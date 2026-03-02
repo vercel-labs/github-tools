@@ -12,7 +12,7 @@ defineOgImage(false)
 const layers = [
   {
     title: 'Tools',
-    description: '18 AI-callable GitHub operations — repositories, pull requests, issues, commits, and code search.',
+    description: '21 AI-callable GitHub operations — repositories, branches, pull requests, issues, commits, and code search.',
     to: '/api/tools-catalog',
     icon: 'i-custom:sdk',
   },

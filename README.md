@@ -1,3 +1,5 @@
+<img src="https://github.com/vercel-labs/github-tools/blob/main/assets/banner.jpg" width="100%" alt="GitHub Tools banner" />
+
 # @github-tools/sdk
 
 [![npm version](https://img.shields.io/npm/v/@github-tools/sdk?color=black)](https://npmjs.com/package/@github-tools/sdk)
@@ -7,7 +9,7 @@
 
 GitHub tools for the [AI SDK](https://ai-sdk.dev) — wrap GitHub's REST API as ready-to-use tools for any agent or `generateText` / `streamText` call.
 
-18 tools covering repositories, pull requests, issues, commits, and search. Write operations support granular approval control out of the box.
+21 tools covering repositories, branches, pull requests, issues, commits, and search. Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -63,7 +65,7 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | `code-review` | `getPullRequest`, `listPullRequests`, `getFileContent`, `listCommits`, `getCommit`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment` |
 | `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `getRepository`, `searchRepositories`, `searchCode` |
 | `repo-explorer` | All read-only tools (no write operations) |
-| `maintainer` | All 18 tools |
+| `maintainer` | All 21 tools |
 
 Omit `preset` to get all tools (same as `maintainer`).
 
