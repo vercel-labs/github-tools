@@ -5,7 +5,12 @@ const docsSiteUrl =
 
 export default defineNuxtConfig({
   extends: ['docus'],
-  modules: ['@nuxt/eslint', '@vercel/analytics', '@vercel/speed-insights'],
+  modules: ['@nuxt/eslint', '@nuxt/fonts', '@vercel/analytics', '@vercel/speed-insights'],
+  fonts: {
+    families: [
+      { name: 'Inter', provider: 'google', weights: [400, 500, 600, 700] },
+    ],
+  },
   css: ['~/assets/css/main.css'],
   colorMode: {
     preference: 'dark',
