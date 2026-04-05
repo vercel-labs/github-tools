@@ -31,7 +31,21 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   searchCode: { title: 'Search Code', label: 'Code searched', labelActive: 'Searching code', icon: 'i-lucide-search-code' },
   searchRepositories: { title: 'Search Repositories', label: 'Repositories searched', labelActive: 'Searching repositories', icon: 'i-lucide-search' },
   listCommits: { title: 'List Commits', label: 'Commits listed', labelActive: 'Listing commits', icon: 'i-lucide-git-commit-horizontal' },
-  getCommit: { title: 'Get Commit', label: 'Commit fetched', labelActive: 'Fetching commit', icon: 'i-lucide-git-commit-horizontal' }
+  getCommit: { title: 'Get Commit', label: 'Commit fetched', labelActive: 'Fetching commit', icon: 'i-lucide-git-commit-horizontal' },
+  listGists: { title: 'List Gists', label: 'Gists listed', labelActive: 'Listing gists', icon: 'i-lucide-file-code-2' },
+  getGist: { title: 'Get Gist', label: 'Gist fetched', labelActive: 'Fetching gist', icon: 'i-lucide-file-code-2' },
+  listGistComments: { title: 'List Gist Comments', label: 'Comments listed', labelActive: 'Listing gist comments', icon: 'i-lucide-message-square' },
+  createGist: { title: 'Create Gist', label: 'Gist created', labelActive: 'Creating gist', icon: 'i-lucide-file-plus' },
+  updateGist: { title: 'Update Gist', label: 'Gist updated', labelActive: 'Updating gist', icon: 'i-lucide-file-pen' },
+  deleteGist: { title: 'Delete Gist', label: 'Gist deleted', labelActive: 'Deleting gist', icon: 'i-lucide-file-x' },
+  createGistComment: { title: 'Comment on Gist', label: 'Comment posted', labelActive: 'Posting gist comment', icon: 'i-lucide-message-square-plus' },
+  listWorkflows: { title: 'List Workflows', label: 'Workflows listed', labelActive: 'Listing workflows', icon: 'i-lucide-workflow' },
+  listWorkflowRuns: { title: 'List Workflow Runs', label: 'Runs listed', labelActive: 'Listing workflow runs', icon: 'i-lucide-play' },
+  getWorkflowRun: { title: 'Get Workflow Run', label: 'Run fetched', labelActive: 'Fetching workflow run', icon: 'i-lucide-play' },
+  listWorkflowJobs: { title: 'List Workflow Jobs', label: 'Jobs listed', labelActive: 'Listing workflow jobs', icon: 'i-lucide-list-checks' },
+  triggerWorkflow: { title: 'Trigger Workflow', label: 'Workflow triggered', labelActive: 'Triggering workflow', icon: 'i-lucide-rocket' },
+  cancelWorkflowRun: { title: 'Cancel Workflow Run', label: 'Run cancelled', labelActive: 'Cancelling workflow run', icon: 'i-lucide-circle-x' },
+  rerunWorkflowRun: { title: 'Re-run Workflow', label: 'Workflow re-run', labelActive: 'Re-running workflow', icon: 'i-lucide-refresh-cw' }
 }
 
 export const GITHUB_TOOL_NAMES = new Set<string>(Object.keys(GITHUB_TOOL_META))

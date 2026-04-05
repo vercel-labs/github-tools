@@ -4,6 +4,8 @@ import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, 
 import { listIssues, getIssue, createIssue, addIssueComment, closeIssue } from './tools/issues'
 import { searchCode, searchRepositories } from './tools/search'
 import { listCommits, getCommit } from './tools/commits'
+import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
+import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 
 export type GithubWriteToolName =
   | 'createBranch'
@@ -16,6 +18,13 @@ export type GithubWriteToolName =
   | 'createIssue'
   | 'addIssueComment'
   | 'closeIssue'
+  | 'createGist'
+  | 'updateGist'
+  | 'deleteGist'
+  | 'createGistComment'
+  | 'triggerWorkflow'
+  | 'cancelWorkflowRun'
+  | 'rerunWorkflowRun'
 
 /**
  * Whether write operations require user approval.
@@ -41,9 +50,10 @@ export type ApprovalConfig = boolean | Partial<Record<GithubWriteToolName, boole
  * - `'code-review'` — Review PRs: read PRs, file content, commits, and post comments
  * - `'issue-triage'` — Triage issues: read/create/close issues, search, and comment
  * - `'repo-explorer'` — Explore repos: read-only access to repos, branches, code, and search
+ * - `'ci-ops'`        — CI operations: monitor and manage GitHub Actions workflows
  * - `'maintainer'`   — Full maintenance: all read + create PRs, merge, manage issues
  */
-export type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'maintainer'
+export type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'maintainer'
 
 const PRESET_TOOLS: Record<GithubToolPreset, string[]> = {
   'code-review': [
@@ -55,19 +65,29 @@ const PRESET_TOOLS: Record<GithubToolPreset, string[]> = {
     'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
     'getRepository', 'searchRepositories', 'searchCode'
   ],
+  'ci-ops': [
+    'getRepository', 'listBranches',
+    'listCommits', 'getCommit',
+    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs',
+    'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun'
+  ],
   'repo-explorer': [
     'getRepository', 'listBranches', 'getFileContent',
     'listPullRequests', 'getPullRequest',
     'listIssues', 'getIssue',
     'listCommits', 'getCommit',
-    'searchCode', 'searchRepositories'
+    'searchCode', 'searchRepositories',
+    'listGists', 'getGist', 'listGistComments',
+    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs'
   ],
   'maintainer': [
     'getRepository', 'listBranches', 'getFileContent', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
     'listPullRequests', 'getPullRequest', 'createPullRequest', 'mergePullRequest', 'addPullRequestComment',
     'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
     'listCommits', 'getCommit',
-    'searchCode', 'searchRepositories'
+    'searchCode', 'searchRepositories',
+    'listGists', 'getGist', 'listGistComments', 'createGist', 'updateGist', 'deleteGist', 'createGistComment',
+    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun'
   ]
 }
 
@@ -170,6 +190,20 @@ export function createGithubTools({ token, requireApproval = true, preset }: Git
     createIssue: createIssue(octokit, approval('createIssue')),
     addIssueComment: addIssueComment(octokit, approval('addIssueComment')),
     closeIssue: closeIssue(octokit, approval('closeIssue')),
+    listGists: listGists(octokit),
+    getGist: getGist(octokit),
+    listGistComments: listGistComments(octokit),
+    createGist: createGist(octokit, approval('createGist')),
+    updateGist: updateGist(octokit, approval('updateGist')),
+    deleteGist: deleteGist(octokit, approval('deleteGist')),
+    createGistComment: createGistComment(octokit, approval('createGistComment')),
+    listWorkflows: listWorkflows(octokit),
+    listWorkflowRuns: listWorkflowRuns(octokit),
+    getWorkflowRun: getWorkflowRun(octokit),
+    listWorkflowJobs: listWorkflowJobs(octokit),
+    triggerWorkflow: triggerWorkflow(octokit, approval('triggerWorkflow')),
+    cancelWorkflowRun: cancelWorkflowRun(octokit, approval('cancelWorkflowRun')),
+    rerunWorkflowRun: rerunWorkflowRun(octokit, approval('rerunWorkflowRun')),
   }
 
   if (!allowed) return allTools
@@ -188,6 +222,8 @@ export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, 
 export { listIssues, getIssue, createIssue, addIssueComment, closeIssue } from './tools/issues'
 export { searchCode, searchRepositories } from './tools/search'
 export { listCommits, getCommit } from './tools/commits'
+export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
+export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 export type { Octokit, ToolOptions } from './types'
 export { createGithubAgent } from './agents'
 export type { CreateGithubAgentOptions } from './agents'

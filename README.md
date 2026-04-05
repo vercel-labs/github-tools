@@ -9,7 +9,7 @@
 
 GitHub tools for the [AI SDK](https://ai-sdk.dev) — wrap GitHub's REST API as ready-to-use tools for any agent or `generateText` / `streamText` call.
 
-21 tools covering repositories, branches, pull requests, issues, commits, and search. Write operations support granular approval control out of the box.
+35 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -64,8 +64,9 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 |---|---|
 | `code-review` | `getPullRequest`, `listPullRequests`, `getFileContent`, `listCommits`, `getCommit`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment` |
 | `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `getRepository`, `searchRepositories`, `searchCode` |
-| `repo-explorer` | All read-only tools (no write operations) |
-| `maintainer` | All 21 tools |
+| `repo-explorer` | All read-only tools including gists and workflows (no write operations) |
+| `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
+| `maintainer` | All 35 tools |
 
 Omit `preset` to get all tools (same as `maintainer`).
 
@@ -110,7 +111,7 @@ createGithubTools({
 })
 ```
 
-Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createIssue`, `addIssueComment`, `closeIssue`.
+Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createIssue`, `addIssueComment`, `closeIssue`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
 
 All other tools are read-only and never require approval.
 
@@ -145,6 +146,30 @@ All other tools are read-only and never require approval.
 | `addIssueComment` | Post a comment on an issue |
 | `closeIssue` | Close an issue (completed or not planned) |
 
+### Gists
+
+| Tool | Description |
+|---|---|
+| `listGists` | List gists for the authenticated user or a specific user |
+| `getGist` | Get a gist including file contents |
+| `listGistComments` | List comments on a gist |
+| `createGist` | Create a new gist with one or more files |
+| `updateGist` | Update a gist's description or files |
+| `deleteGist` | Delete a gist permanently |
+| `createGistComment` | Post a comment on a gist |
+
+### Workflows
+
+| Tool | Description |
+|---|---|
+| `listWorkflows` | List GitHub Actions workflows in a repository |
+| `listWorkflowRuns` | List workflow runs filtered by workflow, branch, status, or event |
+| `getWorkflowRun` | Get a workflow run's status, timing, and trigger info |
+| `listWorkflowJobs` | List jobs in a workflow run with step-level status |
+| `triggerWorkflow` | Trigger a workflow via workflow_dispatch event |
+| `cancelWorkflowRun` | Cancel an in-progress workflow run |
+| `rerunWorkflowRun` | Re-run a workflow run, optionally only failed jobs |
+
 ### Commits
 
 | Tool | Description |
@@ -177,6 +202,11 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | **Issues** | Read-only | `listIssues`, `getIssue` |
 | **Issues** | Read and write | `createIssue`, `addIssueComment`, `closeIssue` |
 
+| **Gists** | Read-only | `listGists`, `getGist`, `listGistComments` |
+| **Gists** | Read and write | `createGist`, `updateGist`, `deleteGist`, `createGistComment` |
+| **Actions** | Read-only | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs` |
+| **Actions** | Read and write | `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
+
 Search tools (`searchCode`, `searchRepositories`) work with any token.
 
 ### Classic token
@@ -199,7 +229,7 @@ type GithubToolsOptions = {
   preset?: GithubToolPreset | GithubToolPreset[]
 }
 
-type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'maintainer'
+type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'maintainer'
 ```
 
 ### `createGithubAgent(options)`
