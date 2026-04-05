@@ -32,6 +32,7 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   searchRepositories: { title: 'Search Repositories', label: 'Repositories searched', labelActive: 'Searching repositories', icon: 'i-lucide-search' },
   listCommits: { title: 'List Commits', label: 'Commits listed', labelActive: 'Listing commits', icon: 'i-lucide-git-commit-horizontal' },
   getCommit: { title: 'Get Commit', label: 'Commit fetched', labelActive: 'Fetching commit', icon: 'i-lucide-git-commit-horizontal' },
+  getBlame: { title: 'Git Blame', label: 'Blame loaded', labelActive: 'Loading blame', icon: 'i-lucide-scroll-text' },
   listGists: { title: 'List Gists', label: 'Gists listed', labelActive: 'Listing gists', icon: 'i-lucide-file-code-2' },
   getGist: { title: 'Get Gist', label: 'Gist fetched', labelActive: 'Fetching gist', icon: 'i-lucide-file-code-2' },
   listGistComments: { title: 'List Gist Comments', label: 'Comments listed', labelActive: 'Listing gist comments', icon: 'i-lucide-message-square' },

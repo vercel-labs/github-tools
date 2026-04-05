@@ -3,7 +3,7 @@ import { getRepository, listBranches, getFileContent, createBranch, forkReposito
 import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment } from './tools/pull-requests'
 import { listIssues, getIssue, createIssue, addIssueComment, closeIssue } from './tools/issues'
 import { searchCode, searchRepositories } from './tools/search'
-import { listCommits, getCommit } from './tools/commits'
+import { listCommits, getCommit, getBlame } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 
@@ -57,7 +57,7 @@ export type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' 
 
 const PRESET_TOOLS: Record<GithubToolPreset, string[]> = {
   'code-review': [
-    'getPullRequest', 'listPullRequests', 'getFileContent', 'listCommits', 'getCommit',
+    'getPullRequest', 'listPullRequests', 'getFileContent', 'listCommits', 'getCommit', 'getBlame',
     'getRepository', 'listBranches', 'searchCode',
     'addPullRequestComment'
   ],
@@ -75,7 +75,7 @@ const PRESET_TOOLS: Record<GithubToolPreset, string[]> = {
     'getRepository', 'listBranches', 'getFileContent',
     'listPullRequests', 'getPullRequest',
     'listIssues', 'getIssue',
-    'listCommits', 'getCommit',
+    'listCommits', 'getCommit', 'getBlame',
     'searchCode', 'searchRepositories',
     'listGists', 'getGist', 'listGistComments',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs'
@@ -84,7 +84,7 @@ const PRESET_TOOLS: Record<GithubToolPreset, string[]> = {
     'getRepository', 'listBranches', 'getFileContent', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
     'listPullRequests', 'getPullRequest', 'createPullRequest', 'mergePullRequest', 'addPullRequestComment',
     'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
-    'listCommits', 'getCommit',
+    'listCommits', 'getCommit', 'getBlame',
     'searchCode', 'searchRepositories',
     'listGists', 'getGist', 'listGistComments', 'createGist', 'updateGist', 'deleteGist', 'createGistComment',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun'
@@ -180,6 +180,7 @@ export function createGithubTools({ token, requireApproval = true, preset }: Git
     searchRepositories: searchRepositories(octokit),
     listCommits: listCommits(octokit),
     getCommit: getCommit(octokit),
+    getBlame: getBlame(octokit),
     createBranch: createBranch(octokit, approval('createBranch')),
     forkRepository: forkRepository(octokit, approval('forkRepository')),
     createRepository: createRepository(octokit, approval('createRepository')),
@@ -221,7 +222,7 @@ export { getRepository, listBranches, getFileContent, createBranch, forkReposito
 export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment } from './tools/pull-requests'
 export { listIssues, getIssue, createIssue, addIssueComment, closeIssue } from './tools/issues'
 export { searchCode, searchRepositories } from './tools/search'
-export { listCommits, getCommit } from './tools/commits'
+export { listCommits, getCommit, getBlame } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 export type { Octokit, ToolOptions } from './types'

@@ -2,9 +2,70 @@ import { tool } from 'ai'
 import { z } from 'zod'
 import type { Octokit } from '../types'
 
+const BLAME_QUERY = `
+  query ($owner: String!, $name: String!, $expression: String!, $path: String!) {
+    repository(owner: $owner, name: $name) {
+      object(expression: $expression) {
+        ... on Commit {
+          oid
+          blame(path: $path) {
+            ranges {
+              startingLine
+              endingLine
+              age
+              commit {
+                oid
+                abbreviatedOid
+                messageHeadline
+                authoredDate
+                url
+                author {
+                  name
+                  email
+                  user {
+                    login
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+type BlameQueryData = {
+  repository: {
+    object: null | {
+      oid?: string
+      blame?: {
+        ranges: Array<{
+          startingLine: number
+          endingLine: number
+          age: number
+          commit: {
+            oid: string
+            abbreviatedOid: string
+            messageHeadline: string
+            authoredDate: string
+            url: string
+            author: null | {
+              name: string | null
+              email: string | null
+              user: null | { login: string }
+            }
+          }
+        }>
+      }
+    }
+  } | null
+}
+
 export const listCommits = (octokit: Octokit) =>
   tool({
-    description: 'List commits for a GitHub repository. Filter by file path to see who changed a specific file and when (git blame alternative). Filter by author, branch, or date range.',
+    description:
+      'List commits for a GitHub repository. Filter by file path to see commits that touched a file. For line-by-line attribution at a given ref, use getBlame instead.',
     inputSchema: z.object({
       owner: z.string().describe('Repository owner'),
       repo: z.string().describe('Repository name'),
@@ -66,6 +127,97 @@ export const getCommit = (octokit: Octokit) =>
           deletions: file.deletions,
           patch: file.patch,
         })),
+      }
+    },
+  })
+
+export const getBlame = (octokit: Octokit) =>
+  tool({
+    description:
+      'Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). Returns contiguous ranges mapping lines to the commits that last modified them — use this to see who introduced a line and when (GitHub GraphQL API).',
+    inputSchema: z.object({
+      owner: z.string().describe('Repository owner'),
+      repo: z.string().describe('Repository name'),
+      path: z.string().describe('Path to the file in the repository'),
+      ref: z
+        .string()
+        .optional()
+        .describe('Branch name, tag, or commit SHA (defaults to the repository default branch)'),
+      line: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('If set, only return blame ranges that include this line number'),
+      lineStart: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('When used with lineEnd, only return ranges overlapping this window'),
+      lineEnd: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('When used with lineStart, only return ranges overlapping this window'),
+    }),
+    execute: async ({ owner, repo, path, ref, line, lineStart, lineEnd }) => {
+      let expression = ref
+      if (!expression) {
+        const { data } = await octokit.rest.repos.get({ owner, repo })
+        expression = data.default_branch
+      }
+
+      const data = (await octokit.graphql(BLAME_QUERY, {
+        owner,
+        name: repo,
+        expression,
+        path,
+      })) as BlameQueryData
+
+      if (!data.repository) {
+        return { error: `Repository not found: ${owner}/${repo}` }
+      }
+
+      const obj = data.repository.object
+      if (!obj?.oid || !obj?.blame) {
+        return {
+          error:
+            `Ref "${expression}" did not resolve to a commit for this repository (or the path is invalid). Pass a branch name, tag, or full commit SHA.`,
+        }
+      }
+
+      let ranges = obj.blame.ranges.map(r => ({
+        startingLine: r.startingLine,
+        endingLine: r.endingLine,
+        age: r.age,
+        commit: {
+          sha: r.commit.oid,
+          abbreviatedSha: r.commit.abbreviatedOid,
+          messageHeadline: r.commit.messageHeadline,
+          authoredDate: r.commit.authoredDate,
+          url: r.commit.url,
+          authorName: r.commit.author?.name ?? null,
+          authorEmail: r.commit.author?.email ?? null,
+          authorLogin: r.commit.author?.user?.login ?? null,
+        },
+      }))
+
+      if (line != null) {
+        ranges = ranges.filter(r => line >= r.startingLine && line <= r.endingLine)
+      } else if (lineStart != null || lineEnd != null) {
+        const start = lineStart ?? 1
+        const end = lineEnd ?? Number.MAX_SAFE_INTEGER
+        ranges = ranges.filter(r => r.endingLine >= start && r.startingLine <= end)
+      }
+
+      return {
+        ref: expression,
+        tipSha: obj.oid,
+        path,
+        rangeCount: ranges.length,
+        ranges,
       }
     },
   })

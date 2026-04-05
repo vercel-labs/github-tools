@@ -14,6 +14,7 @@ const PRESET_INSTRUCTIONS: Record<GithubToolPreset, string> = {
 
 When reviewing a PR:
 - Read the PR description and changed files carefully
+- To trace why a specific line exists or who last touched it, use getBlame on the file path and ref (branch or merge commit), then follow up with getCommit if you need the full patch
 - Check for bugs, logic errors, and edge cases
 - Suggest improvements when you spot issues
 - Be constructive — explain why something is a problem and how to fix it
@@ -48,6 +49,7 @@ ${SHARED_RULES}`,
 
 When exploring repos:
 - Answer questions about code structure and organization
+- Use getBlame when the user asks about history or ownership of specific lines in a file
 - Summarize recent activity (commits, PRs, issues)
 - Find specific files, functions, or patterns in code
 - Explain how different parts of the codebase work together
