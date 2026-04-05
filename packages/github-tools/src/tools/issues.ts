@@ -1,8 +1,9 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { Octokit, ToolOptions } from '../types'
+import { createOctokit } from '../client'
+import type { ToolOptions } from '../types'
 
-export const listIssues = (octokit: Octokit) =>
+export const listIssues = (token: string) =>
   tool({
     description: 'List issues for a GitHub repository (excludes pull requests)',
     inputSchema: z.object({
@@ -13,6 +14,8 @@ export const listIssues = (octokit: Octokit) =>
       perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
     }),
     execute: async ({ owner, repo, state, labels, perPage }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.issues.listForRepo({
         owner,
         repo,
@@ -35,7 +38,7 @@ export const listIssues = (octokit: Octokit) =>
     },
   })
 
-export const getIssue = (octokit: Octokit) =>
+export const getIssue = (token: string) =>
   tool({
     description: 'Get detailed information about a specific issue',
     inputSchema: z.object({
@@ -44,6 +47,8 @@ export const getIssue = (octokit: Octokit) =>
       issueNumber: z.number().describe('Issue number'),
     }),
     execute: async ({ owner, repo, issueNumber }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.issues.get({ owner, repo, issue_number: issueNumber })
       return {
         number: data.number,
@@ -62,7 +67,7 @@ export const getIssue = (octokit: Octokit) =>
     },
   })
 
-export const createIssue = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const createIssue = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Create a new issue in a GitHub repository',
     needsApproval,
@@ -75,6 +80,8 @@ export const createIssue = (octokit: Octokit, { needsApproval = true }: ToolOpti
       assignees: z.array(z.string()).optional().describe('GitHub usernames to assign to the issue'),
     }),
     execute: async ({ owner, repo, title, body, labels, assignees }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.issues.create({ owner, repo, title, body, labels, assignees })
       return {
         number: data.number,
@@ -86,7 +93,7 @@ export const createIssue = (octokit: Octokit, { needsApproval = true }: ToolOpti
     },
   })
 
-export const addIssueComment = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const addIssueComment = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Add a comment to a GitHub issue',
     needsApproval,
@@ -97,6 +104,8 @@ export const addIssueComment = (octokit: Octokit, { needsApproval = true }: Tool
       body: z.string().describe('Comment text (supports Markdown)'),
     }),
     execute: async ({ owner, repo, issueNumber, body }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body })
       return {
         id: data.id,
@@ -108,7 +117,7 @@ export const addIssueComment = (octokit: Octokit, { needsApproval = true }: Tool
     },
   })
 
-export const closeIssue = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const closeIssue = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Close an open GitHub issue',
     needsApproval,
@@ -119,6 +128,8 @@ export const closeIssue = (octokit: Octokit, { needsApproval = true }: ToolOptio
       stateReason: z.enum(['completed', 'not_planned']).optional().default('completed').describe('Reason for closing'),
     }),
     execute: async ({ owner, repo, issueNumber, stateReason }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.issues.update({
         owner,
         repo,

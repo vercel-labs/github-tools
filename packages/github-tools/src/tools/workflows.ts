@@ -1,8 +1,9 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { Octokit, ToolOptions } from '../types'
+import { createOctokit } from '../client'
+import type { ToolOptions } from '../types'
 
-export const listWorkflows = (octokit: Octokit) =>
+export const listWorkflows = (token: string) =>
   tool({
     description: 'List GitHub Actions workflows in a repository',
     inputSchema: z.object({
@@ -12,6 +13,8 @@ export const listWorkflows = (octokit: Octokit) =>
       page: z.number().optional().default(1).describe('Page number for pagination'),
     }),
     execute: async ({ owner, repo, perPage, page }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.actions.listRepoWorkflows({ owner, repo, per_page: perPage, page })
       return {
         totalCount: data.total_count,
@@ -28,7 +31,7 @@ export const listWorkflows = (octokit: Octokit) =>
     },
   })
 
-export const listWorkflowRuns = (octokit: Octokit) =>
+export const listWorkflowRuns = (token: string) =>
   tool({
     description: 'List workflow runs for a repository, optionally filtered by workflow, branch, status, or event',
     inputSchema: z.object({
@@ -42,6 +45,8 @@ export const listWorkflowRuns = (octokit: Octokit) =>
       page: z.number().optional().default(1).describe('Page number for pagination'),
     }),
     execute: async ({ owner, repo, workflowId, branch, event, status, perPage, page }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const params: Record<string, unknown> = { owner, repo, per_page: perPage, page }
       if (branch) params.branch = branch
       if (event) params.event = event
@@ -71,7 +76,7 @@ export const listWorkflowRuns = (octokit: Octokit) =>
     },
   })
 
-export const getWorkflowRun = (octokit: Octokit) =>
+export const getWorkflowRun = (token: string) =>
   tool({
     description: 'Get details of a specific workflow run including status, timing, and trigger info',
     inputSchema: z.object({
@@ -80,6 +85,8 @@ export const getWorkflowRun = (octokit: Octokit) =>
       runId: z.number().describe('Workflow run ID'),
     }),
     execute: async ({ owner, repo, runId }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.actions.getWorkflowRun({ owner, repo, run_id: runId })
       return {
         id: data.id,
@@ -100,7 +107,7 @@ export const getWorkflowRun = (octokit: Octokit) =>
     },
   })
 
-export const listWorkflowJobs = (octokit: Octokit) =>
+export const listWorkflowJobs = (token: string) =>
   tool({
     description: 'List jobs for a workflow run, including step-level status and timing',
     inputSchema: z.object({
@@ -112,6 +119,8 @@ export const listWorkflowJobs = (octokit: Octokit) =>
       page: z.number().optional().default(1).describe('Page number for pagination'),
     }),
     execute: async ({ owner, repo, runId, filter, perPage, page }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: runId, filter, per_page: perPage, page })
       return {
         totalCount: data.total_count,
@@ -137,7 +146,7 @@ export const listWorkflowJobs = (octokit: Octokit) =>
     },
   })
 
-export const triggerWorkflow = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const triggerWorkflow = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Trigger a workflow via workflow_dispatch event',
     needsApproval,
@@ -149,6 +158,8 @@ export const triggerWorkflow = (octokit: Octokit, { needsApproval = true }: Tool
       inputs: z.record(z.string(), z.string()).optional().describe('Input parameters defined in the workflow_dispatch trigger'),
     }),
     execute: async ({ owner, repo, workflowId, ref, inputs }) => {
+      "use step"
+      const octokit = createOctokit(token)
       await octokit.rest.actions.createWorkflowDispatch({
         owner,
         repo,
@@ -160,7 +171,7 @@ export const triggerWorkflow = (octokit: Octokit, { needsApproval = true }: Tool
     },
   })
 
-export const cancelWorkflowRun = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const cancelWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Cancel an in-progress workflow run',
     needsApproval,
@@ -170,12 +181,14 @@ export const cancelWorkflowRun = (octokit: Octokit, { needsApproval = true }: To
       runId: z.number().describe('Workflow run ID to cancel'),
     }),
     execute: async ({ owner, repo, runId }) => {
+      "use step"
+      const octokit = createOctokit(token)
       await octokit.rest.actions.cancelWorkflowRun({ owner, repo, run_id: runId })
       return { cancelled: true, runId }
     },
   })
 
-export const rerunWorkflowRun = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const rerunWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Re-run a workflow run, optionally only the failed jobs',
     needsApproval,
@@ -186,6 +199,8 @@ export const rerunWorkflowRun = (octokit: Octokit, { needsApproval = true }: Too
       onlyFailedJobs: z.boolean().optional().default(false).describe('Only re-run failed jobs instead of the entire workflow'),
     }),
     execute: async ({ owner, repo, runId, onlyFailedJobs }) => {
+      "use step"
+      const octokit = createOctokit(token)
       if (onlyFailedJobs) {
         await octokit.rest.actions.reRunWorkflowFailedJobs({ owner, repo, run_id: runId })
       } else {

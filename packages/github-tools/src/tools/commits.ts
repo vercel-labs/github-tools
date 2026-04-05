@@ -1,6 +1,6 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { Octokit } from '../types'
+import { createOctokit } from '../client'
 
 const BLAME_QUERY = `
   query ($owner: String!, $name: String!, $expression: String!, $path: String!) {
@@ -62,7 +62,7 @@ type BlameQueryData = {
   } | null
 }
 
-export const listCommits = (octokit: Octokit) =>
+export const listCommits = (token: string) =>
   tool({
     description:
       'List commits for a GitHub repository. Filter by file path to see commits that touched a file. For line-by-line attribution at a given ref, use getBlame instead.',
@@ -77,6 +77,8 @@ export const listCommits = (octokit: Octokit) =>
       perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
     }),
     execute: async ({ owner, repo, path, sha, author, since, until, perPage }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.repos.listCommits({
         owner,
         repo,
@@ -98,7 +100,7 @@ export const listCommits = (octokit: Octokit) =>
     },
   })
 
-export const getCommit = (octokit: Octokit) =>
+export const getCommit = (token: string) =>
   tool({
     description: 'Get detailed information about a specific commit, including the list of files changed with additions and deletions',
     inputSchema: z.object({
@@ -107,6 +109,8 @@ export const getCommit = (octokit: Octokit) =>
       ref: z.string().describe('Commit SHA, branch name, or tag'),
     }),
     execute: async ({ owner, repo, ref }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.repos.getCommit({ owner, repo, ref })
       return {
         sha: data.sha,
@@ -131,7 +135,7 @@ export const getCommit = (octokit: Octokit) =>
     },
   })
 
-export const getBlame = (octokit: Octokit) =>
+export const getBlame = (token: string) =>
   tool({
     description:
       'Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). Returns contiguous ranges mapping lines to the commits that last modified them — use this to see who introduced a line and when (GitHub GraphQL API).',
@@ -163,6 +167,8 @@ export const getBlame = (octokit: Octokit) =>
         .describe('When used with lineStart, only return ranges overlapping this window'),
     }),
     execute: async ({ owner, repo, path, ref, line, lineStart, lineEnd }) => {
+      "use step"
+      const octokit = createOctokit(token)
       let expression = ref
       if (!expression) {
         const { data } = await octokit.rest.repos.get({ owner, repo })

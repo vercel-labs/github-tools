@@ -1,8 +1,9 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { Octokit, ToolOptions } from '../types'
+import { createOctokit } from '../client'
+import type { ToolOptions } from '../types'
 
-export const listPullRequests = (octokit: Octokit) =>
+export const listPullRequests = (token: string) =>
   tool({
     description: 'List pull requests for a GitHub repository',
     inputSchema: z.object({
@@ -12,6 +13,8 @@ export const listPullRequests = (octokit: Octokit) =>
       perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
     }),
     execute: async ({ owner, repo, state, perPage }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.pulls.list({ owner, repo, state, per_page: perPage })
       return data.map(pr => ({
         number: pr.number,
@@ -28,7 +31,7 @@ export const listPullRequests = (octokit: Octokit) =>
     },
   })
 
-export const getPullRequest = (octokit: Octokit) =>
+export const getPullRequest = (token: string) =>
   tool({
     description: 'Get detailed information about a specific pull request',
     inputSchema: z.object({
@@ -37,6 +40,8 @@ export const getPullRequest = (octokit: Octokit) =>
       pullNumber: z.number().describe('Pull request number'),
     }),
     execute: async ({ owner, repo, pullNumber }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
       return {
         number: data.number,
@@ -60,7 +65,7 @@ export const getPullRequest = (octokit: Octokit) =>
     },
   })
 
-export const createPullRequest = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const createPullRequest = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Create a new pull request in a GitHub repository',
     needsApproval,
@@ -74,6 +79,8 @@ export const createPullRequest = (octokit: Octokit, { needsApproval = true }: To
       draft: z.boolean().optional().default(false).describe('Create as draft pull request'),
     }),
     execute: async ({ owner, repo, title, body, head, base, draft }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.pulls.create({ owner, repo, title, body, head, base, draft })
       return {
         number: data.number,
@@ -87,7 +94,7 @@ export const createPullRequest = (octokit: Octokit, { needsApproval = true }: To
     },
   })
 
-export const mergePullRequest = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const mergePullRequest = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Merge a pull request',
     needsApproval,
@@ -100,6 +107,8 @@ export const mergePullRequest = (octokit: Octokit, { needsApproval = true }: Too
       mergeMethod: z.enum(['merge', 'squash', 'rebase']).optional().default('merge').describe('Merge strategy'),
     }),
     execute: async ({ owner, repo, pullNumber, commitTitle, commitMessage, mergeMethod }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.pulls.merge({
         owner,
         repo,
@@ -116,7 +125,7 @@ export const mergePullRequest = (octokit: Octokit, { needsApproval = true }: Too
     },
   })
 
-export const addPullRequestComment = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const addPullRequestComment = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Add a comment to a pull request',
     needsApproval,
@@ -127,6 +136,8 @@ export const addPullRequestComment = (octokit: Octokit, { needsApproval = true }
       body: z.string().describe('Comment text (supports Markdown)'),
     }),
     execute: async ({ owner, repo, pullNumber, body }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.issues.createComment({ owner, repo, issue_number: pullNumber, body })
       return {
         id: data.id,

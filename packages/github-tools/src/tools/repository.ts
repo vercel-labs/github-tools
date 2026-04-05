@@ -1,8 +1,9 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { Octokit, ToolOptions } from '../types'
+import { createOctokit } from '../client'
+import type { ToolOptions } from '../types'
 
-export const getRepository = (octokit: Octokit) =>
+export const getRepository = (token: string) =>
   tool({
     description: 'Get information about a GitHub repository including description, stars, forks, language, and default branch',
     inputSchema: z.object({
@@ -10,6 +11,8 @@ export const getRepository = (octokit: Octokit) =>
       repo: z.string().describe('Repository name'),
     }),
     execute: async ({ owner, repo }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.repos.get({ owner, repo })
       return {
         name: data.name,
@@ -28,7 +31,7 @@ export const getRepository = (octokit: Octokit) =>
     },
   })
 
-export const listBranches = (octokit: Octokit) =>
+export const listBranches = (token: string) =>
   tool({
     description: 'List branches in a GitHub repository',
     inputSchema: z.object({
@@ -37,6 +40,8 @@ export const listBranches = (octokit: Octokit) =>
       perPage: z.number().optional().default(30).describe('Number of branches to return (max 100)'),
     }),
     execute: async ({ owner, repo, perPage }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.repos.listBranches({ owner, repo, per_page: perPage })
       return data.map(branch => ({
         name: branch.name,
@@ -46,7 +51,7 @@ export const listBranches = (octokit: Octokit) =>
     },
   })
 
-export const getFileContent = (octokit: Octokit) =>
+export const getFileContent = (token: string) =>
   tool({
     description: 'Get the content of a file from a GitHub repository',
     inputSchema: z.object({
@@ -56,6 +61,8 @@ export const getFileContent = (octokit: Octokit) =>
       ref: z.string().optional().describe('Branch, tag, or commit SHA (defaults to the default branch)'),
     }),
     execute: async ({ owner, repo, path, ref }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.repos.getContent({ owner, repo, path, ref })
       if (Array.isArray(data)) {
         return { type: 'directory', entries: data.map(e => ({ name: e.name, type: e.type, path: e.path })) }
@@ -74,7 +81,7 @@ export const getFileContent = (octokit: Octokit) =>
     },
   })
 
-export const createBranch = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const createBranch = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Create a new branch in a GitHub repository from an existing branch or commit SHA',
     needsApproval,
@@ -85,6 +92,8 @@ export const createBranch = (octokit: Octokit, { needsApproval = true }: ToolOpt
       from: z.string().optional().describe('Source branch name or commit SHA to branch from (defaults to the default branch)'),
     }),
     execute: async ({ owner, repo, branch, from }) => {
+      "use step"
+      const octokit = createOctokit(token)
       let sha = from
       if (!sha || !sha.match(/^[0-9a-f]{40}$/i)) {
         const { data: ref } = await octokit.rest.git.getRef({
@@ -108,7 +117,7 @@ export const createBranch = (octokit: Octokit, { needsApproval = true }: ToolOpt
     },
   })
 
-export const forkRepository = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const forkRepository = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Fork a GitHub repository to the authenticated user account or a specified organization',
     needsApproval,
@@ -119,6 +128,8 @@ export const forkRepository = (octokit: Octokit, { needsApproval = true }: ToolO
       name: z.string().optional().describe('Name for the forked repository (defaults to the original name)'),
     }),
     execute: async ({ owner, repo, organization, name }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.repos.createFork({
         owner,
         repo,
@@ -138,7 +149,7 @@ export const forkRepository = (octokit: Octokit, { needsApproval = true }: ToolO
     },
   })
 
-export const createRepository = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const createRepository = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Create a new GitHub repository for the authenticated user or a specified organization',
     needsApproval,
@@ -152,6 +163,8 @@ export const createRepository = (octokit: Octokit, { needsApproval = true }: Too
       org: z.string().optional().describe('Organization to create the repository in (omit for personal repo)'),
     }),
     execute: async ({ name, description, isPrivate, autoInit, gitignoreTemplate, licenseTemplate, org }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const params = {
         name,
         description,
@@ -179,7 +192,7 @@ export const createRepository = (octokit: Octokit, { needsApproval = true }: Too
     },
   })
 
-export const createOrUpdateFile = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const createOrUpdateFile = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Create or update a file in a GitHub repository. Provide the SHA when updating an existing file.',
     needsApproval,
@@ -193,6 +206,8 @@ export const createOrUpdateFile = (octokit: Octokit, { needsApproval = true }: T
       sha: z.string().optional().describe('SHA of the file being replaced (required when updating an existing file)'),
     }),
     execute: async ({ owner, repo, path, message, content, branch, sha }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const encoded = Buffer.from(content).toString('base64')
       const { data } = await octokit.rest.repos.createOrUpdateFileContents({
         owner,

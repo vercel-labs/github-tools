@@ -1,4 +1,3 @@
-import { createOctokit } from './client'
 import { getRepository, listBranches, getFileContent, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
 import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment } from './tools/pull-requests'
 import { listIssues, getIssue, createIssue, addIssueComment, closeIssue } from './tools/issues'
@@ -164,47 +163,46 @@ export function createGithubTools({ token, requireApproval = true, preset }: Git
   if (!resolvedToken) {
     throw new Error('GitHub token is required. Pass it as `token` or set the GITHUB_TOKEN environment variable.')
   }
-  const octokit = createOctokit(resolvedToken)
   const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveApproval(name, requireApproval) })
   const allowed = preset ? resolvePresetTools(preset) : null
 
   const allTools = {
-    getRepository: getRepository(octokit),
-    listBranches: listBranches(octokit),
-    getFileContent: getFileContent(octokit),
-    listPullRequests: listPullRequests(octokit),
-    getPullRequest: getPullRequest(octokit),
-    listIssues: listIssues(octokit),
-    getIssue: getIssue(octokit),
-    searchCode: searchCode(octokit),
-    searchRepositories: searchRepositories(octokit),
-    listCommits: listCommits(octokit),
-    getCommit: getCommit(octokit),
-    getBlame: getBlame(octokit),
-    createBranch: createBranch(octokit, approval('createBranch')),
-    forkRepository: forkRepository(octokit, approval('forkRepository')),
-    createRepository: createRepository(octokit, approval('createRepository')),
-    createOrUpdateFile: createOrUpdateFile(octokit, approval('createOrUpdateFile')),
-    createPullRequest: createPullRequest(octokit, approval('createPullRequest')),
-    mergePullRequest: mergePullRequest(octokit, approval('mergePullRequest')),
-    addPullRequestComment: addPullRequestComment(octokit, approval('addPullRequestComment')),
-    createIssue: createIssue(octokit, approval('createIssue')),
-    addIssueComment: addIssueComment(octokit, approval('addIssueComment')),
-    closeIssue: closeIssue(octokit, approval('closeIssue')),
-    listGists: listGists(octokit),
-    getGist: getGist(octokit),
-    listGistComments: listGistComments(octokit),
-    createGist: createGist(octokit, approval('createGist')),
-    updateGist: updateGist(octokit, approval('updateGist')),
-    deleteGist: deleteGist(octokit, approval('deleteGist')),
-    createGistComment: createGistComment(octokit, approval('createGistComment')),
-    listWorkflows: listWorkflows(octokit),
-    listWorkflowRuns: listWorkflowRuns(octokit),
-    getWorkflowRun: getWorkflowRun(octokit),
-    listWorkflowJobs: listWorkflowJobs(octokit),
-    triggerWorkflow: triggerWorkflow(octokit, approval('triggerWorkflow')),
-    cancelWorkflowRun: cancelWorkflowRun(octokit, approval('cancelWorkflowRun')),
-    rerunWorkflowRun: rerunWorkflowRun(octokit, approval('rerunWorkflowRun')),
+    getRepository: getRepository(resolvedToken),
+    listBranches: listBranches(resolvedToken),
+    getFileContent: getFileContent(resolvedToken),
+    listPullRequests: listPullRequests(resolvedToken),
+    getPullRequest: getPullRequest(resolvedToken),
+    listIssues: listIssues(resolvedToken),
+    getIssue: getIssue(resolvedToken),
+    searchCode: searchCode(resolvedToken),
+    searchRepositories: searchRepositories(resolvedToken),
+    listCommits: listCommits(resolvedToken),
+    getCommit: getCommit(resolvedToken),
+    getBlame: getBlame(resolvedToken),
+    createBranch: createBranch(resolvedToken, approval('createBranch')),
+    forkRepository: forkRepository(resolvedToken, approval('forkRepository')),
+    createRepository: createRepository(resolvedToken, approval('createRepository')),
+    createOrUpdateFile: createOrUpdateFile(resolvedToken, approval('createOrUpdateFile')),
+    createPullRequest: createPullRequest(resolvedToken, approval('createPullRequest')),
+    mergePullRequest: mergePullRequest(resolvedToken, approval('mergePullRequest')),
+    addPullRequestComment: addPullRequestComment(resolvedToken, approval('addPullRequestComment')),
+    createIssue: createIssue(resolvedToken, approval('createIssue')),
+    addIssueComment: addIssueComment(resolvedToken, approval('addIssueComment')),
+    closeIssue: closeIssue(resolvedToken, approval('closeIssue')),
+    listGists: listGists(resolvedToken),
+    getGist: getGist(resolvedToken),
+    listGistComments: listGistComments(resolvedToken),
+    createGist: createGist(resolvedToken, approval('createGist')),
+    updateGist: updateGist(resolvedToken, approval('updateGist')),
+    deleteGist: deleteGist(resolvedToken, approval('deleteGist')),
+    createGistComment: createGistComment(resolvedToken, approval('createGistComment')),
+    listWorkflows: listWorkflows(resolvedToken),
+    listWorkflowRuns: listWorkflowRuns(resolvedToken),
+    getWorkflowRun: getWorkflowRun(resolvedToken),
+    listWorkflowJobs: listWorkflowJobs(resolvedToken),
+    triggerWorkflow: triggerWorkflow(resolvedToken, approval('triggerWorkflow')),
+    cancelWorkflowRun: cancelWorkflowRun(resolvedToken, approval('cancelWorkflowRun')),
+    rerunWorkflowRun: rerunWorkflowRun(resolvedToken, approval('rerunWorkflowRun')),
   }
 
   if (!allowed) return allTools

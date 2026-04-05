@@ -1,8 +1,9 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { Octokit, ToolOptions } from '../types'
+import { createOctokit } from '../client'
+import type { ToolOptions } from '../types'
 
-export const listGists = (octokit: Octokit) =>
+export const listGists = (token: string) =>
   tool({
     description: 'List gists for the authenticated user or a specific user',
     inputSchema: z.object({
@@ -11,6 +12,8 @@ export const listGists = (octokit: Octokit) =>
       page: z.number().optional().default(1).describe('Page number for pagination'),
     }),
     execute: async ({ username, perPage, page }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = username
         ? await octokit.rest.gists.listForUser({ username, per_page: perPage, page })
         : await octokit.rest.gists.list({ per_page: perPage, page })
@@ -28,13 +31,15 @@ export const listGists = (octokit: Octokit) =>
     },
   })
 
-export const getGist = (octokit: Octokit) =>
+export const getGist = (token: string) =>
   tool({
     description: 'Get a gist by ID, including file contents',
     inputSchema: z.object({
       gistId: z.string().describe('Gist ID'),
     }),
     execute: async ({ gistId }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.gists.get({ gist_id: gistId })
       return {
         id: data.id,
@@ -55,7 +60,7 @@ export const getGist = (octokit: Octokit) =>
     },
   })
 
-export const listGistComments = (octokit: Octokit) =>
+export const listGistComments = (token: string) =>
   tool({
     description: 'List comments on a gist',
     inputSchema: z.object({
@@ -64,6 +69,8 @@ export const listGistComments = (octokit: Octokit) =>
       page: z.number().optional().default(1).describe('Page number for pagination'),
     }),
     execute: async ({ gistId, perPage, page }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.gists.listComments({ gist_id: gistId, per_page: perPage, page })
       return data.map(comment => ({
         id: comment.id,
@@ -76,7 +83,7 @@ export const listGistComments = (octokit: Octokit) =>
     },
   })
 
-export const createGist = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const createGist = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Create a new gist with one or more files',
     needsApproval,
@@ -87,6 +94,8 @@ export const createGist = (octokit: Octokit, { needsApproval = true }: ToolOptio
       isPublic: z.boolean().optional().default(false).describe('Whether the gist is public'),
     }),
     execute: async ({ description, files, isPublic }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.gists.create({
         description,
         files,
@@ -103,7 +112,7 @@ export const createGist = (octokit: Octokit, { needsApproval = true }: ToolOptio
     },
   })
 
-export const updateGist = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const updateGist = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Update an existing gist — edit description, update files, or remove files',
     needsApproval,
@@ -115,6 +124,8 @@ export const updateGist = (octokit: Octokit, { needsApproval = true }: ToolOptio
       filesToDelete: z.array(z.string()).optional().describe('Filenames to remove from the gist'),
     }),
     execute: async ({ gistId, description, files, filesToDelete }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const fileUpdates: Record<string, { content: string } | null> = {}
       if (files) Object.assign(fileUpdates, files)
       if (filesToDelete) {
@@ -134,7 +145,7 @@ export const updateGist = (octokit: Octokit, { needsApproval = true }: ToolOptio
     },
   })
 
-export const deleteGist = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const deleteGist = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Delete a gist permanently',
     needsApproval,
@@ -142,12 +153,14 @@ export const deleteGist = (octokit: Octokit, { needsApproval = true }: ToolOptio
       gistId: z.string().describe('Gist ID to delete'),
     }),
     execute: async ({ gistId }) => {
+      "use step"
+      const octokit = createOctokit(token)
       await octokit.rest.gists.delete({ gist_id: gistId })
       return { deleted: true, gistId }
     },
   })
 
-export const createGistComment = (octokit: Octokit, { needsApproval = true }: ToolOptions = {}) =>
+export const createGistComment = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
     description: 'Add a comment to a gist',
     needsApproval,
@@ -156,6 +169,8 @@ export const createGistComment = (octokit: Octokit, { needsApproval = true }: To
       body: z.string().describe('Comment text (supports Markdown)'),
     }),
     execute: async ({ gistId, body }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.gists.createComment({ gist_id: gistId, body })
       return {
         id: data.id,

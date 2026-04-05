@@ -1,8 +1,8 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { Octokit } from '../types'
+import { createOctokit } from '../client'
 
-export const searchCode = (octokit: Octokit) =>
+export const searchCode = (token: string) =>
   tool({
     description: 'Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search.',
     inputSchema: z.object({
@@ -10,6 +10,8 @@ export const searchCode = (octokit: Octokit) =>
       perPage: z.number().optional().default(10).describe('Number of results to return (max 30)'),
     }),
     execute: async ({ query, perPage }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.search.code({ q: query, per_page: perPage })
       return {
         totalCount: data.total_count,
@@ -24,7 +26,7 @@ export const searchCode = (octokit: Octokit) =>
     },
   })
 
-export const searchRepositories = (octokit: Octokit) =>
+export const searchRepositories = (token: string) =>
   tool({
     description: 'Search for GitHub repositories by keyword, topic, language, or other qualifiers',
     inputSchema: z.object({
@@ -34,6 +36,8 @@ export const searchRepositories = (octokit: Octokit) =>
       order: z.enum(['asc', 'desc']).optional().default('desc').describe('Sort order'),
     }),
     execute: async ({ query, perPage, sort, order }) => {
+      "use step"
+      const octokit = createOctokit(token)
       const { data } = await octokit.rest.search.repos({ q: query, per_page: perPage, sort, order })
       return {
         totalCount: data.total_count,

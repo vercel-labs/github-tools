@@ -18,6 +18,10 @@
     ".": {
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
+    },
+    "./workflow": {
+      "types": "./dist/workflow.d.mts",
+      "import": "./dist/workflow.mjs"
     }
   },
   "main": "./dist/index.mjs",
@@ -38,7 +42,9 @@
     "ai-sdk",
     "github",
     "tools",
-    "agent"
+    "agent",
+    "workflow",
+    "durable"
   ],
   "license": "MIT",
   "dependencies": {
@@ -46,7 +52,17 @@
   },
   "peerDependencies": {
     "ai": "^6.0.97",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "workflow": "^1.0.0",
+    "@workflow/ai": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "workflow": {
+      "optional": true
+    },
+    "@workflow/ai": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^24.10.13",

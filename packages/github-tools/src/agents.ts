@@ -69,6 +69,20 @@ When maintaining repos:
 ${SHARED_RULES}`
 }
 
+export function resolveInstructions(options: {
+  preset?: GithubToolPreset | GithubToolPreset[]
+  instructions?: string
+  additionalInstructions?: string
+}): string {
+  const defaultPrompt = options.preset && !Array.isArray(options.preset)
+    ? PRESET_INSTRUCTIONS[options.preset]
+    : DEFAULT_INSTRUCTIONS
+
+  if (options.instructions) return options.instructions
+  if (options.additionalInstructions) return `${defaultPrompt}\n\n${options.additionalInstructions}`
+  return defaultPrompt
+}
+
 type AgentOptions = Omit<ToolLoopAgentSettings, 'model' | 'tools' | 'instructions'>
 
 export type CreateGithubAgentOptions = AgentOptions & {
@@ -112,22 +126,9 @@ export function createGithubAgent({
 }: CreateGithubAgentOptions) {
   const tools = createGithubTools({ token, requireApproval, preset })
 
-  const defaultPrompt = preset && !Array.isArray(preset)
-    ? PRESET_INSTRUCTIONS[preset]
-    : DEFAULT_INSTRUCTIONS
-
-  let resolvedInstructions: string
-  if (instructions) {
-    resolvedInstructions = instructions
-  } else if (additionalInstructions) {
-    resolvedInstructions = `${defaultPrompt}\n\n${additionalInstructions}`
-  } else {
-    resolvedInstructions = defaultPrompt
-  }
-
   return new ToolLoopAgent({
     ...agentOptions,
     tools,
-    instructions: resolvedInstructions
+    instructions: resolveInstructions({ preset, instructions, additionalInstructions })
   })
 }

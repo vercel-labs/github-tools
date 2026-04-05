@@ -75,15 +75,17 @@ Omit `preset` to get all tools (same as `maintainer`).
 You can also import individual tool factories for full control:
 
 ```ts
-import { createOctokit, listPullRequests, createIssue } from '@github-tools/sdk'
+import { listPullRequests, createIssue } from '@github-tools/sdk'
 
-const octokit = createOctokit(process.env.GITHUB_TOKEN!)
+const token = process.env.GITHUB_TOKEN!
 
 const tools = {
-  listPullRequests: listPullRequests(octokit),
-  createIssue: createIssue(octokit),
+  listPullRequests: listPullRequests(token),
+  createIssue: createIssue(token),
 }
 ```
+
+Each tool factory accepts a `token` string and creates its own client internally. This makes every tool natively compatible with Vercel Workflow SDK — see [Durable Agents](#durable-agents-vercel-workflow-sdk) below.
 
 ## Approval Control
 
@@ -139,6 +141,26 @@ const result = await generateText({
 ```
 
 Each step, toolpick picks the best ~5 tools using keyword + semantic search. All tools remain callable — only the visible set changes. See [toolpick docs](https://github.com/pontusab/toolpick) for LLM re-ranking, caching, and model-driven discovery options.
+
+## Durable Agents (Vercel Workflow SDK)
+
+Every tool includes a built-in `"use step"` directive, making it natively durable when used inside a Vercel Workflow function. Each tool call becomes a retryable, crash-safe step with no extra configuration.
+
+Import from the `@github-tools/sdk/workflow` subpath to get `createDurableGithubAgent`:
+
+```ts
+import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
+
+const agent = createDurableGithubAgent({
+  model: 'anthropic/claude-sonnet-4.6',
+  token: process.env.GITHUB_TOKEN!,
+  preset: 'maintainer',
+})
+```
+
+This works with all presets and supports the same approval control as the standard agent.
+
+> `workflow` and `@workflow/ai` are optional peer dependencies — install them only when using the workflow subpath.
 
 ## Available Tools
 
@@ -309,9 +331,38 @@ const stream = reviewer.stream({ prompt: 'Review PR #42 on vercel/ai' })
 
 All other `ToolLoopAgent` options (`stopWhen`, `toolChoice`, `onStepFinish`, etc.) are passed through.
 
+### `createDurableGithubAgent(options)`
+
+Returns a `DurableAgent` instance for use inside Vercel Workflow SDK functions. Every tool call runs as a durable step with automatic retries and crash recovery.
+
+Requires the optional peer dependencies `workflow` and `@workflow/ai`:
+
+```sh
+pnpm add workflow @workflow/ai
+```
+
+```ts
+import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
+import { getWritable } from 'workflow'
+import type { ModelMessage, UIMessageChunk } from 'ai'
+
+async function chatWorkflow(messages: ModelMessage[], token: string) {
+  "use workflow"
+  const agent = createDurableGithubAgent({
+    model: 'anthropic/claude-sonnet-4.6',
+    token,
+    preset: 'code-review',
+  })
+  const writable = getWritable<UIMessageChunk>()
+  await agent.stream({ messages, writable })
+}
+```
+
+All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. The options are the same as `createGithubAgent` except it returns a `DurableAgent` instead of a `ToolLoopAgent`.
+
 ### `createOctokit(token)`
 
-Returns a configured [`@octokit/rest`](https://github.com/octokit/rest.js) instance. Useful when cherry-picking individual tools or building custom ones.
+Returns a configured [`octokit`](https://github.com/octokit/octokit.js) instance. Useful for building custom tools.
 
 ## License
 
