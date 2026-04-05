@@ -1,6 +1,6 @@
 {
   "name": "@github-tools/sdk",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "GitHub tools for the Vercel AI SDK, wrap GitHub's API as AI SDK tools ready to plug into any agent",
   "author": "HugoRCD <hugo.richard@vercel.com",
   "repository": {
@@ -13,7 +13,9 @@
     "url": "https://github.com/vercel-labs/github-tools/issues"
   },
   "type": "module",
-  "sideEffects": ["./dist/agents-*.mjs"],
+  "sideEffects": [
+    "./dist/agents-*.mjs"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
