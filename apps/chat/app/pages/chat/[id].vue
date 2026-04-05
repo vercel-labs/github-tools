@@ -16,7 +16,7 @@ const components = {
 const route = useRoute()
 const toast = useToast()
 const clipboard = useClipboard()
-const { model } = useModels()
+const { model, durable } = useModels()
 
 function getFileName(url: string): string {
   try {
@@ -48,11 +48,13 @@ if (!data.value) {
 }
 const input = ref('')
 
+const chatApiBase = durable.value ? '/api/workflow/chats' : '/api/chats'
+
 const chat = new Chat({
   id: data.value.id,
   messages: data.value.messages,
   transport: new DefaultChatTransport({
-    api: `/api/chats/${data.value.id}`,
+    api: `${chatApiBase}/${data.value.id}`,
     body: {
       model: model.value
     }
@@ -215,6 +217,16 @@ onMounted(() => {
                 <FileUploadButton :open="open" />
 
                 <ModelSelect />
+
+                <UTooltip text="Durable mode (Workflow SDK)">
+                  <UButton
+                    :icon="durable ? 'i-lucide-shield-check' : 'i-lucide-shield'"
+                    :color="durable ? 'primary' : 'neutral'"
+                    :variant="durable ? 'subtle' : 'ghost'"
+                    size="sm"
+                    @click="durable = !durable"
+                  />
+                </UTooltip>
               </div>
 
               <UChatPromptSubmit

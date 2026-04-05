@@ -85,7 +85,7 @@ const tools = {
 }
 ```
 
-Each tool factory accepts a `token` string and creates its own client internally. This makes every tool natively compatible with Vercel Workflow SDK — see [Durable Agents](#durable-agents-vercel-workflow-sdk) below.
+Each tool factory accepts a `token` string. Tools use named module-level step functions with `"use step"` internally, ensuring proper step registration and full Node.js access when running inside a Vercel Workflow sandbox. See [Durable Agents](#durable-agents-vercel-workflow-sdk).
 
 ## Approval Control
 
@@ -144,9 +144,9 @@ Each step, toolpick picks the best ~5 tools using keyword + semantic search. All
 
 ## Durable Agents (Vercel Workflow SDK)
 
-Every tool includes a built-in `"use step"` directive, making it natively durable when used inside a Vercel Workflow function. Each tool call becomes a retryable, crash-safe step with no extra configuration.
+All tools include `"use step"` directives with named, module-level step functions, making them natively compatible with the Vercel Workflow SDK. Each tool execution runs as a properly registered durable step with full Node.js access in the workflow sandbox.
 
-Import from the `@github-tools/sdk/workflow` subpath to get `createDurableGithubAgent`:
+Use `DurableAgent` via the `@github-tools/sdk/workflow` subpath to make every LLM call and tool execution a retryable, crash-safe step:
 
 ```ts
 import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
@@ -158,7 +158,9 @@ const agent = createDurableGithubAgent({
 })
 ```
 
-This works with all presets and supports the same approval control as the standard agent.
+All presets work with `createDurableGithubAgent`.
+
+> **Approval control limitation**: `requireApproval` is accepted for forward-compatibility but is currently ignored by `DurableAgent`. The Workflow SDK does not yet support interactive tool approval — all tools execute immediately. Use `createGithubAgent` (standard `ToolLoopAgent`) when human-in-the-loop approval is required.
 
 > `workflow` and `@workflow/ai` are optional peer dependencies — install them only when using the workflow subpath.
 
@@ -333,7 +335,7 @@ All other `ToolLoopAgent` options (`stopWhen`, `toolChoice`, `onStepFinish`, etc
 
 ### `createDurableGithubAgent(options)`
 
-Returns a `DurableAgent` instance for use inside Vercel Workflow SDK functions. Every tool call runs as a durable step with automatic retries and crash recovery.
+Returns a `DurableAgent` instance for use inside Vercel Workflow SDK functions. Every LLM call and tool execution runs as a durable step with automatic retries and crash recovery.
 
 Requires the optional peer dependencies `workflow` and `@workflow/ai`:
 
@@ -359,6 +361,8 @@ async function chatWorkflow(messages: ModelMessage[], token: string) {
 ```
 
 All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. The options are the same as `createGithubAgent` except it returns a `DurableAgent` instead of a `ToolLoopAgent`.
+
+> **Note:** `requireApproval` is accepted but currently ignored by `DurableAgent` — the Workflow SDK does not yet support interactive tool approval.
 
 ### `createOctokit(token)`
 

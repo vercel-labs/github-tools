@@ -2,6 +2,7 @@
 const input = ref('')
 const loading = ref(false)
 const chatId = crypto.randomUUID()
+const { durable } = useModels()
 
 const {
   dropzoneRef,
@@ -121,6 +122,16 @@ const quickChats = [
                 <FileUploadButton :open="open" />
 
                 <ModelSelect />
+
+                <UTooltip text="Durable mode (Workflow SDK)">
+                  <UButton
+                    :icon="durable ? 'i-lucide-shield-check' : 'i-lucide-shield'"
+                    :color="durable ? 'primary' : 'neutral'"
+                    :variant="durable ? 'subtle' : 'ghost'"
+                    size="sm"
+                    @click="durable = !durable"
+                  />
+                </UTooltip>
               </div>
 
               <UChatPromptSubmit color="neutral" size="sm" :disabled="isUploading" />

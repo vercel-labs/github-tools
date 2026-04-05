@@ -1,11 +1,11 @@
 import { DurableAgent } from '@workflow/ai/agent'
-import type { LanguageModel } from 'ai'
+import type { CompatibleLanguageModel } from '@workflow/ai/agent'
 import { createGithubTools } from './index'
 import { resolveInstructions } from './agents'
 import type { GithubToolPreset, ApprovalConfig } from './index'
 
 export type CreateDurableGithubAgentOptions = {
-  model: string | LanguageModel
+  model: string | CompatibleLanguageModel | (() => Promise<CompatibleLanguageModel>)
   /**
    * GitHub personal access token.
    * Falls back to `process.env.GITHUB_TOKEN` when omitted.
@@ -25,6 +25,10 @@ export type CreateDurableGithubAgentOptions = {
  *
  * Each tool call runs as a durable step with automatic retries and observability.
  * Must be used inside a `"use workflow"` function.
+ *
+ * **Note:** `requireApproval` is accepted for forward-compatibility but is currently
+ * ignored by `DurableAgent` — the Workflow SDK does not yet support interactive tool
+ * approval. All tools execute immediately without user confirmation.
  *
  * @example
  * ```ts
@@ -55,9 +59,13 @@ export function createDurableGithubAgent({
 }: CreateDurableGithubAgentOptions) {
   const tools = createGithubTools({ token, requireApproval, preset })
 
+  const resolvedModel = typeof model === 'string' || typeof model === 'function'
+    ? model
+    : () => Promise.resolve(model)
+
   return new DurableAgent({
     ...agentOptions,
-    model,
+    model: resolvedModel,
     tools,
     instructions: resolveInstructions({ preset, instructions, additionalInstructions }),
   })

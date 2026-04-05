@@ -13,6 +13,7 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
+    "workflow": "pnpm --filter @github-tools/chat exec workflow web",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=@github-tools/sdk && changeset publish"

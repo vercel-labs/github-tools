@@ -6,9 +6,11 @@ export function useModels() {
   ]
 
   const model = useCookie<string>('model', { default: () => 'openai/gpt-5-nano' })
+  const durable = useCookie<boolean>('durable', { default: () => false })
 
   return {
     models,
-    model
+    model,
+    durable
   }
 }

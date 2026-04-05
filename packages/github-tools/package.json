@@ -13,7 +13,7 @@
     "url": "https://github.com/vercel-labs/github-tools/issues"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": ["./dist/agents-*.mjs"],
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
