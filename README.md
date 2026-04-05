@@ -9,7 +9,7 @@
 
 GitHub tools for the [AI SDK](https://ai-sdk.dev) — wrap GitHub's REST API as ready-to-use tools for any agent or `generateText` / `streamText` call.
 
-35 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
+36 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -62,11 +62,11 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 | Preset | Tools included |
 |---|---|
-| `code-review` | `getPullRequest`, `listPullRequests`, `getFileContent`, `listCommits`, `getCommit`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment` |
+| `code-review` | `getPullRequest`, `listPullRequests`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment` |
 | `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `getRepository`, `searchRepositories`, `searchCode` |
 | `repo-explorer` | All read-only tools including gists and workflows (no write operations) |
 | `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
-| `maintainer` | All 35 tools |
+| `maintainer` | All 36 tools |
 
 Omit `preset` to get all tools (same as `maintainer`).
 
@@ -201,6 +201,7 @@ Each step, toolpick picks the best ~5 tools using keyword + semantic search. All
 |---|---|
 | `listCommits` | List commits, optionally filtered by file path, author, or date range |
 | `getCommit` | Get a commit's full details including changed files and diffs |
+| `getBlame` | Line-level git blame for a file (GitHub GraphQL) |
 
 ### Search
 
@@ -220,7 +221,7 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | Permission | Level | Required for |
 |---|---|---|
 | **Metadata** | Read-only | Always required (auto-included) |
-| **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `listCommits`, `getCommit` |
+| **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `listCommits`, `getCommit`, `getBlame` |
 | **Contents** | Read and write | `createOrUpdateFile` |
 | **Pull requests** | Read-only | `listPullRequests`, `getPullRequest` |
 | **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `addPullRequestComment` |
