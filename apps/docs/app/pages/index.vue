@@ -1,21 +1,22 @@
 <script setup lang="ts">
-const site = useSiteConfig()
-const ogImageUrl = `${site.url}/og.png`
+const { seo } = useAppConfig()
+
+const ogImageUrl = 'https://github-tools.com/og.png'
 
 useSeoMeta({
   title: 'GitHub Tools',
   titleTemplate: '%s',
-  description: 'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and granular write approvals for production use.',
+  description: seo.description,
   ogTitle: 'GitHub Tools',
-  ogDescription: 'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and granular write approvals for production use.',
+  ogDescription: seo.description,
   ogImage: ogImageUrl,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
   twitterTitle: 'GitHub Tools',
-  twitterDescription: 'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and granular write approvals for production use.',
+  twitterDescription: seo.description,
   twitterImage: ogImageUrl,
   twitterCard: 'summary_large_image',
 })
-
-defineOgImage(false)
 
 const layers = [
   {

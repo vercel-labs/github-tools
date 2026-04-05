@@ -33,7 +33,9 @@ export const listWorkflows = (token: string) =>
     execute: async args => listWorkflowsStep({ token, ...args }),
   })
 
-async function listWorkflowRunsStep({ token, owner, repo, workflowId, branch, event, status, perPage, page }: { token: string, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: string, perPage: number, page: number }) {
+type WorkflowRunStatus = 'completed' | 'action_required' | 'cancelled' | 'failure' | 'neutral' | 'skipped' | 'stale' | 'success' | 'timed_out' | 'in_progress' | 'queued' | 'requested' | 'waiting' | 'pending'
+
+async function listWorkflowRunsStep({ token, owner, repo, workflowId, branch, event, status, perPage, page }: { token: string, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: WorkflowRunStatus, perPage: number, page: number }) {
   "use step"
   const octokit = createOctokit(token)
   const { data } = workflowId
