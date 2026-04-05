@@ -114,6 +114,31 @@ Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `add
 
 All other tools are read-only and never require approval.
 
+## Tool Selection with toolpick
+
+With dozens of tools, context window usage adds up. [toolpick](https://github.com/pontusab/toolpick) selects only the most relevant tools per step so the model sees what it needs:
+
+```ts
+import { createGithubTools } from '@github-tools/sdk'
+import { createToolIndex } from 'toolpick'
+import { generateText } from 'ai'
+import { openai } from '@ai-sdk/openai'
+
+const tools = createGithubTools()
+const index = createToolIndex(tools, {
+  embeddingModel: openai.embeddingModel('text-embedding-3-small'),
+})
+
+const result = await generateText({
+  model: openai('gpt-4o'),
+  tools,
+  prepareStep: index.prepareStep(),
+  prompt: 'List open PRs on vercel/ai and summarize them.',
+})
+```
+
+Each step, toolpick picks the best ~5 tools using keyword + semantic search. All tools remain callable — only the visible set changes. See [toolpick docs](https://github.com/pontusab/toolpick) for LLM re-ranking, caching, and model-driven discovery options.
+
 ## Available Tools
 
 ### Repository
@@ -194,7 +219,7 @@ Returns an object of tools, ready to spread into `tools` of any AI SDK call.
 
 ```ts
 type GithubToolsOptions = {
-  token: string
+  token?: string // defaults to process.env.GITHUB_TOKEN
   requireApproval?: boolean | Partial<Record<GithubWriteToolName, boolean>>
   preset?: GithubToolPreset | GithubToolPreset[]
 }
