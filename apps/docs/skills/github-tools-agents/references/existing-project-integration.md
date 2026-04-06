@@ -1,3 +1,9 @@
+---
+name: existing-project-integration
+description: How to integrate GitHub tools into an existing codebase, including environment variable management and framework-specific hooks.
+tags: [setup, installation, integration, environment, preset, token, getting-started]
+---
+
 # Adding GitHub Tools to an existing project
 
 ## 1. Dependencies

@@ -1,3 +1,9 @@
+---
+name: durable-workflows
+description: Best practices for using GitHub tools within Vercel Workflow, including step directives and streaming responses.
+tags: [workflow, durable, DurableAgent, use-step, use-workflow, streaming, vercel]
+---
+
 # Durable workflows
 
 ## Concepts

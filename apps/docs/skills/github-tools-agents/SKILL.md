@@ -1,6 +1,13 @@
 ---
 name: github-tools-agents
-description: Integrate @github-tools/sdk in AI SDK apps — tools, presets, ToolLoopAgent, durable workflows (Vercel Workflow), tokens, and write approvals.
+description: Add GitHub API tools to Vercel AI SDK apps using @github-tools/sdk. Covers tool setup, presets, approval control, token scoping, standard agents (ToolLoopAgent), and crash-safe durable agents (Vercel Workflow SDK).
+license: MIT
+metadata:
+  author: "HugoRCD"
+  repository: "https://github.com/vercel-labs/github-tools"
+  url: "https://github-tools.com/.well-known/skills"
+  version: "1.0.0"
+  keywords: "ai, agent, skill, vercel, ai sdk, github, tools, octokit, durable, workflow"
 ---
 
 # GitHub Tools for AI agents
@@ -93,14 +100,27 @@ Array presets merge: `preset: ['code-review', 'issue-triage']`.
 
 Each packaged tool uses a named module-level **`"use step"`** function so individual GitHub calls register as workflow steps when running under the Workflow SDK. See `./references/durable-workflows.md`.
 
-## Reference docs
+## Reference Documentation
 
-- `./references/durable-workflows.md` — workflow directive, streaming, Nuxt/Next notes
-- `./references/existing-project-integration.md` — env, structure, framework hooks
-- `./references/tokens-and-approval.md` — PAT matrix vs `requireApproval`
+Each reference file includes YAML frontmatter with `name`, `description`, and `tags` for searchability. Use the search script available in `scripts/search_references.py` to quickly find relevant references by tag or keyword.
 
-## External links
+- [Durable Workflows](references/durable-workflows.md): Best practices for using GitHub tools within Vercel Workflow, including step directives and streaming responses.
+- [Existing Project Integration](references/existing-project-integration.md): How to integrate GitHub tools into an existing codebase, including environment variable management and framework-specific hooks.
+- [Tokens and Approval](references/tokens-and-approval.md): Guidance on mapping GitHub token scopes to specific tools and configuring approval flows for safe write operations.
 
-- [AI SDK](https://ai-sdk.dev/docs)
-- [Vercel Workflow](https://vercel.com/docs/workflow)
-- [GitHub REST API](https://docs.github.com/en/rest)
+### Searching References
+
+```bash
+# List all references with metadata
+python scripts/search_references.py --list
+
+# Search by tag (exact match)
+python scripts/search_references.py --tag <tag>
+
+# Search by keyword (across name, description, tags, and content)
+python scripts/search_references.py --search <query>
+```
+
+## Scripts
+
+- **`scripts/search_references.py`**: Search reference files by tag, keyword, or list all with metadata

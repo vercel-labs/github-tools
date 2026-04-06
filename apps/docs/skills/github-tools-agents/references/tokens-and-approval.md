@@ -1,3 +1,9 @@
+---
+name: tokens-and-approval
+description: Guidance on mapping GitHub token scopes to specific tools and configuring approval flows for safe write operations.
+tags: [token, PAT, permissions, approval, requireApproval, security, write-safety]
+---
+
 # Tokens and approval
 
 ## GitHub token
