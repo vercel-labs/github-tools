@@ -128,8 +128,8 @@ def cmd_list(refs: list[dict]) -> None:
 def cmd_tag(refs: list[dict], tag: str) -> None:
 
     tag_lower = tag.lower()
-    matches = [r for r in refs if tag_lower in
-               [t.lower() for t in r["tags"]] if isinstance(r["tags"], list)]
+    matches = [r for r in refs if isinstance(r["tags"], list) and tag_lower in
+               [t.lower() for t in r["tags"]]]
 
     if not matches:
         print(f"No references found with tag: {tag}")
