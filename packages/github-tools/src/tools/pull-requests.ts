@@ -158,3 +158,98 @@ export const addPullRequestComment = (token: string, { needsApproval = true }: T
     }),
     execute: async args => addPullRequestCommentStep({ token, ...args }),
   })
+
+async function listPullRequestFilesStep({ token, owner, repo, pullNumber, perPage, page }: { token: string, owner: string, repo: string, pullNumber: number, perPage: number, page: number }) {
+  "use step"
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.pulls.listFiles({ owner, repo, pull_number: pullNumber, per_page: perPage, page })
+  return data.map(file => ({
+    filename: file.filename,
+    status: file.status,
+    additions: file.additions,
+    deletions: file.deletions,
+    changes: file.changes,
+    patch: file.patch,
+  }))
+}
+
+export const listPullRequestFiles = (token: string) =>
+  tool({
+    description: 'List files changed in a pull request, including diff status and patch content',
+    inputSchema: z.object({
+      owner: z.string().describe('Repository owner'),
+      repo: z.string().describe('Repository name'),
+      pullNumber: z.number().describe('Pull request number'),
+      perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+      page: z.number().optional().default(1).describe('Page number for pagination'),
+    }),
+    execute: async args => listPullRequestFilesStep({ token, ...args }),
+  })
+
+async function listPullRequestReviewsStep({ token, owner, repo, pullNumber, perPage, page }: { token: string, owner: string, repo: string, pullNumber: number, perPage: number, page: number }) {
+  "use step"
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.pulls.listReviews({ owner, repo, pull_number: pullNumber, per_page: perPage, page })
+  return data.map(review => ({
+    id: review.id,
+    state: review.state,
+    body: review.body,
+    author: review.user?.login,
+    url: review.html_url,
+    submittedAt: review.submitted_at,
+  }))
+}
+
+export const listPullRequestReviews = (token: string) =>
+  tool({
+    description: 'List reviews on a pull request (approvals, change requests, and comments)',
+    inputSchema: z.object({
+      owner: z.string().describe('Repository owner'),
+      repo: z.string().describe('Repository name'),
+      pullNumber: z.number().describe('Pull request number'),
+      perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+      page: z.number().optional().default(1).describe('Page number for pagination'),
+    }),
+    execute: async args => listPullRequestReviewsStep({ token, ...args }),
+  })
+
+async function createPullRequestReviewStep({ token, owner, repo, pullNumber, body, event, comments }: { token: string, owner: string, repo: string, pullNumber: number, body?: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT', comments?: Array<{ path: string, body: string, line?: number, side?: 'LEFT' | 'RIGHT' }> }) {
+  "use step"
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.pulls.createReview({
+    owner,
+    repo,
+    pull_number: pullNumber,
+    body,
+    event,
+    comments,
+  })
+  return {
+    id: data.id,
+    state: data.state,
+    body: data.body,
+    url: data.html_url,
+    author: data.user?.login,
+    submittedAt: data.submitted_at,
+  }
+}
+
+export const createPullRequestReview = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+  tool({
+    description: 'Submit a pull request review — approve, request changes, or comment with optional inline comments on specific lines',
+    needsApproval,
+    inputSchema: z.object({
+      owner: z.string().describe('Repository owner'),
+      repo: z.string().describe('Repository name'),
+      pullNumber: z.number().describe('Pull request number'),
+      body: z.string().optional().describe('Review body text (supports Markdown)'),
+      event: z.enum(['APPROVE', 'REQUEST_CHANGES', 'COMMENT']).describe('Review action: approve, request changes, or comment'),
+      comments: z.array(z.object({
+        path: z.string().describe('File path relative to the repository root'),
+        body: z.string().describe('Inline comment text'),
+        line: z.number().optional().describe('Line number in the file to comment on'),
+        side: z.enum(['LEFT', 'RIGHT']).optional().describe('Which side of the diff to comment on (LEFT = base, RIGHT = head)'),
+      })).optional().describe('Inline review comments on specific files and lines'),
+    }),
+    execute: async args => createPullRequestReviewStep({ token, ...args }),
+  })

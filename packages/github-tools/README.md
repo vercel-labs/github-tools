@@ -9,7 +9,7 @@
 
 GitHub tools for the [AI SDK](https://ai-sdk.dev) — wrap GitHub's REST API as ready-to-use tools for any agent or `generateText` / `streamText` call.
 
-36 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
+39 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -62,11 +62,11 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 | Preset | Tools included |
 |---|---|
-| `code-review` | `getPullRequest`, `listPullRequests`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment` |
+| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment`, `createPullRequestReview` |
 | `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `getRepository`, `searchRepositories`, `searchCode` |
 | `repo-explorer` | All read-only tools including gists and workflows (no write operations) |
 | `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
-| `maintainer` | All 36 tools |
+| `maintainer` | All 39 tools |
 
 Omit `preset` to get all tools (same as `maintainer`).
 
@@ -113,7 +113,7 @@ createGithubTools({
 })
 ```
 
-Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createIssue`, `addIssueComment`, `closeIssue`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
+Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview`, `createIssue`, `addIssueComment`, `closeIssue`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
 
 All other tools are read-only and never require approval.
 
@@ -181,9 +181,12 @@ All presets work with `createDurableGithubAgent`.
 |---|---|
 | `listPullRequests` | List PRs filtered by state |
 | `getPullRequest` | Get a PR's full details (diff stats, body, merge status) |
+| `listPullRequestFiles` | List files changed in a PR with diff status and patches |
+| `listPullRequestReviews` | List reviews on a PR (approvals, change requests, comments) |
 | `createPullRequest` | Open a new PR |
 | `mergePullRequest` | Merge a PR (merge, squash, or rebase) |
 | `addPullRequestComment` | Post a comment on a PR |
+| `createPullRequestReview` | Submit a formal review (approve, request changes, or comment) with inline comments |
 
 ### Issues
 
@@ -247,8 +250,8 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | **Metadata** | Read-only | Always required (auto-included) |
 | **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `listCommits`, `getCommit`, `getBlame` |
 | **Contents** | Read and write | `createOrUpdateFile` |
-| **Pull requests** | Read-only | `listPullRequests`, `getPullRequest` |
-| **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `addPullRequestComment` |
+| **Pull requests** | Read-only | `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviews` |
+| **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview` |
 | **Issues** | Read-only | `listIssues`, `getIssue` |
 | **Issues** | Read and write | `createIssue`, `addIssueComment`, `closeIssue` |
 
