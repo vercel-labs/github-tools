@@ -156,3 +156,70 @@ export const closeIssue = (token: string, { needsApproval = true }: ToolOptions 
     }),
     execute: async args => closeIssueStep({ token, ...args }),
   })
+
+async function listLabelsStep({ token, owner, repo, perPage, page }: { token: string, owner: string, repo: string, perPage: number, page: number }) {
+  "use step"
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.listLabelsForRepo({ owner, repo, per_page: perPage, page })
+  return data.map(label => ({
+    name: label.name,
+    color: label.color,
+    description: label.description,
+  }))
+}
+
+export const listLabels = (token: string) =>
+  tool({
+    description: 'List labels available in a GitHub repository',
+    inputSchema: z.object({
+      owner: z.string().describe('Repository owner'),
+      repo: z.string().describe('Repository name'),
+      perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+      page: z.number().optional().default(1).describe('Page number for pagination'),
+    }),
+    execute: async args => listLabelsStep({ token, ...args }),
+  })
+
+async function addLabelsStep({ token, owner, repo, issueNumber, labels }: { token: string, owner: string, repo: string, issueNumber: number, labels: string[] }) {
+  "use step"
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.addLabels({ owner, repo, issue_number: issueNumber, labels })
+  return data.map(label => ({
+    name: label.name,
+    color: label.color,
+    description: label.description,
+  }))
+}
+
+export const addLabels = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+  tool({
+    description: 'Add labels to an issue or pull request',
+    needsApproval,
+    inputSchema: z.object({
+      owner: z.string().describe('Repository owner'),
+      repo: z.string().describe('Repository name'),
+      issueNumber: z.number().describe('Issue or pull request number'),
+      labels: z.array(z.string()).describe('Label names to add'),
+    }),
+    execute: async args => addLabelsStep({ token, ...args }),
+  })
+
+async function removeLabelStep({ token, owner, repo, issueNumber, label }: { token: string, owner: string, repo: string, issueNumber: number, label: string }) {
+  "use step"
+  const octokit = createOctokit(token)
+  await octokit.rest.issues.removeLabel({ owner, repo, issue_number: issueNumber, name: label })
+  return { removed: true, label, issueNumber }
+}
+
+export const removeLabel = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+  tool({
+    description: 'Remove a label from an issue or pull request',
+    needsApproval,
+    inputSchema: z.object({
+      owner: z.string().describe('Repository owner'),
+      repo: z.string().describe('Repository name'),
+      issueNumber: z.number().describe('Issue or pull request number'),
+      label: z.string().describe('Label name to remove'),
+    }),
+    execute: async args => removeLabelStep({ token, ...args }),
+  })

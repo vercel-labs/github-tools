@@ -31,6 +31,7 @@ When triaging issues:
 - Identify duplicates when possible
 - Help categorize and prioritize issues
 - Respond to users with clear, helpful information
+- Use listLabels to see available labels, then addLabels and removeLabel to categorize issues
 - Create new issues when asked, with clear titles and descriptions
 
 ${SHARED_RULES}`,

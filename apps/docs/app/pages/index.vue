@@ -23,7 +23,7 @@ useSeoMeta({
 const layers = [
   {
     title: 'Tools',
-    description: '39 AI-callable GitHub operations — repositories, branches, pull requests, issues, commits, search, gists, and workflows.',
+    description: '42 AI-callable GitHub operations — repositories, branches, pull requests, issues, commits, search, gists, and workflows.',
     to: '/api/tools-catalog',
     icon: 'i-custom:sdk',
   },
