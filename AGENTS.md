@@ -79,6 +79,10 @@ export const myTool = (token: string, { needsApproval = true }: ToolOptions = {}
 - **Standard**: `createGithubAgent()` → `ToolLoopAgent` — supports `requireApproval` for human-in-the-loop
 - **Durable**: `createDurableGithubAgent()` → `DurableAgent` — crash-safe, retryable; `requireApproval` is accepted but currently ignored
 
+### Tool Overrides
+
+`createGithubTools` accepts an `overrides` option for per-tool customization (description, title, needsApproval, etc.) without changing the tool's implementation. `execute`, `inputSchema`, and `outputSchema` cannot be overridden. The `ToolOverrides` type is re-exported for consumers.
+
 ### Presets
 
 Five presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintainer`) defined in `src/index.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
