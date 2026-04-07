@@ -237,7 +237,8 @@ export function createGithubTools({ token, requireApproval = true, preset, overr
   if (overrides) {
     for (const [name, toolOverrides] of Object.entries(overrides)) {
       if (name in allTools && toolOverrides) {
-        (allTools as Record<string, any>)[name] = { ...allTools[name as keyof typeof allTools], ...toolOverrides }
+        const key = name as keyof typeof allTools
+        Object.assign(allTools, { [key]: { ...allTools[key], ...toolOverrides } })
       }
     }
   }
