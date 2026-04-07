@@ -117,6 +117,30 @@ Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `add
 
 All other tools are read-only and never require approval.
 
+### Tool overrides
+
+The `overrides` option lets you customize any AI SDK [`tool()`](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling) property on a per-tool basis, keyed by tool name.
+
+```ts
+import type { ToolOverrides } from "@github-tools/sdk";
+```
+
+Supported override properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `description` | `string` | Custom tool description for the model |
+| `title` | `string` | Human-readable title |
+| `strict` | `boolean` | Strict mode for input generation |
+| `needsApproval` | `boolean \| function` | Gate execution behind approval |
+| `providerOptions` | `ProviderOptions` | Provider-specific metadata |
+| `onInputStart` | `function` | Callback when argument streaming starts |
+| `onInputDelta` | `function` | Callback on each streaming delta |
+| `onInputAvailable` | `function` | Callback when full input is available |
+| `toModelOutput` | `function` | Custom mapping of tool result to model output |
+
+Core properties (`execute`, `inputSchema`, `outputSchema`) cannot be overridden.
+
 ## Tool Selection with toolpick
 
 With dozens of tools, context window usage adds up. [toolpick](https://github.com/pontusab/toolpick) selects only the most relevant tools per step so the model sees what it needs:
