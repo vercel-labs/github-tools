@@ -1,5 +1,13 @@
 # @github-tools/sdk
 
+## 1.4.0
+
+### Minor Changes
+
+- [#23](https://github.com/vercel-labs/github-tools/pull/23) [`daa610c`](https://github.com/vercel-labs/github-tools/commit/daa610c07441c978668c9cd40aa1fed07828242e) Thanks [@bensabic](https://github.com/bensabic)! - Add PR review tools (`listPullRequestFiles`, `listPullRequestReviews`, `createPullRequestReview`) and label tools (`listLabels`, `addLabels`, `removeLabel`).
+
+- [#26](https://github.com/vercel-labs/github-tools/pull/26) [`4cfaf0c`](https://github.com/vercel-labs/github-tools/commit/4cfaf0c27d1282f7c63d3ea877ab3123eb866f42) Thanks [@bensabic](https://github.com/bensabic)! - Add per-tool `overrides` option to `createGithubTools` for customizing tool behavior (description, title, needsApproval, etc.) without changing the underlying implementation.
+
 ## 1.3.0
 
 ### Minor Changes
