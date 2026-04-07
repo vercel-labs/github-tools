@@ -5,6 +5,7 @@ import { searchCode, searchRepositories } from './tools/search'
 import { listCommits, getCommit, getBlame } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
+import type { ToolOverrides } from './types'
 
 export type GithubWriteToolName =
   | 'createBranch'
@@ -104,6 +105,22 @@ export type GithubToolsOptions = {
   token?: string
   requireApproval?: ApprovalConfig
   /**
+   * Per-tool overrides for customizing tool behavior (description, title, needsApproval, etc.)
+   * without changing the underlying implementation. `execute`, `inputSchema`, and `outputSchema`
+   * cannot be overridden.
+   *
+   * @example
+   * ```ts
+   * createGithubTools({
+   *   overrides: {
+   *     deleteGist: { needsApproval: false },
+   *     listIssues: { description: 'List bugs for the current sprint' },
+   *   }
+   * })
+   * ```
+   */
+  overrides?: Partial<Record<string, ToolOverrides>>
+  /**
    * Restrict the returned tools to a predefined preset.
    * Omit to get all tools.
    *
@@ -164,7 +181,7 @@ function resolvePresetTools(preset: GithubToolPreset | GithubToolPreset[]): Set<
  * })
  * ```
  */
-export function createGithubTools({ token, requireApproval = true, preset }: GithubToolsOptions = {}) {
+export function createGithubTools({ token, requireApproval = true, preset, overrides }: GithubToolsOptions = {}) {
   const resolvedToken = token || process.env.GITHUB_TOKEN
   if (!resolvedToken) {
     throw new Error('GitHub token is required. Pass it as `token` or set the GITHUB_TOKEN environment variable.')
@@ -217,6 +234,14 @@ export function createGithubTools({ token, requireApproval = true, preset }: Git
     rerunWorkflowRun: rerunWorkflowRun(resolvedToken, approval('rerunWorkflowRun')),
   }
 
+  if (overrides) {
+    for (const [name, toolOverrides] of Object.entries(overrides)) {
+      if (name in allTools && toolOverrides) {
+        (allTools as Record<string, any>)[name] = { ...allTools[name as keyof typeof allTools], ...toolOverrides }
+      }
+    }
+  }
+
   if (!allowed) return allTools
 
   return Object.fromEntries(
@@ -235,6 +260,6 @@ export { searchCode, searchRepositories } from './tools/search'
 export { listCommits, getCommit, getBlame } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-export type { Octokit, ToolOptions } from './types'
+export type { Octokit, ToolOptions, ToolOverrides } from './types'
 export { createGithubAgent } from './agents'
 export type { CreateGithubAgentOptions } from './agents'
