@@ -7,7 +7,7 @@
     "build:docs": "pnpm --filter @github-tools/docs build",
     "build:packages": "pnpm --filter @github-tools/sdk build",
     "dev": "turbo run --filter=@github-tools/chat dev",
-    "dev:github-bot": "pnpm --filter @github-tools/github-bot dev",
+    "dev:pr-review-bot": "pnpm --filter @github-tools/pr-review-bot dev",
     "docs:dev": "pnpm --filter @github-tools/docs dev",
     "docs:build": "pnpm --filter @github-tools/docs build",
     "docs:generate": "pnpm --filter @github-tools/docs generate",

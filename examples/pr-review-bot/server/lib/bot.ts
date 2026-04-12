@@ -19,7 +19,7 @@ export type ChatTurnPayload = { text: string }
 const adapters = { github: createGitHubAdapter() }
 
 export const bot = new Chat<typeof adapters, ThreadState>({
-  userName: process.env.GITHUB_BOT_USERNAME || 'github-bot',
+  userName: process.env.GITHUB_BOT_USERNAME || 'pr-review-bot',
   adapters,
   state: createMemoryState(),
 }).registerSingleton()

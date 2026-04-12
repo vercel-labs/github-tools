@@ -394,21 +394,24 @@ async function chatWorkflow(messages: ModelMessage[], token: string) {
 }
 ```
 
-#### Non-streaming (bot / background job)
+#### Non-streaming (bot / background job — needs `"use step"`)
 
 ```ts
-import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
+import { createGithubAgent } from '@github-tools/sdk'
 
-async function reviewWorkflow(prompt: string) {
-  "use workflow"
-  const agent = createDurableGithubAgent({
+async function agentTurn(prompt: string) {
+  "use step"
+  const agent = createGithubAgent({
     model: 'anthropic/claude-sonnet-4.6',
     preset: 'code-review',
+    requireApproval: false,
   })
   const { text } = await agent.generate({ prompt })
-  console.log(text)
+  return text
 }
 ```
+
+> See [`examples/pr-review-bot`](../../examples/pr-review-bot) for a complete PR review bot built with Chat SDK and Vercel Workflow.
 
 All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `DurableAgentOptions` fields like `experimental_telemetry`, `onStepFinish`, `onFinish`, and `prepareStep`.
 

@@ -1,6 +1,6 @@
 import { DurableAgent } from '@workflow/ai/agent'
 import type { CompatibleLanguageModel, DurableAgentOptions, DurableAgentStreamOptions, DurableAgentStreamResult, TelemetrySettings } from '@workflow/ai/agent'
-import type { ToolSet, StepResult, FinishReason, LanguageModelUsage, LanguageModelResponseMetadata, ModelMessage } from 'ai'
+import type { ToolSet, StepResult, FinishReason, LanguageModelUsage, LanguageModelResponseMetadata, ModelMessage, StopCondition } from 'ai'
 import { createGithubTools } from './index'
 import { resolveInstructions } from './agents'
 import type { GithubToolPreset, ApprovalConfig } from './index'
@@ -76,7 +76,7 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
    * }
    * ```
    */
-  async generate({ prompt, maxSteps = 25 }: { prompt: string, maxSteps?: number }): Promise<DurableGithubAgentGenerateResult<TTools>> {
+  async generate({ prompt, stopWhen }: { prompt: string, stopWhen?: StopCondition<TTools> | Array<StopCondition<TTools>> }): Promise<DurableGithubAgentGenerateResult<TTools>> {
     const { generateText } = await import('ai')
 
     const model = typeof this._model === 'function'
@@ -92,8 +92,8 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
       tools: this._tools,
       system,
       prompt,
-      maxSteps,
-      experimental_telemetry: this._telemetry as any,
+      stopWhen,
+      experimental_telemetry: this._telemetry as Parameters<typeof generateText>[0]['experimental_telemetry'],
     })
 
     return {
