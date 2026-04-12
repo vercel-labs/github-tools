@@ -1,15 +1,10 @@
-import { Chat, type Message, type Thread } from 'chat'
+import { Chat, emoji, type Message, type Thread } from 'chat'
 import { createGitHubAdapter } from '@chat-adapter/github'
 import { createMemoryState } from '@chat-adapter/state-memory'
-import type { SerializedMessage } from 'chat'
 import { resumeHook, start } from 'workflow/api'
 import { reviewWorkflow } from '../workflows/review'
 
-const adapters = { github: createGitHubAdapter() }
-
-export interface ThreadState {
-  runId?: string
-}
+export interface ThreadState { runId?: string }
 
 export interface GitHubContext {
   owner: string
@@ -19,9 +14,9 @@ export interface GitHubContext {
   title: string
 }
 
-export type ChatTurnPayload = {
-  message: SerializedMessage
-}
+export type ChatTurnPayload = { text: string }
+
+const adapters = { github: createGitHubAdapter() }
 
 export const bot = new Chat<typeof adapters, ThreadState>({
   userName: process.env.GITHUB_BOT_USERNAME || 'github-bot',
@@ -42,23 +37,16 @@ function extractGitHubContext(message: Message): GitHubContext {
 
 bot.onNewMention(async (thread: Thread<ThreadState>, message: Message) => {
   const ctx = extractGitHubContext(message)
-  console.log('[bot] onNewMention:', `${ctx.owner}/${ctx.repo}#${ctx.issueNumber}`, '|', message.text)
+  const sent = thread.createSentMessageFromMessage(message)
+  await sent.addReaction(emoji.eyes)
 
   await thread.subscribe()
-  const run = await start(reviewWorkflow, [
-    JSON.stringify(thread.toJSON()),
-    message.text,
-    JSON.stringify(ctx),
-  ])
+  const run = await start(reviewWorkflow, [message.text, ctx])
   await thread.setState({ runId: run.runId })
 })
 
 bot.onSubscribedMessage(async (thread: Thread<ThreadState>, message: Message) => {
-  console.log('[bot] onSubscribedMessage:', message.text)
   const state = await thread.state
   if (!state?.runId) return
-
-  await resumeHook<ChatTurnPayload>(state.runId, {
-    message: message.toJSON(),
-  })
+  await resumeHook<ChatTurnPayload>(state.runId, { text: message.text })
 })
