@@ -155,7 +155,7 @@ importers:
         specifier: ^9.19.0
         version: 9.39.3(jiti@2.6.1)
 
-  examples/pr-review-bot:
+  examples/pr-review-agent:
     dependencies:
       '@chat-adapter/github':
         specifier: latest
@@ -25333,7 +25333,7 @@ snapshots:
 
   unhead@2.1.4:
     dependencies:
-      hookable: 6.0.1
+      hookable: 6.1.0
 
   unicode-emoji-modifier-base@1.0.0: {}
 
