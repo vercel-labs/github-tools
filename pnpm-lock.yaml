@@ -155,7 +155,7 @@ importers:
         specifier: ^9.19.0
         version: 9.39.3(jiti@2.6.1)
 
-  examples/github-bot:
+  examples/pr-review-bot:
     dependencies:
       '@chat-adapter/github':
         specifier: latest
@@ -13171,7 +13171,7 @@ snapshots:
 
   '@img/sharp-wasm32@0.34.5':
     dependencies:
-      '@emnapi/runtime': 1.8.1
+      '@emnapi/runtime': 1.9.2
     optional: true
 
   '@img/sharp-win32-arm64@0.34.5':
@@ -13544,8 +13544,8 @@ snapshots:
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
-      '@emnapi/core': 1.8.1
-      '@emnapi/runtime': 1.8.1
+      '@emnapi/core': 1.9.2
+      '@emnapi/runtime': 1.9.2
       '@tybys/wasm-util': 0.10.1
     optional: true
 
