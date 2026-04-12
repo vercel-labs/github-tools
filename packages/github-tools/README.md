@@ -365,13 +365,17 @@ All other `ToolLoopAgent` options (`stopWhen`, `toolChoice`, `onStepFinish`, etc
 
 ### `createDurableGithubAgent(options)`
 
-Returns a `DurableAgent` instance for use inside Vercel Workflow SDK functions. Every LLM call and tool execution runs as a durable step with automatic retries and crash recovery.
+Returns a `DurableGithubAgent` instance for use inside Vercel Workflow SDK functions. Every LLM call and tool execution runs as a durable step with automatic retries and crash recovery.
+
+Supports both `.stream()` (real-time output to a writable) and `.generate()` (non-streaming, returns the full text response).
 
 Requires the optional peer dependencies `workflow` and `@workflow/ai`:
 
 ```sh
 pnpm add workflow @workflow/ai
 ```
+
+#### Streaming (chat UI)
 
 ```ts
 import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
@@ -390,7 +394,26 @@ async function chatWorkflow(messages: ModelMessage[], token: string) {
 }
 ```
 
-All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. The options are the same as `createGithubAgent` except it returns a `DurableAgent` instead of a `ToolLoopAgent`.
+#### Non-streaming (bot / background job — needs `"use step"`)
+
+```ts
+import { createGithubAgent } from '@github-tools/sdk'
+
+async function agentTurn(prompt: string) {
+  "use step"
+  const agent = createGithubAgent({
+    model: 'anthropic/claude-sonnet-4.6',
+    preset: 'code-review',
+    requireApproval: false,
+  })
+  const { text } = await agent.generate({ prompt })
+  return text
+}
+```
+
+> See [`examples/pr-review-bot`](../../examples/pr-review-bot) for a complete PR review bot built with Chat SDK and Vercel Workflow.
+
+All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `DurableAgentOptions` fields like `experimental_telemetry`, `onStepFinish`, `onFinish`, and `prepareStep`.
 
 > **Note:** `requireApproval` is accepted but currently ignored by `DurableAgent` — the Workflow SDK does not yet support interactive tool approval.
 

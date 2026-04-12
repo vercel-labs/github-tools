@@ -16,12 +16,12 @@ export async function durableChatWorkflow(
   const agent = createDurableGithubAgent({
     model,
     token,
-    additionalInstructions,
-    maxSteps
+    additionalInstructions
   })
 
   await agent.stream({
     messages,
-    writable
+    writable,
+    maxSteps
   })
 }

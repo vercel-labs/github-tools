@@ -1,0 +1,26 @@
+{
+  "name": "@github-tools/pr-review-bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "workflow:web": "npx workflow web"
+  },
+  "dependencies": {
+    "@github-tools/sdk": "workspace:*",
+    "ai": "^6",
+    "chat": "latest",
+    "@chat-adapter/github": "latest",
+    "@chat-adapter/state-memory": "latest",
+    "evlog": "latest",
+    "zod": "^4",
+    "workflow": "latest",
+    "@workflow/ai": "latest"
+  },
+  "devDependencies": {
+    "nitro": "latest",
+    "typescript": "^5.8",
+    "vite": "^7"
+  }
+}
