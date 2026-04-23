@@ -141,6 +141,31 @@ Supported override properties:
 
 Core properties (`execute`, `inputSchema`, `outputSchema`) cannot be overridden.
 
+## Commit Attribution
+
+Control how commits are attributed when using `createOrUpdateFile` or `mergePullRequest`:
+
+```ts
+import { createGithubTools } from '@github-tools/sdk'
+
+const tools = createGithubTools({
+  token,
+  coAuthors: [
+    { name: 'my-bot[bot]', email: '12345+my-bot[bot]@users.noreply.github.com' }
+  ]
+})
+```
+
+This appends `Co-authored-by` trailers to commit messages, crediting additional contributors.
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `author` | `{ name: string, email: string }` | The person who wrote the code. Falls back to the authenticated user. |
+| `committer` | `{ name: string, email: string }` | The person who applied the commit. Falls back to the authenticated user. |
+| `coAuthors` | `{ name: string, email: string }[]` | Additional contributors added as `Co-authored-by` trailers. |
+
+Commits made via the GitHub API are **automatically signed** by GitHub's web-flow key, passing branch protection rules that require signed commits.
+
 ## Tool Selection with toolpick
 
 With dozens of tools, context window usage adds up. [toolpick](https://github.com/pontusab/toolpick) selects only the most relevant tools per step so the model sees what it needs:
