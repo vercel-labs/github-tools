@@ -11,7 +11,7 @@ export function composeCommitMessage(
   const trailers = coAuthors
     .map(({ name, email }) => `Co-authored-by: ${name} <${email}>`)
     .join('\n')
-  return `${message}\n\n${trailers}`
+  return message ? `${message}\n\n${trailers}` : trailers
 }
 
 async function getRepositoryStep({ token, owner, repo }: { token: string, owner: string, repo: string }) {
