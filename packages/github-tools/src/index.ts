@@ -5,7 +5,7 @@ import { searchCode, searchRepositories } from './tools/search'
 import { listCommits, getCommit, getBlame } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-import type { ToolOverrides } from './types'
+import type { CommitIdentity, ToolOverrides } from './types'
 
 export type GithubWriteToolName =
   | 'createBranch'
@@ -134,6 +134,33 @@ export type GithubToolsOptions = {
    * ```
    */
   preset?: GithubToolPreset | GithubToolPreset[]
+  /**
+   * Default author for commit-creating tools.
+   * The author is the person who originally wrote the code.
+   * Falls back to the authenticated user when omitted.
+   */
+  author?: CommitIdentity
+  /**
+   * Default committer for commit-creating tools.
+   * The committer is the person who applied the commit.
+   * Falls back to the authenticated user when omitted.
+   */
+  committer?: CommitIdentity
+  /**
+   * Co-authors to attribute on all commits created by tools.
+   * Added as "Co-authored-by" trailers to commit messages.
+   *
+   * @example
+   * ```ts
+   * createGithubTools({
+   *   token,
+   *   coAuthors: [
+   *     { name: 'my-bot[bot]', email: '12345+my-bot[bot]@users.noreply.github.com' }
+   *   ]
+   * })
+   * ```
+   */
+  coAuthors?: CommitIdentity[]
 }
 
 function resolveApproval(toolName: GithubWriteToolName, config: ApprovalConfig): boolean {
@@ -181,7 +208,15 @@ function resolvePresetTools(preset: GithubToolPreset | GithubToolPreset[]): Set<
  * })
  * ```
  */
-export function createGithubTools({ token, requireApproval = true, preset, overrides }: GithubToolsOptions = {}) {
+export function createGithubTools({
+  token,
+  requireApproval = true,
+  preset,
+  overrides,
+  author,
+  committer,
+  coAuthors,
+}: GithubToolsOptions = {}) {
   const resolvedToken = token || process.env.GITHUB_TOKEN
   if (!resolvedToken) {
     throw new Error('GitHub token is required. Pass it as `token` or set the GITHUB_TOKEN environment variable.')
@@ -205,9 +240,9 @@ export function createGithubTools({ token, requireApproval = true, preset, overr
     createBranch: createBranch(resolvedToken, approval('createBranch')),
     forkRepository: forkRepository(resolvedToken, approval('forkRepository')),
     createRepository: createRepository(resolvedToken, approval('createRepository')),
-    createOrUpdateFile: createOrUpdateFile(resolvedToken, approval('createOrUpdateFile')),
+    createOrUpdateFile: createOrUpdateFile(resolvedToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
     createPullRequest: createPullRequest(resolvedToken, approval('createPullRequest')),
-    mergePullRequest: mergePullRequest(resolvedToken, approval('mergePullRequest')),
+    mergePullRequest: mergePullRequest(resolvedToken, { ...approval('mergePullRequest'), coAuthors }),
     addPullRequestComment: addPullRequestComment(resolvedToken, approval('addPullRequestComment')),
     listPullRequestFiles: listPullRequestFiles(resolvedToken),
     listPullRequestReviews: listPullRequestReviews(resolvedToken),
@@ -261,6 +296,6 @@ export { searchCode, searchRepositories } from './tools/search'
 export { listCommits, getCommit, getBlame } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-export type { Octokit, ToolOptions, ToolOverrides } from './types'
+export type { CommitIdentity, CommitToolOptions, Octokit, ToolOptions, ToolOverrides } from './types'
 export { createGithubAgent } from './agents'
 export type { CreateGithubAgentOptions } from './agents'

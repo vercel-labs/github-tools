@@ -1,7 +1,18 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { createOctokit } from '../client'
-import type { ToolOptions } from '../types'
+import type { CommitIdentity, CommitToolOptions, ToolOptions } from '../types'
+
+export function composeCommitMessage(
+  message: string,
+  coAuthors?: CommitIdentity[]
+): string {
+  if (!coAuthors?.length) return message
+  const trailers = coAuthors
+    .map(({ name, email }) => `Co-authored-by: ${name} <${email}>`)
+    .join('\n')
+  return `${message}\n\n${trailers}`
+}
 
 async function getRepositoryStep({ token, owner, repo }: { token: string, owner: string, repo: string }) {
   "use step"
@@ -204,18 +215,45 @@ export const createRepository = (token: string, { needsApproval = true }: ToolOp
     execute: async args => createRepositoryStep({ token, ...args }),
   })
 
-async function createOrUpdateFileStep({ token, owner, repo, path, message, content, branch, sha }: { token: string, owner: string, repo: string, path: string, message: string, content: string, branch?: string, sha?: string }) {
+async function createOrUpdateFileStep({
+  token,
+  owner,
+  repo,
+  path,
+  message,
+  content,
+  branch,
+  sha,
+  author,
+  committer,
+  coAuthors,
+}: {
+  token: string
+  owner: string
+  repo: string
+  path: string
+  message: string
+  content: string
+  branch?: string
+  sha?: string
+  author?: CommitIdentity
+  committer?: CommitIdentity
+  coAuthors?: CommitIdentity[]
+}) {
   "use step"
   const octokit = createOctokit(token)
   const encoded = Buffer.from(content).toString('base64')
+  const finalMessage = composeCommitMessage(message, coAuthors)
   const { data } = await octokit.rest.repos.createOrUpdateFileContents({
     owner,
     repo,
     path,
-    message,
+    message: finalMessage,
     content: encoded,
     branch,
     sha,
+    author,
+    committer,
   })
   return {
     path: data.content?.path,
@@ -225,7 +263,10 @@ async function createOrUpdateFileStep({ token, owner, repo, path, message, conte
   }
 }
 
-export const createOrUpdateFile = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createOrUpdateFile = (
+  token: string,
+  { needsApproval = true, author, committer, coAuthors }: CommitToolOptions = {}
+) =>
   tool({
     description: 'Create or update a file in a GitHub repository. Provide the SHA when updating an existing file.',
     needsApproval,
@@ -238,5 +279,5 @@ export const createOrUpdateFile = (token: string, { needsApproval = true }: Tool
       branch: z.string().optional().describe('Branch to commit to (defaults to the default branch)'),
       sha: z.string().optional().describe('SHA of the file being replaced (required when updating an existing file)'),
     }),
-    execute: async args => createOrUpdateFileStep({ token, ...args }),
+    execute: async args => createOrUpdateFileStep({ token, author, committer, coAuthors, ...args }),
   })

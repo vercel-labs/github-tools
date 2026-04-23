@@ -2,6 +2,7 @@ import { ToolLoopAgent } from 'ai'
 import type { ToolLoopAgentSettings } from 'ai'
 import { createGithubTools } from './index'
 import type { GithubToolPreset, ApprovalConfig } from './index'
+import type { CommitIdentity } from './types'
 
 const SHARED_RULES = `When a tool execution is denied by the user, do not retry it. Briefly acknowledge the decision and move on.`
 
@@ -99,6 +100,21 @@ export type CreateGithubAgentOptions = AgentOptions & {
   requireApproval?: ApprovalConfig
   instructions?: string
   additionalInstructions?: string
+  /**
+   * Default author for commit-creating tools.
+   * Falls back to the authenticated user when omitted.
+   */
+  author?: CommitIdentity
+  /**
+   * Default committer for commit-creating tools.
+   * Falls back to the authenticated user when omitted.
+   */
+  committer?: CommitIdentity
+  /**
+   * Co-authors to attribute on all commits.
+   * Added as "Co-authored-by" trailers to commit messages.
+   */
+  coAuthors?: CommitIdentity[]
 }
 
 /**
@@ -125,9 +141,12 @@ export function createGithubAgent({
   requireApproval,
   instructions,
   additionalInstructions,
+  author,
+  committer,
+  coAuthors,
   ...agentOptions
 }: CreateGithubAgentOptions) {
-  const tools = createGithubTools({ token, requireApproval, preset })
+  const tools = createGithubTools({ token, requireApproval, preset, author, committer, coAuthors })
 
   return new ToolLoopAgent({
     ...agentOptions,

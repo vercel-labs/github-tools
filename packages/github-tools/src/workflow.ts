@@ -4,6 +4,7 @@ import type { ToolSet, StepResult, FinishReason, LanguageModelUsage, LanguageMod
 import { createGithubTools } from './index'
 import { resolveInstructions } from './agents'
 import type { GithubToolPreset, ApprovalConfig } from './index'
+import type { CommitIdentity } from './types'
 
 /**
  * Result of {@link DurableGithubAgent.generate}.
@@ -124,6 +125,21 @@ export type CreateDurableGithubAgentOptions =
     requireApproval?: ApprovalConfig
     instructions?: string
     additionalInstructions?: string
+    /**
+     * Default author for commit-creating tools.
+     * Falls back to the authenticated user when omitted.
+     */
+    author?: CommitIdentity
+    /**
+     * Default committer for commit-creating tools.
+     * Falls back to the authenticated user when omitted.
+     */
+    committer?: CommitIdentity
+    /**
+     * Co-authors to attribute on all commits.
+     * Added as "Co-authored-by" trailers to commit messages.
+     */
+    coAuthors?: CommitIdentity[]
   }
 
 /**
@@ -179,9 +195,12 @@ export function createDurableGithubAgent({
   requireApproval,
   instructions,
   additionalInstructions,
+  author,
+  committer,
+  coAuthors,
   ...agentOptions
 }: CreateDurableGithubAgentOptions) {
-  const tools = createGithubTools({ token, requireApproval, preset })
+  const tools = createGithubTools({ token, requireApproval, preset, author, committer, coAuthors })
 
   const resolvedModel = typeof model === 'string' || typeof model === 'function'
     ? model
@@ -196,5 +215,5 @@ export function createDurableGithubAgent({
 }
 
 export { createGithubTools, createGithubAgent } from './index'
-export type { GithubTools, GithubToolsOptions, GithubToolPreset, GithubWriteToolName, ApprovalConfig, ToolOverrides } from './index'
+export type { CommitIdentity, CommitToolOptions, GithubTools, GithubToolsOptions, GithubToolPreset, GithubWriteToolName, ApprovalConfig, ToolOverrides } from './index'
 export type { CreateGithubAgentOptions } from './agents'

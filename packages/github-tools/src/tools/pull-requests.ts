@@ -1,7 +1,12 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { createOctokit } from '../client'
-import type { ToolOptions } from '../types'
+import type { CommitIdentity, ToolOptions } from '../types'
+import { composeCommitMessage } from './repository'
+
+export type MergeToolOptions = ToolOptions & {
+  coAuthors?: CommitIdentity[]
+}
 
 async function listPullRequestsStep({ token, owner, repo, state, perPage }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', perPage: number }) {
   "use step"
@@ -100,15 +105,34 @@ export const createPullRequest = (token: string, { needsApproval = true }: ToolO
     execute: async args => createPullRequestStep({ token, ...args }),
   })
 
-async function mergePullRequestStep({ token, owner, repo, pullNumber, commitTitle, commitMessage, mergeMethod }: { token: string, owner: string, repo: string, pullNumber: number, commitTitle?: string, commitMessage?: string, mergeMethod: 'merge' | 'squash' | 'rebase' }) {
+async function mergePullRequestStep({
+  token,
+  owner,
+  repo,
+  pullNumber,
+  commitTitle,
+  commitMessage,
+  mergeMethod,
+  coAuthors,
+}: {
+  token: string
+  owner: string
+  repo: string
+  pullNumber: number
+  commitTitle?: string
+  commitMessage?: string
+  mergeMethod: 'merge' | 'squash' | 'rebase'
+  coAuthors?: CommitIdentity[]
+}) {
   "use step"
   const octokit = createOctokit(token)
+  const finalMessage = composeCommitMessage(commitMessage ?? '', coAuthors) || undefined
   const { data } = await octokit.rest.pulls.merge({
     owner,
     repo,
     pull_number: pullNumber,
     commit_title: commitTitle,
-    commit_message: commitMessage,
+    commit_message: finalMessage,
     merge_method: mergeMethod,
   })
   return {
@@ -118,7 +142,7 @@ async function mergePullRequestStep({ token, owner, repo, pullNumber, commitTitl
   }
 }
 
-export const mergePullRequest = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const mergePullRequest = (token: string, { needsApproval = true, coAuthors }: MergeToolOptions = {}) =>
   tool({
     description: 'Merge a pull request',
     needsApproval,
@@ -130,7 +154,7 @@ export const mergePullRequest = (token: string, { needsApproval = true }: ToolOp
       commitMessage: z.string().optional().describe('Extra detail to append to automatic commit message'),
       mergeMethod: z.enum(['merge', 'squash', 'rebase']).optional().default('merge').describe('Merge strategy'),
     }),
-    execute: async args => mergePullRequestStep({ token, ...args }),
+    execute: async args => mergePullRequestStep({ token, coAuthors, ...args }),
   })
 
 async function addPullRequestCommentStep({ token, owner, repo, pullNumber, body }: { token: string, owner: string, repo: string, pullNumber: number, body: string }) {
