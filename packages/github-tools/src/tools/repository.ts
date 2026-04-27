@@ -1,7 +1,52 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { createOctokit } from '../client'
-import type { CommitIdentity, CommitToolOptions, ToolOptions } from '../types'
+import type { CommitIdentity, CommitToolOptions, Octokit, ToolOptions } from '../types'
+
+const CREATE_COMMIT_ON_BRANCH_MUTATION = `
+  mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
+    createCommitOnBranch(input: $input) { commit { oid url } }
+  }
+`
+
+type CreateCommitOnBranchErrorReason = 'stale_data' | 'forbidden' | 'unknown'
+class CreateCommitOnBranchError extends Error {
+  constructor(message: string, public reason: CreateCommitOnBranchErrorReason) {
+    super(message)
+    this.name = 'CreateCommitOnBranchError'
+  }
+}
+
+async function createCommitOnBranch(octokit: Octokit, input: {
+  owner: string
+  repo: string
+  branch: string
+  expectedHeadOid: string
+  headline: string
+  body?: string
+  additions?: Array<{ path: string; contents: string }>
+  deletions?: Array<{ path: string }>
+}): Promise<{ commitSha: string; commitUrl: string }> {
+  try {
+    const result = await octokit.graphql<{ createCommitOnBranch: { commit: { oid: string; url: string } } }>(CREATE_COMMIT_ON_BRANCH_MUTATION, {
+      input: {
+        branch: { repositoryNameWithOwner: `${input.owner}/${input.repo}`, branchName: input.branch },
+        expectedHeadOid: input.expectedHeadOid,
+        message: input.body ? { headline: input.headline, body: input.body } : { headline: input.headline },
+        fileChanges: { additions: input.additions, deletions: input.deletions },
+      },
+    })
+    return { commitSha: result.createCommitOnBranch.commit.oid, commitUrl: result.createCommitOnBranch.commit.url }
+  } catch (error: unknown) {
+    const err = error as { errors?: Array<{ type?: string }>; status?: number; message?: string }
+    const types = new Set((err.errors ?? []).map((e) => e.type))
+    if (types.has('STALE_DATA')) throw new CreateCommitOnBranchError(err.message ?? 'Stale data', 'stale_data')
+    if (types.has('FORBIDDEN') || types.has('INSUFFICIENT_SCOPES') || err.status === 401 || err.status === 403) {
+      throw new CreateCommitOnBranchError(err.message ?? 'Forbidden', 'forbidden')
+    }
+    throw error
+  }
+}
 
 export function composeCommitMessage(
   message: string,
@@ -242,6 +287,34 @@ async function createOrUpdateFileStep({
 }) {
   "use step"
   const octokit = createOctokit(token)
+
+  // optimistically try to create a signed commit via GraphQL API
+  if (!author && !committer) {
+    try {
+      const branchName = branch || (await octokit.rest.repos.get({ owner, repo })).data.default_branch
+      const { data: ref } = await octokit.rest.git.getRef({ owner, repo, ref: `heads/${branchName}` })
+
+      const fullMessage = composeCommitMessage(message, coAuthors)
+      const [headline, ...rest] = fullMessage.split('\n')
+      const body = rest.join('\n').replace(/^\n+/, '') || undefined
+
+      const result = await createCommitOnBranch(octokit, {
+        owner, repo, branch: branchName,
+        expectedHeadOid: ref.object.sha,
+        headline, body,
+        additions: [{ path, contents: Buffer.from(content).toString('base64') }],
+      })
+      return { path, commitSha: result.commitSha, commitUrl: result.commitUrl }
+    } catch (error) {
+      if (error instanceof CreateCommitOnBranchError && error.reason === 'stale_data') {
+        throw error
+      }
+      const msg = error instanceof Error ? error.message : String(error)
+      console.warn(`[github-tools] Signed commit failed, using REST API: ${msg}`)
+    }
+  }
+
+  // fallback to REST API
   const encoded = Buffer.from(content).toString('base64')
   const finalMessage = composeCommitMessage(message, coAuthors)
   const { data } = await octokit.rest.repos.createOrUpdateFileContents({
