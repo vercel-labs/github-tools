@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { tool } from 'ai'
 import { z } from 'zod'
 import { createOctokit } from '../client'
@@ -46,6 +47,12 @@ async function createCommitOnBranch(octokit: Octokit, input: {
     }
     throw error
   }
+}
+
+/** Compute the git blob SHA (SHA-1 of "blob {size}\0{content}") for a given string. */
+function gitBlobSha(content: string): string {
+  const buf = Buffer.from(content)
+  return createHash('sha1').update(`blob ${buf.length}\0`).update(buf).digest('hex')
 }
 
 export function composeCommitMessage(
@@ -304,7 +311,7 @@ async function createOrUpdateFileStep({
         headline, body,
         additions: [{ path, contents: Buffer.from(content).toString('base64') }],
       })
-      return { path, commitSha: result.commitSha, commitUrl: result.commitUrl }
+      return { path, sha: gitBlobSha(content), commitSha: result.commitSha, commitUrl: result.commitUrl }
     } catch (error) {
       if (error instanceof CreateCommitOnBranchError && error.reason === 'stale_data') {
         throw error
