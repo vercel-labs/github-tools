@@ -6,7 +6,16 @@ packages:
 shamefullyHoist: true
 
 allowBuilds:
+  '@nestjs/core': false
+  '@parcel/watcher': false
+  '@swc/core': false
   better-sqlite3: true
+  cbor-extract: false
+  esbuild: false
+  maplibre-gl: false
+  sharp: false
+  unrs-resolver: false
+  vue-demi: false
 
 minimumReleaseAge: 2880
 
