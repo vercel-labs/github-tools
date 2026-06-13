@@ -4,6 +4,8 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     workflow: 'src/workflow.ts',
+    eve: 'src/eve.ts',
+    cli: 'src/cli.ts',
   },
   format: 'esm',
   dts: true,
@@ -14,5 +16,8 @@ export default defineConfig({
     'zod',
     'workflow',
     '@workflow/ai',
+    'eve',
+    'eve/tools',
+    'eve/tools/approval',
   ],
 })

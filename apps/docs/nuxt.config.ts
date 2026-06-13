@@ -24,11 +24,11 @@ export default defineNuxtConfig({
     domain: docsSiteUrl,
     title: 'GitHub Tools',
     description:
-      'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and granular write approvals.',
+      'AI-callable GitHub tools for the Vercel AI SDK and Eve — presets, agents, durable workflows, and granular write approvals.',
     full: {
       title: 'GitHub Tools',
       description:
-        'GitHub REST API as AI SDK tools: generateText, streamText, ToolLoopAgent, and Vercel Workflow DurableAgent.',
+        'GitHub REST API as AI SDK tools: generateText, streamText, ToolLoopAgent, and Vercel Workflow DurableAgent — or scaffold them into a file-based Eve agent.',
     },
   },
   content: {

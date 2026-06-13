@@ -26,6 +26,8 @@ export interface DurableGithubAgentGenerateResult<TTools extends ToolSet = ToolS
  * - `.generate()` — uses `generateText` from the AI SDK for non-streaming
  *   execution. Must be called from within a `"use step"` function in
  *   workflow context (the Workflow runtime blocks raw I/O in workflow scope).
+ *
+ * @typeParam TTools - The agent's tool set.
  */
 export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
   private agent: DurableAgent<TTools>
@@ -34,6 +36,9 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
   private _telemetry?: TelemetrySettings
   private _tools: TTools
 
+  /**
+   * @param options - `DurableAgent` options (model, tools, instructions, telemetry, …).
+   */
   constructor(options: DurableAgentOptions<TTools>) {
     this.agent = new DurableAgent(options)
     this._model = options.model
@@ -50,6 +55,9 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
   /**
    * Stream the agent's response. Delegates directly to `DurableAgent.stream()`.
    * Works in workflow context — each tool call is a durable step.
+   *
+   * @param options - `DurableAgent` stream options (messages/prompt, writable, …).
+   * @returns The durable stream result.
    */
   stream<TStreamTools extends TTools = TTools, OUTPUT = never, PARTIAL_OUTPUT = never>(
     options: DurableAgentStreamOptions<TStreamTools, OUTPUT, PARTIAL_OUTPUT>,
@@ -63,6 +71,11 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
    * In workflow context this **must** be called from within a `"use step"`
    * function, because the Workflow runtime blocks direct I/O (HTTP calls)
    * at the workflow scope level.
+   *
+   * @param params - Generation parameters.
+   * @param params.prompt - The user prompt for this turn.
+   * @param params.stopWhen - Stop condition(s) controlling when the tool loop ends.
+   * @returns The generated text plus finish reason, usage, steps, and response metadata.
    *
    * @example
    * ```ts
@@ -154,6 +167,12 @@ export type CreateDurableGithubAgentOptions =
  * **Note:** `requireApproval` is accepted for forward-compatibility but is currently
  * ignored by `DurableAgent` — the Workflow SDK does not yet support interactive tool
  * approval. All tools execute immediately without user confirmation.
+ *
+ * @param options - Model, token, preset, instructions, commit identity, plus any
+ *   other `DurableAgent` option. A non-string/function `model` is wrapped in a thunk.
+ * @returns A configured {@link DurableGithubAgent}.
+ * @throws {Error} If no token is provided and `GITHUB_TOKEN` is unset.
+ * @see {@link createGithubAgent} for the non-durable `ToolLoopAgent` variant.
  *
  * @example Streaming (chat UI — works in workflow scope)
  * ```ts

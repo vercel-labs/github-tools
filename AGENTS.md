@@ -61,16 +61,19 @@ export const myTool = (token: string, { needsApproval = true }: ToolOptions = {}
 
 ### Key source files
 
-- `src/index.ts` — public API: `createGithubTools()`, preset definitions (`PRESET_TOOLS`), `GithubWriteToolName` union, all re-exports
+- `src/index.ts` — public API: `createGithubTools()`, all re-exports
+- `src/presets.ts` — tool name lists (`GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOL_NAMES`), `PRESET_TOOLS`, preset/tool name types. Must stay free of runtime imports — the CLI bundles it
 - `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`) with preset-specific system prompts
 - `src/workflow.ts` — `createDurableGithubAgent()` (`DurableAgent`), exported from `@github-tools/sdk/workflow` subpath
+- `src/eve.ts` — `toEveTool()` adapter + `githubToken()` helper for the Eve framework, exported from `@github-tools/sdk/eve` subpath
+- `src/cli.ts` — `github-tools eve` scaffold CLI (generates Eve `agent/tools/*.ts` files), built to `dist/cli.mjs` (the package `bin`)
 - `src/client.ts` — `createOctokit(token)` wrapper
 - `src/tools/` — 7 domain files: `repository.ts`, `pull-requests.ts`, `issues.ts`, `commits.ts`, `gists.ts`, `workflows.ts`, `search.ts`
 
 ### Adding a New Tool
 
 1. Add the tool in the appropriate `src/tools/*.ts` file following the pattern above
-2. Register in `src/index.ts`: imports, `GithubWriteToolName` (if write), `PRESET_TOOLS`, `createGithubTools()` `allTools`, re-exports
+2. Register in `src/presets.ts` (`GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOL_NAMES` if write, `PRESET_TOOLS`) and `src/index.ts` (imports, `createGithubTools()` `allTools`, re-exports)
 3. Add display metadata in `apps/chat/shared/utils/tools/github.ts` (`GITHUB_TOOL_META`)
 4. Update docs: `apps/docs/content/docs/3.api/1.tools-catalog.md`, approval docs (for write tools), `packages/github-tools/README.md`
 
@@ -101,4 +104,4 @@ Five presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintai
 - **PRs**: One feature or fix per commit, create from `main`, include a changeset for user-facing changes
 - **TypeScript**: Strict mode, ESNext target, `verbatimModuleSyntax: true`
 - **ESLint**: `typescript-eslint` flat config for SDK; `@nuxt/eslint` with stylistic rules for apps (no trailing commas, 1tbs brace style)
-- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath
+- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath; `eve` is an optional peer dep for the eve subpath

@@ -1,6 +1,6 @@
 export default defineAppConfig({
   name: 'GitHub Tools',
-  description: 'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and granular write approvals for production use.',
+  description: 'AI-callable GitHub tools for the Vercel AI SDK and Eve — presets, agents, durable workflows, and granular write approvals for production use.',
   landing: false,
   socials: {
     x: 'https://x.com/hugorcd',
@@ -8,7 +8,7 @@ export default defineAppConfig({
   seo: {
     titleTemplate: '%s - GitHub Tools',
     title: 'GitHub Tools',
-    description: 'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and granular write approvals for production use.',
+    description: 'AI-callable GitHub tools for the Vercel AI SDK and Eve — presets, agents, durable workflows, and granular write approvals for production use.',
   },
   github: {
     rootDir: 'apps/docs',
@@ -48,6 +48,14 @@ export default defineAppConfig({
           'How does approval control work?',
           'What token permissions do I need?',
           'How do I run the SDK in read-only mode?',
+        ],
+      },
+      {
+        category: 'Eve',
+        items: [
+          'How do I use these GitHub tools in an Eve agent?',
+          'What does the github-tools eve scaffold CLI generate?',
+          'How does write approval work in Eve compared to the AI SDK?',
         ],
       },
     ],

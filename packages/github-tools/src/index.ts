@@ -6,28 +6,8 @@ import { listCommits, getCommit, getBlame } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 import type { CommitIdentity, ToolOverrides } from './types'
-
-export type GithubWriteToolName =
-  | 'createBranch'
-  | 'forkRepository'
-  | 'createRepository'
-  | 'createOrUpdateFile'
-  | 'createPullRequest'
-  | 'mergePullRequest'
-  | 'addPullRequestComment'
-  | 'createPullRequestReview'
-  | 'createIssue'
-  | 'addIssueComment'
-  | 'closeIssue'
-  | 'addLabels'
-  | 'removeLabel'
-  | 'createGist'
-  | 'updateGist'
-  | 'deleteGist'
-  | 'createGistComment'
-  | 'triggerWorkflow'
-  | 'cancelWorkflowRun'
-  | 'rerunWorkflowRun'
+import { PRESET_TOOLS } from './presets'
+import type { GithubToolPreset, GithubWriteToolName } from './presets'
 
 /**
  * Whether write operations require user approval.
@@ -47,62 +27,18 @@ export type GithubWriteToolName =
  */
 export type ApprovalConfig = boolean | Partial<Record<GithubWriteToolName, boolean>>
 
-/**
- * Predefined tool presets for common use cases.
- *
- * - `'code-review'` — Review PRs: read PRs, file content, commits, and post comments
- * - `'issue-triage'` — Triage issues: read/create/close issues, search, and comment
- * - `'repo-explorer'` — Explore repos: read-only access to repos, branches, code, and search
- * - `'ci-ops'`        — CI operations: monitor and manage GitHub Actions workflows
- * - `'maintainer'`   — Full maintenance: all read + create PRs, merge, manage issues
- */
-export type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'maintainer'
-
-const PRESET_TOOLS: Record<GithubToolPreset, string[]> = {
-  'code-review': [
-    'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'getFileContent', 'listCommits', 'getCommit', 'getBlame',
-    'getRepository', 'listBranches', 'searchCode',
-    'addPullRequestComment', 'createPullRequestReview'
-  ],
-  'issue-triage': [
-    'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
-    'listLabels', 'addLabels', 'removeLabel',
-    'getRepository', 'searchRepositories', 'searchCode'
-  ],
-  'ci-ops': [
-    'getRepository', 'listBranches',
-    'listCommits', 'getCommit',
-    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs',
-    'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun'
-  ],
-  'repo-explorer': [
-    'getRepository', 'listBranches', 'getFileContent',
-    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews',
-    'listIssues', 'getIssue',
-    'listLabels',
-    'listCommits', 'getCommit', 'getBlame',
-    'searchCode', 'searchRepositories',
-    'listGists', 'getGist', 'listGistComments',
-    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs'
-  ],
-  'maintainer': [
-    'getRepository', 'listBranches', 'getFileContent', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
-    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'createPullRequest', 'mergePullRequest', 'addPullRequestComment', 'createPullRequestReview',
-    'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
-    'listLabels', 'addLabels', 'removeLabel',
-    'listCommits', 'getCommit', 'getBlame',
-    'searchCode', 'searchRepositories',
-    'listGists', 'getGist', 'listGistComments', 'createGist', 'updateGist', 'deleteGist', 'createGistComment',
-    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun'
-  ]
-}
-
 export type GithubToolsOptions = {
   /**
    * GitHub personal access token.
    * Falls back to `process.env.GITHUB_TOKEN` when omitted.
    */
   token?: string
+  /**
+   * Whether write tools require user approval before executing.
+   * Pass an object to override individual tools — see {@link ApprovalConfig}.
+   *
+   * @defaultValue `true`
+   */
   requireApproval?: ApprovalConfig
   /**
    * Per-tool overrides for customizing tool behavior (description, title, needsApproval, etc.)
@@ -184,6 +120,12 @@ function resolvePresetTools(preset: GithubToolPreset | GithubToolPreset[]): Set<
  * Write operations require user approval by default.
  * Control this globally or per-tool via `requireApproval`.
  * Use `preset` to get only the tools you need.
+ *
+ * @param options - Token, approval policy, preset, overrides, and commit identity.
+ * @returns A record of AI SDK tools keyed by tool name, narrowed to the
+ *   selected `preset` when one is given.
+ * @throws {Error} If no token is provided and `GITHUB_TOKEN` is unset.
+ * @see {@link createGithubAgent} to get a ready-to-use agent instead of raw tools.
  *
  * @example
  * ```ts
@@ -286,6 +228,10 @@ export function createGithubTools({
 }
 
 export type GithubTools = ReturnType<typeof createGithubTools>
+
+// Re-export preset metadata and tool name types
+export { GITHUB_TOOL_NAMES, GITHUB_WRITE_TOOL_NAMES, PRESET_TOOLS } from './presets'
+export type { GithubToolName, GithubToolPreset, GithubWriteToolName } from './presets'
 
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'

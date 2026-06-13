@@ -14,7 +14,7 @@ withDefaults(
 )
 
 const FALLBACK_DESCRIPTION =
-  'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and agent skills.'
+  'AI-callable GitHub tools for the Vercel AI SDK and Eve — presets, agents, durable workflows, and agent skills.'
 </script>
 
 <template>

@@ -41,12 +41,33 @@ const layers = [
   },
 ]
 
+const frameworks = [
+  {
+    title: 'Vercel AI SDK',
+    description: 'Wire tools into generateText, streamText, or any agent loop — the original target.',
+    to: '/guide/quick-start',
+    icon: 'i-custom:ai',
+  },
+  {
+    title: 'Eve',
+    description: 'Scaffold tools as files and let Eve discover them automatically — the filename is the tool name.',
+    to: '/guide/eve',
+    icon: 'i-lucide-folder-tree',
+  },
+]
+
 const guides = [
   {
     title: 'Quick Start',
     description: 'Use GitHub tools in your first AI SDK call.',
     to: '/guide/quick-start',
     icon: 'i-lucide-play',
+  },
+  {
+    title: 'Eve Agents',
+    description: 'Scaffold GitHub tools into a file-based Eve agent.',
+    to: '/guide/eve',
+    icon: 'i-lucide-folder-tree',
   },
   {
     title: 'Control Write Safety',
@@ -98,7 +119,7 @@ const quickAccess = [
       <header class="space-y-3">
         <h1 class="max-w-4xl text-3xl/9 font-semibold tracking-tight sm:text-4xl/10">GitHub Tools Documentation</h1>
         <p class="max-w-4xl text-base/7 text-toned sm:text-lg/8">
-          AI-callable GitHub tools for <code class="text-sm">generateText</code>, <code class="text-sm">streamText</code>, and agent loops.
+          AI-callable GitHub tools for <code class="text-sm">generateText</code>, <code class="text-sm">streamText</code>, and agent loops — use them with the Vercel AI SDK or scaffold them into an Eve agent.
         </p>
       </header>
 
@@ -110,6 +131,24 @@ const quickAccess = [
             :key="item.title"
             :to="item.to"
             class="group flex min-h-48 flex-col justify-between rounded-xl border border-default/60 bg-elevated/30 p-5 transition hover:-translate-y-0.5 hover:border-default hover:bg-elevated/80"
+          >
+            <UIcon :name="item.icon" class="size-5 text-toned transition group-hover:text-highlighted" />
+            <div class="space-y-2">
+              <p class="text-base/7 font-semibold">{{ item.title }}</p>
+              <p class="text-sm/6 text-toned">{{ item.description }}</p>
+            </div>
+          </NuxtLink>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <h2 class="text-xl/8 font-semibold tracking-tight sm:text-2xl/8">Use them in your framework</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <NuxtLink
+            v-for="item in frameworks"
+            :key="item.title"
+            :to="item.to"
+            class="group flex min-h-40 flex-col justify-between rounded-xl border border-default/60 bg-elevated/30 p-5 transition hover:-translate-y-0.5 hover:border-default hover:bg-elevated/80"
           >
             <UIcon :name="item.icon" class="size-5 text-toned transition group-hover:text-highlighted" />
             <div class="space-y-2">

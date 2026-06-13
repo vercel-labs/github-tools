@@ -213,6 +213,40 @@ All presets work with `createDurableGithubAgent`.
 
 > `workflow` and `@workflow/ai` are optional peer dependencies — install them only when using the workflow subpath.
 
+## Eve Agents
+
+[Eve](https://beta.eve.dev) discovers tools from files: each file under `agent/tools/` default-exports one tool, and the filename becomes the model-facing tool name. The `@github-tools/sdk/eve` subpath adapts any tool from this SDK to Eve's `defineTool` shape, and the scaffold CLI generates the tool files:
+
+```bash
+# in your Eve project
+npx @github-tools/sdk eve --preset code-review
+```
+
+Each generated file is a one-liner you can edit freely:
+
+```ts
+// agent/tools/getRepository.ts
+import { getRepository } from '@github-tools/sdk'
+import { githubToken, toEveTool } from '@github-tools/sdk/eve'
+
+export default toEveTool(getRepository(githubToken()))
+```
+
+Write tools map their default `needsApproval: true` to Eve's `always()` predicate. Swap in `once()` (approve the first call per session) or a custom predicate via the adapter options:
+
+```ts
+// agent/tools/mergePullRequest.ts
+import { mergePullRequest } from '@github-tools/sdk'
+import { githubToken, toEveTool } from '@github-tools/sdk/eve'
+import { once } from 'eve/tools/approval'
+
+export default toEveTool(mergePullRequest(githubToken()), { needsApproval: once() })
+```
+
+CLI flags: `--preset <name>` (repeatable, comma-separated), `--tools <names>`, `--all`, `--dir <path>` (default `agent/tools`), `--force`, `--list`.
+
+> `eve` is an optional peer dependency — install it only in Eve projects (`pnpm add eve@beta`).
+
 ## Available Tools
 
 ### Repository

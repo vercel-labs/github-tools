@@ -29,3 +29,8 @@ minimumReleaseAgeExclude:
   - '@vercel/*'
   - '@ai-sdk/*'
   - 'ai'
+  # Eve (pins fresh nitro betas as exact deps)
+  - 'eve'
+  - 'nitro'
+  - 'env-runner'
+  - 'ocache'

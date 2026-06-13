@@ -73,6 +73,20 @@ When maintaining repos:
 ${SHARED_RULES}`
 }
 
+/**
+ * Resolve the system instructions for an agent from its preset and overrides.
+ *
+ * Precedence: an explicit `instructions` string wins outright; otherwise the
+ * preset-specific (or default) prompt is used, with `additionalInstructions`
+ * appended when present. A combined/array preset falls back to the default prompt.
+ *
+ * @param options - Preset and instruction overrides.
+ * @param options.preset - A single preset selects its tailored prompt; an array
+ *   (or omitted) uses the default prompt.
+ * @param options.instructions - Replaces the resolved prompt entirely.
+ * @param options.additionalInstructions - Appended to the resolved prompt.
+ * @returns The system prompt string for the agent.
+ */
 export function resolveInstructions(options: {
   preset?: GithubToolPreset | GithubToolPreset[]
   instructions?: string
@@ -96,9 +110,13 @@ export type CreateGithubAgentOptions = AgentOptions & {
    * Falls back to `process.env.GITHUB_TOKEN` when omitted.
    */
   token?: string
+  /** Restrict the agent's tools to one or more presets. Omit for all tools. */
   preset?: GithubToolPreset | GithubToolPreset[]
+  /** Approval policy for write tools. @defaultValue `true` */
   requireApproval?: ApprovalConfig
+  /** Replace the preset/default system prompt entirely. */
   instructions?: string
+  /** Append to the preset/default system prompt (ignored when `instructions` is set). */
   additionalInstructions?: string
   /**
    * Default author for commit-creating tools.
@@ -121,6 +139,12 @@ export type CreateGithubAgentOptions = AgentOptions & {
  * Create a pre-configured GitHub agent powered by the AI SDK's `ToolLoopAgent`.
  *
  * Returns a `ToolLoopAgent` instance with `.generate()` and `.stream()` methods.
+ *
+ * @param options - Model, token, preset, approval policy, instructions, commit
+ *   identity, plus any other `ToolLoopAgent` setting.
+ * @returns A configured `ToolLoopAgent`.
+ * @throws {Error} If no token is provided and `GITHUB_TOKEN` is unset.
+ * @see {@link createDurableGithubAgent} for crash-safe execution on Vercel Workflow.
  *
  * @example
  * ```ts
