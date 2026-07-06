@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DefineComponent } from 'vue'
-import { Chat } from '@ai-sdk/vue'
+import { useChat } from '@ai-sdk/vue'
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses } from 'ai'
 import { WorkflowChatTransport } from '@ai-sdk/workflow'
 import type { UIMessage } from 'ai'
@@ -49,18 +49,28 @@ if (!data.value) {
 }
 const input = ref('')
 
-const chatApiBase = durable.value ? '/api/workflow/chats' : '/api/chats'
+const chatApiBase = computed(() => durable.value ? '/api/workflow/chats' : '/api/chats')
 
-const chatApi = `${chatApiBase}/${data.value.id}`
+function toggleDurable() {
+  durable.value = !durable.value
+}
 
-const chat = new Chat({
-  id: data.value.id,
-  messages: data.value.messages,
+const {
+  messages,
+  status,
+  error,
+  sendMessage,
+  regenerate,
+  stop,
+  addToolApprovalResponse
+} = useChat(() => ({
+  id: data.value!.id,
+  messages: data.value!.messages,
   transport: durable.value
     ? new WorkflowChatTransport({
-        api: chatApi,
+        api: `${chatApiBase.value}/${data.value!.id}`,
         initialStartIndex: -50,
-        prepareSendMessagesRequest: ({ body, messages, api, credentials, headers }) => ({
+        prepareSendMessagesRequest: ({ body, messages: chatMessages, api, credentials, headers }) => ({
           api,
           credentials,
           headers: {
@@ -70,12 +80,12 @@ const chat = new Chat({
           body: {
             ...body,
             model: model.value,
-            messages
+            messages: chatMessages
           }
         })
       })
     : new DefaultChatTransport({
-        api: chatApi,
+        api: `${chatApiBase.value}/${data.value!.id}`,
         body: {
           model: model.value
         }
@@ -95,18 +105,18 @@ const chat = new Chat({
       duration: 0
     })
   }
-})
+}))
 
 function handleApproval(invocation: GithubUIToolInvocation, approved: boolean) {
   const approval = invocation.approval as { id: string } | undefined
   if (!approval?.id) return
-  chat.addToolApprovalResponse({ id: approval.id, approved })
+  addToolApprovalResponse({ id: approval.id, approved })
 }
 
 async function handleSubmit(e: Event) {
   e.preventDefault()
   if (input.value.trim() && !isUploading.value) {
-    chat.sendMessage({
+    sendMessage({
       text: input.value,
       files: uploadedFiles.value.length > 0 ? uploadedFiles.value : undefined
     })
@@ -129,7 +139,7 @@ function copy(e: MouseEvent, message: UIMessage) {
 
 onMounted(() => {
   if (data.value?.messages.length === 1) {
-    chat.regenerate()
+    regenerate()
   }
 })
 </script>
@@ -151,9 +161,9 @@ onMounted(() => {
         <UContainer class="flex-1 flex flex-col gap-4 sm:gap-6">
           <UChatMessages
             should-auto-scroll
-            :messages="chat.messages"
-            :status="chat.status"
-            :assistant="chat.status !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
+            :messages="messages"
+            :status="status"
+            :assistant="status !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
             :spacing-offset="160"
             class="lg:pt-(--ui-header-height) pb-4 sm:pb-6"
           >
@@ -210,7 +220,7 @@ onMounted(() => {
 
           <UChatPrompt
             v-model="input"
-            :error="chat.error"
+            :error="error"
             :disabled="isUploading"
             variant="subtle"
             class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10"
@@ -245,18 +255,18 @@ onMounted(() => {
                     :color="durable ? 'primary' : 'neutral'"
                     :variant="durable ? 'subtle' : 'ghost'"
                     size="sm"
-                    @click="durable = !durable"
+                    @click="toggleDurable"
                   />
                 </UTooltip>
               </div>
 
               <UChatPromptSubmit
-                :status="chat.status"
+                :status="status"
                 :disabled="isUploading"
                 color="neutral"
                 size="sm"
-                @stop="chat.stop()"
-                @reload="chat.regenerate()"
+                @stop="stop()"
+                @reload="regenerate()"
               />
             </template>
           </UChatPrompt>

@@ -2,6 +2,8 @@ import type { Tool } from 'ai'
 
 export type { Octokit } from 'octokit'
 
+// Tool input/output vary per GitHub endpoint; keep this alias wide enough for all factories.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above
 export type GithubTool = Tool<any, any>
 
 export type ToolOptions = { needsApproval?: boolean }
