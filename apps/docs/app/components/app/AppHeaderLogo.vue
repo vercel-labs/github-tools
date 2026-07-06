@@ -1,10 +1,26 @@
-<script setup lang="ts">
-const appConfig = useAppConfig()
-</script>
-
 <template>
-  <div class="flex items-center gap-2">
-    <UIcon name="i-simple-icons-github" class="size-5 text-white" />
-    <span class="font-semibold text-white">{{ appConfig.docus?.name || 'GitHub Tools' }}</span>
-  </div>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 420 32"
+    fill="none"
+    role="img"
+    aria-label="GitHub Tools"
+    class="text-highlighted"
+  >
+    <path
+      fill="currentColor"
+      d="M16 0C7.163 0 0 7.163 0 16c0 7.07 4.584 13.065 10.949 15.18.8.147 1.093-.347 1.093-.77 0-.38-.014-1.385-.022-2.72-4.452.967-5.392-2.147-5.392-2.147-.728-1.85-1.777-2.342-1.777-2.342-1.452-.992.11-.972.11-.972 1.605.113 2.45 1.648 2.45 1.648 1.427 2.445 3.744 1.74 4.657 1.33.145-1.034.558-1.74 1.015-2.14-3.552-.404-7.285-1.776-7.285-7.905 0-1.746.623-3.174 1.646-4.293-.165-.404-.713-2.03.156-4.234 0 0 1.343-.43 4.398 1.64 1.276-.354 2.646-.53 4.006-.536 1.36.006 2.73.182 4.008.536 3.053-2.07 4.395-1.64 4.395-1.64.87 2.204.323 3.83.16 4.234 1.025 1.12 1.644 2.547 1.644 4.293 0 6.14-3.74 7.497-7.304 7.893.574.494 1.085 1.47 1.085 2.963 0 2.14-.02 3.864-.02 4.39 0 .427.29.923 1.1.765C27.412 29.06 32 23.07 32 16 32 7.163 24.837 0 16 0Z"
+    />
+    <text
+      x="44"
+      y="23"
+      fill="currentColor"
+      font-family="Geist, ui-sans-serif, sans-serif"
+      font-size="18"
+      font-weight="600"
+      letter-spacing="-0.02em"
+    >
+      GitHub Tools
+    </text>
+  </svg>
 </template>

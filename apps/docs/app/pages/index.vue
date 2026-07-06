@@ -101,7 +101,7 @@ const quickAccess = [
 <template>
   <NuxtLayout name="docs">
     <section class="space-y-12 pt-8 pb-12 sm:pt-10">
-      <header class="space-y-3">
+      <header class="hero-grid space-y-3 rounded-xl border border-default/60 p-6 sm:p-8">
         <h1 class="max-w-4xl text-3xl/9 font-semibold tracking-tight sm:text-4xl/10">GitHub Tools Documentation</h1>
         <p class="max-w-4xl text-base/7 text-toned sm:text-lg/8">
           AI-callable GitHub tools for <code class="text-sm">generateText</code>, <code class="text-sm">streamText</code>, and agent loops.

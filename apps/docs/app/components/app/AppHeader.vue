@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { useDocusI18n } from '#imports'
-
 const appConfig = useAppConfig()
-const site = useSiteConfig()
+const { forced: forcedColorMode } = useDocusColorMode()
 
 const { isEnabled: isAssistantEnabled } = useAssistant()
-const { localePath } = useDocusI18n()
 
 const links = computed(() => appConfig.github && appConfig.github.url
   ? [
@@ -20,15 +17,11 @@ const links = computed(() => appConfig.github && appConfig.github.url
 </script>
 
 <template>
-  <UHeader
-    :ui="{ center: 'flex-1' }"
-    :to="localePath('/')"
-    :title="appConfig.header?.title || site.name"
-  >
+  <UHeader :ui="{ left: 'lg:flex-none', center: 'flex-1', right: 'gap-2.5', body: 'sm:p-4' }">
     <AppHeaderCenter />
 
-    <template #title>
-      <AppHeaderLogo class="h-6 w-auto shrink-0" />
+    <template #left>
+      <AppHeaderLeft />
     </template>
 
     <template #right>
@@ -39,6 +32,14 @@ const links = computed(() => appConfig.github && appConfig.github.url
       </template>
 
       <UContentSearchButton class="lg:hidden" />
+
+      <ClientOnly v-if="!forcedColorMode">
+        <UColorModeButton />
+
+        <template #fallback>
+          <div class="h-8 w-8 animate-pulse bg-elevated rounded-md" />
+        </template>
+      </ClientOnly>
 
       <template v-if="links?.length">
         <UButton
@@ -52,7 +53,8 @@ const links = computed(() => appConfig.github && appConfig.github.url
     <template #toggle="{ open, toggle }">
       <IconMenuToggle
         :open="open"
-        class="lg:hidden"
+        variant="outline"
+        class="lg:hidden rounded-full"
         @click="toggle"
       />
     </template>

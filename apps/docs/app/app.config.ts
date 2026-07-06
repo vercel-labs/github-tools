@@ -55,7 +55,7 @@ export default defineAppConfig({
   ui: {
     colors: {
       primary: 'neutral',
-      neutral: 'zinc',
+      neutral: 'neutral',
     },
     prose: {
       h1: {
@@ -88,5 +88,32 @@ export default defineAppConfig({
         },
       },
     },
+  },
+  footer: {
+    sections: [
+      {
+        title: 'Getting Started',
+        links: [
+          { label: 'Introduction', to: '/getting-started/introduction' },
+          { label: 'Installation', to: '/getting-started/installation' },
+          { label: 'Agent Skills', to: '/getting-started/agent-skills' },
+        ],
+      },
+      {
+        title: 'Guides',
+        links: [
+          { label: 'Quick Start', to: '/guide/quick-start' },
+          { label: 'Presets', to: '/guide/presets' },
+          { label: 'Durable Workflows', to: '/guide/durable-workflows' },
+        ],
+      },
+      {
+        title: 'API',
+        links: [
+          { label: 'Tools Catalog', to: '/api/tools-catalog' },
+          { label: 'API Reference', to: '/api/reference' },
+        ],
+      },
+    ],
   },
 })

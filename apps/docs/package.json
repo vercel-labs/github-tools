@@ -18,6 +18,7 @@
     "better-sqlite3": "^12.9.0",
     "docus": "^5.12.3",
     "nuxt": "^4.4.4",
+    "satori": "^0.26.0",
     "zod": "^4.4.3",
     "zod-to-json-schema": "^3.25.2"
   },

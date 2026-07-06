@@ -7,8 +7,13 @@ export default defineNuxtConfig({
   extends: ['docus'],
   modules: ['@nuxt/eslint', '@nuxt/fonts', '@vercel/analytics', '@vercel/speed-insights'],
   fonts: {
+    defaults: {
+      // Full variable axis — discrete weights from @nuxt/ui defaults render too thin on Chromium.
+      weights: ['100 900'],
+    },
     families: [
-      { name: 'Inter', provider: 'google', weights: [400, 500, 600, 700] },
+      { name: 'Geist', weights: ['100 900'], global: true },
+      { name: 'Geist Mono', weights: ['100 900'], global: true },
     ],
   },
   css: ['~/assets/css/main.css'],
