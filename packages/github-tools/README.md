@@ -17,7 +17,7 @@ GitHub tools for the [AI SDK](https://ai-sdk.dev) — wrap GitHub's REST API as 
 pnpm add @github-tools/sdk
 ```
 
-`ai` and `zod` are peer dependencies:
+`ai` and `zod` are peer dependencies (`ai` v6 or v7; the eve subpath requires v7):
 
 ```sh
 pnpm add ai zod

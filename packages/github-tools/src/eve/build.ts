@@ -4,6 +4,7 @@ import { resolveGithubToken } from '../core/token'
 import { mapEveApprovalValue, resolveEveApproval } from './approval'
 import { getEveTools } from './load-eve'
 import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
+import { runGithubToolStep } from './steps'
 import type { EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './types'
 
 type BuildOptions = EveGithubToolsOptions | (EveToolFactoryOptions & { preset?: EveGithubToolsOptions['preset'] })
@@ -49,7 +50,7 @@ export function buildEveToolDefinition(
       approval: resolveEveApproval(entry.writeTool, options.requireApproval),
     }),
     ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
-    execute: async (input) => entry.execute(input as Record<string, unknown>),
+    execute: async (input) => runGithubToolStep(name, input as Record<string, unknown>, ctx),
   })
 
   return applyOverrides(tool, name, options.overrides)
@@ -79,7 +80,7 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}) {
         approval: resolveEveApproval(entry.writeTool, options.requireApproval),
       }),
       ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
-      execute: async (input) => entry.execute(input as Record<string, unknown>),
+      execute: async (input) => runGithubToolStep(entry.name, input as Record<string, unknown>, ctx),
     })
 
     tools[entry.name] = applyOverrides(tool, entry.name, options.overrides)

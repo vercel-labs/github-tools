@@ -1,7 +1,7 @@
-import { createHash } from 'crypto'
 import { z } from 'zod'
 import { createOctokit } from '../client'
 import type { CommitIdentity, Octokit } from '../types'
+import { gitBlobSha } from './git-blob-sha'
 
 const CREATE_COMMIT_ON_BRANCH_MUTATION = `
   mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
@@ -46,12 +46,6 @@ export async function createCommitOnBranch(octokit: Octokit, input: {
     }
     throw error
   }
-}
-
-/** Compute the git blob SHA (SHA-1 of "blob {size}\0{content}") for a given string. */
-function gitBlobSha(content: string): string {
-  const buf = Buffer.from(content)
-  return createHash('sha1').update(`blob ${buf.length}\0`).update(buf).digest('hex')
 }
 
 export function composeCommitMessage(
