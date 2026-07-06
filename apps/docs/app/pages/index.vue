@@ -102,14 +102,14 @@ const quickAccess = [
   <NuxtLayout name="docs">
     <section class="space-y-12 pt-8 pb-12 sm:pt-10">
       <header class="hero-grid space-y-3 rounded-xl border border-default/60 p-6 sm:p-8">
-        <h1 class="max-w-4xl text-3xl/9 font-semibold tracking-tight sm:text-4xl/10">GitHub Tools Documentation</h1>
+        <h1 class="max-w-4xl text-3xl/9 font-semibold tracking-tight text-highlighted sm:text-4xl/10">GitHub Tools Documentation</h1>
         <p class="max-w-4xl text-base/7 text-toned sm:text-lg/8">
           AI-callable GitHub tools for <code class="text-sm">generateText</code>, <code class="text-sm">streamText</code>, and agent loops.
         </p>
       </header>
 
       <section class="space-y-4">
-        <h2 class="text-xl/8 font-semibold tracking-tight sm:text-2xl/8">Three layers, one SDK</h2>
+        <h2 class="text-xl/8 font-semibold tracking-tight text-highlighted sm:text-2xl/8">Three layers, one SDK</h2>
         <div class="grid gap-4 lg:grid-cols-3">
           <NuxtLink
             v-for="item in layers"
@@ -119,7 +119,7 @@ const quickAccess = [
           >
             <UIcon :name="item.icon" class="size-5 text-toned transition group-hover:text-highlighted" />
             <div class="space-y-2">
-              <p class="text-base/7 font-semibold">{{ item.title }}</p>
+              <p class="text-base/7 font-semibold text-highlighted">{{ item.title }}</p>
               <p class="text-sm/6 text-toned">{{ item.description }}</p>
             </div>
           </NuxtLink>
@@ -127,7 +127,7 @@ const quickAccess = [
       </section>
 
       <section class="space-y-4">
-        <h2 class="text-xl/8 font-semibold tracking-tight sm:text-2xl/8">Guides</h2>
+        <h2 class="text-xl/8 font-semibold tracking-tight text-highlighted sm:text-2xl/8">Guides</h2>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <NuxtLink
             v-for="guide in guides"
@@ -136,14 +136,14 @@ const quickAccess = [
             class="group rounded-xl border border-default/60 bg-default/30 p-5 transition hover:border-default hover:bg-elevated/70"
           >
             <UIcon :name="guide.icon" class="size-4 text-toned transition group-hover:text-highlighted" />
-            <p class="mt-3 text-sm/6 font-medium">{{ guide.title }}</p>
+            <p class="mt-3 text-sm/6 font-medium text-highlighted">{{ guide.title }}</p>
             <p class="mt-1 text-sm/6 text-toned">{{ guide.description }}</p>
           </NuxtLink>
         </div>
       </section>
 
       <section class="space-y-4">
-        <h2 class="text-xl/8 font-semibold tracking-tight sm:text-2xl/8">Quick access</h2>
+        <h2 class="text-xl/8 font-semibold tracking-tight text-highlighted sm:text-2xl/8">Quick access</h2>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <NuxtLink
             v-for="item in quickAccess"
@@ -152,7 +152,7 @@ const quickAccess = [
             class="group flex items-center gap-3 rounded-xl border border-default/60 bg-default/30 p-4 transition hover:border-default hover:bg-elevated/70"
           >
             <UIcon :name="item.icon" class="size-4 text-toned transition group-hover:text-highlighted" />
-            <span class="text-sm/6 font-medium">{{ item.title }}</span>
+            <span class="text-sm/6 font-medium text-highlighted">{{ item.title }}</span>
           </NuxtLink>
         </div>
       </section>

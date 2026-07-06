@@ -16,7 +16,7 @@
       y="23"
       fill="currentColor"
       font-family="Geist, ui-sans-serif, sans-serif"
-      font-size="18"
+      font-size="20"
       font-weight="600"
       letter-spacing="-0.02em"
     >

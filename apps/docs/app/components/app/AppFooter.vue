@@ -3,29 +3,21 @@ const appConfig = useAppConfig()
 </script>
 
 <template>
-  <div :class="[$route.path === '/' ? '' : 'border-t border-default']">
-    <UContainer
-      class="border-default px-0!"
-      :class="[$route.path === '/' ? 'border-x' : '']"
-    >
+  <div class="border-t border-default">
+    <UContainer class="px-0!">
       <footer>
-        <div class="grid border-b border-default sm:grid-cols-2 lg:grid-cols-4">
-          <div class="border-b border-default p-6 sm:border-r md:p-8 lg:border-b-0">
-            <AppHeaderLogo class="h-5 text-highlighted" />
+        <div class="grid gap-8 border-b border-default px-6 py-8 sm:grid-cols-2 lg:grid-cols-4 md:px-8">
+          <div>
+            <AppHeaderLogo class="h-6 text-highlighted" />
 
-            <p class="mt-3 max-w-xs text-sm text-muted">
+            <p class="mt-3 max-w-xs text-sm text-toned">
               {{ appConfig.description }}
             </p>
           </div>
 
           <div
-            v-for="(section, i) in appConfig.footer?.sections"
+            v-for="section in appConfig.footer?.sections"
             :key="section.title"
-            class="p-6 md:p-8"
-            :class="{
-              'border-b border-default lg:border-r lg:border-b-0': i === 0,
-              'border-b border-default sm:border-r lg:border-b-0': i === 1,
-            }"
           >
             <h3 class="text-xs font-semibold uppercase tracking-wider text-highlighted">
               {{ section.title }}
@@ -41,32 +33,32 @@ const appConfig = useAppConfig()
                   :external="link.to.startsWith('https://')"
                   variant="link"
                   color="neutral"
-                  size="xs"
-                  class="px-0"
+                  size="sm"
+                  class="px-0 text-toned hover:text-highlighted"
                 />
               </li>
             </ul>
           </div>
         </div>
 
-        <div class="flex items-center justify-between px-6 py-6 md:px-8">
+        <div class="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8">
           <p class="text-sm text-muted">
             Copyright
             <a
               href="https://vercel.com"
               target="_blank"
-              class="text-default"
+              class="text-toned hover:text-highlighted"
               rel="noopener"
             >Vercel</a>
             {{ new Date().getFullYear() }}. Released under the
             <a
               href="https://github.com/vercel-labs/github-tools/blob/main/LICENSE"
               target="_blank"
-              class="text-default"
+              class="text-toned hover:text-highlighted"
               rel="noopener"
             >MIT License</a>.
           </p>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 [&_button]:text-highlighted">
             <UColorModeButton size="sm" />
             <UButton
               to="https://github.com/vercel-labs/github-tools"

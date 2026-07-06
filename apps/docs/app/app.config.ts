@@ -63,16 +63,6 @@ export default defineAppConfig({
           root: 'relative flex flex-wrap items-center gap-2 border border-default bg-elevated/50 rounded-sm px-4 py-3 my-5 last:mb-0',
         },
       },
-      h1: {
-        slots: {
-          root: 'scroll-m-20 text-3xl/9 font-semibold tracking-tight sm:text-4xl/10',
-        },
-      },
-      h2: {
-        slots: {
-          root: 'mt-10 text-2xl/8 font-semibold tracking-tight',
-        },
-      },
       p: {
         slots: {
           root: 'text-base/7 text-toned',

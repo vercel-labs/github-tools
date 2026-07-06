@@ -17,7 +17,7 @@ const links = computed(() => appConfig.github && appConfig.github.url
 </script>
 
 <template>
-  <UHeader :ui="{ left: 'lg:flex-none', center: 'flex-1', right: 'gap-2.5', body: 'sm:p-4' }">
+  <UHeader :ui="{ left: 'lg:flex-none', center: 'flex-1', right: 'gap-2.5 [&_button]:text-highlighted', body: 'sm:p-4' }">
     <AppHeaderCenter />
 
     <template #left>
@@ -45,6 +45,7 @@ const links = computed(() => appConfig.github && appConfig.github.url
         <UButton
           v-for="(link, index) of links"
           :key="index"
+          class="text-highlighted"
           v-bind="{ color: 'neutral', variant: 'ghost', ...link }"
         />
       </template>

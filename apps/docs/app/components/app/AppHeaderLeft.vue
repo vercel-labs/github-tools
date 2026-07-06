@@ -65,7 +65,7 @@
       aria-label="GitHub Tools"
       class="text-highlighted!"
     >
-      <AppHeaderLogo class="h-5 w-auto shrink-0" />
+      <AppHeaderLogo class="h-6 w-auto shrink-0" />
     </ULink>
   </div>
 </template>
