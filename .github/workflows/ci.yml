@@ -53,3 +53,4 @@ jobs:
       - run: corepack enable
       - run: pnpm install
       - run: pnpx pkg-pr-new publish --compact --no-template --pnpm './packages/github-tools'
+        continue-on-error: true

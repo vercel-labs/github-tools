@@ -55,17 +55,12 @@ export default defineAppConfig({
   ui: {
     colors: {
       primary: 'neutral',
-      neutral: 'zinc',
+      neutral: 'neutral',
     },
     prose: {
-      h1: {
+      prompt: {
         slots: {
-          root: 'scroll-m-20 text-3xl/9 font-semibold tracking-tight sm:text-4xl/10',
-        },
-      },
-      h2: {
-        slots: {
-          root: 'mt-10 text-2xl/8 font-semibold tracking-tight',
+          root: 'relative flex flex-wrap items-center gap-2 border border-default bg-elevated/50 rounded-sm px-4 py-3 my-5 last:mb-0',
         },
       },
       p: {
@@ -88,5 +83,32 @@ export default defineAppConfig({
         },
       },
     },
+  },
+  footer: {
+    sections: [
+      {
+        title: 'Getting Started',
+        links: [
+          { label: 'Introduction', to: '/getting-started/introduction' },
+          { label: 'Installation', to: '/getting-started/installation' },
+          { label: 'Agent Skills', to: '/getting-started/agent-skills' },
+        ],
+      },
+      {
+        title: 'Guides',
+        links: [
+          { label: 'Quick Start', to: '/guide/quick-start' },
+          { label: 'Presets', to: '/guide/presets' },
+          { label: 'Durable Workflows', to: '/guide/durable-workflows' },
+        ],
+      },
+      {
+        title: 'API',
+        links: [
+          { label: 'Tools Catalog', to: '/api/tools-catalog' },
+          { label: 'API Reference', to: '/api/reference' },
+        ],
+      },
+    ],
   },
 })
