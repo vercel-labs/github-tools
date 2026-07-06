@@ -17,6 +17,7 @@ export default defineConfig({
     'zod',
     'workflow',
     '@workflow/ai',
+    '@ai-sdk/workflow',
     'eve',
     'eve/tools',
     'eve/tools/approval',

@@ -64,7 +64,7 @@ await agent.generate({ prompt: '…' })
 
 ### Durable agent (Vercel Workflow)
 
-Requires optional peers: `workflow`, `@workflow/ai`. Import from `@github-tools/sdk/workflow`.
+Requires optional peers: `workflow`, `@ai-sdk/workflow`. Import from `@github-tools/sdk/workflow`.
 
 ```ts
 import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
@@ -78,7 +78,7 @@ export async function run(messages: ModelMessage[], token: string) {
 }
 ```
 
-**Limitation:** `requireApproval` is accepted but **ignored** by `DurableAgent` today. Use `createGithubAgent` + `createGithubTools({ requireApproval: … })` when you need interactive approval on writes, or [eve agents](/guide/eve-agents) for durable `once` / predicate approval.
+**Limitation:** Durable agents require `@ai-sdk/workflow` and `WorkflowChatTransport` on the client for resumable streams. For predicate/`once` approval policies, use [eve agents](/guide/eve-agents).
 
 ### eve agent
 

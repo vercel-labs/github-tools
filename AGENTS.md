@@ -29,7 +29,7 @@ There is no test suite. Verify changes with `pnpm build && pnpm lint && pnpm typ
 pnpm workspaces + Turborepo. Three packages:
 
 - **`packages/github-tools`** — the SDK (`@github-tools/sdk`), published to npm. Built with `tsdown` to ESM (`.mjs`/`.d.mts`).
-- **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `DurableAgent`).
+- **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
 - **`apps/docs`** — Nuxt 4 docs site built on Docus.
 
 Turbo task dependencies: `lint`, `lint:fix`, and `typecheck` all depend on `^build` (upstream packages must build first).
@@ -63,7 +63,7 @@ export const myTool = (token: string, { needsApproval = true }: ToolOptions = {}
 
 - `src/index.ts` — public API: `createGithubTools()`, preset definitions (`PRESET_TOOLS`), `GithubWriteToolName` union, all re-exports
 - `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`) with preset-specific system prompts
-- `src/workflow.ts` — `createDurableGithubAgent()` (`DurableAgent`), exported from `@github-tools/sdk/workflow` subpath
+- `src/workflow.ts` — `createDurableGithubAgent()` (`WorkflowAgent` from `@ai-sdk/workflow`), exported from `@github-tools/sdk/workflow` subpath
 - `src/client.ts` — `createOctokit(token)` wrapper
 - `src/tools/` — 7 domain files: `repository.ts`, `pull-requests.ts`, `issues.ts`, `commits.ts`, `gists.ts`, `workflows.ts`, `search.ts`
 
@@ -77,7 +77,7 @@ export const myTool = (token: string, { needsApproval = true }: ToolOptions = {}
 ### Dual-Mode Agents
 
 - **Standard**: `createGithubAgent()` → `ToolLoopAgent` — supports `requireApproval` for human-in-the-loop
-- **Durable**: `createDurableGithubAgent()` → `DurableAgent` — crash-safe, retryable; `requireApproval` is accepted but currently ignored
+- **Durable**: `createDurableGithubAgent()` → `WorkflowAgent` — crash-safe, retryable; `requireApproval` pauses the workflow until the user responds
 
 ### Tool Overrides
 

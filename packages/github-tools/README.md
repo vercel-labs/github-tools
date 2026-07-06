@@ -195,7 +195,7 @@ Each step, toolpick picks the best ~5 tools using keyword + semantic search. All
 
 All tools include `"use step"` directives with named, module-level step functions, making them natively compatible with the Vercel Workflow SDK. Each tool execution runs as a properly registered durable step with full Node.js access in the workflow sandbox.
 
-Use `DurableAgent` via the `@github-tools/sdk/workflow` subpath to make every LLM call and tool execution a retryable, crash-safe step:
+Use `WorkflowAgent` via the `@github-tools/sdk/workflow` subpath to make every LLM call and tool execution a retryable, crash-safe step:
 
 ```ts
 import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
@@ -207,11 +207,9 @@ const agent = createDurableGithubAgent({
 })
 ```
 
-All presets work with `createDurableGithubAgent`.
+All presets work with `createDurableGithubAgent`. Write tools honor `requireApproval` via `needsApproval` — the workflow pauses until the user approves or denies.
 
-> **Approval control limitation**: `requireApproval` is accepted for forward-compatibility but is currently ignored by `DurableAgent`. The Workflow SDK does not yet support interactive tool approval — all tools execute immediately. Use `createGithubAgent` (standard `ToolLoopAgent`) when human-in-the-loop approval is required.
-
-> `workflow` and `@workflow/ai` are optional peer dependencies — install them only when using the workflow subpath.
+> `workflow` and `@ai-sdk/workflow` are optional peer dependencies — install them only when using the workflow subpath.
 
 ## eve
 
@@ -509,9 +507,7 @@ async function agentTurn(prompt: string) {
 
 > See [`examples/pr-review-agent`](../../examples/pr-review-agent) for a complete PR review agent built with Chat SDK and Vercel Workflow.
 
-All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `DurableAgentOptions` fields like `experimental_telemetry`, `onStepFinish`, `onFinish`, and `prepareStep`.
-
-> **Note:** `requireApproval` is accepted but currently ignored by `DurableAgent` — the Workflow SDK does not yet support interactive tool approval.
+All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
 
 ### `createOctokit(token)`
 

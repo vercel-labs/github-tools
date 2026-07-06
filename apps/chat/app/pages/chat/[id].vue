@@ -2,6 +2,7 @@
 import type { DefineComponent } from 'vue'
 import { Chat } from '@ai-sdk/vue'
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses } from 'ai'
+import { WorkflowChatTransport } from '@ai-sdk/workflow'
 import type { UIMessage } from 'ai'
 import { useClipboard } from '@vueuse/core'
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
@@ -50,15 +51,35 @@ const input = ref('')
 
 const chatApiBase = durable.value ? '/api/workflow/chats' : '/api/chats'
 
+const chatApi = `${chatApiBase}/${data.value.id}`
+
 const chat = new Chat({
   id: data.value.id,
   messages: data.value.messages,
-  transport: new DefaultChatTransport({
-    api: `${chatApiBase}/${data.value.id}`,
-    body: {
-      model: model.value
-    }
-  }),
+  transport: durable.value
+    ? new WorkflowChatTransport({
+        api: chatApi,
+        initialStartIndex: -50,
+        prepareSendMessagesRequest: ({ body, messages, api, credentials, headers }) => ({
+          api,
+          credentials,
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers
+          },
+          body: {
+            ...body,
+            model: model.value,
+            messages
+          }
+        })
+      })
+    : new DefaultChatTransport({
+        api: chatApi,
+        body: {
+          model: model.value
+        }
+      }),
   sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
   onData: (dataPart) => {
     if (dataPart.type === 'data-chat-title') {

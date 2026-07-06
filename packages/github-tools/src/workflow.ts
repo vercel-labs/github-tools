@@ -1,10 +1,25 @@
-import { DurableAgent } from '@workflow/ai/agent'
-import type { CompatibleLanguageModel, DurableAgentOptions, DurableAgentStreamOptions, DurableAgentStreamResult, TelemetrySettings } from '@workflow/ai/agent'
-import type { ToolSet, StepResult, FinishReason, LanguageModelUsage, LanguageModelResponseMetadata, ModelMessage, StopCondition } from 'ai'
+import { WorkflowAgent } from '@ai-sdk/workflow'
+import type {
+  WorkflowAgentOptions,
+  WorkflowAgentStreamOptions,
+  WorkflowAgentStreamResult,
+  TelemetryOptions,
+} from '@ai-sdk/workflow'
+import type {
+  LanguageModel,
+  ToolSet,
+  StepResult,
+  FinishReason,
+  LanguageModelUsage,
+  LanguageModelResponseMetadata,
+  ModelMessage,
+  StopCondition,
+} from 'ai'
 import { createGithubTools } from './index'
 import { resolveInstructions } from './agents'
 import type { GithubToolPreset, ApprovalConfig } from './index'
 import type { CommitIdentity } from './types'
+import type { Context } from '@ai-sdk/provider-utils'
 
 /**
  * Result of {@link DurableGithubAgent.generate}.
@@ -18,27 +33,27 @@ export interface DurableGithubAgentGenerateResult<TTools extends ToolSet = ToolS
 }
 
 /**
- * A wrapper around the Workflow SDK's `DurableAgent` that adds a non-streaming
+ * A wrapper around {@link WorkflowAgent} that adds a non-streaming
  * `.generate()` method alongside the existing `.stream()`.
  *
- * - `.stream()` — delegates to `DurableAgent.stream()`, each tool call is
- *   an individually retriable workflow step. Works in workflow context.
+ * - `.stream()` — delegates to `WorkflowAgent.stream()`. Each tool call is
+ *   an individually retriable workflow step. Supports `needsApproval` on tools.
  * - `.generate()` — uses `generateText` from the AI SDK for non-streaming
  *   execution. Must be called from within a `"use step"` function in
  *   workflow context (the Workflow runtime blocks raw I/O in workflow scope).
  */
 export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
-  private agent: DurableAgent<TTools>
-  private _model: DurableAgentOptions<TTools>['model']
-  private _instructions?: DurableAgentOptions<TTools>['instructions']
-  private _telemetry?: TelemetrySettings
+  private agent: WorkflowAgent<TTools>
+  private _model: LanguageModel
+  private _instructions?: string
+  private _telemetry?: TelemetryOptions
   private _tools: TTools
 
-  constructor(options: DurableAgentOptions<TTools>) {
-    this.agent = new DurableAgent(options)
+  constructor(options: WorkflowAgentOptions<TTools>) {
+    this.agent = new WorkflowAgent(options)
     this._model = options.model
-    this._instructions = options.instructions
-    this._telemetry = options.experimental_telemetry
+    this._instructions = typeof options.instructions === 'string' ? options.instructions : undefined
+    this._telemetry = options.telemetry
     this._tools = options.tools ?? {} as TTools
   }
 
@@ -48,12 +63,12 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
   }
 
   /**
-   * Stream the agent's response. Delegates directly to `DurableAgent.stream()`.
+   * Stream the agent's response. Delegates directly to `WorkflowAgent.stream()`.
    * Works in workflow context — each tool call is a durable step.
    */
   stream<TStreamTools extends TTools = TTools, OUTPUT = never, PARTIAL_OUTPUT = never>(
-    options: DurableAgentStreamOptions<TStreamTools, OUTPUT, PARTIAL_OUTPUT>,
-  ): Promise<DurableAgentStreamResult<TStreamTools, OUTPUT>> {
+    options: WorkflowAgentStreamOptions<TStreamTools, Context, OUTPUT, PARTIAL_OUTPUT>,
+  ): Promise<WorkflowAgentStreamResult<TStreamTools, OUTPUT>> {
     return this.agent.stream(options)
   }
 
@@ -63,33 +78,14 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
    * In workflow context this **must** be called from within a `"use step"`
    * function, because the Workflow runtime blocks direct I/O (HTTP calls)
    * at the workflow scope level.
-   *
-   * @example
-   * ```ts
-   * async function agentTurn(prompt: string) {
-   *   "use step"
-   *   const agent = createDurableGithubAgent({
-   *     model: 'anthropic/claude-sonnet-4.6',
-   *     preset: 'code-review',
-   *   })
-   *   const { text } = await agent.generate({ prompt })
-   *   return text
-   * }
-   * ```
    */
   async generate({ prompt, stopWhen }: { prompt: string, stopWhen?: StopCondition<TTools> | Array<StopCondition<TTools>> }): Promise<DurableGithubAgentGenerateResult<TTools>> {
     const { generateText } = await import('ai')
 
-    const model = typeof this._model === 'function'
-      ? await this._model()
-      : this._model
-
-    const system = typeof this._instructions === 'string'
-      ? this._instructions
-      : undefined
+    const system = this._instructions
 
     const result = await generateText({
-      model: model as Parameters<typeof generateText>[0]['model'],
+      model: this._model,
       tools: this._tools,
       system,
       prompt,
@@ -110,12 +106,12 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
 /**
  * Options for creating a durable GitHub agent via {@link createDurableGithubAgent}.
  *
- * Extends all `DurableAgentOptions` (temperature, telemetry, callbacks, etc.)
+ * Extends all `WorkflowAgentOptions` (temperature, telemetry, callbacks, etc.)
  * and adds GitHub-specific fields (token, preset, approval config).
  */
 export type CreateDurableGithubAgentOptions =
-  Omit<DurableAgentOptions, 'model' | 'tools' | 'instructions'> & {
-    model: string | CompatibleLanguageModel | (() => Promise<CompatibleLanguageModel>)
+  Omit<WorkflowAgentOptions, 'model' | 'tools' | 'instructions'> & {
+    model: string | LanguageModel
     /**
      * GitHub personal access token.
      * Falls back to `process.env.GITHUB_TOKEN` when omitted.
@@ -143,23 +139,22 @@ export type CreateDurableGithubAgentOptions =
   }
 
 /**
- * Create a pre-configured durable GitHub agent powered by Vercel Workflow SDK's `DurableAgent`.
+ * Create a pre-configured durable GitHub agent powered by `WorkflowAgent`
+ * from `@ai-sdk/workflow`.
  *
  * Returns a {@link DurableGithubAgent} with two interaction modes:
  *
  * - `.stream()` — works directly in workflow scope; each tool call is a durable step.
+ *   Write tools honor `requireApproval` via `needsApproval` and pause the workflow
+ *   until the user approves or denies.
  * - `.generate()` — uses `generateText` from the AI SDK; must be called from
  *   within a `"use step"` function when running inside a workflow.
- *
- * **Note:** `requireApproval` is accepted for forward-compatibility but is currently
- * ignored by `DurableAgent` — the Workflow SDK does not yet support interactive tool
- * approval. All tools execute immediately without user confirmation.
  *
  * @example Streaming (chat UI — works in workflow scope)
  * ```ts
  * import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
  * import { getWritable } from 'workflow'
- * import type { ModelMessage, UIMessageChunk } from 'ai'
+ * import type { ModelMessage, ModelCallStreamPart } from 'ai'
  *
  * async function chatWorkflow(messages: ModelMessage[], token: string) {
  *   "use workflow"
@@ -168,23 +163,8 @@ export type CreateDurableGithubAgentOptions =
  *     token,
  *     preset: 'code-review',
  *   })
- *   const writable = getWritable<UIMessageChunk>()
+ *   const writable = getWritable<ModelCallStreamPart>()
  *   await agent.stream({ messages, writable })
- * }
- * ```
- *
- * @example Non-streaming (bot / background job — needs "use step")
- * ```ts
- * import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
- *
- * async function agentTurn(prompt: string) {
- *   "use step"
- *   const agent = createDurableGithubAgent({
- *     model: 'anthropic/claude-sonnet-4.6',
- *     preset: 'code-review',
- *   })
- *   const { text } = await agent.generate({ prompt })
- *   return text
  * }
  * ```
  */
@@ -202,13 +182,9 @@ export function createDurableGithubAgent({
 }: CreateDurableGithubAgentOptions): DurableGithubAgent {
   const tools = createGithubTools({ token, requireApproval, preset, author, committer, coAuthors })
 
-  const resolvedModel = typeof model === 'string' || typeof model === 'function'
-    ? model
-    : () => Promise.resolve(model)
-
   return new DurableGithubAgent({
-    ...agentOptions as Omit<typeof agentOptions, 'toolChoice'>,
-    model: resolvedModel,
+    ...agentOptions,
+    model,
     tools,
     instructions: resolveInstructions({ preset, instructions, additionalInstructions }),
   })

@@ -1,7 +1,7 @@
 ---
 name: durable-workflows
 description: Best practices for using GitHub tools within Vercel Workflow, including step directives and streaming responses.
-tags: [workflow, durable, DurableAgent, use-step, use-workflow, streaming, vercel]
+tags: [workflow, durable, WorkflowAgent, use-step, use-workflow, streaming, vercel]
 ---
 
 # Durable workflows
@@ -10,27 +10,27 @@ tags: [workflow, durable, DurableAgent, use-step, use-workflow, streaming, verce
 
 - **`"use workflow"`** — Entry function runs as a Vercel Workflow: durable orchestration, replay, observability.
 - **`"use step"`** — Each GitHub tool invocation is implemented as a step (retries, isolation, full Node in the workflow runtime).
-- **`createDurableGithubAgent`** — From `@github-tools/sdk/workflow`, wraps tools in `DurableAgent` so **model steps and tool calls** participate in the same durable execution model.
+- **`createDurableGithubAgent`** — From `@github-tools/sdk/workflow`, wraps tools in `WorkflowAgent` (`@ai-sdk/workflow`) so **model steps and tool calls** participate in the same durable execution model.
 
 ## Dependencies
 
 ```bash
-pnpm add workflow @workflow/ai @github-tools/sdk ai zod
+pnpm add workflow @ai-sdk/workflow @github-tools/sdk ai zod
 ```
 
 ## Minimal pattern
 
 1. Define a workflow function with `'use workflow'` at the top of the async body.
-2. `createDurableGithubAgent({ model, token, preset?, maxSteps?, … })`.
-3. `getWritable<UIMessageChunk>()` when streaming chunks to a UI (chat).
-4. `await agent.stream({ messages, writable })` (or the non-stream API your app uses).
+2. `createDurableGithubAgent({ model, token, preset?, requireApproval?, stopWhen?, … })`.
+3. `getWritable<ModelCallStreamPart>()` when streaming chunks to a UI (chat).
+4. `await agent.stream({ messages, writable })`.
+5. In the route handler, pipe `run.readable` through `createModelCallToUIChunkTransform()` and return `x-workflow-run-id`.
 
 ## Approval
 
-Do not rely on `requireApproval` for durable agents until Workflow supports the same approval UX as `ToolLoopAgent`. Prefer:
+`requireApproval` maps to `needsApproval` on write tools. `WorkflowAgent` pauses the workflow and emits approval requests to the stream until the user responds. Wire the client with `WorkflowChatTransport` and a GET reconnect route.
 
-- **Non-durable** `createGithubAgent` / `createGithubTools` for human-in-the-loop writes, or
-- **Application-level** guards (only pass write-capable tokens in trusted routes, or branch on environment).
+For predicate/`once` approval policies, prefer [eve agents](/guide/eve-agents).
 
 ## Framework notes
 

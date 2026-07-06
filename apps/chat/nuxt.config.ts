@@ -46,10 +46,13 @@ export default defineNuxtConfig({
     db: 'sqlite',
     blob: true
   },
-
   vite: {
     optimizeDeps: {
-      include: ['striptags']
+      include: [
+        'striptags', // CJS
+        '@vue/devtools-core',
+        '@vue/devtools-kit'
+      ]
     }
   },
 

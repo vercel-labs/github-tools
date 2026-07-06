@@ -1,4 +1,5 @@
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateText } from 'ai'
+import { createModelCallToUIChunkTransform } from '@ai-sdk/workflow'
 import { start } from 'workflow/api'
 import { z } from 'zod'
 import { db, schema } from 'hub:db'
@@ -84,7 +85,7 @@ export default defineEventHandler(async (event) => {
       if (!chat.title && !isContinuation) {
         writer.write({ type: 'data-chat-title', data: { message: 'Generating title...' }, transient: true })
       }
-      writer.merge(run.readable)
+      writer.merge(run.readable.pipeThrough(createModelCallToUIChunkTransform()))
     },
     onFinish: async ({ responseMessage, isContinuation: isCont }) => {
       if (isCont) {
@@ -106,5 +107,10 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  return createUIMessageStreamResponse({ stream })
+  return createUIMessageStreamResponse({
+    stream,
+    headers: {
+      'x-workflow-run-id': run.runId
+    }
+  })
 })

@@ -1,6 +1,8 @@
+import { stepCountIs } from 'ai'
+import type { ModelMessage } from 'ai'
+import type { ModelCallStreamPart } from '@ai-sdk/workflow'
 import { getWritable } from 'workflow'
 import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
-import type { ModelMessage, UIMessageChunk } from 'ai'
 
 export async function durableChatWorkflow(
   messages: ModelMessage[],
@@ -11,17 +13,22 @@ export async function durableChatWorkflow(
 ) {
   'use workflow'
 
-  const writable = getWritable<UIMessageChunk>()
+  const writable = getWritable<ModelCallStreamPart>()
 
   const agent = createDurableGithubAgent({
     model,
     token,
-    additionalInstructions
+    requireApproval: true,
+    additionalInstructions,
+    stopWhen: stepCountIs(maxSteps),
+    providerOptions: {
+      openai: { reasoningEffort: 'low', reasoningSummary: 'detailed' },
+      google: { thinkingConfig: { includeThoughts: true, thinkingBudget: 2048 } }
+    }
   })
 
   await agent.stream({
     messages,
-    writable,
-    maxSteps
+    writable
   })
 }

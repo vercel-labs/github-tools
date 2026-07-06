@@ -16,6 +16,7 @@
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.12",
     "@ai-sdk/vue": "^4.0.16",
+    "@ai-sdk/workflow": "^1.0.16",
     "@github-tools/sdk": "workspace:*",
     "@iconify-json/logos": "^1.2.11",
     "@iconify-json/lucide": "^1.2.105",

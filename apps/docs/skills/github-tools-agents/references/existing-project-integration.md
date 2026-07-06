@@ -15,7 +15,7 @@ pnpm add @github-tools/sdk ai zod
 Optional for durable mode:
 
 ```bash
-pnpm add workflow @workflow/ai
+pnpm add workflow @ai-sdk/workflow
 ```
 
 ## 2. Environment
