@@ -1,5 +1,5 @@
 import { ToolLoopAgent } from 'ai'
-import type { ToolLoopAgentSettings } from 'ai'
+import type { ToolLoopAgentSettings, ToolSet } from 'ai'
 import { createGithubTools } from './index'
 import type { GithubToolPreset, ApprovalConfig } from './index'
 import type { CommitIdentity } from './types'
@@ -87,10 +87,10 @@ export function resolveInstructions(options: {
   return defaultPrompt
 }
 
-type AgentOptions = Omit<ToolLoopAgentSettings, 'model' | 'tools' | 'instructions'>
+type AgentOptions = Omit<ToolLoopAgentSettings<ToolSet>, 'model' | 'tools' | 'instructions'>
 
 export type CreateGithubAgentOptions = AgentOptions & {
-  model: ToolLoopAgentSettings['model']
+  model: ToolLoopAgentSettings<ToolSet>['model']
   /**
    * GitHub personal access token.
    * Falls back to `process.env.GITHUB_TOKEN` when omitted.
@@ -145,12 +145,12 @@ export function createGithubAgent({
   committer,
   coAuthors,
   ...agentOptions
-}: CreateGithubAgentOptions): ToolLoopAgent {
+}: CreateGithubAgentOptions): ToolLoopAgent<ToolSet> {
   const tools = createGithubTools({ token, requireApproval, preset, author, committer, coAuthors })
 
   return new ToolLoopAgent({
     ...agentOptions,
     tools,
-    instructions: resolveInstructions({ preset, instructions, additionalInstructions })
-  })
+    instructions: resolveInstructions({ preset, instructions, additionalInstructions }),
+  } as ToolLoopAgentSettings<ToolSet>)
 }

@@ -1,3 +1,4 @@
+import type { ToolSet } from 'ai'
 import { getRepository, listBranches, getFileContent, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
 import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview } from './tools/pull-requests'
 import { listIssues, getIssue, createIssue, addIssueComment, closeIssue, listLabels, addLabels, removeLabel } from './tools/issues'
@@ -119,7 +120,7 @@ export function createGithubTools({
   author,
   committer,
   coAuthors,
-}: GithubToolsOptions = {}) {
+}: GithubToolsOptions = {}): ToolSet {
   const resolvedToken = resolveGithubToken(token)
   const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveAiSdkApproval(name, requireApproval) })
   const allowed = preset ? resolvePresetTools(preset) : null
@@ -185,7 +186,7 @@ export function createGithubTools({
   ) as Partial<typeof allTools>
 }
 
-export type GithubTools = ReturnType<typeof createGithubTools>
+export type GithubTools = ToolSet
 
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'
@@ -196,6 +197,6 @@ export { searchCode, searchRepositories } from './tools/search'
 export { listCommits, getCommit, getBlame } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-export type { CommitIdentity, CommitToolOptions, Octokit, ToolOptions, ToolOverrides } from './types'
+export type { CommitIdentity, CommitToolOptions, GithubTool, Octokit, ToolOptions, ToolOverrides } from './types'
 export { createGithubAgent } from './agents'
 export type { CreateGithubAgentOptions } from './agents'

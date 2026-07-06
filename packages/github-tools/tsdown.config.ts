@@ -12,6 +12,8 @@ export default defineConfig({
   fixedExtension: true,
   external: [
     'ai',
+    '@ai-sdk/provider',
+    '@ai-sdk/provider-utils',
     'zod',
     'workflow',
     '@workflow/ai',

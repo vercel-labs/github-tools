@@ -1,4 +1,5 @@
 import { tool } from 'ai'
+import type { GithubTool } from '../types'
 import {
   searchCodeInputSchema,
   searchCodeDescription,
@@ -13,7 +14,7 @@ async function searchCodeStep(args: Parameters<typeof searchCodeCore>[0]) {
   return searchCodeCore(args)
 }
 
-export const searchCode = (token: string) =>
+export const searchCode = (token: string): GithubTool =>
   tool({
     description: searchCodeDescription,
     inputSchema: searchCodeInputSchema,
@@ -25,7 +26,7 @@ async function searchRepositoriesStep(args: Parameters<typeof searchRepositories
   return searchRepositoriesCore(args)
 }
 
-export const searchRepositories = (token: string) =>
+export const searchRepositories = (token: string): GithubTool =>
   tool({
     description: searchRepositoriesDescription,
     inputSchema: searchRepositoriesInputSchema,

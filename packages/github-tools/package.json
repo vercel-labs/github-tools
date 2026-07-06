@@ -58,7 +58,7 @@
     "octokit": "^5.0.5"
   },
   "peerDependencies": {
-    "@workflow/ai": "^4.1.0-beta.60",
+    "@workflow/ai": "^4.1.2",
     "ai": "^6.0.97 || ^7.0.0",
     "eve": "^0.19.0",
     "workflow": "^4.5.0",
@@ -76,8 +76,10 @@
     }
   },
   "devDependencies": {
+    "@ai-sdk/provider": "^4.0.2",
+    "@ai-sdk/provider-utils": "^5.0.5",
     "@types/node": "^25.6.0",
-    "ai": "^6.0.175",
+    "ai": "^7.0.0",
     "eslint": "^10.3.0",
     "eve": "^0.19.0",
     "tsdown": "^0.21.10",

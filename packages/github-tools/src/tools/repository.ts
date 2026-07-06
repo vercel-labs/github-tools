@@ -24,7 +24,7 @@ import {
   composeCommitMessage,
 } from '../core/repository'
 import { getFileContentToModelOutput } from '../core/model-output'
-import type { CommitToolOptions, ToolOptions } from '../types'
+import type { CommitToolOptions, ToolOptions, GithubTool } from '../types'
 
 export { composeCommitMessage }
 
@@ -33,7 +33,7 @@ async function getRepositoryStep(args: Parameters<typeof getRepositoryCore>[0]) 
   return getRepositoryCore(args)
 }
 
-export const getRepository = (token: string) =>
+export const getRepository = (token: string): GithubTool =>
   tool({
     description: getRepositoryDescription,
     inputSchema: getRepositoryInputSchema,
@@ -45,7 +45,7 @@ async function listBranchesStep(args: Parameters<typeof listBranchesCore>[0]) {
   return listBranchesCore(args)
 }
 
-export const listBranches = (token: string) =>
+export const listBranches = (token: string): GithubTool =>
   tool({
     description: listBranchesDescription,
     inputSchema: listBranchesInputSchema,
@@ -57,7 +57,7 @@ async function getFileContentStep(args: Parameters<typeof getFileContentCore>[0]
   return getFileContentCore(args)
 }
 
-export const getFileContent = (token: string) =>
+export const getFileContent = (token: string): GithubTool =>
   tool({
     description: getFileContentDescription,
     inputSchema: getFileContentInputSchema,
@@ -70,7 +70,7 @@ async function createBranchStep(args: Parameters<typeof createBranchCore>[0]) {
   return createBranchCore(args)
 }
 
-export const createBranch = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createBranch = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createBranchDescription,
     needsApproval,
@@ -83,7 +83,7 @@ async function forkRepositoryStep(args: Parameters<typeof forkRepositoryCore>[0]
   return forkRepositoryCore(args)
 }
 
-export const forkRepository = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const forkRepository = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: forkRepositoryDescription,
     needsApproval,
@@ -96,7 +96,7 @@ async function createRepositoryStep(args: Parameters<typeof createRepositoryCore
   return createRepositoryCore(args)
 }
 
-export const createRepository = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createRepository = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createRepositoryDescription,
     needsApproval,
@@ -111,8 +111,8 @@ async function createOrUpdateFileStep(args: Parameters<typeof createOrUpdateFile
 
 export const createOrUpdateFile = (
   token: string,
-  { needsApproval = true, author, committer, coAuthors }: CommitToolOptions = {}
-) =>
+  { needsApproval = true, author, committer, coAuthors }: CommitToolOptions = {},
+): GithubTool =>
   tool({
     description: createOrUpdateFileDescription,
     needsApproval,

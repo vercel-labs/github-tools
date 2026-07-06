@@ -22,14 +22,14 @@ import {
   rerunWorkflowRunDescription,
   rerunWorkflowRunCore,
 } from '../core/workflows'
-import type { ToolOptions } from '../types'
+import type { ToolOptions, GithubTool } from '../types'
 
 async function listWorkflowsStep(args: Parameters<typeof listWorkflowsCore>[0]) {
   "use step"
   return listWorkflowsCore(args)
 }
 
-export const listWorkflows = (token: string) =>
+export const listWorkflows = (token: string): GithubTool =>
   tool({
     description: listWorkflowsDescription,
     inputSchema: listWorkflowsInputSchema,
@@ -41,7 +41,7 @@ async function listWorkflowRunsStep(args: Parameters<typeof listWorkflowRunsCore
   return listWorkflowRunsCore(args)
 }
 
-export const listWorkflowRuns = (token: string) =>
+export const listWorkflowRuns = (token: string): GithubTool =>
   tool({
     description: listWorkflowRunsDescription,
     inputSchema: listWorkflowRunsInputSchema,
@@ -53,7 +53,7 @@ async function getWorkflowRunStep(args: Parameters<typeof getWorkflowRunCore>[0]
   return getWorkflowRunCore(args)
 }
 
-export const getWorkflowRun = (token: string) =>
+export const getWorkflowRun = (token: string): GithubTool =>
   tool({
     description: getWorkflowRunDescription,
     inputSchema: getWorkflowRunInputSchema,
@@ -65,7 +65,7 @@ async function listWorkflowJobsStep(args: Parameters<typeof listWorkflowJobsCore
   return listWorkflowJobsCore(args)
 }
 
-export const listWorkflowJobs = (token: string) =>
+export const listWorkflowJobs = (token: string): GithubTool =>
   tool({
     description: listWorkflowJobsDescription,
     inputSchema: listWorkflowJobsInputSchema,
@@ -77,7 +77,7 @@ async function triggerWorkflowStep(args: Parameters<typeof triggerWorkflowCore>[
   return triggerWorkflowCore(args)
 }
 
-export const triggerWorkflow = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const triggerWorkflow = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: triggerWorkflowDescription,
     needsApproval,
@@ -90,7 +90,7 @@ async function cancelWorkflowRunStep(args: Parameters<typeof cancelWorkflowRunCo
   return cancelWorkflowRunCore(args)
 }
 
-export const cancelWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const cancelWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: cancelWorkflowRunDescription,
     needsApproval,
@@ -103,7 +103,7 @@ async function rerunWorkflowRunStep(args: Parameters<typeof rerunWorkflowRunCore
   return rerunWorkflowRunCore(args)
 }
 
-export const rerunWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const rerunWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: rerunWorkflowRunDescription,
     needsApproval,

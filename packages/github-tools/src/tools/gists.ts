@@ -22,14 +22,14 @@ import {
   createGistCommentDescription,
   createGistCommentCore,
 } from '../core/gists'
-import type { ToolOptions } from '../types'
+import type { ToolOptions, GithubTool } from '../types'
 
 async function listGistsStep(args: Parameters<typeof listGistsCore>[0]) {
   "use step"
   return listGistsCore(args)
 }
 
-export const listGists = (token: string) =>
+export const listGists = (token: string): GithubTool =>
   tool({
     description: listGistsDescription,
     inputSchema: listGistsInputSchema,
@@ -41,7 +41,7 @@ async function getGistStep(args: Parameters<typeof getGistCore>[0]) {
   return getGistCore(args)
 }
 
-export const getGist = (token: string) =>
+export const getGist = (token: string): GithubTool =>
   tool({
     description: getGistDescription,
     inputSchema: getGistInputSchema,
@@ -53,7 +53,7 @@ async function listGistCommentsStep(args: Parameters<typeof listGistCommentsCore
   return listGistCommentsCore(args)
 }
 
-export const listGistComments = (token: string) =>
+export const listGistComments = (token: string): GithubTool =>
   tool({
     description: listGistCommentsDescription,
     inputSchema: listGistCommentsInputSchema,
@@ -65,7 +65,7 @@ async function createGistStep(args: Parameters<typeof createGistCore>[0]) {
   return createGistCore(args)
 }
 
-export const createGist = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistDescription,
     needsApproval,
@@ -78,7 +78,7 @@ async function updateGistStep(args: Parameters<typeof updateGistCore>[0]) {
   return updateGistCore(args)
 }
 
-export const updateGist = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const updateGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: updateGistDescription,
     needsApproval,
@@ -91,7 +91,7 @@ async function deleteGistStep(args: Parameters<typeof deleteGistCore>[0]) {
   return deleteGistCore(args)
 }
 
-export const deleteGist = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const deleteGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: deleteGistDescription,
     needsApproval,
@@ -104,7 +104,7 @@ async function createGistCommentStep(args: Parameters<typeof createGistCommentCo
   return createGistCommentCore(args)
 }
 
-export const createGistComment = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createGistComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistCommentDescription,
     needsApproval,

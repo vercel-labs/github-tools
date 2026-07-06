@@ -1,4 +1,5 @@
 import { tool } from 'ai'
+import type { GithubTool } from '../types'
 import {
   listCommitsInputSchema,
   listCommitsDescription,
@@ -17,7 +18,7 @@ async function listCommitsStep(args: Parameters<typeof listCommitsCore>[0]) {
   return listCommitsCore(args)
 }
 
-export const listCommits = (token: string) =>
+export const listCommits = (token: string): GithubTool =>
   tool({
     description: listCommitsDescription,
     inputSchema: listCommitsInputSchema,
@@ -29,7 +30,7 @@ async function getCommitStep(args: Parameters<typeof getCommitCore>[0]) {
   return getCommitCore(args)
 }
 
-export const getCommit = (token: string) =>
+export const getCommit = (token: string): GithubTool =>
   tool({
     description: getCommitDescription,
     inputSchema: getCommitInputSchema,
@@ -42,7 +43,7 @@ async function getBlameStep(args: Parameters<typeof getBlameCore>[0]) {
   return getBlameCore(args)
 }
 
-export const getBlame = (token: string) =>
+export const getBlame = (token: string): GithubTool =>
   tool({
     description: getBlameDescription,
     inputSchema: getBlameInputSchema,

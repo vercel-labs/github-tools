@@ -199,7 +199,7 @@ export function createDurableGithubAgent({
   committer,
   coAuthors,
   ...agentOptions
-}: CreateDurableGithubAgentOptions) {
+}: CreateDurableGithubAgentOptions): DurableGithubAgent {
   const tools = createGithubTools({ token, requireApproval, preset, author, committer, coAuthors })
 
   const resolvedModel = typeof model === 'string' || typeof model === 'function'

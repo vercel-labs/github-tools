@@ -2,6 +2,8 @@ import type { Tool } from 'ai'
 
 export type { Octokit } from 'octokit'
 
+export type GithubTool = Tool<any, any>
+
 export type ToolOptions = { needsApproval?: boolean }
 
 /**

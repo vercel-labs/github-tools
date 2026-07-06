@@ -26,7 +26,7 @@ import {
   createPullRequestReviewCore,
 } from '../core/pull-requests'
 import { listPullRequestFilesToModelOutput } from '../core/model-output'
-import type { CommitIdentity, ToolOptions } from '../types'
+import type { CommitIdentity, ToolOptions, GithubTool } from '../types'
 
 export type MergeToolOptions = ToolOptions & {
   coAuthors?: CommitIdentity[]
@@ -37,7 +37,7 @@ async function listPullRequestsStep(args: Parameters<typeof listPullRequestsCore
   return listPullRequestsCore(args)
 }
 
-export const listPullRequests = (token: string) =>
+export const listPullRequests = (token: string): GithubTool =>
   tool({
     description: listPullRequestsDescription,
     inputSchema: listPullRequestsInputSchema,
@@ -49,7 +49,7 @@ async function getPullRequestStep(args: Parameters<typeof getPullRequestCore>[0]
   return getPullRequestCore(args)
 }
 
-export const getPullRequest = (token: string) =>
+export const getPullRequest = (token: string): GithubTool =>
   tool({
     description: getPullRequestDescription,
     inputSchema: getPullRequestInputSchema,
@@ -61,7 +61,7 @@ async function createPullRequestStep(args: Parameters<typeof createPullRequestCo
   return createPullRequestCore(args)
 }
 
-export const createPullRequest = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createPullRequest = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createPullRequestDescription,
     needsApproval,
@@ -74,7 +74,7 @@ async function mergePullRequestStep(args: Parameters<typeof mergePullRequestCore
   return mergePullRequestCore(args)
 }
 
-export const mergePullRequest = (token: string, { needsApproval = true, coAuthors }: MergeToolOptions = {}) =>
+export const mergePullRequest = (token: string, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
   tool({
     description: mergePullRequestDescription,
     needsApproval,
@@ -87,7 +87,7 @@ async function addPullRequestCommentStep(args: Parameters<typeof addPullRequestC
   return addPullRequestCommentCore(args)
 }
 
-export const addPullRequestComment = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const addPullRequestComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: addPullRequestCommentDescription,
     needsApproval,
@@ -100,7 +100,7 @@ async function listPullRequestFilesStep(args: Parameters<typeof listPullRequestF
   return listPullRequestFilesCore(args)
 }
 
-export const listPullRequestFiles = (token: string) =>
+export const listPullRequestFiles = (token: string): GithubTool =>
   tool({
     description: listPullRequestFilesDescription,
     inputSchema: listPullRequestFilesInputSchema,
@@ -113,7 +113,7 @@ async function listPullRequestReviewsStep(args: Parameters<typeof listPullReques
   return listPullRequestReviewsCore(args)
 }
 
-export const listPullRequestReviews = (token: string) =>
+export const listPullRequestReviews = (token: string): GithubTool =>
   tool({
     description: listPullRequestReviewsDescription,
     inputSchema: listPullRequestReviewsInputSchema,
@@ -125,7 +125,7 @@ async function createPullRequestReviewStep(args: Parameters<typeof createPullReq
   return createPullRequestReviewCore(args)
 }
 
-export const createPullRequestReview = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createPullRequestReview = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createPullRequestReviewDescription,
     needsApproval,

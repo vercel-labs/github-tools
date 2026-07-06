@@ -25,14 +25,14 @@ import {
   removeLabelDescription,
   removeLabelCore,
 } from '../core/issues'
-import type { ToolOptions } from '../types'
+import type { ToolOptions, GithubTool } from '../types'
 
 async function listIssuesStep(args: Parameters<typeof listIssuesCore>[0]) {
   "use step"
   return listIssuesCore(args)
 }
 
-export const listIssues = (token: string) =>
+export const listIssues = (token: string): GithubTool =>
   tool({
     description: listIssuesDescription,
     inputSchema: listIssuesInputSchema,
@@ -44,7 +44,7 @@ async function getIssueStep(args: Parameters<typeof getIssueCore>[0]) {
   return getIssueCore(args)
 }
 
-export const getIssue = (token: string) =>
+export const getIssue = (token: string): GithubTool =>
   tool({
     description: getIssueDescription,
     inputSchema: getIssueInputSchema,
@@ -56,7 +56,7 @@ async function createIssueStep(args: Parameters<typeof createIssueCore>[0]) {
   return createIssueCore(args)
 }
 
-export const createIssue = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const createIssue = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createIssueDescription,
     needsApproval,
@@ -69,7 +69,7 @@ async function addIssueCommentStep(args: Parameters<typeof addIssueCommentCore>[
   return addIssueCommentCore(args)
 }
 
-export const addIssueComment = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const addIssueComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: addIssueCommentDescription,
     needsApproval,
@@ -82,7 +82,7 @@ async function closeIssueStep(args: Parameters<typeof closeIssueCore>[0]) {
   return closeIssueCore(args)
 }
 
-export const closeIssue = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const closeIssue = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: closeIssueDescription,
     needsApproval,
@@ -95,7 +95,7 @@ async function listLabelsStep(args: Parameters<typeof listLabelsCore>[0]) {
   return listLabelsCore(args)
 }
 
-export const listLabels = (token: string) =>
+export const listLabels = (token: string): GithubTool =>
   tool({
     description: listLabelsDescription,
     inputSchema: listLabelsInputSchema,
@@ -107,7 +107,7 @@ async function addLabelsStep(args: Parameters<typeof addLabelsCore>[0]) {
   return addLabelsCore(args)
 }
 
-export const addLabels = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const addLabels = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: addLabelsDescription,
     needsApproval,
@@ -120,7 +120,7 @@ async function removeLabelStep(args: Parameters<typeof removeLabelCore>[0]) {
   return removeLabelCore(args)
 }
 
-export const removeLabel = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+export const removeLabel = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: removeLabelDescription,
     needsApproval,
