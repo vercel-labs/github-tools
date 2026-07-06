@@ -14,7 +14,7 @@ metadata:
 
 Use this skill when the user wants **GitHub API access from an LLM** via the [`@github-tools/sdk`](https://www.npmjs.com/package/@github-tools/sdk) package: `generateText` / `streamText`, `createGithubAgent`, or **durable** `createDurableGithubAgent` with the Vercel Workflow SDK.
 
-Official docs: **https://github-tools.com** — paths such as `/getting-started/installation`, `/guide/quick-start`, `/guide/durable-workflows`, `/guide/approval-control`, `/guide/token-permissions`, `/api/reference`. Copy-prompts for assistants are embedded on those pages.
+Official docs: **https://github-tools.com** — paths such as `/getting-started/installation`, `/guide/quick-start`, `/guide/durable-workflows`, `/guide/eve-agents`, `/guide/approval-control`, `/guide/token-permissions`, `/api/reference`. Copy-prompts for assistants are embedded on those pages.
 
 ## When to use
 
@@ -22,6 +22,7 @@ Official docs: **https://github-tools.com** — paths such as `/getting-started/
 - **Existing repo**: "We already use the AI SDK — add repo/PR/issue tools."
 - **Agents**: "Use `createGithubAgent` with a preset" / custom system instructions.
 - **Durable**: "Run the agent inside Vercel Workflow" / `"use workflow"` / crash-safe tool steps.
+- **eve**: "Add GitHub tools to an eve agent" / `defineDynamic` / `@github-tools/sdk/eve`.
 - **Safety**: "Gate merges / file writes with approval" / fine-grained PAT scopes.
 - **Narrow scope**: Presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintainer`) or cherry-picked tool factories.
 
@@ -77,7 +78,20 @@ export async function run(messages: ModelMessage[], token: string) {
 }
 ```
 
-**Limitation:** `requireApproval` is accepted but **ignored** by `DurableAgent` today. Use `createGithubAgent` + `createGithubTools({ requireApproval: … })` when you need interactive approval on writes.
+**Limitation:** `requireApproval` is accepted but **ignored** by `DurableAgent` today. Use `createGithubAgent` + `createGithubTools({ requireApproval: … })` when you need interactive approval on writes, or [eve agents](/guide/eve-agents) for durable `once` / predicate approval.
+
+### eve agent
+
+Requires optional peers: `eve`, **`ai` v7`. Import from `@github-tools/sdk/eve`.
+
+```ts
+// agent/tools/github.ts
+import { createGithubTools } from '@github-tools/sdk/eve'
+
+export default createGithubTools({ preset: 'code-review' })
+```
+
+See `./references/eve-agents.md` and `/guide/eve-agents`.
 
 ## Presets
 
@@ -105,6 +119,7 @@ Each packaged tool uses a named module-level **`"use step"`** function so indivi
 Each reference file includes YAML frontmatter with `name`, `description`, and `tags` for searchability. Use the search script available in `scripts/search_references.py` to quickly find relevant references by tag or keyword.
 
 - [Durable Workflows](references/durable-workflows.md): Best practices for using GitHub tools within Vercel Workflow, including step directives and streaming responses.
+- [eve Agents](references/eve-agents.md): Register GitHub tools in eve via defineDynamic, approval policies, and the eve-agent example.
 - [Existing Project Integration](references/existing-project-integration.md): How to integrate GitHub tools into an existing codebase, including environment variable management and framework-specific hooks.
 - [Tokens and Approval](references/tokens-and-approval.md): Guidance on mapping GitHub token scopes to specific tools and configuring approval flows for safe write operations.
 

@@ -66,6 +66,12 @@ const guides = [
     to: '/guide/examples',
     icon: 'i-custom:terminal',
   },
+  {
+    title: 'eve agents',
+    description: 'Filesystem-first agents with defineDynamic and durable approval.',
+    to: '/guide/eve-agents',
+    icon: 'i-custom:eve',
+  },
 ]
 
 const quickAccess = [
