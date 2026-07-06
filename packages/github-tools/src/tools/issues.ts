@@ -1,225 +1,129 @@
 import { tool } from 'ai'
-import { z } from 'zod'
-import { createOctokit } from '../client'
+import {
+  listIssuesInputSchema,
+  listIssuesDescription,
+  listIssuesCore,
+  getIssueInputSchema,
+  getIssueDescription,
+  getIssueCore,
+  createIssueInputSchema,
+  createIssueDescription,
+  createIssueCore,
+  addIssueCommentInputSchema,
+  addIssueCommentDescription,
+  addIssueCommentCore,
+  closeIssueInputSchema,
+  closeIssueDescription,
+  closeIssueCore,
+  listLabelsInputSchema,
+  listLabelsDescription,
+  listLabelsCore,
+  addLabelsInputSchema,
+  addLabelsDescription,
+  addLabelsCore,
+  removeLabelInputSchema,
+  removeLabelDescription,
+  removeLabelCore,
+} from '../core/issues'
 import type { ToolOptions } from '../types'
 
-async function listIssuesStep({ token, owner, repo, state, labels, perPage }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', labels?: string, perPage: number }) {
+async function listIssuesStep(args: Parameters<typeof listIssuesCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.listForRepo({
-    owner,
-    repo,
-    state,
-    labels,
-    per_page: perPage,
-  })
-  return data
-    .filter(issue => !issue.pull_request)
-    .map(issue => ({
-      number: issue.number,
-      title: issue.title,
-      state: issue.state,
-      url: issue.html_url,
-      author: issue.user?.login,
-      labels: issue.labels.map(l => (typeof l === 'string' ? l : l.name)),
-      createdAt: issue.created_at,
-      updatedAt: issue.updated_at,
-    }))
+  return listIssuesCore(args)
 }
 
 export const listIssues = (token: string) =>
   tool({
-    description: 'List issues for a GitHub repository (excludes pull requests)',
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      state: z.enum(['open', 'closed', 'all']).optional().default('open').describe('Filter by state'),
-      labels: z.string().optional().describe('Comma-separated list of label names to filter by'),
-      perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-    }),
+    description: listIssuesDescription,
+    inputSchema: listIssuesInputSchema,
     execute: async args => listIssuesStep({ token, ...args }),
   })
 
-async function getIssueStep({ token, owner, repo, issueNumber }: { token: string, owner: string, repo: string, issueNumber: number }) {
+async function getIssueStep(args: Parameters<typeof getIssueCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.get({ owner, repo, issue_number: issueNumber })
-  return {
-    number: data.number,
-    title: data.title,
-    body: data.body,
-    state: data.state,
-    url: data.html_url,
-    author: data.user?.login,
-    assignees: data.assignees?.map(a => a.login),
-    labels: data.labels.map(l => (typeof l === 'string' ? l : l.name)),
-    comments: data.comments,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    closedAt: data.closed_at,
-  }
+  return getIssueCore(args)
 }
 
 export const getIssue = (token: string) =>
   tool({
-    description: 'Get detailed information about a specific issue',
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      issueNumber: z.number().describe('Issue number'),
-    }),
+    description: getIssueDescription,
+    inputSchema: getIssueInputSchema,
     execute: async args => getIssueStep({ token, ...args }),
   })
 
-async function createIssueStep({ token, owner, repo, title, body, labels, assignees }: { token: string, owner: string, repo: string, title: string, body?: string, labels?: string[], assignees?: string[] }) {
+async function createIssueStep(args: Parameters<typeof createIssueCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.create({ owner, repo, title, body, labels, assignees })
-  return {
-    number: data.number,
-    title: data.title,
-    url: data.html_url,
-    state: data.state,
-    labels: data.labels.map(l => (typeof l === 'string' ? l : l.name)),
-  }
+  return createIssueCore(args)
 }
 
 export const createIssue = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
-    description: 'Create a new issue in a GitHub repository',
+    description: createIssueDescription,
     needsApproval,
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      title: z.string().describe('Issue title'),
-      body: z.string().optional().describe('Issue description (supports Markdown)'),
-      labels: z.array(z.string()).optional().describe('Labels to apply to the issue'),
-      assignees: z.array(z.string()).optional().describe('GitHub usernames to assign to the issue'),
-    }),
+    inputSchema: createIssueInputSchema,
     execute: async args => createIssueStep({ token, ...args }),
   })
 
-async function addIssueCommentStep({ token, owner, repo, issueNumber, body }: { token: string, owner: string, repo: string, issueNumber: number, body: string }) {
+async function addIssueCommentStep(args: Parameters<typeof addIssueCommentCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body })
-  return {
-    id: data.id,
-    url: data.html_url,
-    body: data.body,
-    author: data.user?.login,
-    createdAt: data.created_at,
-  }
+  return addIssueCommentCore(args)
 }
 
 export const addIssueComment = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
-    description: 'Add a comment to a GitHub issue',
+    description: addIssueCommentDescription,
     needsApproval,
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      issueNumber: z.number().describe('Issue number'),
-      body: z.string().describe('Comment text (supports Markdown)'),
-    }),
+    inputSchema: addIssueCommentInputSchema,
     execute: async args => addIssueCommentStep({ token, ...args }),
   })
 
-async function closeIssueStep({ token, owner, repo, issueNumber, stateReason }: { token: string, owner: string, repo: string, issueNumber: number, stateReason: 'completed' | 'not_planned' }) {
+async function closeIssueStep(args: Parameters<typeof closeIssueCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.update({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    state: 'closed',
-    state_reason: stateReason,
-  })
-  return {
-    number: data.number,
-    title: data.title,
-    state: data.state,
-    url: data.html_url,
-    closedAt: data.closed_at,
-  }
+  return closeIssueCore(args)
 }
 
 export const closeIssue = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
-    description: 'Close an open GitHub issue',
+    description: closeIssueDescription,
     needsApproval,
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      issueNumber: z.number().describe('Issue number to close'),
-      stateReason: z.enum(['completed', 'not_planned']).optional().default('completed').describe('Reason for closing'),
-    }),
+    inputSchema: closeIssueInputSchema,
     execute: async args => closeIssueStep({ token, ...args }),
   })
 
-async function listLabelsStep({ token, owner, repo, perPage, page }: { token: string, owner: string, repo: string, perPage: number, page: number }) {
+async function listLabelsStep(args: Parameters<typeof listLabelsCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.listLabelsForRepo({ owner, repo, per_page: perPage, page })
-  return data.map(label => ({
-    name: label.name,
-    color: label.color,
-    description: label.description,
-  }))
+  return listLabelsCore(args)
 }
 
 export const listLabels = (token: string) =>
   tool({
-    description: 'List labels available in a GitHub repository',
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-      page: z.number().optional().default(1).describe('Page number for pagination'),
-    }),
+    description: listLabelsDescription,
+    inputSchema: listLabelsInputSchema,
     execute: async args => listLabelsStep({ token, ...args }),
   })
 
-async function addLabelsStep({ token, owner, repo, issueNumber, labels }: { token: string, owner: string, repo: string, issueNumber: number, labels: string[] }) {
+async function addLabelsStep(args: Parameters<typeof addLabelsCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.addLabels({ owner, repo, issue_number: issueNumber, labels })
-  return data.map(label => ({
-    name: label.name,
-    color: label.color,
-    description: label.description,
-  }))
+  return addLabelsCore(args)
 }
 
 export const addLabels = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
-    description: 'Add labels to an issue or pull request',
+    description: addLabelsDescription,
     needsApproval,
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      issueNumber: z.number().describe('Issue or pull request number'),
-      labels: z.array(z.string()).describe('Label names to add'),
-    }),
+    inputSchema: addLabelsInputSchema,
     execute: async args => addLabelsStep({ token, ...args }),
   })
 
-async function removeLabelStep({ token, owner, repo, issueNumber, label }: { token: string, owner: string, repo: string, issueNumber: number, label: string }) {
+async function removeLabelStep(args: Parameters<typeof removeLabelCore>[0]) {
   "use step"
-  const octokit = createOctokit(token)
-  await octokit.rest.issues.removeLabel({ owner, repo, issue_number: issueNumber, name: label })
-  return { removed: true, label, issueNumber }
+  return removeLabelCore(args)
 }
 
 export const removeLabel = (token: string, { needsApproval = true }: ToolOptions = {}) =>
   tool({
-    description: 'Remove a label from an issue or pull request',
+    description: removeLabelDescription,
     needsApproval,
-    inputSchema: z.object({
-      owner: z.string().describe('Repository owner'),
-      repo: z.string().describe('Repository name'),
-      issueNumber: z.number().describe('Issue or pull request number'),
-      label: z.string().describe('Label name to remove'),
-    }),
+    inputSchema: removeLabelInputSchema,
     execute: async args => removeLabelStep({ token, ...args }),
   })

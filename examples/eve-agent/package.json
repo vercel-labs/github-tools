@@ -1,0 +1,20 @@
+{
+  "name": "@github-tools/eve-agent",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "eve dev"
+  },
+  "dependencies": {
+    "@github-tools/sdk": "workspace:*",
+    "ai": "^7.0.0",
+    "eve": "^0.19.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "microsandbox": "^0.6.3"
+  }
+}

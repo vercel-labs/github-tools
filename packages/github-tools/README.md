@@ -213,6 +213,77 @@ All presets work with `createDurableGithubAgent`.
 
 > `workflow` and `@workflow/ai` are optional peer dependencies — install them only when using the workflow subpath.
 
+## eve
+
+[eve](https://eve.dev) is Vercel's filesystem-first agent framework. The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic` — one file, zero CLI.
+
+```sh
+pnpm add @github-tools/sdk eve ai zod
+```
+
+`eve` v0.19+ requires **`ai` v7** as a peer dependency.
+
+```ts
+// agent/tools/github.ts
+import { createGithubTools } from '@github-tools/sdk/eve'
+
+export default createGithubTools({
+  preset: ['code-review', 'issue-triage'],
+  requireApproval: {
+    mergePullRequest: true,
+    createIssue: 'once',
+    addPullRequestComment: false,
+    createOrUpdateFile: ({ toolInput }) => toolInput?.owner !== 'vercel-labs',
+  },
+})
+```
+
+Dynamic tools are named by their **bare map key** — the model sees `listPullRequests`, `createIssue`, and so on (same names as the AI SDK package). There is no automatic file-slug prefix when returning a tool map from `defineDynamic`.
+
+### Approval (eve)
+
+| Value | Maps to | Behavior |
+|---|---|---|
+| `true` / `'always'` | `always()` | Require approval on every call |
+| `false` / `'never'` | `never()` | Skip approval |
+| `'once'` | `once()` | Approve once per session, then auto-allow |
+| predicate | custom `Approval` | Input-dependent gate; booleans map to `user-approval` / `not-applicable` |
+| `always()` / `once()` / `never()` | passthrough | Use eve helpers directly |
+
+Default (no `requireApproval`): all write tools → `always()`. Unlisted write tools keep the `always()` fail-safe default.
+
+Unlike the Workflow SDK subpath, eve approval **works durably** — gated tools pause the session until a human approves.
+
+### Cherry-picking (one tool per file)
+
+```ts
+// agent/tools/list_pull_requests.ts
+import { listPullRequests } from '@github-tools/sdk/eve'
+
+export default listPullRequests()
+```
+
+### Idempotency
+
+eve replays completed steps but re-runs steps interrupted mid-execution. Write tools vary:
+
+| Tool | Idempotency |
+|---|---|
+| `createOrUpdateFile` | Natural when content + `sha` unchanged (skips no-op updates) |
+| `closeIssue` | Natural when already closed |
+| `createBranch` | Natural when branch exists at same SHA |
+| `addIssueComment`, `createIssue`, `mergePullRequest`, … | **Not** idempotent — each call creates new side effects |
+
+Gate non-idempotent writes behind `always()` or `once()` where replay safety matters.
+
+### Roadmap
+
+`// TODO(eve-auth)`: per-session GitHub tokens via eve connections (`auth: 'eve'`). For now, pass `token` explicitly or set `GITHUB_TOKEN`.
+
+> `eve` is an optional peer dependency — install it only when using the `/eve` subpath.
+
+See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
+
 ## Available Tools
 
 ### Repository
