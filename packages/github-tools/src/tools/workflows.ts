@@ -29,6 +29,7 @@ async function listWorkflowsStep(args: Parameters<typeof listWorkflowsCore>[0]) 
   return listWorkflowsCore(args)
 }
 
+/** List GitHub Actions workflows in a repository. */
 export const listWorkflows = (token: string): GithubTool =>
   tool({
     description: listWorkflowsDescription,
@@ -41,6 +42,7 @@ async function listWorkflowRunsStep(args: Parameters<typeof listWorkflowRunsCore
   return listWorkflowRunsCore(args)
 }
 
+/** List workflow runs for a repository, optionally filtered by workflow, branch, status, or event. */
 export const listWorkflowRuns = (token: string): GithubTool =>
   tool({
     description: listWorkflowRunsDescription,
@@ -53,6 +55,7 @@ async function getWorkflowRunStep(args: Parameters<typeof getWorkflowRunCore>[0]
   return getWorkflowRunCore(args)
 }
 
+/** Get details of a specific workflow run including status, timing, and trigger info. */
 export const getWorkflowRun = (token: string): GithubTool =>
   tool({
     description: getWorkflowRunDescription,
@@ -65,6 +68,7 @@ async function listWorkflowJobsStep(args: Parameters<typeof listWorkflowJobsCore
   return listWorkflowJobsCore(args)
 }
 
+/** List jobs for a workflow run, including step-level status and timing. */
 export const listWorkflowJobs = (token: string): GithubTool =>
   tool({
     description: listWorkflowJobsDescription,
@@ -77,6 +81,7 @@ async function triggerWorkflowStep(args: Parameters<typeof triggerWorkflowCore>[
   return triggerWorkflowCore(args)
 }
 
+/** Trigger a workflow via workflow_dispatch event. Requires approval by default. */
 export const triggerWorkflow = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: triggerWorkflowDescription,
@@ -90,6 +95,7 @@ async function cancelWorkflowRunStep(args: Parameters<typeof cancelWorkflowRunCo
   return cancelWorkflowRunCore(args)
 }
 
+/** Cancel an in-progress workflow run. Requires approval by default. */
 export const cancelWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: cancelWorkflowRunDescription,
@@ -103,6 +109,7 @@ async function rerunWorkflowRunStep(args: Parameters<typeof rerunWorkflowRunCore
   return rerunWorkflowRunCore(args)
 }
 
+/** Re-run a workflow run, optionally only the failed jobs. Requires approval by default. */
 export const rerunWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: rerunWorkflowRunDescription,

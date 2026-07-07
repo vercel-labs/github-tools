@@ -33,6 +33,7 @@ async function getRepositoryStep(args: Parameters<typeof getRepositoryCore>[0]) 
   return getRepositoryCore(args)
 }
 
+/** Get information about a GitHub repository including description, stars, forks, language, and default branch. */
 export const getRepository = (token: string): GithubTool =>
   tool({
     description: getRepositoryDescription,
@@ -45,6 +46,7 @@ async function listBranchesStep(args: Parameters<typeof listBranchesCore>[0]) {
   return listBranchesCore(args)
 }
 
+/** List branches in a GitHub repository. */
 export const listBranches = (token: string): GithubTool =>
   tool({
     description: listBranchesDescription,
@@ -57,6 +59,7 @@ async function getFileContentStep(args: Parameters<typeof getFileContentCore>[0]
   return getFileContentCore(args)
 }
 
+/** Get the content of a file from a GitHub repository. */
 export const getFileContent = (token: string): GithubTool =>
   tool({
     description: getFileContentDescription,
@@ -70,6 +73,7 @@ async function createBranchStep(args: Parameters<typeof createBranchCore>[0]) {
   return createBranchCore(args)
 }
 
+/** Create a new branch in a GitHub repository from an existing branch or commit SHA. Requires approval by default. */
 export const createBranch = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createBranchDescription,
@@ -83,6 +87,7 @@ async function forkRepositoryStep(args: Parameters<typeof forkRepositoryCore>[0]
   return forkRepositoryCore(args)
 }
 
+/** Fork a GitHub repository to the authenticated user account or a specified organization. Requires approval by default. */
 export const forkRepository = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: forkRepositoryDescription,
@@ -96,6 +101,7 @@ async function createRepositoryStep(args: Parameters<typeof createRepositoryCore
   return createRepositoryCore(args)
 }
 
+/** Create a new GitHub repository for the authenticated user or a specified organization. Requires approval by default. */
 export const createRepository = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createRepositoryDescription,
@@ -109,6 +115,7 @@ async function createOrUpdateFileStep(args: Parameters<typeof createOrUpdateFile
   return createOrUpdateFileCore(args)
 }
 
+/** Create or update a file in a GitHub repository. Provide the SHA when updating an existing file. Requires approval by default. */
 export const createOrUpdateFile = (
   token: string,
   { needsApproval = true, author, committer, coAuthors }: CommitToolOptions = {},

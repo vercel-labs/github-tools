@@ -37,6 +37,7 @@ async function listPullRequestsStep(args: Parameters<typeof listPullRequestsCore
   return listPullRequestsCore(args)
 }
 
+/** List pull requests for a GitHub repository. */
 export const listPullRequests = (token: string): GithubTool =>
   tool({
     description: listPullRequestsDescription,
@@ -49,6 +50,7 @@ async function getPullRequestStep(args: Parameters<typeof getPullRequestCore>[0]
   return getPullRequestCore(args)
 }
 
+/** Get detailed information about a specific pull request. */
 export const getPullRequest = (token: string): GithubTool =>
   tool({
     description: getPullRequestDescription,
@@ -61,6 +63,7 @@ async function createPullRequestStep(args: Parameters<typeof createPullRequestCo
   return createPullRequestCore(args)
 }
 
+/** Create a new pull request in a GitHub repository. Requires approval by default. */
 export const createPullRequest = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createPullRequestDescription,
@@ -74,6 +77,7 @@ async function mergePullRequestStep(args: Parameters<typeof mergePullRequestCore
   return mergePullRequestCore(args)
 }
 
+/** Merge a pull request. Requires approval by default. */
 export const mergePullRequest = (token: string, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
   tool({
     description: mergePullRequestDescription,
@@ -87,6 +91,7 @@ async function addPullRequestCommentStep(args: Parameters<typeof addPullRequestC
   return addPullRequestCommentCore(args)
 }
 
+/** Add a comment to a pull request. Requires approval by default. */
 export const addPullRequestComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: addPullRequestCommentDescription,
@@ -100,6 +105,7 @@ async function listPullRequestFilesStep(args: Parameters<typeof listPullRequestF
   return listPullRequestFilesCore(args)
 }
 
+/** List files changed in a pull request, including diff status and patch content. */
 export const listPullRequestFiles = (token: string): GithubTool =>
   tool({
     description: listPullRequestFilesDescription,
@@ -113,6 +119,7 @@ async function listPullRequestReviewsStep(args: Parameters<typeof listPullReques
   return listPullRequestReviewsCore(args)
 }
 
+/** List reviews on a pull request (approvals, change requests, and comments). */
 export const listPullRequestReviews = (token: string): GithubTool =>
   tool({
     description: listPullRequestReviewsDescription,
@@ -125,6 +132,7 @@ async function createPullRequestReviewStep(args: Parameters<typeof createPullReq
   return createPullRequestReviewCore(args)
 }
 
+/** Submit a pull request review with optional inline comments. Requires approval by default. */
 export const createPullRequestReview = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createPullRequestReviewDescription,

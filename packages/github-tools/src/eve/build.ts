@@ -1,5 +1,5 @@
 import type { ToolDefinition } from 'eve/tools'
-import { resolvePresetTools } from '../core/presets'
+import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from '../core/presets'
 import { resolveGithubToken } from '../core/token'
 import { mapEveApprovalValue, resolveEveApproval } from './approval'
 import { getEveTools } from './load-eve'
@@ -8,10 +8,11 @@ import { runGithubToolStep } from './steps'
 import type { EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './types'
 
 type BuildOptions = EveGithubToolsOptions | (EveToolFactoryOptions & { preset?: EveGithubToolsOptions['preset'] })
+type EveToolMap = Partial<Record<GithubToolName, ToolDefinition>>
 
 function applyOverrides<T extends ToolDefinition>(
   tool: T,
-  name: string,
+  name: GithubToolName,
   overrides?: EveToolOverrides,
 ): T {
   const override = overrides?.[name]
@@ -56,7 +57,7 @@ export function buildEveToolDefinition(
   return applyOverrides(tool, name, options.overrides)
 }
 
-export function buildEveToolMap(options: EveGithubToolsOptions = {}) {
+export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap {
   const { defineTool } = getEveTools()
   const token = resolveGithubToken(options.token)
   const ctx: ToolBuildContext = {
@@ -68,7 +69,7 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}) {
 
   const allowed = options.preset ? resolvePresetTools(options.preset) : null
   const registry = createToolRegistry(ctx)
-  const tools: Record<string, ReturnType<typeof defineTool>> = {}
+  const tools = {} as EveToolMap
 
   for (const entry of registry) {
     if (allowed && !allowed.has(entry.name)) continue
@@ -100,7 +101,10 @@ export function createEveGithubToolsDynamic(options: EveGithubToolsOptions = {})
   })
 }
 
-export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'preset'> = {}) {
+export function listResolvedEveToolNames(options?: { preset?: undefined }): GithubToolName[]
+export function listResolvedEveToolNames<P extends GithubToolPreset>(options: { preset: P }): PresetToolName<P>[]
+export function listResolvedEveToolNames<P extends readonly GithubToolPreset[]>(options: { preset: P }): CombinedPresetToolNames<P>[]
+export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'preset'> = {}): GithubToolName[] {
   if (!options.preset) return [...ALL_GITHUB_TOOL_NAMES]
   return ALL_GITHUB_TOOL_NAMES.filter(name => resolvePresetTools(options.preset!)!.has(name))
 }

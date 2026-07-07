@@ -6,42 +6,28 @@ import { searchCode, searchRepositories } from './tools/search'
 import { listCommits, getCommit, getBlame } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-import { resolveAiSdkApproval, type ApprovalConfig } from './core/approval'
-import { resolvePresetTools, type GithubToolPreset } from './core/presets'
+import { resolveAiSdkApproval } from './core/approval'
+import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
+import { type GithubToolName } from './core/tool-names'
+import { type AllGithubTools, type GithubToolsBaseOptions } from './core/tool-types'
 import { resolveGithubToken } from './core/token'
 import type { GithubWriteToolName } from './core/write-tools'
-import type { CommitIdentity, ToolOverrides } from './types'
 
 export type { GithubWriteToolName } from './core/write-tools'
 export type { ApprovalConfig } from './core/approval'
-export type { GithubToolPreset } from './core/presets'
+export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
+export type { GithubToolName } from './core/tool-names'
+export type { AllGithubTools, GithubToolsForPreset, PickGithubTools } from './core/tool-types'
+export { PRESET_TOOLS } from './core/presets'
+export { GITHUB_TOOL_NAMES } from './core/tool-names'
+export { GITHUB_WRITE_TOOLS } from './core/write-tools'
 
-export type GithubToolsOptions = {
-  /**
-   * GitHub personal access token.
-   * Falls back to `process.env.GITHUB_TOKEN` when omitted.
-   */
-  token?: string
-  requireApproval?: ApprovalConfig
-  /**
-   * Per-tool overrides for customizing tool behavior (description, title, needsApproval, etc.)
-   * without changing the underlying implementation. `execute`, `inputSchema`, and `outputSchema`
-   * cannot be overridden.
-   *
-   * @example
-   * ```ts
-   * createGithubTools({
-   *   overrides: {
-   *     deleteGist: { needsApproval: false },
-   *     listIssues: { description: 'List bugs for the current sprint' },
-   *   }
-   * })
-   * ```
-   */
-  overrides?: Partial<Record<string, ToolOverrides>>
+export type GithubToolsOptions = GithubToolsBaseOptions & {
   /**
    * Restrict the returned tools to a predefined preset.
    * Omit to get all tools.
+   *
+   * @see {@link GithubToolPreset} for available presets and included tools.
    *
    * @example
    * ```ts
@@ -53,35 +39,16 @@ export type GithubToolsOptions = {
    * ```
    */
   preset?: GithubToolPreset | GithubToolPreset[]
-  /**
-   * Default author for commit-creating tools.
-   * The author is the person who originally wrote the code.
-   * Falls back to the authenticated user when omitted.
-   */
-  author?: CommitIdentity
-  /**
-   * Default committer for commit-creating tools.
-   * The committer is the person who applied the commit.
-   * Falls back to the authenticated user when omitted.
-   */
-  committer?: CommitIdentity
-  /**
-   * Co-authors to attribute on all commits created by tools.
-   * Added as "Co-authored-by" trailers to commit messages.
-   *
-   * @example
-   * ```ts
-   * createGithubTools({
-   *   token,
-   *   coAuthors: [
-   *     { name: 'my-bot[bot]', email: '12345+my-bot[bot]@users.noreply.github.com' }
-   *   ]
-   * })
-   * ```
-   */
-  coAuthors?: CommitIdentity[]
 }
 
+export function createGithubTools(options?: GithubToolsBaseOptions & { preset?: undefined }): AllGithubTools
+export function createGithubTools<P extends GithubToolPreset>(
+  options: GithubToolsBaseOptions & { preset: P },
+): Pick<AllGithubTools, PresetToolName<P>>
+export function createGithubTools<P extends readonly GithubToolPreset[]>(
+  options: GithubToolsBaseOptions & { preset: P },
+): Pick<AllGithubTools, CombinedPresetToolNames<P>>
+export function createGithubTools(options?: GithubToolsOptions): AllGithubTools | Pick<AllGithubTools, GithubToolName>
 /**
  * Create a set of GitHub tools for the Vercel AI SDK.
  *
@@ -120,7 +87,7 @@ export function createGithubTools({
   author,
   committer,
   coAuthors,
-}: GithubToolsOptions = {}): ToolSet {
+}: GithubToolsOptions = {}): AllGithubTools | Pick<AllGithubTools, GithubToolName> {
   const resolvedToken = resolveGithubToken(token)
   const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveAiSdkApproval(name, requireApproval) })
   const allowed = preset ? resolvePresetTools(preset) : null
@@ -168,7 +135,7 @@ export function createGithubTools({
     triggerWorkflow: triggerWorkflow(resolvedToken, approval('triggerWorkflow')),
     cancelWorkflowRun: cancelWorkflowRun(resolvedToken, approval('cancelWorkflowRun')),
     rerunWorkflowRun: rerunWorkflowRun(resolvedToken, approval('rerunWorkflowRun')),
-  }
+  } satisfies AllGithubTools
 
   if (overrides) {
     for (const [name, toolOverrides] of Object.entries(overrides)) {
@@ -182,11 +149,11 @@ export function createGithubTools({
   if (!allowed) return allTools
 
   return Object.fromEntries(
-    Object.entries(allTools).filter(([name]) => allowed.has(name))
-  ) as Partial<typeof allTools>
+    Object.entries(allTools).filter(([name]) => allowed.has(name as GithubToolName))
+  ) as Pick<typeof allTools, GithubToolName>
 }
 
-export type GithubTools = ToolSet
+export type GithubTools = AllGithubTools & ToolSet
 
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'

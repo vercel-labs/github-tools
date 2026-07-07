@@ -1,6 +1,7 @@
 import type { Approval, ToolModelOutput } from 'eve/tools'
 import type { z } from 'zod'
 import type { GithubToolPreset } from '../core/presets'
+import type { GithubToolName } from '../core/tool-names'
 import type { GithubWriteToolName } from '../core/write-tools'
 import type { CommitIdentity } from '../types'
 
@@ -23,7 +24,7 @@ export type EveApprovalConfig =
   | boolean
   | Partial<Record<GithubWriteToolName, EveApprovalValue>>
 
-export type EveToolOverrides = Partial<Record<string, {
+export type EveToolOverrides = Partial<Record<GithubToolName, {
   description?: string
   approval?: EveApprovalValue
   toModelOutput?: (output: unknown) => ToolModelOutput | Promise<ToolModelOutput>
@@ -33,11 +34,29 @@ export type EveToolOverrides = Partial<Record<string, {
 export type EveGithubToolsOptions = {
   /** Defaults to `process.env.GITHUB_TOKEN`. */
   token?: string
+  /**
+   * Restrict tools to a predefined preset.
+   *
+   * @see {@link GithubToolPreset} for available presets and included tools.
+   */
   preset?: GithubToolPreset | GithubToolPreset[]
+  /**
+   * Control whether write operations require user approval before execution.
+   *
+   * @see {@link EveApprovalConfig} for global and per-tool options.
+   */
   requireApproval?: EveApprovalConfig
+  /**
+   * Per-tool overrides for description, approval, output shaping, and output schema.
+   *
+   * @see {@link GithubToolName} for valid tool keys.
+   */
   overrides?: EveToolOverrides
+  /** Default author for commit-creating tools. Falls back to the authenticated user when omitted. */
   author?: CommitIdentity
+  /** Default committer for commit-creating tools. Falls back to the authenticated user when omitted. */
   committer?: CommitIdentity
+  /** Co-authors to attribute on all commits created by tools. */
   coAuthors?: CommitIdentity[]
 }
 

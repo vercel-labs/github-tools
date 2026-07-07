@@ -1,8 +1,9 @@
 import { ToolLoopAgent } from 'ai'
 import type { ToolLoopAgentSettings, ToolSet } from 'ai'
 import { createGithubTools } from './index'
-import type { GithubToolPreset, ApprovalConfig } from './index'
-import type { CommitIdentity } from './types'
+import type { AllGithubTools, GithubToolsBaseOptions } from './core/tool-types'
+import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './core/presets'
+import type { GithubToolName } from './core/tool-names'
 
 const SHARED_RULES = `When a tool execution is denied by the user, do not retry it. Briefly acknowledge the decision and move on.`
 
@@ -89,33 +90,36 @@ export function resolveInstructions(options: {
 
 type AgentOptions = Omit<ToolLoopAgentSettings<ToolSet>, 'model' | 'tools' | 'instructions'>
 
-export type CreateGithubAgentOptions = AgentOptions & {
+export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
   model: ToolLoopAgentSettings<ToolSet>['model']
   /**
-   * GitHub personal access token.
-   * Falls back to `process.env.GITHUB_TOKEN` when omitted.
+   * Restrict tools and system prompt to a predefined preset.
+   *
+   * Selects a subset of tools and, when a single preset is passed,
+   * sets a matching system prompt. Combine presets with an array to merge tool sets.
+   *
+   * @see {@link GithubToolPreset} for available presets and included tools.
    */
-  token?: string
   preset?: GithubToolPreset | GithubToolPreset[]
-  requireApproval?: ApprovalConfig
+  /**
+   * Fully replace the default system prompt.
+   * When set, `preset` system prompts and `additionalInstructions` are ignored.
+   */
   instructions?: string
+  /**
+   * Append text to the preset-specific (or default) system prompt.
+   * Ignored when `instructions` is set.
+   */
   additionalInstructions?: string
-  /**
-   * Default author for commit-creating tools.
-   * Falls back to the authenticated user when omitted.
-   */
-  author?: CommitIdentity
-  /**
-   * Default committer for commit-creating tools.
-   * Falls back to the authenticated user when omitted.
-   */
-  committer?: CommitIdentity
-  /**
-   * Co-authors to attribute on all commits.
-   * Added as "Co-authored-by" trailers to commit messages.
-   */
-  coAuthors?: CommitIdentity[]
 }
+
+export function createGithubAgent(options: CreateGithubAgentOptions & { preset?: undefined }): ToolLoopAgent<never, AllGithubTools>
+export function createGithubAgent<P extends GithubToolPreset>(
+  options: CreateGithubAgentOptions & { preset: P },
+): ToolLoopAgent<never, Pick<AllGithubTools, PresetToolName<P>>>
+export function createGithubAgent<P extends readonly GithubToolPreset[]>(
+  options: CreateGithubAgentOptions & { preset: P },
+): ToolLoopAgent<never, Pick<AllGithubTools, CombinedPresetToolNames<P>>>
 
 /**
  * Create a pre-configured GitHub agent powered by the AI SDK's `ToolLoopAgent`.
@@ -145,12 +149,12 @@ export function createGithubAgent({
   committer,
   coAuthors,
   ...agentOptions
-}: CreateGithubAgentOptions): ToolLoopAgent<never, ReturnType<typeof createGithubTools>> {
+}: CreateGithubAgentOptions): ToolLoopAgent<never, AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
   const tools = createGithubTools({ token, requireApproval, preset, author, committer, coAuthors })
 
   return new ToolLoopAgent({
     ...agentOptions,
     tools,
     instructions: resolveInstructions({ preset, instructions, additionalInstructions }),
-  } as ToolLoopAgentSettings<ToolSet>)
+  } as ToolLoopAgentSettings<never, typeof tools>) as ToolLoopAgent<never, typeof tools>
 }

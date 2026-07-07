@@ -17,7 +17,10 @@ import type {
 } from 'ai'
 import { createGithubTools } from './index'
 import { resolveInstructions } from './agents'
-import type { GithubToolPreset, ApprovalConfig } from './index'
+import type { AllGithubTools } from './core/tool-types'
+import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './core/presets'
+import type { GithubToolName } from './core/tool-names'
+import type { ApprovalConfig } from './index'
 import type { CommitIdentity } from './types'
 import type { Context } from '@ai-sdk/provider-utils'
 
@@ -117,9 +120,30 @@ export type CreateDurableGithubAgentOptions =
      * Falls back to `process.env.GITHUB_TOKEN` when omitted.
      */
     token?: string
+    /**
+     * Restrict tools and system prompt to a predefined preset.
+     *
+     * Selects a subset of tools and, when a single preset is passed,
+     * sets a matching system prompt. Combine presets with an array to merge tool sets.
+     *
+     * @see {@link GithubToolPreset} for available presets and included tools.
+     */
     preset?: GithubToolPreset | GithubToolPreset[]
+    /**
+     * Control whether write operations require user approval before execution.
+     *
+     * @see {@link ApprovalConfig} for global and per-tool options.
+     */
     requireApproval?: ApprovalConfig
+    /**
+     * Fully replace the default system prompt.
+     * When set, `preset` system prompts and `additionalInstructions` are ignored.
+     */
     instructions?: string
+    /**
+     * Append text to the preset-specific (or default) system prompt.
+     * Ignored when `instructions` is set.
+     */
     additionalInstructions?: string
     /**
      * Default author for commit-creating tools.
@@ -168,6 +192,15 @@ export type CreateDurableGithubAgentOptions =
  * }
  * ```
  */
+export function createDurableGithubAgent(
+  options: CreateDurableGithubAgentOptions & { preset?: undefined },
+): DurableGithubAgent<AllGithubTools>
+export function createDurableGithubAgent<P extends GithubToolPreset>(
+  options: CreateDurableGithubAgentOptions & { preset: P },
+): DurableGithubAgent<Pick<AllGithubTools, PresetToolName<P>>>
+export function createDurableGithubAgent<P extends readonly GithubToolPreset[]>(
+  options: CreateDurableGithubAgentOptions & { preset: P },
+): DurableGithubAgent<Pick<AllGithubTools, CombinedPresetToolNames<P>>>
 export function createDurableGithubAgent({
   model,
   token,
@@ -179,7 +212,7 @@ export function createDurableGithubAgent({
   committer,
   coAuthors,
   ...agentOptions
-}: CreateDurableGithubAgentOptions): DurableGithubAgent {
+}: CreateDurableGithubAgentOptions): DurableGithubAgent<AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
   const tools = createGithubTools({ token, requireApproval, preset, author, committer, coAuthors })
 
   return new DurableGithubAgent({
@@ -187,9 +220,10 @@ export function createDurableGithubAgent({
     model,
     tools,
     instructions: resolveInstructions({ preset, instructions, additionalInstructions }),
-  })
+  }) as DurableGithubAgent<typeof tools>
 }
 
 export { createGithubTools, createGithubAgent } from './index'
-export type { CommitIdentity, CommitToolOptions, GithubTools, GithubToolsOptions, GithubToolPreset, GithubWriteToolName, ApprovalConfig, ToolOverrides } from './index'
+export type { CommitIdentity, CommitToolOptions, GithubTools, GithubToolsOptions, GithubToolPreset, GithubToolName, GithubWriteToolName, ApprovalConfig, ToolOverrides, AllGithubTools, PresetToolName, CombinedPresetToolNames, GithubToolsForPreset, PickGithubTools } from './index'
+export { PRESET_TOOLS, GITHUB_TOOL_NAMES, GITHUB_WRITE_TOOLS } from './index'
 export type { CreateGithubAgentOptions } from './agents'

@@ -9,7 +9,10 @@ export type GithubTool = Tool<any, any>
 export type ToolOptions = { needsApproval?: boolean }
 
 /**
- * Identity for commit author or committer.
+ * Identity for a commit author or committer on GitHub.
+ *
+ * - **Author** — the person who originally wrote the code patch.
+ * - **Committer** — the person who applied the commit to the repository.
  */
 export type CommitIdentity = {
   name: string
@@ -17,16 +20,16 @@ export type CommitIdentity = {
 }
 
 /**
- * Options for commit-creating tools (createOrUpdateFile, mergePullRequest).
+ * Options for commit-creating tools (`createOrUpdateFile`, `mergePullRequest`).
  */
 export type CommitToolOptions = ToolOptions & {
   /**
-   * The author of the commit, person who wrote the code patch.
+   * The author of the commit — the person who wrote the code patch.
    * Falls back to the authenticated user when omitted.
    */
   author?: CommitIdentity
   /**
-   * The committer of the commit, person who applied the commit.
+   * The committer of the commit — the person who applied the commit.
    * Falls back to the authenticated user when omitted.
    */
   committer?: CommitIdentity
@@ -39,7 +42,21 @@ export type CommitToolOptions = ToolOptions & {
 
 /**
  * Per-tool overrides for customizing tool behavior without changing the underlying implementation.
- * Properties like `execute`, `inputSchema`, and `outputSchema` are intentionally excluded.
+ *
+ * Overridable properties: `description`, `title`, `needsApproval`, `strict`, `providerOptions`,
+ * `toModelOutput`, and input lifecycle callbacks (`onInputStart`, `onInputDelta`, `onInputAvailable`).
+ *
+ * `execute`, `inputSchema`, and `outputSchema` cannot be overridden.
+ *
+ * @example
+ * ```ts
+ * createGithubTools({
+ *   overrides: {
+ *     mergePullRequest: { needsApproval: true, title: 'Merge PR' },
+ *     listIssues: { description: 'List open bugs' },
+ *   },
+ * })
+ * ```
  */
 export type ToolOverrides = Partial<
   Pick<
