@@ -103,11 +103,11 @@ const apiLinks = [
     <section class="space-y-16 pb-16 pt-10 sm:pt-14">
       <!-- Hero -->
       <header class="space-y-6">
-        <h1 class="max-w-3xl text-4xl font-bold tracking-tight text-highlighted sm:text-5xl/14">
-          AI-callable GitHub tools
+        <h1 class="max-w-3xl text-4xl font-light tracking-tighter text-highlighted text-balance sm:text-5xl/[1.15]">
+          Give your AI agents full&nbsp;GitHub&nbsp;access
         </h1>
         <p class="max-w-2xl text-lg/8 text-toned">
-          42 typed GitHub operations for AI agents — presets, human approval, and durable execution. Works with the AI SDK, eve, Vercel Workflow, and Chat SDK.
+          42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.
         </p>
         <div class="flex flex-wrap items-center gap-3">
           <UButton

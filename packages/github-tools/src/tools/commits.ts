@@ -18,6 +18,7 @@ async function listCommitsStep(args: Parameters<typeof listCommitsCore>[0]) {
   return listCommitsCore(args)
 }
 
+/** List commits for a GitHub repository. Filter by file path to see commits that touched a file. */
 export const listCommits = (token: string): GithubTool =>
   tool({
     description: listCommitsDescription,
@@ -30,6 +31,7 @@ async function getCommitStep(args: Parameters<typeof getCommitCore>[0]) {
   return getCommitCore(args)
 }
 
+/** Get detailed information about a specific commit, including files changed with additions and deletions. */
 export const getCommit = (token: string): GithubTool =>
   tool({
     description: getCommitDescription,
@@ -43,6 +45,7 @@ async function getBlameStep(args: Parameters<typeof getBlameCore>[0]) {
   return getBlameCore(args)
 }
 
+/** Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). */
 export const getBlame = (token: string): GithubTool =>
   tool({
     description: getBlameDescription,

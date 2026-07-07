@@ -29,6 +29,7 @@ async function listGistsStep(args: Parameters<typeof listGistsCore>[0]) {
   return listGistsCore(args)
 }
 
+/** List gists for the authenticated user or a specific user. */
 export const listGists = (token: string): GithubTool =>
   tool({
     description: listGistsDescription,
@@ -41,6 +42,7 @@ async function getGistStep(args: Parameters<typeof getGistCore>[0]) {
   return getGistCore(args)
 }
 
+/** Get a gist by ID, including file contents. */
 export const getGist = (token: string): GithubTool =>
   tool({
     description: getGistDescription,
@@ -53,6 +55,7 @@ async function listGistCommentsStep(args: Parameters<typeof listGistCommentsCore
   return listGistCommentsCore(args)
 }
 
+/** List comments on a gist. */
 export const listGistComments = (token: string): GithubTool =>
   tool({
     description: listGistCommentsDescription,
@@ -65,6 +68,7 @@ async function createGistStep(args: Parameters<typeof createGistCore>[0]) {
   return createGistCore(args)
 }
 
+/** Create a new gist with one or more files. Requires approval by default. */
 export const createGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistDescription,
@@ -78,6 +82,7 @@ async function updateGistStep(args: Parameters<typeof updateGistCore>[0]) {
   return updateGistCore(args)
 }
 
+/** Update an existing gist. Requires approval by default. */
 export const updateGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: updateGistDescription,
@@ -91,6 +96,7 @@ async function deleteGistStep(args: Parameters<typeof deleteGistCore>[0]) {
   return deleteGistCore(args)
 }
 
+/** Delete a gist permanently. Requires approval by default. */
 export const deleteGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: deleteGistDescription,
@@ -104,6 +110,7 @@ async function createGistCommentStep(args: Parameters<typeof createGistCommentCo
   return createGistCommentCore(args)
 }
 
+/** Add a comment to a gist. Requires approval by default. */
 export const createGistComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistCommentDescription,

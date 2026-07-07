@@ -14,6 +14,7 @@ async function searchCodeStep(args: Parameters<typeof searchCodeCore>[0]) {
   return searchCodeCore(args)
 }
 
+/** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. */
 export const searchCode = (token: string): GithubTool =>
   tool({
     description: searchCodeDescription,
@@ -26,6 +27,7 @@ async function searchRepositoriesStep(args: Parameters<typeof searchRepositories
   return searchRepositoriesCore(args)
 }
 
+/** Search for GitHub repositories by keyword, topic, language, or other qualifiers. */
 export const searchRepositories = (token: string): GithubTool =>
   tool({
     description: searchRepositoriesDescription,

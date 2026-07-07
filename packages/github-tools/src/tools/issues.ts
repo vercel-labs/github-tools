@@ -32,6 +32,7 @@ async function listIssuesStep(args: Parameters<typeof listIssuesCore>[0]) {
   return listIssuesCore(args)
 }
 
+/** List issues for a GitHub repository (excludes pull requests). */
 export const listIssues = (token: string): GithubTool =>
   tool({
     description: listIssuesDescription,
@@ -44,6 +45,7 @@ async function getIssueStep(args: Parameters<typeof getIssueCore>[0]) {
   return getIssueCore(args)
 }
 
+/** Get detailed information about a specific issue. */
 export const getIssue = (token: string): GithubTool =>
   tool({
     description: getIssueDescription,
@@ -56,6 +58,7 @@ async function createIssueStep(args: Parameters<typeof createIssueCore>[0]) {
   return createIssueCore(args)
 }
 
+/** Create a new issue in a GitHub repository. Requires approval by default. */
 export const createIssue = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createIssueDescription,
@@ -69,6 +72,7 @@ async function addIssueCommentStep(args: Parameters<typeof addIssueCommentCore>[
   return addIssueCommentCore(args)
 }
 
+/** Add a comment to a GitHub issue. Requires approval by default. */
 export const addIssueComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: addIssueCommentDescription,
@@ -82,6 +86,7 @@ async function closeIssueStep(args: Parameters<typeof closeIssueCore>[0]) {
   return closeIssueCore(args)
 }
 
+/** Close an open GitHub issue. Requires approval by default. */
 export const closeIssue = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: closeIssueDescription,
@@ -95,6 +100,7 @@ async function listLabelsStep(args: Parameters<typeof listLabelsCore>[0]) {
   return listLabelsCore(args)
 }
 
+/** List labels available in a GitHub repository. */
 export const listLabels = (token: string): GithubTool =>
   tool({
     description: listLabelsDescription,
@@ -107,6 +113,7 @@ async function addLabelsStep(args: Parameters<typeof addLabelsCore>[0]) {
   return addLabelsCore(args)
 }
 
+/** Add labels to an issue or pull request. Requires approval by default. */
 export const addLabels = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: addLabelsDescription,
@@ -120,6 +127,7 @@ async function removeLabelStep(args: Parameters<typeof removeLabelCore>[0]) {
   return removeLabelCore(args)
 }
 
+/** Remove a label from an issue or pull request. Requires approval by default. */
 export const removeLabel = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: removeLabelDescription,
