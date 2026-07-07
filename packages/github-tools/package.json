@@ -1,14 +1,14 @@
 {
   "name": "@github-tools/sdk",
   "version": "1.7.0",
-  "description": "GitHub tools for the Vercel AI SDK, wrap GitHub's API as AI SDK tools ready to plug into any agent",
+  "description": "42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK",
   "author": "HugoRCD <hugo.richard@vercel.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vercel-labs/github-tools.git",
     "directory": "packages/github-tools"
   },
-  "homepage": "https://github.com/vercel-labs/github-tools",
+  "homepage": "https://github-tools.com",
   "bugs": {
     "url": "https://github.com/vercel-labs/github-tools/issues"
   },

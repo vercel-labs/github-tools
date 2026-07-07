@@ -3,9 +3,20 @@ const docsSiteUrl =
   process.env.NUXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
   || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://github-tools.com')
 
+const siteDescription =
+  '42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
+
 export default defineNuxtConfig({
   extends: ['docus'],
   modules: ['@nuxt/eslint', '@nuxt/fonts', '@vercel/analytics', '@vercel/speed-insights'],
+  app: {
+    head: {
+      meta: [
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { property: 'og:site_name', content: 'GitHub Tools' },
+      ],
+    },
+  },
   fonts: {
     defaults: {
       // Full variable axis — discrete weights from @nuxt/ui defaults render too thin on Chromium.
@@ -28,12 +39,10 @@ export default defineNuxtConfig({
   llms: {
     domain: docsSiteUrl,
     title: 'GitHub Tools',
-    description:
-      'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, eve, durable workflows, and granular write approvals.',
+    description: siteDescription,
     full: {
       title: 'GitHub Tools',
-      description:
-        'GitHub REST API as AI SDK tools: generateText, streamText, ToolLoopAgent, eve defineDynamic, and Vercel Workflow DurableAgent.',
+      description: siteDescription,
     },
   },
   routeRules: {

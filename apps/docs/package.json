@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@nuxt/fonts": "^0.14.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "better-sqlite3": "^12.9.0",
@@ -24,7 +25,8 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
-    "eslint": "^10.3.0"
+    "eslint": "^10.3.0",
+    "nuxtseo-layer-devtools": "5.3.2"
   },
   "packageManager": "pnpm@10.30.2"
 }

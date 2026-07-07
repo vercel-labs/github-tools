@@ -1,6 +1,6 @@
 ---
 name: github-tools-agents
-description: Add GitHub API tools to Vercel AI SDK apps using @github-tools/sdk. Covers tool setup, presets, approval control, token scoping, standard agents (ToolLoopAgent), and crash-safe durable agents (Vercel Workflow SDK).
+description: Add GitHub API tools to AI agents using @github-tools/sdk — AI SDK, eve, Vercel Workflow, and Chat SDK. Covers tools, presets, approval control, token scoping, and durable agents.
 license: MIT
 metadata:
   author: "HugoRCD"

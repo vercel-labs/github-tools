@@ -4,7 +4,7 @@ A durable PR review agent in **~60 lines of code**. Tag it on any pull request, 
 
 Built with:
 
-- **[@github-tools/sdk](https://github-tools.com)** — 36 AI-callable GitHub tools (PRs, commits, issues, code search...)
+- **[@github-tools/sdk](https://github-tools.com)** — 42 AI-callable GitHub tools (PRs, commits, issues, code search...)
 - **[Chat SDK](https://chat-sdk.dev)** — multi-platform agent framework with the GitHub adapter
 - **[Vercel Workflow](https://useworkflow.dev)** — durable execution that survives timeouts and restarts
 - **[evlog](https://evlog.dev)** — AI observability (token usage, tool calls, cost, timing)

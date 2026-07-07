@@ -1,26 +1,15 @@
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
+import { joinURL } from 'ufo'
 
 const { seo } = useAppConfig()
+const site = useSiteConfig()
 
-const ogImageUrl = 'https://github-tools.com/og.png'
+const title = 'Connect GitHub to any agent'
+const description = seo.description
+const ogImage = site.url ? joinURL(site.url, '/og.png') : undefined
 
-useSeoMeta({
-  title: 'GitHub Tools',
-  titleTemplate: '%s',
-  description: seo.description,
-  ogType: 'website',
-  ogUrl: 'https://github-tools.com',
-  ogTitle: 'GitHub Tools',
-  ogDescription: seo.description,
-  ogImage: ogImageUrl,
-  ogImageWidth: 2400,
-  ogImageHeight: 1256,
-  twitterTitle: 'GitHub Tools',
-  twitterDescription: seo.description,
-  twitterImage: ogImageUrl,
-  twitterCard: 'summary_large_image',
-})
+useSeo({ title, description, type: 'website', ogImage })
 
 const installCmd = 'pnpm add @github-tools/sdk'
 const { copy, copied } = useClipboard()
@@ -100,7 +89,6 @@ const apiLinks = [
 <template>
   <NuxtLayout name="docs">
     <section class="min-w-0 max-w-full space-y-16 pb-16 pt-10 sm:pt-14">
-      <!-- Hero -->
       <header class="space-y-6">
         <h1 class="max-w-3xl text-4xl font-light tracking-tighter text-highlighted text-balance sm:text-5xl/[1.15]">
           Connect GitHub to any agent
@@ -128,7 +116,6 @@ const apiLinks = [
         </div>
       </header>
 
-      <!-- Command bar -->
       <div class="vercel-command-bar max-w-xl">
         <span class="select-all truncate">{{ installCmd }}</span>
         <UButton
@@ -143,7 +130,6 @@ const apiLinks = [
         />
       </div>
 
-      <!-- Bento -->
       <section class="space-y-4">
         <p class="vercel-section-label">
           Three layers, one SDK
@@ -165,7 +151,6 @@ const apiLinks = [
         </div>
       </section>
 
-      <!-- Frameworks -->
       <section class="space-y-4">
         <p class="vercel-section-label">
           Works with your framework
@@ -223,7 +208,6 @@ You are a GitHub code-review assistant.
         </div>
       </section>
 
-      <!-- Guides + API -->
       <section class="grid gap-10 sm:grid-cols-2">
         <div class="space-y-4">
           <p class="vercel-section-label">

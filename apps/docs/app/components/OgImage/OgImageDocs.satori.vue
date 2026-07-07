@@ -14,7 +14,7 @@ withDefaults(
 )
 
 const FALLBACK_DESCRIPTION =
-  'AI-callable GitHub tools for the Vercel AI SDK — presets, agents, durable workflows, and agent skills.'
+  '42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
 </script>
 
 <template>
@@ -26,22 +26,29 @@ const FALLBACK_DESCRIPTION =
       style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 55% at 50% -10%, rgba(255,255,255,0.06) 0%, transparent 55%);"
     />
 
-    <div style="position: relative; display: flex; align-items: center; gap: 12px;">
+    <div style="position: relative; display: flex; align-items: center; gap: 14px;">
       <svg
-        width="20"
-        height="20"
-        viewBox="0 0 16 16"
+        width="88"
+        height="24"
+        viewBox="0 0 232 65"
         fill="#ededed"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M73.4619 64.2783H0L36.7305 0L73.4619 64.2783ZM113.694 4.80566C129.268 4.80572 138.598 15.3104 138.598 32.1328C138.598 48.9555 129.268 59.3144 113.694 59.3145C98.1939 59.3145 88.8643 48.9555 88.8643 32.1328C88.8644 15.3103 98.1941 4.80566 113.694 4.80566ZM163.259 4.80566C175.747 4.80579 182.579 12.0784 183.754 22.1426L174.131 22.583C173.47 16.9266 169.723 13.0332 163.111 13.0332C157.602 13.0333 154.223 15.8249 154.223 19.8652C154.223 24.1259 156.647 25.7417 165.977 27.8721C180.008 30.884 184.709 36.0266 184.709 43.8135C184.709 53.3635 176.922 59.3145 165.095 59.3145C152.166 59.3144 144.232 52.0412 143.424 41.1689L153.121 40.5811C154.003 47.3395 158.043 51.0859 165.242 51.0859C171.413 51.0859 174.938 48.8091 174.938 44.3281C174.938 40.2878 172.882 37.8629 162.23 35.3652C149.301 32.4268 144.452 28.754 144.452 20.2324C144.452 11.1232 151.578 4.80566 163.259 4.80566ZM210.125 4.80566C222.613 4.80578 229.445 12.0784 230.62 22.1426L220.997 22.583C220.336 16.9266 216.589 13.0332 209.978 13.0332C204.468 13.0333 201.089 15.8249 201.089 19.8652C201.089 24.1259 203.513 25.7417 212.843 27.8721C226.874 30.884 231.575 36.0266 231.575 43.8135C231.575 53.3635 223.788 59.3145 211.961 59.3145C199.032 59.3143 191.098 52.0412 190.29 41.1689L199.987 40.5811C200.869 47.3395 204.909 51.0859 212.108 51.0859C218.279 51.0859 221.805 48.8091 221.805 44.3281C221.805 40.2878 219.748 37.8629 209.097 35.3652C196.167 32.4268 191.318 28.754 191.318 20.2324C191.318 11.1232 198.445 4.80566 210.125 4.80566ZM113.694 13.1064C104.365 13.1064 98.7081 20.2323 98.708 32.1328C98.708 44.0336 104.365 51.0127 113.694 51.0127C123.171 51.0126 128.754 44.0336 128.754 32.1328C128.754 20.2323 123.171 13.1065 113.694 13.1064Z" />
+      </svg>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="rgba(255,255,255,0.35)"
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
           clip-rule="evenodd"
-          d="m8 1 8 14H0z"
+          d="m4.02 15.4.3-.7 6-14 .29-.68 1.37.59-.3.69-6 14-.29.68z"
           fill-rule="evenodd"
         />
       </svg>
-      <span style="font-size: 14px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255,255,255,0.5);">Vercel OSS</span>
-      <span style="font-size: 20px; font-weight: 300; color: rgba(255,255,255,0.3);">/</span>
       <svg
         width="28"
         height="28"
@@ -57,8 +64,8 @@ const FALLBACK_DESCRIPTION =
     <div
       style="position: relative; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 24px 0 32px; min-height: 0;"
     >
-      <div v-if="headline" style="margin-bottom: 22px; width: 100%;">
-        <span style="font-size: 16px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5);">{{ headline }}</span>
+      <div v-if="headline" style="margin-bottom: 20px; width: 100%;">
+        <span style="font-size: 18px; font-weight: 400; letter-spacing: -0.01em; color: rgba(255,255,255,0.58);">{{ headline }}</span>
       </div>
 
       <h1 style="font-size: 76px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; margin: 0 0 28px; max-width: 1080px; width: 100%; color: #ffffff;">
