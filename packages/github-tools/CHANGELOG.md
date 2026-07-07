@@ -1,5 +1,17 @@
 # @github-tools/sdk
 
+## 1.7.0
+
+### Minor Changes
+
+- [#35](https://github.com/vercel-labs/github-tools/pull/35) [`021a8ab`](https://github.com/vercel-labs/github-tools/commit/021a8ab2687afa86e49f33dba9933691a2e4e0dc) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add native eve integration via `@github-tools/sdk/eve` with `defineDynamic` tool registration, rich approval mapping (`once`, predicates), shared core refactor, and an `examples/eve-agent` starter.
+
+- [#35](https://github.com/vercel-labs/github-tools/pull/35) [`021a8ab`](https://github.com/vercel-labs/github-tools/commit/021a8ab2687afa86e49f33dba9933691a2e4e0dc) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Migrate `createDurableGithubAgent` from `DurableAgent` to `WorkflowAgent` (`@ai-sdk/workflow`). Write tools now honor `requireApproval` via `needsApproval` — the workflow pauses until the user approves or denies.
+
+### Patch Changes
+
+- [#38](https://github.com/vercel-labs/github-tools/pull/38) [`c96c15b`](https://github.com/vercel-labs/github-tools/commit/c96c15b7d40555de85ae82eb67aa17b749b8b607) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Improve JSDoc and TypeScript types for richer IDE hover and autocomplete — preset-aware tool sets, typed tool/write-tool catalogs, and stricter option keys.
+
 ## 1.6.0
 
 ### Minor Changes
