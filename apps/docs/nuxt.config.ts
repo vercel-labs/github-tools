@@ -4,7 +4,7 @@ const docsSiteUrl =
   || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://github-tools.com')
 
 const siteDescription =
-  '42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
+  '47 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
 
 export default defineNuxtConfig({
   extends: ['docus'],

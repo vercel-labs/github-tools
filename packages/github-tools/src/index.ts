@@ -3,7 +3,7 @@ import { getRepository, listBranches, getFileContent, createBranch, forkReposito
 import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview } from './tools/pull-requests'
 import { listIssues, getIssue, createIssue, addIssueComment, closeIssue, listLabels, addLabels, removeLabel } from './tools/issues'
 import { searchCode, searchRepositories } from './tools/search'
-import { listCommits, getCommit, getBlame } from './tools/commits'
+import { listCommits, getCommit, getBlame, getCommitComment, listCommitComments, createCommitComment, updateCommitComment, deleteCommitComment } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 import { resolveAiSdkApproval } from './core/approval'
@@ -105,6 +105,11 @@ export function createGithubTools({
     listCommits: listCommits(resolvedToken),
     getCommit: getCommit(resolvedToken),
     getBlame: getBlame(resolvedToken),
+    getCommitComment: getCommitComment(resolvedToken),
+    listCommitComments: listCommitComments(resolvedToken),
+    createCommitComment: createCommitComment(resolvedToken, approval('createCommitComment')),
+    updateCommitComment: updateCommitComment(resolvedToken, approval('updateCommitComment')),
+    deleteCommitComment: deleteCommitComment(resolvedToken, approval('deleteCommitComment')),
     createBranch: createBranch(resolvedToken, approval('createBranch')),
     forkRepository: forkRepository(resolvedToken, approval('forkRepository')),
     createRepository: createRepository(resolvedToken, approval('createRepository')),
@@ -161,7 +166,7 @@ export { getRepository, listBranches, getFileContent, createBranch, forkReposito
 export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview } from './tools/pull-requests'
 export { listIssues, getIssue, createIssue, addIssueComment, closeIssue, listLabels, addLabels, removeLabel } from './tools/issues'
 export { searchCode, searchRepositories } from './tools/search'
-export { listCommits, getCommit, getBlame } from './tools/commits'
+export { listCommits, getCommit, getBlame, getCommitComment, listCommitComments, createCommitComment, updateCommitComment, deleteCommitComment } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 export type { CommitIdentity, CommitToolOptions, GithubTool, Octokit, ToolOptions, ToolOverrides } from './types'

@@ -59,6 +59,16 @@ export const GITHUB_TOOL_NAMES = {
   getCommit: 'getCommit',
   /** Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). Returns contiguous ranges mapping lines to the commits that last modified them. */
   getBlame: 'getBlame',
+  /** Get a single commit comment by its ID, including the file path and diff position it was left on. */
+  getCommitComment: 'getCommitComment',
+  /** List comments left on a specific commit. */
+  listCommitComments: 'listCommitComments',
+  /** Add a comment to a commit, optionally anchored to a file path and diff position. Requires approval by default. */
+  createCommitComment: 'createCommitComment',
+  /** Update the body of an existing commit comment. Requires approval by default. */
+  updateCommitComment: 'updateCommitComment',
+  /** Delete a commit comment permanently. Requires approval by default. */
+  deleteCommitComment: 'deleteCommitComment',
   /** List gists for the authenticated user or a specific user. */
   listGists: 'listGists',
   /** Get a gist by ID, including file contents. */

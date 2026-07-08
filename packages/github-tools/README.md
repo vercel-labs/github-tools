@@ -7,11 +7,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-black?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![license](https://img.shields.io/github/license/vercel-labs/github-tools?color=black)](https://github.com/vercel-labs/github-tools/blob/main/LICENSE)
 
-**Connect GitHub to any agent.** 42 typed GitHub tools with presets, human approval, and durable execution — for the [AI SDK](https://ai-sdk.dev), [eve](https://eve.dev), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
+**Connect GitHub to any agent.** 47 typed GitHub tools with presets, human approval, and durable execution — for the [AI SDK](https://ai-sdk.dev), [eve](https://eve.dev), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
 
 Docs: **[github-tools.com](https://github-tools.com)**
 
-42 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
+47 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -64,11 +64,11 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 | Preset | Tools included |
 |---|---|
-| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment`, `createPullRequestReview` |
+| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getCommitComment`, `listCommitComments`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment`, `createPullRequestReview`, `createCommitComment` |
 | `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `listLabels`, `addLabels`, `removeLabel`, `getRepository`, `searchRepositories`, `searchCode` |
 | `repo-explorer` | All read-only tools including gists and workflows (no write operations) |
 | `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
-| `maintainer` | All 42 tools |
+| `maintainer` | All 47 tools |
 
 Omit `preset` to get all tools (same as `maintainer`).
 
@@ -352,6 +352,11 @@ See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 | `listCommits` | List commits, optionally filtered by file path, author, or date range |
 | `getCommit` | Get a commit's full details including changed files and diffs |
 | `getBlame` | Line-level git blame for a file (GitHub GraphQL) |
+| `getCommitComment` | Get a single commit comment by its ID |
+| `listCommitComments` | List comments left on a specific commit |
+| `createCommitComment` | Comment on a commit, optionally anchored to a diff line (write) |
+| `updateCommitComment` | Update the body of an existing commit comment (write) |
+| `deleteCommitComment` | Delete a commit comment permanently (write) |
 
 ### Search
 

@@ -37,6 +37,12 @@ export const GITHUB_WRITE_TOOLS = {
   deleteGist: 'deleteGist',
   /** Add a comment to a gist. Requires approval by default. */
   createGistComment: 'createGistComment',
+  /** Add a comment to a commit. Requires approval by default. */
+  createCommitComment: 'createCommitComment',
+  /** Update the body of an existing commit comment. Requires approval by default. */
+  updateCommitComment: 'updateCommitComment',
+  /** Delete a commit comment permanently. Requires approval by default. */
+  deleteCommitComment: 'deleteCommitComment',
   /** Trigger a workflow via workflow_dispatch event. Requires approval by default. */
   triggerWorkflow: 'triggerWorkflow',
   /** Cancel an in-progress workflow run. Requires approval by default. */

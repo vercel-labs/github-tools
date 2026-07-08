@@ -17,7 +17,7 @@ const { copy, copied } = useClipboard()
 const layers = [
   {
     title: 'Tools',
-    description: '42 AI-callable GitHub operations — repositories, branches, pull requests, issues, commits, search, gists, and workflows.',
+    description: '47 AI-callable GitHub operations — repositories, branches, pull requests, issues, commits, search, gists, and workflows.',
     to: '/api/tools-catalog',
     icon: 'i-custom:sdk',
     featured: true,
@@ -94,7 +94,7 @@ const apiLinks = [
           Connect GitHub to any agent
         </h1>
         <p class="max-w-2xl text-lg/8 text-toned">
-          42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.
+          47 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.
         </p>
         <div class="flex flex-wrap items-center gap-3">
           <UButton
@@ -190,7 +190,7 @@ You are a GitHub code-review assistant.
 })</code></pre>
             <p class="text-sm/6 text-toned">
               <span class="font-semibold text-highlighted">A GitHub agent in 3 files.</span>
-              With eve, one tools file registers all 42 tools — durable approval included.
+              With eve, one tools file registers all 47 tools — durable approval included.
             </p>
           </NuxtLink>
         </div>

@@ -220,3 +220,120 @@ export async function getBlameCore({ token, owner, repo, path, ref, line, lineSt
     ranges,
   }
 }
+
+export const getCommitCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commentId: z.number().describe('Commit comment ID'),
+})
+
+export const getCommitCommentDescription =
+  'Get a single commit comment by its ID, including the file path and diff position it was left on (if any).'
+
+export async function getCommitCommentCore({ token, owner, repo, commentId }: { token: string, owner: string, repo: string, commentId: number }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.repos.getCommitComment({ owner, repo, comment_id: commentId })
+  return {
+    id: data.id,
+    body: data.body,
+    author: data.user?.login,
+    commitId: data.commit_id,
+    path: data.path,
+    position: data.position,
+    line: data.line,
+    url: data.html_url,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }
+}
+
+export const listCommitCommentsInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commitSha: z.string().describe('Commit SHA to list comments for'),
+  perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+  page: z.number().optional().default(1).describe('Page number for pagination'),
+})
+
+export const listCommitCommentsDescription =
+  'List comments left on a specific commit. Commit comments can be general or anchored to a file path and diff position.'
+
+export async function listCommitCommentsCore({ token, owner, repo, commitSha, perPage, page }: { token: string, owner: string, repo: string, commitSha: string, perPage: number, page: number }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.repos.listCommentsForCommit({ owner, repo, commit_sha: commitSha, per_page: perPage, page })
+  return data.map(comment => ({
+    id: comment.id,
+    body: comment.body,
+    author: comment.user?.login,
+    path: comment.path,
+    position: comment.position,
+    line: comment.line,
+    url: comment.html_url,
+    createdAt: comment.created_at,
+    updatedAt: comment.updated_at,
+  }))
+}
+
+export const createCommitCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commitSha: z.string().describe('SHA of the commit to comment on'),
+  body: z.string().describe('Comment text (supports Markdown)'),
+  path: z.string().optional().describe('Relative path of the file to comment on. Omit for a general commit-level comment'),
+  position: z.number().optional().describe('Line index in the commit diff to anchor the comment to (requires path)'),
+})
+
+export const createCommitCommentDescription =
+  'Add a comment to a commit. Omit path/position for a general commit comment, or provide both to anchor it to a line in the commit diff.'
+
+/** Not idempotent — each call adds another comment. */
+export async function createCommitCommentCore({ token, owner, repo, commitSha, body, path, position }: { token: string, owner: string, repo: string, commitSha: string, body: string, path?: string, position?: number }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.repos.createCommitComment({ owner, repo, commit_sha: commitSha, body, path, position })
+  return {
+    id: data.id,
+    body: data.body,
+    author: data.user?.login,
+    commitId: data.commit_id,
+    path: data.path,
+    position: data.position,
+    url: data.html_url,
+    createdAt: data.created_at,
+  }
+}
+
+export const updateCommitCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commentId: z.number().describe('Commit comment ID to update'),
+  body: z.string().describe('New comment text (supports Markdown)'),
+})
+
+export const updateCommitCommentDescription = 'Update the body of an existing commit comment.'
+
+export async function updateCommitCommentCore({ token, owner, repo, commentId, body }: { token: string, owner: string, repo: string, commentId: number, body: string }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.repos.updateCommitComment({ owner, repo, comment_id: commentId, body })
+  return {
+    id: data.id,
+    body: data.body,
+    author: data.user?.login,
+    url: data.html_url,
+    updatedAt: data.updated_at,
+  }
+}
+
+export const deleteCommitCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commentId: z.number().describe('Commit comment ID to delete'),
+})
+
+export const deleteCommitCommentDescription = 'Delete a commit comment permanently.'
+
+/** Not idempotent — deleting an already-deleted comment returns 404 from GitHub. */
+export async function deleteCommitCommentCore({ token, owner, repo, commentId }: { token: string, owner: string, repo: string, commentId: number }) {
+  const octokit = createOctokit(token)
+  await octokit.rest.repos.deleteCommitComment({ owner, repo, comment_id: commentId })
+  return { deleted: true, commentId }
+}

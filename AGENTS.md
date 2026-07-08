@@ -1,6 +1,6 @@
 ## Overview
 
-`@github-tools/sdk` wraps GitHub's REST API as 42 AI SDK-compatible tools for agents and `generateText`/`streamText` calls — with presets, approval control, and integrations for eve, Vercel Workflow, and Chat SDK. Docs: [github-tools.com](https://github-tools.com).
+`@github-tools/sdk` wraps GitHub's REST API as 47 AI SDK-compatible tools for agents and `generateText`/`streamText` calls — with presets, approval control, and integrations for eve, Vercel Workflow, and Chat SDK. Docs: [github-tools.com](https://github-tools.com).
 
 ## Commands
 
