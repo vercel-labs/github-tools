@@ -26,117 +26,118 @@ import {
   createPullRequestReviewCore,
 } from '../core/pull-requests'
 import { listPullRequestFilesToModelOutput } from '../core/model-output'
-import type { CommitIdentity, ToolOptions, GithubTool } from '../types'
+import { createGithubTokenStepResolver, type GithubTokenResolver, type GithubTokenStepArgs } from '../core/token'
+import type { CommitIdentity, GithubTool, ToolOptions } from '../types'
 
 export type MergeToolOptions = ToolOptions & {
   coAuthors?: CommitIdentity[]
 }
 
-async function listPullRequestsStep(args: Parameters<typeof listPullRequestsCore>[0]) {
+async function listPullRequestsStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof listPullRequestsCore>[0]>) {
   "use step"
-  return listPullRequestsCore(args)
+  return listPullRequestsCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** List pull requests for a GitHub repository. */
-export const listPullRequests = (token: string): GithubTool =>
+export const listPullRequests = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: listPullRequestsDescription,
     inputSchema: listPullRequestsInputSchema,
-    execute: async args => listPullRequestsStep({ token, ...args }),
+    execute: async args => listPullRequestsStep({ token: await resolveToken(), ...args }),
   })
 
-async function getPullRequestStep(args: Parameters<typeof getPullRequestCore>[0]) {
+async function getPullRequestStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof getPullRequestCore>[0]>) {
   "use step"
-  return getPullRequestCore(args)
+  return getPullRequestCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Get detailed information about a specific pull request. */
-export const getPullRequest = (token: string): GithubTool =>
+export const getPullRequest = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: getPullRequestDescription,
     inputSchema: getPullRequestInputSchema,
-    execute: async args => getPullRequestStep({ token, ...args }),
+    execute: async args => getPullRequestStep({ token: await resolveToken(), ...args }),
   })
 
-async function createPullRequestStep(args: Parameters<typeof createPullRequestCore>[0]) {
+async function createPullRequestStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof createPullRequestCore>[0]>) {
   "use step"
-  return createPullRequestCore(args)
+  return createPullRequestCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Create a new pull request in a GitHub repository. Requires approval by default. */
-export const createPullRequest = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createPullRequest = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createPullRequestDescription,
     needsApproval,
     inputSchema: createPullRequestInputSchema,
-    execute: async args => createPullRequestStep({ token, ...args }),
+    execute: async args => createPullRequestStep({ token: await resolveToken(), ...args }),
   })
 
-async function mergePullRequestStep(args: Parameters<typeof mergePullRequestCore>[0]) {
+async function mergePullRequestStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof mergePullRequestCore>[0]>) {
   "use step"
-  return mergePullRequestCore(args)
+  return mergePullRequestCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Merge a pull request. Requires approval by default. */
-export const mergePullRequest = (token: string, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
+export const mergePullRequest = (resolveToken: GithubTokenResolver, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
   tool({
     description: mergePullRequestDescription,
     needsApproval,
     inputSchema: mergePullRequestInputSchema,
-    execute: async args => mergePullRequestStep({ token, coAuthors, ...args }),
+    execute: async args => mergePullRequestStep({ token: await resolveToken(), coAuthors, ...args }),
   })
 
-async function addPullRequestCommentStep(args: Parameters<typeof addPullRequestCommentCore>[0]) {
+async function addPullRequestCommentStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof addPullRequestCommentCore>[0]>) {
   "use step"
-  return addPullRequestCommentCore(args)
+  return addPullRequestCommentCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Add a comment to a pull request. Requires approval by default. */
-export const addPullRequestComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const addPullRequestComment = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: addPullRequestCommentDescription,
     needsApproval,
     inputSchema: addPullRequestCommentInputSchema,
-    execute: async args => addPullRequestCommentStep({ token, ...args }),
+    execute: async args => addPullRequestCommentStep({ token: await resolveToken(), ...args }),
   })
 
-async function listPullRequestFilesStep(args: Parameters<typeof listPullRequestFilesCore>[0]) {
+async function listPullRequestFilesStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof listPullRequestFilesCore>[0]>) {
   "use step"
-  return listPullRequestFilesCore(args)
+  return listPullRequestFilesCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** List files changed in a pull request, including diff status and patch content. */
-export const listPullRequestFiles = (token: string): GithubTool =>
+export const listPullRequestFiles = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: listPullRequestFilesDescription,
     inputSchema: listPullRequestFilesInputSchema,
     toModelOutput: listPullRequestFilesToModelOutput,
-    execute: async args => listPullRequestFilesStep({ token, ...args }),
+    execute: async args => listPullRequestFilesStep({ token: await resolveToken(), ...args }),
   })
 
-async function listPullRequestReviewsStep(args: Parameters<typeof listPullRequestReviewsCore>[0]) {
+async function listPullRequestReviewsStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof listPullRequestReviewsCore>[0]>) {
   "use step"
-  return listPullRequestReviewsCore(args)
+  return listPullRequestReviewsCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** List reviews on a pull request (approvals, change requests, and comments). */
-export const listPullRequestReviews = (token: string): GithubTool =>
+export const listPullRequestReviews = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: listPullRequestReviewsDescription,
     inputSchema: listPullRequestReviewsInputSchema,
-    execute: async args => listPullRequestReviewsStep({ token, ...args }),
+    execute: async args => listPullRequestReviewsStep({ token: await resolveToken(), ...args }),
   })
 
-async function createPullRequestReviewStep(args: Parameters<typeof createPullRequestReviewCore>[0]) {
+async function createPullRequestReviewStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof createPullRequestReviewCore>[0]>) {
   "use step"
-  return createPullRequestReviewCore(args)
+  return createPullRequestReviewCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Submit a pull request review with optional inline comments. Requires approval by default. */
-export const createPullRequestReview = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createPullRequestReview = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createPullRequestReviewDescription,
     needsApproval,
     inputSchema: createPullRequestReviewInputSchema,
-    execute: async args => createPullRequestReviewStep({ token, ...args }),
+    execute: async args => createPullRequestReviewStep({ token: await resolveToken(), ...args }),
   })

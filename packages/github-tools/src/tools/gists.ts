@@ -22,99 +22,100 @@ import {
   createGistCommentDescription,
   createGistCommentCore,
 } from '../core/gists'
-import type { ToolOptions, GithubTool } from '../types'
+import { createGithubTokenStepResolver, type GithubTokenResolver, type GithubTokenStepArgs } from '../core/token'
+import type { GithubTool, ToolOptions } from '../types'
 
-async function listGistsStep(args: Parameters<typeof listGistsCore>[0]) {
+async function listGistsStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof listGistsCore>[0]>) {
   "use step"
-  return listGistsCore(args)
+  return listGistsCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** List gists for the authenticated user or a specific user. */
-export const listGists = (token: string): GithubTool =>
+export const listGists = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: listGistsDescription,
     inputSchema: listGistsInputSchema,
-    execute: async args => listGistsStep({ token, ...args }),
+    execute: async args => listGistsStep({ token: await resolveToken(), ...args }),
   })
 
-async function getGistStep(args: Parameters<typeof getGistCore>[0]) {
+async function getGistStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof getGistCore>[0]>) {
   "use step"
-  return getGistCore(args)
+  return getGistCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Get a gist by ID, including file contents. */
-export const getGist = (token: string): GithubTool =>
+export const getGist = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: getGistDescription,
     inputSchema: getGistInputSchema,
-    execute: async args => getGistStep({ token, ...args }),
+    execute: async args => getGistStep({ token: await resolveToken(), ...args }),
   })
 
-async function listGistCommentsStep(args: Parameters<typeof listGistCommentsCore>[0]) {
+async function listGistCommentsStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof listGistCommentsCore>[0]>) {
   "use step"
-  return listGistCommentsCore(args)
+  return listGistCommentsCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** List comments on a gist. */
-export const listGistComments = (token: string): GithubTool =>
+export const listGistComments = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: listGistCommentsDescription,
     inputSchema: listGistCommentsInputSchema,
-    execute: async args => listGistCommentsStep({ token, ...args }),
+    execute: async args => listGistCommentsStep({ token: await resolveToken(), ...args }),
   })
 
-async function createGistStep(args: Parameters<typeof createGistCore>[0]) {
+async function createGistStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof createGistCore>[0]>) {
   "use step"
-  return createGistCore(args)
+  return createGistCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Create a new gist with one or more files. Requires approval by default. */
-export const createGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createGist = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistDescription,
     needsApproval,
     inputSchema: createGistInputSchema,
-    execute: async args => createGistStep({ token, ...args }),
+    execute: async args => createGistStep({ token: await resolveToken(), ...args }),
   })
 
-async function updateGistStep(args: Parameters<typeof updateGistCore>[0]) {
+async function updateGistStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof updateGistCore>[0]>) {
   "use step"
-  return updateGistCore(args)
+  return updateGistCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Update an existing gist. Requires approval by default. */
-export const updateGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const updateGist = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: updateGistDescription,
     needsApproval,
     inputSchema: updateGistInputSchema,
-    execute: async args => updateGistStep({ token, ...args }),
+    execute: async args => updateGistStep({ token: await resolveToken(), ...args }),
   })
 
-async function deleteGistStep(args: Parameters<typeof deleteGistCore>[0]) {
+async function deleteGistStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof deleteGistCore>[0]>) {
   "use step"
-  return deleteGistCore(args)
+  return deleteGistCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Delete a gist permanently. Requires approval by default. */
-export const deleteGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const deleteGist = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: deleteGistDescription,
     needsApproval,
     inputSchema: deleteGistInputSchema,
-    execute: async args => deleteGistStep({ token, ...args }),
+    execute: async args => deleteGistStep({ token: await resolveToken(), ...args }),
   })
 
-async function createGistCommentStep(args: Parameters<typeof createGistCommentCore>[0]) {
+async function createGistCommentStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof createGistCommentCore>[0]>) {
   "use step"
-  return createGistCommentCore(args)
+  return createGistCommentCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Add a comment to a gist. Requires approval by default. */
-export const createGistComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createGistComment = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistCommentDescription,
     needsApproval,
     inputSchema: createGistCommentInputSchema,
-    execute: async args => createGistCommentStep({ token, ...args }),
+    execute: async args => createGistCommentStep({ token: await resolveToken(), ...args }),
   })

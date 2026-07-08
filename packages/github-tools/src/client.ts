@@ -1,10 +1,11 @@
 import { Octokit } from 'octokit'
+import type { GithubTokenResolver } from './core/token'
 
 /** @see https://docs.github.com/en/rest/about-the-rest-api/api-versions */
 export const GITHUB_API_VERSION = '2026-03-10'
 
-export function createOctokit(token: string): Octokit {
-  const octokit = new Octokit({ auth: token })
+export async function createOctokit(resolveToken: GithubTokenResolver): Promise<Octokit> {
+  const octokit = new Octokit({ auth: await resolveToken() })
 
   octokit.hook.before('request', (options) => {
     options.headers = {

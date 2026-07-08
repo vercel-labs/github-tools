@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { createOctokit } from '../client'
+import type { GithubTokenResolver } from './token'
 
 export const searchCodeInputSchema = z.object({
   query: z.string().describe('Search query. Supports GitHub search qualifiers, e.g. "useState repo:facebook/react"'),
@@ -8,8 +9,8 @@ export const searchCodeInputSchema = z.object({
 
 export const searchCodeDescription = 'Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search.'
 
-export async function searchCodeCore({ token, query, perPage }: { token: string, query: string, perPage: number }) {
-  const octokit = createOctokit(token)
+export async function searchCodeCore({ resolveToken, query, perPage }: { resolveToken: GithubTokenResolver, query: string, perPage: number }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.search.code({ q: query, per_page: perPage })
   return {
     totalCount: data.total_count,
@@ -32,8 +33,8 @@ export const searchRepositoriesInputSchema = z.object({
 
 export const searchRepositoriesDescription = 'Search for GitHub repositories by keyword, topic, language, or other qualifiers'
 
-export async function searchRepositoriesCore({ token, query, perPage, sort, order }: { token: string, query: string, perPage: number, sort?: 'stars' | 'forks' | 'help-wanted-issues' | 'updated', order: 'asc' | 'desc' }) {
-  const octokit = createOctokit(token)
+export async function searchRepositoriesCore({ resolveToken, query, perPage, sort, order }: { resolveToken: GithubTokenResolver, query: string, perPage: number, sort?: 'stars' | 'forks' | 'help-wanted-issues' | 'updated', order: 'asc' | 'desc' }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.search.repos({ q: query, per_page: perPage, sort, order })
   return {
     totalCount: data.total_count,

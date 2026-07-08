@@ -1,6 +1,7 @@
 import type { Approval, ToolModelOutput } from 'eve/tools'
 import type { z } from 'zod'
 import type { GithubToolPreset } from '../core/presets'
+import type { GithubTokenInput } from '../core/token'
 import type { GithubToolName } from '../core/tool-names'
 import type { GithubWriteToolName } from '../core/write-tools'
 import type { CommitIdentity } from '../types'
@@ -32,8 +33,8 @@ export type EveToolOverrides = Partial<Record<GithubToolName, {
 }>>
 
 export type EveGithubToolsOptions = {
-  /** Defaults to `process.env.GITHUB_TOKEN`. */
-  token?: string
+  /** GitHub token string or async provider. Defaults to `process.env.GITHUB_TOKEN`. */
+  token?: GithubTokenInput
   /**
    * Restrict tools to a predefined preset.
    *

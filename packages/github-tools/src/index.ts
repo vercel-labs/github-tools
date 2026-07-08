@@ -10,7 +10,7 @@ import { resolveAiSdkApproval } from './core/approval'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
 import { type GithubToolName } from './core/tool-names'
 import { type AllGithubTools, type GithubToolsBaseOptions } from './core/tool-types'
-import { resolveGithubToken } from './core/token'
+import { createGithubTokenResolver } from './core/token'
 import type { GithubWriteToolName } from './core/write-tools'
 
 export type { GithubWriteToolName } from './core/write-tools'
@@ -88,53 +88,53 @@ export function createGithubTools({
   committer,
   coAuthors,
 }: GithubToolsOptions = {}): AllGithubTools | Pick<AllGithubTools, GithubToolName> {
-  const resolvedToken = resolveGithubToken(token)
+  const resolveToken = createGithubTokenResolver(token)
   const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveAiSdkApproval(name, requireApproval) })
   const allowed = preset ? resolvePresetTools(preset) : null
 
   const allTools = {
-    getRepository: getRepository(resolvedToken),
-    listBranches: listBranches(resolvedToken),
-    getFileContent: getFileContent(resolvedToken),
-    listPullRequests: listPullRequests(resolvedToken),
-    getPullRequest: getPullRequest(resolvedToken),
-    listIssues: listIssues(resolvedToken),
-    getIssue: getIssue(resolvedToken),
-    searchCode: searchCode(resolvedToken),
-    searchRepositories: searchRepositories(resolvedToken),
-    listCommits: listCommits(resolvedToken),
-    getCommit: getCommit(resolvedToken),
-    getBlame: getBlame(resolvedToken),
-    createBranch: createBranch(resolvedToken, approval('createBranch')),
-    forkRepository: forkRepository(resolvedToken, approval('forkRepository')),
-    createRepository: createRepository(resolvedToken, approval('createRepository')),
-    createOrUpdateFile: createOrUpdateFile(resolvedToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
-    createPullRequest: createPullRequest(resolvedToken, approval('createPullRequest')),
-    mergePullRequest: mergePullRequest(resolvedToken, { ...approval('mergePullRequest'), coAuthors }),
-    addPullRequestComment: addPullRequestComment(resolvedToken, approval('addPullRequestComment')),
-    listPullRequestFiles: listPullRequestFiles(resolvedToken),
-    listPullRequestReviews: listPullRequestReviews(resolvedToken),
-    createPullRequestReview: createPullRequestReview(resolvedToken, approval('createPullRequestReview')),
-    createIssue: createIssue(resolvedToken, approval('createIssue')),
-    addIssueComment: addIssueComment(resolvedToken, approval('addIssueComment')),
-    closeIssue: closeIssue(resolvedToken, approval('closeIssue')),
-    listLabels: listLabels(resolvedToken),
-    addLabels: addLabels(resolvedToken, approval('addLabels')),
-    removeLabel: removeLabel(resolvedToken, approval('removeLabel')),
-    listGists: listGists(resolvedToken),
-    getGist: getGist(resolvedToken),
-    listGistComments: listGistComments(resolvedToken),
-    createGist: createGist(resolvedToken, approval('createGist')),
-    updateGist: updateGist(resolvedToken, approval('updateGist')),
-    deleteGist: deleteGist(resolvedToken, approval('deleteGist')),
-    createGistComment: createGistComment(resolvedToken, approval('createGistComment')),
-    listWorkflows: listWorkflows(resolvedToken),
-    listWorkflowRuns: listWorkflowRuns(resolvedToken),
-    getWorkflowRun: getWorkflowRun(resolvedToken),
-    listWorkflowJobs: listWorkflowJobs(resolvedToken),
-    triggerWorkflow: triggerWorkflow(resolvedToken, approval('triggerWorkflow')),
-    cancelWorkflowRun: cancelWorkflowRun(resolvedToken, approval('cancelWorkflowRun')),
-    rerunWorkflowRun: rerunWorkflowRun(resolvedToken, approval('rerunWorkflowRun')),
+    getRepository: getRepository(resolveToken),
+    listBranches: listBranches(resolveToken),
+    getFileContent: getFileContent(resolveToken),
+    listPullRequests: listPullRequests(resolveToken),
+    getPullRequest: getPullRequest(resolveToken),
+    listIssues: listIssues(resolveToken),
+    getIssue: getIssue(resolveToken),
+    searchCode: searchCode(resolveToken),
+    searchRepositories: searchRepositories(resolveToken),
+    listCommits: listCommits(resolveToken),
+    getCommit: getCommit(resolveToken),
+    getBlame: getBlame(resolveToken),
+    createBranch: createBranch(resolveToken, approval('createBranch')),
+    forkRepository: forkRepository(resolveToken, approval('forkRepository')),
+    createRepository: createRepository(resolveToken, approval('createRepository')),
+    createOrUpdateFile: createOrUpdateFile(resolveToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
+    createPullRequest: createPullRequest(resolveToken, approval('createPullRequest')),
+    mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors }),
+    addPullRequestComment: addPullRequestComment(resolveToken, approval('addPullRequestComment')),
+    listPullRequestFiles: listPullRequestFiles(resolveToken),
+    listPullRequestReviews: listPullRequestReviews(resolveToken),
+    createPullRequestReview: createPullRequestReview(resolveToken, approval('createPullRequestReview')),
+    createIssue: createIssue(resolveToken, approval('createIssue')),
+    addIssueComment: addIssueComment(resolveToken, approval('addIssueComment')),
+    closeIssue: closeIssue(resolveToken, approval('closeIssue')),
+    listLabels: listLabels(resolveToken),
+    addLabels: addLabels(resolveToken, approval('addLabels')),
+    removeLabel: removeLabel(resolveToken, approval('removeLabel')),
+    listGists: listGists(resolveToken),
+    getGist: getGist(resolveToken),
+    listGistComments: listGistComments(resolveToken),
+    createGist: createGist(resolveToken, approval('createGist')),
+    updateGist: updateGist(resolveToken, approval('updateGist')),
+    deleteGist: deleteGist(resolveToken, approval('deleteGist')),
+    createGistComment: createGistComment(resolveToken, approval('createGistComment')),
+    listWorkflows: listWorkflows(resolveToken),
+    listWorkflowRuns: listWorkflowRuns(resolveToken),
+    getWorkflowRun: getWorkflowRun(resolveToken),
+    listWorkflowJobs: listWorkflowJobs(resolveToken),
+    triggerWorkflow: triggerWorkflow(resolveToken, approval('triggerWorkflow')),
+    cancelWorkflowRun: cancelWorkflowRun(resolveToken, approval('cancelWorkflowRun')),
+    rerunWorkflowRun: rerunWorkflowRun(resolveToken, approval('rerunWorkflowRun')),
   } satisfies AllGithubTools
 
   if (overrides) {
@@ -165,5 +165,7 @@ export { listCommits, getCommit, getBlame } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 export type { CommitIdentity, CommitToolOptions, GithubTool, Octokit, ToolOptions, ToolOverrides } from './types'
+export type { GithubTokenInput, GithubTokenResolver } from './core/token'
+export { createGithubTokenResolver } from './core/token'
 export { createGithubAgent } from './agents'
 export type { CreateGithubAgentOptions } from './agents'

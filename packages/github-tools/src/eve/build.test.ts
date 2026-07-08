@@ -50,12 +50,14 @@ describe('createGithubTools eve integration', () => {
       content: 'hello',
     }, {} as never)
 
-    expect(coreSpy).toHaveBeenCalledWith(expect.objectContaining({
-      token: 'ghp_test',
+    const [coreArgs] = coreSpy.mock.calls[0]!
+    expect(coreArgs).toEqual(expect.objectContaining({
+      resolveToken: expect.any(Function),
       author: { name: 'Author', email: 'author@example.com' },
       committer: { name: 'Committer', email: 'committer@example.com' },
       coAuthors,
     }))
+    await expect(coreArgs.resolveToken()).resolves.toBe('ghp_test')
 
     coreSpy.mockRestore()
   })

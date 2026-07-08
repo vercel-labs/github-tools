@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { createOctokit } from '../client'
+import type { GithubTokenResolver } from './token'
 
 export const listGistsInputSchema = z.object({
   username: z.string().optional().describe('GitHub username — omit to list your own gists'),
@@ -9,8 +10,8 @@ export const listGistsInputSchema = z.object({
 
 export const listGistsDescription = 'List gists for the authenticated user or a specific user'
 
-export async function listGistsCore({ token, username, perPage, page }: { token: string, username?: string, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+export async function listGistsCore({ resolveToken, username, perPage, page }: { resolveToken: GithubTokenResolver, username?: string, perPage: number, page: number }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = username
     ? await octokit.rest.gists.listForUser({ username, per_page: perPage, page })
     : await octokit.rest.gists.list({ per_page: perPage, page })
@@ -33,8 +34,8 @@ export const getGistInputSchema = z.object({
 
 export const getGistDescription = 'Get a gist by ID, including file contents'
 
-export async function getGistCore({ token, gistId }: { token: string, gistId: string }) {
-  const octokit = createOctokit(token)
+export async function getGistCore({ resolveToken, gistId }: { resolveToken: GithubTokenResolver, gistId: string }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.gists.get({ gist_id: gistId })
   return {
     id: data.id,
@@ -62,8 +63,8 @@ export const listGistCommentsInputSchema = z.object({
 
 export const listGistCommentsDescription = 'List comments on a gist'
 
-export async function listGistCommentsCore({ token, gistId, perPage, page }: { token: string, gistId: string, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+export async function listGistCommentsCore({ resolveToken, gistId, perPage, page }: { resolveToken: GithubTokenResolver, gistId: string, perPage: number, page: number }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.gists.listComments({ gist_id: gistId, per_page: perPage, page })
   return data.map(comment => ({
     id: comment.id,
@@ -85,8 +86,8 @@ export const createGistInputSchema = z.object({
 export const createGistDescription = 'Create a new gist with one or more files'
 
 /** Not idempotent — each call creates a new gist. */
-export async function createGistCore({ token, description, files, isPublic }: { token: string, description?: string, files: Record<string, { content: string }>, isPublic: boolean }) {
-  const octokit = createOctokit(token)
+export async function createGistCore({ resolveToken, description, files, isPublic }: { resolveToken: GithubTokenResolver, description?: string, files: Record<string, { content: string }>, isPublic: boolean }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.gists.create({
     description,
     files,
@@ -113,8 +114,8 @@ export const updateGistInputSchema = z.object({
 export const updateGistDescription = 'Update an existing gist — edit description, update files, or remove files'
 
 /** Not idempotent — each call applies a new revision. */
-export async function updateGistCore({ token, gistId, description, files, filesToDelete }: { token: string, gistId: string, description?: string, files?: Record<string, { content: string }>, filesToDelete?: string[] }) {
-  const octokit = createOctokit(token)
+export async function updateGistCore({ resolveToken, gistId, description, files, filesToDelete }: { resolveToken: GithubTokenResolver, gistId: string, description?: string, files?: Record<string, { content: string }>, filesToDelete?: string[] }) {
+  const octokit = await createOctokit(resolveToken)
   const fileUpdates: Record<string, { content: string } | null> = {}
   if (files) Object.assign(fileUpdates, files)
   if (filesToDelete) {
@@ -140,8 +141,8 @@ export const deleteGistInputSchema = z.object({
 export const deleteGistDescription = 'Delete a gist permanently'
 
 /** Not idempotent — deleting an already-deleted gist returns 404 from GitHub. */
-export async function deleteGistCore({ token, gistId }: { token: string, gistId: string }) {
-  const octokit = createOctokit(token)
+export async function deleteGistCore({ resolveToken, gistId }: { resolveToken: GithubTokenResolver, gistId: string }) {
+  const octokit = await createOctokit(resolveToken)
   await octokit.rest.gists.delete({ gist_id: gistId })
   return { deleted: true, gistId }
 }
@@ -154,8 +155,8 @@ export const createGistCommentInputSchema = z.object({
 export const createGistCommentDescription = 'Add a comment to a gist'
 
 /** Not idempotent — each call adds another comment. */
-export async function createGistCommentCore({ token, gistId, body }: { token: string, gistId: string, body: string }) {
-  const octokit = createOctokit(token)
+export async function createGistCommentCore({ resolveToken, gistId, body }: { resolveToken: GithubTokenResolver, gistId: string, body: string }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.gists.createComment({ gist_id: gistId, body })
   return {
     id: data.id,

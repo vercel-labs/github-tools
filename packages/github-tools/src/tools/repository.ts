@@ -24,105 +24,106 @@ import {
   composeCommitMessage,
 } from '../core/repository'
 import { getFileContentToModelOutput } from '../core/model-output'
-import type { CommitToolOptions, ToolOptions, GithubTool } from '../types'
+import { createGithubTokenStepResolver, type GithubTokenResolver, type GithubTokenStepArgs } from '../core/token'
+import type { CommitToolOptions, GithubTool, ToolOptions } from '../types'
 
 export { composeCommitMessage }
 
-async function getRepositoryStep(args: Parameters<typeof getRepositoryCore>[0]) {
+async function getRepositoryStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof getRepositoryCore>[0]>) {
   "use step"
-  return getRepositoryCore(args)
+  return getRepositoryCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Get information about a GitHub repository including description, stars, forks, language, and default branch. */
-export const getRepository = (token: string): GithubTool =>
+export const getRepository = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: getRepositoryDescription,
     inputSchema: getRepositoryInputSchema,
-    execute: async args => getRepositoryStep({ token, ...args }),
+    execute: async args => getRepositoryStep({ token: await resolveToken(), ...args }),
   })
 
-async function listBranchesStep(args: Parameters<typeof listBranchesCore>[0]) {
+async function listBranchesStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof listBranchesCore>[0]>) {
   "use step"
-  return listBranchesCore(args)
+  return listBranchesCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** List branches in a GitHub repository. */
-export const listBranches = (token: string): GithubTool =>
+export const listBranches = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: listBranchesDescription,
     inputSchema: listBranchesInputSchema,
-    execute: async args => listBranchesStep({ token, ...args }),
+    execute: async args => listBranchesStep({ token: await resolveToken(), ...args }),
   })
 
-async function getFileContentStep(args: Parameters<typeof getFileContentCore>[0]) {
+async function getFileContentStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof getFileContentCore>[0]>) {
   "use step"
-  return getFileContentCore(args)
+  return getFileContentCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Get the content of a file from a GitHub repository. */
-export const getFileContent = (token: string): GithubTool =>
+export const getFileContent = (resolveToken: GithubTokenResolver): GithubTool =>
   tool({
     description: getFileContentDescription,
     inputSchema: getFileContentInputSchema,
     toModelOutput: getFileContentToModelOutput,
-    execute: async args => getFileContentStep({ token, ...args }),
+    execute: async args => getFileContentStep({ token: await resolveToken(), ...args }),
   })
 
-async function createBranchStep(args: Parameters<typeof createBranchCore>[0]) {
+async function createBranchStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof createBranchCore>[0]>) {
   "use step"
-  return createBranchCore(args)
+  return createBranchCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Create a new branch in a GitHub repository from an existing branch or commit SHA. Requires approval by default. */
-export const createBranch = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createBranch = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createBranchDescription,
     needsApproval,
     inputSchema: createBranchInputSchema,
-    execute: async args => createBranchStep({ token, ...args }),
+    execute: async args => createBranchStep({ token: await resolveToken(), ...args }),
   })
 
-async function forkRepositoryStep(args: Parameters<typeof forkRepositoryCore>[0]) {
+async function forkRepositoryStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof forkRepositoryCore>[0]>) {
   "use step"
-  return forkRepositoryCore(args)
+  return forkRepositoryCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Fork a GitHub repository to the authenticated user account or a specified organization. Requires approval by default. */
-export const forkRepository = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const forkRepository = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: forkRepositoryDescription,
     needsApproval,
     inputSchema: forkRepositoryInputSchema,
-    execute: async args => forkRepositoryStep({ token, ...args }),
+    execute: async args => forkRepositoryStep({ token: await resolveToken(), ...args }),
   })
 
-async function createRepositoryStep(args: Parameters<typeof createRepositoryCore>[0]) {
+async function createRepositoryStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof createRepositoryCore>[0]>) {
   "use step"
-  return createRepositoryCore(args)
+  return createRepositoryCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Create a new GitHub repository for the authenticated user or a specified organization. Requires approval by default. */
-export const createRepository = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createRepository = (resolveToken: GithubTokenResolver, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createRepositoryDescription,
     needsApproval,
     inputSchema: createRepositoryInputSchema,
-    execute: async args => createRepositoryStep({ token, ...args }),
+    execute: async args => createRepositoryStep({ token: await resolveToken(), ...args }),
   })
 
-async function createOrUpdateFileStep(args: Parameters<typeof createOrUpdateFileCore>[0]) {
+async function createOrUpdateFileStep({ token, ...args }: GithubTokenStepArgs<Parameters<typeof createOrUpdateFileCore>[0]>) {
   "use step"
-  return createOrUpdateFileCore(args)
+  return createOrUpdateFileCore({ resolveToken: createGithubTokenStepResolver(token), ...args })
 }
 
 /** Create or update a file in a GitHub repository. Provide the SHA when updating an existing file. Requires approval by default. */
 export const createOrUpdateFile = (
-  token: string,
+  resolveToken: GithubTokenResolver,
   { needsApproval = true, author, committer, coAuthors }: CommitToolOptions = {},
 ): GithubTool =>
   tool({
     description: createOrUpdateFileDescription,
     needsApproval,
     inputSchema: createOrUpdateFileInputSchema,
-    execute: async args => createOrUpdateFileStep({ token, author, committer, coAuthors, ...args }),
+    execute: async args => createOrUpdateFileStep({ token: await resolveToken(), author, committer, coAuthors, ...args }),
   })

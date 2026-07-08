@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { createOctokit } from '../client'
+import type { GithubTokenResolver } from './token'
 
 export const listWorkflowsInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
@@ -10,8 +11,8 @@ export const listWorkflowsInputSchema = z.object({
 
 export const listWorkflowsDescription = 'List GitHub Actions workflows in a repository'
 
-export async function listWorkflowsCore({ token, owner, repo, perPage, page }: { token: string, owner: string, repo: string, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+export async function listWorkflowsCore({ resolveToken, owner, repo, perPage, page }: { resolveToken: GithubTokenResolver, owner: string, repo: string, perPage: number, page: number }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.actions.listRepoWorkflows({ owner, repo, per_page: perPage, page })
   return {
     totalCount: data.total_count,
@@ -42,8 +43,8 @@ export const listWorkflowRunsInputSchema = z.object({
 
 export const listWorkflowRunsDescription = 'List workflow runs for a repository, optionally filtered by workflow, branch, status, or event'
 
-export async function listWorkflowRunsCore({ token, owner, repo, workflowId, branch, event, status, perPage, page }: { token: string, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: WorkflowRunStatus, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+export async function listWorkflowRunsCore({ resolveToken, owner, repo, workflowId, branch, event, status, perPage, page }: { resolveToken: GithubTokenResolver, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: WorkflowRunStatus, perPage: number, page: number }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = workflowId
     ? await octokit.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: workflowId, per_page: perPage, page, ...branch && { branch }, ...event && { event }, ...status && { status } })
     : await octokit.rest.actions.listWorkflowRunsForRepo({ owner, repo, per_page: perPage, page, ...branch && { branch }, ...event && { event }, ...status && { status } })
@@ -75,8 +76,8 @@ export const getWorkflowRunInputSchema = z.object({
 
 export const getWorkflowRunDescription = 'Get details of a specific workflow run including status, timing, and trigger info'
 
-export async function getWorkflowRunCore({ token, owner, repo, runId }: { token: string, owner: string, repo: string, runId: number }) {
-  const octokit = createOctokit(token)
+export async function getWorkflowRunCore({ resolveToken, owner, repo, runId }: { resolveToken: GithubTokenResolver, owner: string, repo: string, runId: number }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.actions.getWorkflowRun({ owner, repo, run_id: runId })
   return {
     id: data.id,
@@ -107,8 +108,8 @@ export const listWorkflowJobsInputSchema = z.object({
 
 export const listWorkflowJobsDescription = 'List jobs for a workflow run, including step-level status and timing'
 
-export async function listWorkflowJobsCore({ token, owner, repo, runId, filter, perPage, page }: { token: string, owner: string, repo: string, runId: number, filter: 'latest' | 'all', perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+export async function listWorkflowJobsCore({ resolveToken, owner, repo, runId, filter, perPage, page }: { resolveToken: GithubTokenResolver, owner: string, repo: string, runId: number, filter: 'latest' | 'all', perPage: number, page: number }) {
+  const octokit = await createOctokit(resolveToken)
   const { data } = await octokit.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: runId, filter, per_page: perPage, page })
   return {
     totalCount: data.total_count,
@@ -144,8 +145,8 @@ export const triggerWorkflowInputSchema = z.object({
 export const triggerWorkflowDescription = 'Trigger a workflow via workflow_dispatch event'
 
 /** Not idempotent — each call starts a new workflow run. */
-export async function triggerWorkflowCore({ token, owner, repo, workflowId, ref, inputs }: { token: string, owner: string, repo: string, workflowId: string | number, ref: string, inputs?: Record<string, string> }) {
-  const octokit = createOctokit(token)
+export async function triggerWorkflowCore({ resolveToken, owner, repo, workflowId, ref, inputs }: { resolveToken: GithubTokenResolver, owner: string, repo: string, workflowId: string | number, ref: string, inputs?: Record<string, string> }) {
+  const octokit = await createOctokit(resolveToken)
   await octokit.rest.actions.createWorkflowDispatch({
     owner,
     repo,
@@ -165,8 +166,8 @@ export const cancelWorkflowRunInputSchema = z.object({
 export const cancelWorkflowRunDescription = 'Cancel an in-progress workflow run'
 
 /** Not idempotent — cancelling an already-finished run is a no-op on GitHub but still mutates. */
-export async function cancelWorkflowRunCore({ token, owner, repo, runId }: { token: string, owner: string, repo: string, runId: number }) {
-  const octokit = createOctokit(token)
+export async function cancelWorkflowRunCore({ resolveToken, owner, repo, runId }: { resolveToken: GithubTokenResolver, owner: string, repo: string, runId: number }) {
+  const octokit = await createOctokit(resolveToken)
   await octokit.rest.actions.cancelWorkflowRun({ owner, repo, run_id: runId })
   return { cancelled: true, runId }
 }
@@ -181,8 +182,8 @@ export const rerunWorkflowRunInputSchema = z.object({
 export const rerunWorkflowRunDescription = 'Re-run a workflow run, optionally only the failed jobs'
 
 /** Not idempotent — each call starts another run attempt. */
-export async function rerunWorkflowRunCore({ token, owner, repo, runId, onlyFailedJobs }: { token: string, owner: string, repo: string, runId: number, onlyFailedJobs: boolean }) {
-  const octokit = createOctokit(token)
+export async function rerunWorkflowRunCore({ resolveToken, owner, repo, runId, onlyFailedJobs }: { resolveToken: GithubTokenResolver, owner: string, repo: string, runId: number, onlyFailedJobs: boolean }) {
+  const octokit = await createOctokit(resolveToken)
   if (onlyFailedJobs) {
     await octokit.rest.actions.reRunWorkflowFailedJobs({ owner, repo, run_id: runId })
   } else {

@@ -22,6 +22,7 @@ import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from '
 import type { GithubToolName } from './core/tool-names'
 import type { ApprovalConfig } from './index'
 import type { CommitIdentity } from './types'
+import type { GithubTokenInput } from './core/token'
 import type { Context } from '@ai-sdk/provider-utils'
 
 /**
@@ -116,10 +117,10 @@ export type CreateDurableGithubAgentOptions =
   Omit<WorkflowAgentOptions, 'model' | 'tools' | 'instructions'> & {
     model: string | LanguageModel
     /**
-     * GitHub personal access token.
+     * GitHub personal access token or async token provider.
      * Falls back to `process.env.GITHUB_TOKEN` when omitted.
      */
-    token?: string
+    token?: GithubTokenInput
     /**
      * Restrict tools and system prompt to a predefined preset.
      *
@@ -224,6 +225,6 @@ export function createDurableGithubAgent({
 }
 
 export { createGithubTools, createGithubAgent } from './index'
-export type { CommitIdentity, CommitToolOptions, GithubTools, GithubToolsOptions, GithubToolPreset, GithubToolName, GithubWriteToolName, ApprovalConfig, ToolOverrides, AllGithubTools, PresetToolName, CombinedPresetToolNames, GithubToolsForPreset, PickGithubTools } from './index'
-export { PRESET_TOOLS, GITHUB_TOOL_NAMES, GITHUB_WRITE_TOOLS } from './index'
+export type { CommitIdentity, CommitToolOptions, GithubTools, GithubToolsOptions, GithubToolPreset, GithubToolName, GithubWriteToolName, ApprovalConfig, ToolOverrides, AllGithubTools, PresetToolName, CombinedPresetToolNames, GithubToolsForPreset, PickGithubTools, GithubTokenInput, GithubTokenResolver } from './index'
+export { PRESET_TOOLS, GITHUB_TOOL_NAMES, GITHUB_WRITE_TOOLS, createGithubTokenResolver } from './index'
 export type { CreateGithubAgentOptions } from './agents'

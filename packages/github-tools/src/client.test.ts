@@ -4,7 +4,7 @@ import { GITHUB_API_VERSION, createOctokit } from './client'
 describe('createOctokit', () => {
   it('sets X-GitHub-Api-Version on REST requests', async () => {
     const seen: string[] = []
-    const octokit = createOctokit('ghp_test')
+    const octokit = await createOctokit(async () => 'ghp_test')
 
     octokit.request = octokit.request.defaults({
       request: {
