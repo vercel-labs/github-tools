@@ -87,6 +87,16 @@ export const listCommits = factory('listCommits')
 export const getCommit = factory('getCommit')
 /** Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). */
 export const getBlame = factory('getBlame')
+/** Get a single commit comment by its ID. */
+export const getCommitComment = factory('getCommitComment')
+/** List comments left on a specific commit. */
+export const listCommitComments = factory('listCommitComments')
+/** Add a comment to a commit, optionally anchored to a file path and diff position. Requires approval by default. */
+export const createCommitComment = factory('createCommitComment')
+/** Update the body of an existing commit comment. Requires approval by default. */
+export const updateCommitComment = factory('updateCommitComment')
+/** Delete a commit comment permanently. Requires approval by default. */
+export const deleteCommitComment = factory('deleteCommitComment')
 /** List gists for the authenticated user or a specific user. */
 export const listGists = factory('listGists')
 /** Get a gist by ID, including file contents. */

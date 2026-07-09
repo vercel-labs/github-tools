@@ -16,9 +16,9 @@ export const PRESET_TOOLS = {
    * Agent prompt: optimized for thorough PR review with inline feedback.
    */
   'code-review': [
-    'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'getFileContent', 'listCommits', 'getCommit', 'getBlame',
+    'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'getFileContent', 'listCommits', 'getCommit', 'getBlame', 'getCommitComment', 'listCommitComments',
     'getRepository', 'listBranches', 'searchCode',
-    'addPullRequestComment', 'createPullRequestReview',
+    'addPullRequestComment', 'createPullRequestReview', 'createCommitComment',
   ],
   /**
    * **Issue triage** — manage and organize GitHub issues.
@@ -61,7 +61,7 @@ export const PRESET_TOOLS = {
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews',
     'listIssues', 'getIssue',
     'listLabels',
-    'listCommits', 'getCommit', 'getBlame',
+    'listCommits', 'getCommit', 'getBlame', 'getCommitComment', 'listCommitComments',
     'searchCode', 'searchRepositories',
     'listGists', 'getGist', 'listGistComments',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs',
@@ -69,7 +69,7 @@ export const PRESET_TOOLS = {
   /**
    * **Maintainer** — full repository maintenance with all read and write tools.
    *
-   * Tools: all 42 tools (same as omitting `preset`).
+   * Tools: all 47 tools (same as omitting `preset`).
    *
    * Agent prompt: optimized for day-to-day repo maintenance with careful write operations.
    */
@@ -78,7 +78,7 @@ export const PRESET_TOOLS = {
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'createPullRequest', 'mergePullRequest', 'addPullRequestComment', 'createPullRequestReview',
     'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
     'listLabels', 'addLabels', 'removeLabel',
-    'listCommits', 'getCommit', 'getBlame',
+    'listCommits', 'getCommit', 'getBlame', 'getCommitComment', 'listCommitComments', 'createCommitComment', 'updateCommitComment', 'deleteCommitComment',
     'searchCode', 'searchRepositories',
     'listGists', 'getGist', 'listGistComments', 'createGist', 'updateGist', 'deleteGist', 'createGistComment',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',

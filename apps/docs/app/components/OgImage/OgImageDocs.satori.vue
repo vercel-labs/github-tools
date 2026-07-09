@@ -14,7 +14,7 @@ withDefaults(
 )
 
 const FALLBACK_DESCRIPTION =
-  '42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
+  '47 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
 
 function ogTitleLines(raw: string): string[] {
   const title = !raw ? 'Documentation' : (raw.length > 68 ? `${raw.slice(0, 65)}…` : raw)

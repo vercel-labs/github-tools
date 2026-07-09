@@ -1,5 +1,5 @@
 import { tool } from 'ai'
-import type { GithubTool } from '../types'
+import type { ToolOptions, GithubTool } from '../types'
 import {
   listCommitsInputSchema,
   listCommitsDescription,
@@ -10,6 +10,21 @@ import {
   getBlameInputSchema,
   getBlameDescription,
   getBlameCore,
+  getCommitCommentInputSchema,
+  getCommitCommentDescription,
+  getCommitCommentCore,
+  listCommitCommentsInputSchema,
+  listCommitCommentsDescription,
+  listCommitCommentsCore,
+  createCommitCommentInputSchema,
+  createCommitCommentDescription,
+  createCommitCommentCore,
+  updateCommitCommentInputSchema,
+  updateCommitCommentDescription,
+  updateCommitCommentCore,
+  deleteCommitCommentInputSchema,
+  deleteCommitCommentDescription,
+  deleteCommitCommentCore,
 } from '../core/commits'
 import { getCommitToModelOutput } from '../core/model-output'
 
@@ -51,4 +66,72 @@ export const getBlame = (token: string): GithubTool =>
     description: getBlameDescription,
     inputSchema: getBlameInputSchema,
     execute: async args => getBlameStep({ token, ...args }),
+  })
+
+async function getCommitCommentStep(args: Parameters<typeof getCommitCommentCore>[0]) {
+  "use step"
+  return getCommitCommentCore(args)
+}
+
+/** Get a single commit comment by its ID. */
+export const getCommitComment = (token: string): GithubTool =>
+  tool({
+    description: getCommitCommentDescription,
+    inputSchema: getCommitCommentInputSchema,
+    execute: async args => getCommitCommentStep({ token, ...args }),
+  })
+
+async function listCommitCommentsStep(args: Parameters<typeof listCommitCommentsCore>[0]) {
+  "use step"
+  return listCommitCommentsCore(args)
+}
+
+/** List comments left on a specific commit. */
+export const listCommitComments = (token: string): GithubTool =>
+  tool({
+    description: listCommitCommentsDescription,
+    inputSchema: listCommitCommentsInputSchema,
+    execute: async args => listCommitCommentsStep({ token, ...args }),
+  })
+
+async function createCommitCommentStep(args: Parameters<typeof createCommitCommentCore>[0]) {
+  "use step"
+  return createCommitCommentCore(args)
+}
+
+/** Add a comment to a commit. Requires approval by default. */
+export const createCommitComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: createCommitCommentDescription,
+    needsApproval,
+    inputSchema: createCommitCommentInputSchema,
+    execute: async args => createCommitCommentStep({ token, ...args }),
+  })
+
+async function updateCommitCommentStep(args: Parameters<typeof updateCommitCommentCore>[0]) {
+  "use step"
+  return updateCommitCommentCore(args)
+}
+
+/** Update the body of an existing commit comment. Requires approval by default. */
+export const updateCommitComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: updateCommitCommentDescription,
+    needsApproval,
+    inputSchema: updateCommitCommentInputSchema,
+    execute: async args => updateCommitCommentStep({ token, ...args }),
+  })
+
+async function deleteCommitCommentStep(args: Parameters<typeof deleteCommitCommentCore>[0]) {
+  "use step"
+  return deleteCommitCommentCore(args)
+}
+
+/** Delete a commit comment permanently. Requires approval by default. */
+export const deleteCommitComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: deleteCommitCommentDescription,
+    needsApproval,
+    inputSchema: deleteCommitCommentInputSchema,
+    execute: async args => deleteCommitCommentStep({ token, ...args }),
   })
