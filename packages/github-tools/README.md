@@ -232,6 +232,16 @@ const tools = connectGithubTools('github/my-connector', {
 For eve agents, import from `@github-tools/sdk/connect/eve`:
 
 ```ts
+// agent/agent.ts — TODO(eve-connect-bundle): drop externalDependencies when eve fixes upstream
+import { defineAgent } from 'eve'
+
+export default defineAgent({
+  model: 'anthropic/claude-sonnet-5',
+  build: { externalDependencies: ['@vercel/connect'] },
+})
+```
+
+```ts
 // agent/tools/github.ts
 import { connectGithubTools } from '@github-tools/sdk/connect/eve'
 

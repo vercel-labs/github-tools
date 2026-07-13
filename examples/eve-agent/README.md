@@ -42,10 +42,12 @@ Open the dev TUI and ask it to review a pull request on a repo your connector ca
 
 ```
 agent/
-  agent.ts              # eve agent config
+  agent.ts              # eve agent config (externalizes @vercel/connect for bundling)
   instructions.md       # system prompt
   tools/github.ts       # GitHub tools via connectGithubTools()
 ```
+
+`agent.ts` sets `build.externalDependencies: ['@vercel/connect']` so `eve dev` can bundle `connectGithubTools` — a workaround until [eve](https://eve.dev) handles transitive Connect imports from workspace-linked packages without extra config.
 
 ## Customize
 
