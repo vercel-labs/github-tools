@@ -1,5 +1,13 @@
 # @github-tools/sdk
 
+## 1.8.0
+
+### Minor Changes
+
+- [#42](https://github.com/vercel-labs/github-tools/pull/42) [`58d0158`](https://github.com/vercel-labs/github-tools/commit/58d01586241495daee93b126704740562e90b683) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Allow GitHub token inputs to be strings or async provider functions (`GithubTokenInput`). Adds a `resolveGithubToken` helper for custom tool factories.
+
+- [#44](https://github.com/vercel-labs/github-tools/pull/44) [`a6ff194`](https://github.com/vercel-labs/github-tools/commit/a6ff194f5604f6dad74e7dc59261f6d1e342bf4a) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `@github-tools/sdk/connect` and `@github-tools/sdk/connect/eve` helpers for Vercel Connect — preset-derived scopes, `connectGithubToken`, and `connectGithubTools`.
+
 ## 1.7.0
 
 ### Minor Changes
