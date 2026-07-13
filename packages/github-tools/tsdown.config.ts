@@ -5,6 +5,8 @@ export default defineConfig({
     index: 'src/index.ts',
     workflow: 'src/workflow.ts',
     eve: 'src/eve.ts',
+    connect: 'src/connect/index.ts',
+    'connect/eve': 'src/connect/eve.ts',
   },
   format: 'esm',
   dts: true,
@@ -21,5 +23,6 @@ export default defineConfig({
     'eve',
     'eve/tools',
     'eve/tools/approval',
+    '@vercel/connect',
   ],
 })

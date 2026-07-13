@@ -213,6 +213,71 @@ All presets work with `createDurableGithubAgent`. Write tools honor `requireAppr
 
 > `workflow` and `@ai-sdk/workflow` are optional peer dependencies — install them only when using the workflow subpath.
 
+## Vercel Connect
+
+[Vercel Connect](https://vercel.com/docs/connect) mints short-lived GitHub tokens from a connector — no PAT to store. The `@github-tools/sdk/connect` subpath derives scopes from your preset automatically.
+
+```sh
+pnpm add @vercel/connect
+```
+
+```ts
+import { connectGithubTools } from '@github-tools/sdk/connect'
+
+const tools = connectGithubTools('github/my-connector', {
+  preset: 'code-review',
+})
+```
+
+For eve agents, import from `@github-tools/sdk/connect/eve`:
+
+```ts
+// agent/agent.ts — TODO(eve-connect-bundle): drop externalDependencies when eve fixes upstream
+import { defineAgent } from 'eve'
+
+export default defineAgent({
+  model: 'anthropic/claude-sonnet-5',
+  build: { externalDependencies: ['@vercel/connect'] },
+})
+```
+
+```ts
+// agent/tools/github.ts
+import { connectGithubTools } from '@github-tools/sdk/connect/eve'
+
+export default connectGithubTools('github/my-connector', {
+  preset: 'maintainer',
+})
+```
+
+Token provider only (custom factories):
+
+```ts
+import { connectGithubToken } from '@github-tools/sdk/connect'
+
+createGithubTools({
+  preset: 'ci-ops',
+  token: connectGithubToken('github/my-connector', { preset: 'ci-ops' }),
+})
+```
+
+Pass the same `preset` to `connectGithubToken` — it derives Connect scopes independently of the `preset` given to `createGithubTools`.
+
+Override installation, repositories, or scopes via `connect`:
+
+```ts
+connectGithubTools('github/my-connector', {
+  preset: 'issue-triage',
+  connect: {
+    installationId: 'inst_abc',
+    repositories: ['my-org/my-repo'],
+    scopes: ['issues:write'],
+  },
+})
+```
+
+> `@vercel/connect` is an optional peer dependency — install it only when using the `/connect` subpath.
+
 ## eve
 
 [eve](https://eve.dev) is Vercel's filesystem-first agent framework. The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic` — one file, zero CLI.
