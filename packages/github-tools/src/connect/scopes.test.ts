@@ -6,6 +6,9 @@ describe('connectGithubScopesForPreset', () => {
     expect(connectGithubScopesForPreset('repo-explorer')).toEqual([
       'contents:read',
       'metadata:read',
+      'pull_requests:read',
+      'issues:read',
+      'actions:read',
     ])
   })
 
@@ -15,9 +18,11 @@ describe('connectGithubScopesForPreset', () => {
       'contents:read',
       'metadata:read',
       'pull_requests:read',
+      'issues:read',
+      'actions:read',
       'pull_requests:write',
     ]))
-    expect(scopes).toHaveLength(4)
+    expect(scopes).toHaveLength(6)
   })
 
   it('returns the union of all preset scopes when no preset is given', () => {

@@ -257,9 +257,11 @@ import { connectGithubToken } from '@github-tools/sdk/connect'
 
 createGithubTools({
   preset: 'ci-ops',
-  token: connectGithubToken('github/my-connector'),
+  token: connectGithubToken('github/my-connector', { preset: 'ci-ops' }),
 })
 ```
+
+Pass the same `preset` to `connectGithubToken` — it derives Connect scopes independently of the `preset` given to `createGithubTools`.
 
 Override installation, repositories, or scopes via `connect`:
 
