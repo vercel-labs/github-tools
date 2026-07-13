@@ -1,8 +1,6 @@
 # GitHub eve Agent
 
-Minimal [eve](https://eve.dev) agent using `@github-tools/sdk/eve` with the `maintainer` preset.
-
-> **Temporary:** this example uses [Vercel Connect](https://vercel.com/docs/connect) (`github/test-github-tools`) instead of a `GITHUB_TOKEN` PAT. Revert `agent/tools/github.ts` to drop the `token` provider when you're done testing.
+Minimal [eve](https://eve.dev) agent using `@github-tools/sdk/connect/eve` with the `maintainer` preset and a [Vercel Connect](https://vercel.com/docs/connect) connector.
 
 ## Setup
 
@@ -46,7 +44,7 @@ Open the dev TUI and ask it to review a pull request on a repo your connector ca
 agent/
   agent.ts              # eve agent config
   instructions.md       # system prompt
-  tools/github.ts       # GitHub tools via createGithubTools() + Vercel Connect
+  tools/github.ts       # GitHub tools via connectGithubTools()
 ```
 
 ## Customize
@@ -54,12 +52,10 @@ agent/
 Swap the preset or configure approval:
 
 ```ts
-export default createGithubTools({
+import { connectGithubTools } from '@github-tools/sdk/connect/eve'
+
+export default connectGithubTools('github/test-github-tools', {
   preset: ['code-review', 'issue-triage'],
-  token: () => getToken('github/test-github-tools', {
-    subject: { type: 'app' },
-    scopes: ['contents:read', 'pull_requests:read'],
-  }),
   requireApproval: {
     mergePullRequest: true,
     addPullRequestComment: 'once',
@@ -67,4 +63,4 @@ export default createGithubTools({
 })
 ```
 
-See the [@github-tools/sdk README](../../packages/github-tools/README.md#eve) for the full eve integration guide.
+See the [@github-tools/sdk README](../../packages/github-tools/README.md#vercel-connect) for the full Connect integration guide.
