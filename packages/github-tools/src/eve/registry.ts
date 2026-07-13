@@ -13,13 +13,14 @@ import * as pullRequests from '../core/pull-requests'
 import * as repository from '../core/repository'
 import * as search from '../core/search'
 import * as workflows from '../core/workflows'
+import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubWriteToolName } from '../core/write-tools'
 import type { GithubToolName } from '../core/tool-names'
 export type { GithubToolName } from '../core/tool-names'
 export { ALL_GITHUB_TOOL_NAMES } from '../core/tool-names'
 
 export type ToolBuildContext = {
-  token: string
+  token: GithubTokenInput
   author?: CommitIdentity
   committer?: CommitIdentity
   coAuthors?: CommitIdentity[]
@@ -39,7 +40,7 @@ function withToken<T extends Record<string, unknown>>(
   ctx: ToolBuildContext,
   extra?: Record<string, unknown>,
 ) {
-  return (input: Record<string, unknown>) => core({ token: ctx.token, ...extra, ...input } as T & { token: string })
+  return async (input: Record<string, unknown>) => core({ token: await resolveGithubToken(ctx.token), ...extra, ...input } as T & { token: string })
 }
 
 function modelOutputAdapter(
@@ -331,4 +332,3 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
     },
   ]
 }
-

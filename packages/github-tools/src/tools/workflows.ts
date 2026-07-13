@@ -22,6 +22,7 @@ import {
   rerunWorkflowRunDescription,
   rerunWorkflowRunCore,
 } from '../core/workflows'
+import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
 
 async function listWorkflowsStep(args: Parameters<typeof listWorkflowsCore>[0]) {
@@ -30,11 +31,11 @@ async function listWorkflowsStep(args: Parameters<typeof listWorkflowsCore>[0]) 
 }
 
 /** List GitHub Actions workflows in a repository. */
-export const listWorkflows = (token: string): GithubTool =>
+export const listWorkflows = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listWorkflowsDescription,
     inputSchema: listWorkflowsInputSchema,
-    execute: async args => listWorkflowsStep({ token, ...args }),
+    execute: async args => listWorkflowsStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function listWorkflowRunsStep(args: Parameters<typeof listWorkflowRunsCore>[0]) {
@@ -43,11 +44,11 @@ async function listWorkflowRunsStep(args: Parameters<typeof listWorkflowRunsCore
 }
 
 /** List workflow runs for a repository, optionally filtered by workflow, branch, status, or event. */
-export const listWorkflowRuns = (token: string): GithubTool =>
+export const listWorkflowRuns = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listWorkflowRunsDescription,
     inputSchema: listWorkflowRunsInputSchema,
-    execute: async args => listWorkflowRunsStep({ token, ...args }),
+    execute: async args => listWorkflowRunsStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function getWorkflowRunStep(args: Parameters<typeof getWorkflowRunCore>[0]) {
@@ -56,11 +57,11 @@ async function getWorkflowRunStep(args: Parameters<typeof getWorkflowRunCore>[0]
 }
 
 /** Get details of a specific workflow run including status, timing, and trigger info. */
-export const getWorkflowRun = (token: string): GithubTool =>
+export const getWorkflowRun = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getWorkflowRunDescription,
     inputSchema: getWorkflowRunInputSchema,
-    execute: async args => getWorkflowRunStep({ token, ...args }),
+    execute: async args => getWorkflowRunStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function listWorkflowJobsStep(args: Parameters<typeof listWorkflowJobsCore>[0]) {
@@ -69,11 +70,11 @@ async function listWorkflowJobsStep(args: Parameters<typeof listWorkflowJobsCore
 }
 
 /** List jobs for a workflow run, including step-level status and timing. */
-export const listWorkflowJobs = (token: string): GithubTool =>
+export const listWorkflowJobs = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listWorkflowJobsDescription,
     inputSchema: listWorkflowJobsInputSchema,
-    execute: async args => listWorkflowJobsStep({ token, ...args }),
+    execute: async args => listWorkflowJobsStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function triggerWorkflowStep(args: Parameters<typeof triggerWorkflowCore>[0]) {
@@ -82,12 +83,12 @@ async function triggerWorkflowStep(args: Parameters<typeof triggerWorkflowCore>[
 }
 
 /** Trigger a workflow via workflow_dispatch event. Requires approval by default. */
-export const triggerWorkflow = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const triggerWorkflow = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: triggerWorkflowDescription,
     needsApproval,
     inputSchema: triggerWorkflowInputSchema,
-    execute: async args => triggerWorkflowStep({ token, ...args }),
+    execute: async args => triggerWorkflowStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function cancelWorkflowRunStep(args: Parameters<typeof cancelWorkflowRunCore>[0]) {
@@ -96,12 +97,12 @@ async function cancelWorkflowRunStep(args: Parameters<typeof cancelWorkflowRunCo
 }
 
 /** Cancel an in-progress workflow run. Requires approval by default. */
-export const cancelWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const cancelWorkflowRun = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: cancelWorkflowRunDescription,
     needsApproval,
     inputSchema: cancelWorkflowRunInputSchema,
-    execute: async args => cancelWorkflowRunStep({ token, ...args }),
+    execute: async args => cancelWorkflowRunStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function rerunWorkflowRunStep(args: Parameters<typeof rerunWorkflowRunCore>[0]) {
@@ -110,10 +111,10 @@ async function rerunWorkflowRunStep(args: Parameters<typeof rerunWorkflowRunCore
 }
 
 /** Re-run a workflow run, optionally only the failed jobs. Requires approval by default. */
-export const rerunWorkflowRun = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const rerunWorkflowRun = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: rerunWorkflowRunDescription,
     needsApproval,
     inputSchema: rerunWorkflowRunInputSchema,
-    execute: async args => rerunWorkflowRunStep({ token, ...args }),
+    execute: async args => rerunWorkflowRunStep({ token: await resolveGithubToken(token), ...args }),
   })

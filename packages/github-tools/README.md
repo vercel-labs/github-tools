@@ -400,10 +400,12 @@ Returns an object of tools, ready to spread into `tools` of any AI SDK call.
 
 ```ts
 type GithubToolsOptions = {
-  token?: string // defaults to process.env.GITHUB_TOKEN
+  token?: GithubTokenInput // defaults to process.env.GITHUB_TOKEN
   requireApproval?: boolean | Partial<Record<GithubWriteToolName, boolean>>
   preset?: GithubToolPreset | GithubToolPreset[]
 }
+
+type GithubTokenInput = string | (() => Promise<string>)
 
 type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'maintainer'
 ```
@@ -451,7 +453,7 @@ const stream = reviewer.stream({ prompt: 'Review PR #42 on vercel/ai' })
 | Option | Description |
 |---|---|
 | `model` | Language model — string (`'anthropic/claude-sonnet-4.6'`) or provider instance |
-| `token` | GitHub personal access token |
+| `token` | GitHub token string or async provider |
 | `preset` | Optional preset or array of presets to scope tools |
 | `requireApproval` | Approval config (same as `createGithubTools`) |
 | `instructions` | Replaces the built-in system prompt entirely |
@@ -510,6 +512,10 @@ async function agentTurn(prompt: string) {
 > See [`examples/pr-review-agent`](../../examples/pr-review-agent) for a complete PR review agent built with Chat SDK and Vercel Workflow.
 
 All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
+
+### `resolveGithubToken(token?)`
+
+Resolves a `GithubTokenInput` (token string, async provider, or `process.env.GITHUB_TOKEN`) to a token string. Throws when no token is available.
 
 ### `createOctokit(token)`
 

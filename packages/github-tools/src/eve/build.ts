@@ -1,6 +1,6 @@
 import type { ToolDefinition } from 'eve/tools'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from '../core/presets'
-import { resolveGithubToken } from '../core/token'
+import { createGithubTokenResolver } from '../core/token'
 import { mapEveApprovalValue, resolveEveApproval } from './approval'
 import { getEveTools } from './load-eve'
 import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
@@ -31,9 +31,8 @@ export function buildEveToolDefinition(
   options: BuildOptions = {},
 ): ToolDefinition {
   const { defineTool } = getEveTools()
-  const token = resolveGithubToken(options.token)
   const ctx: ToolBuildContext = {
-    token,
+    token: createGithubTokenResolver(options.token),
     author: options.author,
     committer: options.committer,
     coAuthors: options.coAuthors,
@@ -59,9 +58,8 @@ export function buildEveToolDefinition(
 
 export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap {
   const { defineTool } = getEveTools()
-  const token = resolveGithubToken(options.token)
   const ctx: ToolBuildContext = {
-    token,
+    token: createGithubTokenResolver(options.token),
     author: options.author,
     committer: options.committer,
     coAuthors: options.coAuthors,
