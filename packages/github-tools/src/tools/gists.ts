@@ -22,6 +22,7 @@ import {
   createGistCommentDescription,
   createGistCommentCore,
 } from '../core/gists'
+import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
 
 async function listGistsStep(args: Parameters<typeof listGistsCore>[0]) {
@@ -30,11 +31,11 @@ async function listGistsStep(args: Parameters<typeof listGistsCore>[0]) {
 }
 
 /** List gists for the authenticated user or a specific user. */
-export const listGists = (token: string): GithubTool =>
+export const listGists = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listGistsDescription,
     inputSchema: listGistsInputSchema,
-    execute: async args => listGistsStep({ token, ...args }),
+    execute: async args => listGistsStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function getGistStep(args: Parameters<typeof getGistCore>[0]) {
@@ -43,11 +44,11 @@ async function getGistStep(args: Parameters<typeof getGistCore>[0]) {
 }
 
 /** Get a gist by ID, including file contents. */
-export const getGist = (token: string): GithubTool =>
+export const getGist = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getGistDescription,
     inputSchema: getGistInputSchema,
-    execute: async args => getGistStep({ token, ...args }),
+    execute: async args => getGistStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function listGistCommentsStep(args: Parameters<typeof listGistCommentsCore>[0]) {
@@ -56,11 +57,11 @@ async function listGistCommentsStep(args: Parameters<typeof listGistCommentsCore
 }
 
 /** List comments on a gist. */
-export const listGistComments = (token: string): GithubTool =>
+export const listGistComments = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listGistCommentsDescription,
     inputSchema: listGistCommentsInputSchema,
-    execute: async args => listGistCommentsStep({ token, ...args }),
+    execute: async args => listGistCommentsStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function createGistStep(args: Parameters<typeof createGistCore>[0]) {
@@ -69,12 +70,12 @@ async function createGistStep(args: Parameters<typeof createGistCore>[0]) {
 }
 
 /** Create a new gist with one or more files. Requires approval by default. */
-export const createGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createGist = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistDescription,
     needsApproval,
     inputSchema: createGistInputSchema,
-    execute: async args => createGistStep({ token, ...args }),
+    execute: async args => createGistStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function updateGistStep(args: Parameters<typeof updateGistCore>[0]) {
@@ -83,12 +84,12 @@ async function updateGistStep(args: Parameters<typeof updateGistCore>[0]) {
 }
 
 /** Update an existing gist. Requires approval by default. */
-export const updateGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const updateGist = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: updateGistDescription,
     needsApproval,
     inputSchema: updateGistInputSchema,
-    execute: async args => updateGistStep({ token, ...args }),
+    execute: async args => updateGistStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function deleteGistStep(args: Parameters<typeof deleteGistCore>[0]) {
@@ -97,12 +98,12 @@ async function deleteGistStep(args: Parameters<typeof deleteGistCore>[0]) {
 }
 
 /** Delete a gist permanently. Requires approval by default. */
-export const deleteGist = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const deleteGist = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: deleteGistDescription,
     needsApproval,
     inputSchema: deleteGistInputSchema,
-    execute: async args => deleteGistStep({ token, ...args }),
+    execute: async args => deleteGistStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function createGistCommentStep(args: Parameters<typeof createGistCommentCore>[0]) {
@@ -111,10 +112,10 @@ async function createGistCommentStep(args: Parameters<typeof createGistCommentCo
 }
 
 /** Add a comment to a gist. Requires approval by default. */
-export const createGistComment = (token: string, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+export const createGistComment = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
     description: createGistCommentDescription,
     needsApproval,
     inputSchema: createGistCommentInputSchema,
-    execute: async args => createGistCommentStep({ token, ...args }),
+    execute: async args => createGistCommentStep({ token: await resolveGithubToken(token), ...args }),
   })

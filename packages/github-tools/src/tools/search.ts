@@ -1,4 +1,5 @@
 import { tool } from 'ai'
+import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubTool } from '../types'
 import {
   searchCodeInputSchema,
@@ -15,11 +16,11 @@ async function searchCodeStep(args: Parameters<typeof searchCodeCore>[0]) {
 }
 
 /** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. */
-export const searchCode = (token: string): GithubTool =>
+export const searchCode = (token: GithubTokenInput): GithubTool =>
   tool({
     description: searchCodeDescription,
     inputSchema: searchCodeInputSchema,
-    execute: async args => searchCodeStep({ token, ...args }),
+    execute: async args => searchCodeStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function searchRepositoriesStep(args: Parameters<typeof searchRepositoriesCore>[0]) {
@@ -28,9 +29,9 @@ async function searchRepositoriesStep(args: Parameters<typeof searchRepositories
 }
 
 /** Search for GitHub repositories by keyword, topic, language, or other qualifiers. */
-export const searchRepositories = (token: string): GithubTool =>
+export const searchRepositories = (token: GithubTokenInput): GithubTool =>
   tool({
     description: searchRepositoriesDescription,
     inputSchema: searchRepositoriesInputSchema,
-    execute: async args => searchRepositoriesStep({ token, ...args }),
+    execute: async args => searchRepositoriesStep({ token: await resolveGithubToken(token), ...args }),
   })

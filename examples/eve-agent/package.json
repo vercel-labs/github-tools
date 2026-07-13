@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@github-tools/sdk": "workspace:*",
+    "@vercel/connect": "^0.3.2",
     "ai": "^7.0.0",
     "eve": "^0.19.0",
     "zod": "^4.3.6"
