@@ -1,5 +1,11 @@
 # @github-tools/sdk
 
+## 1.8.1
+
+### Patch Changes
+
+- [#46](https://github.com/vercel-labs/github-tools/pull/46) [`88559b2`](https://github.com/vercel-labs/github-tools/commit/88559b221f6b4f4cc147bdae27e9597d4a0ddde5) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Fix eve / Connect integration for bundled serverless builds: widen `eve` and `@vercel/connect` peer ranges, replace runtime `createRequire("eve/tools")` with static ESM imports, and document lazy Connect token minting for eve tool modules.
+
 ## 1.8.0
 
 ### Minor Changes
