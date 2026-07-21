@@ -16,7 +16,7 @@ importers:
         version: 2.31.0(@types/node@25.6.0)
       turbo:
         specifier: latest
-        version: 2.10.4
+        version: 2.10.5
 
   apps/chat:
     dependencies:
@@ -182,14 +182,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/github-tools
       '@vercel/connect':
-        specifier: ^0.3.2
-        version: 0.3.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.15(zod@4.4.3))(eve@0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))
+        specifier: ^0.4.2
+        version: 0.4.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.15(zod@4.4.3))(eve@0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))
       ai:
         specifier: ^7.0.0
         version: 7.0.15(zod@4.4.3)
       eve:
-        specifier: ^0.19.0
-        version: 0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^0.26.2
+        version: 0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -202,10 +202,10 @@ importers:
     dependencies:
       '@chat-adapter/github':
         specifier: latest
-        version: 4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
+        version: 4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
       '@chat-adapter/state-memory':
         specifier: latest
-        version: 4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
+        version: 4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
       '@github-tools/sdk':
         specifier: workspace:*
         version: link:../../packages/github-tools
@@ -217,10 +217,10 @@ importers:
         version: 6.0.175(zod@4.4.3)
       chat:
         specifier: latest
-        version: 4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
+        version: 4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
       evlog:
         specifier: latest
-        version: 2.20.0(baf9dfdaf59b56c95f6f0af7706c3836)
+        version: 2.22.0(39ebe393d732c11f2d0d4924daa09496)
       workflow:
         specifier: latest
         version: 4.6.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.0)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.21))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.21))(@swc/helpers@0.5.21)(magicast@0.5.3)(typescript@6.0.3)
@@ -266,8 +266,8 @@ importers:
         specifier: ^25.6.0
         version: 25.6.0
       '@vercel/connect':
-        specifier: ^0.3.2
-        version: 0.3.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.16(zod@4.4.3))(eve@0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))
+        specifier: ^0.4.2
+        version: 0.4.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.16(zod@4.4.3))(eve@0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))
       ai:
         specifier: ^7.0.0
         version: 7.0.16(zod@4.4.3)
@@ -275,8 +275,8 @@ importers:
         specifier: ^10.3.0
         version: 10.3.0(jiti@2.7.0)
       eve:
-        specifier: ^0.19.0
-        version: 0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^0.26.2
+        version: 0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
       tsdown:
         specifier: ^0.21.10
         version: 0.21.10(typescript@6.0.3)(vue-tsc@3.2.8(typescript@6.0.3))
@@ -719,16 +719,16 @@ packages:
   '@changesets/write@0.4.0':
     resolution: {integrity: sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q==}
 
-  '@chat-adapter/github@4.33.0':
-    resolution: {integrity: sha512-42FlshypGNSke+PoNhl2qRG8SUdilimivCPGW+jQfAqDz4/DDuM5qdMoy93p1TnJ5GqIg8LxJLDT+eNwgQJxEQ==}
+  '@chat-adapter/github@4.34.0':
+    resolution: {integrity: sha512-XtvRnbYt+waUu9f+qgkAYC+rQo64svNN6TzwZIb4UiwwipQFXKQXb0bPNOicJSrUEm8j4gTHBD4rK67zWe7uSQ==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/shared@4.33.0':
-    resolution: {integrity: sha512-PIafG7ySashbaGBBBnpDtufgXYiAEf8LIp2nu6iTXYe97KBgCK5qwFksONxEcvOkpMvLsn2Tx/Ui2dGLA0Xe6g==}
+  '@chat-adapter/shared@4.34.0':
+    resolution: {integrity: sha512-3j1LIWNLp91du8y78FEUNATOEnXyVGrY3JcTNmO5/KARwHTAa17LMVMuWusj0WQj2KsKW4w/K9wytaOj7ToppA==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/state-memory@4.33.0':
-    resolution: {integrity: sha512-qCFAN4GRpdWdDAnbjTkC0nQIHBsfqcloEfbLZuuC8/yPeJHfp/O7LzOGU1HAPvrhDz6KZg5Kvy4XAc8YDwirPw==}
+  '@chat-adapter/state-memory@4.34.0':
+    resolution: {integrity: sha512-voZQK+bAz6RLwUDb582f+Wub5aChp6eVqtHAGjf1gAYFUKcIy54k0JA540jG1ZHLym6m0kIH5FjVXDCDb5DLng==}
     engines: {node: '>=20'}
 
   '@clack/core@1.3.0':
@@ -4736,33 +4736,33 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@turbo/darwin-64@2.10.4':
-    resolution: {integrity: sha512-m1MUEI4MJ69r5CwfMYxmHi0H0rrgiYCBOp0tgBZ9x/YVvOb5uu/lRIDyDwdtH054R2yWeQaIigUGu6aCX9f8cA==}
+  '@turbo/darwin-64@2.10.5':
+    resolution: {integrity: sha512-ENvPwy3x5yS7MwNYHeWjqOBXkwIMp39Pd+/zXC6PoiNzF8EIvvLZOZZ+ny6L9x4WgS5vxUii2LM5gM+zjPdnWw==}
     cpu: [x64]
     os: [darwin]
 
-  '@turbo/darwin-arm64@2.10.4':
-    resolution: {integrity: sha512-VQ1Yxs5zkPT+2z7t1P4mvn6JmcKLkOCAsPuK9XbOvuVj0DlTlETfIXNisX0771v/vTWHOQqiwoGi+TtAUq8efw==}
+  '@turbo/darwin-arm64@2.10.5':
+    resolution: {integrity: sha512-rqROo9zsF/P9RqsdtbLD1nFJicjSrYyvQ9kNJC38AbxA3pAs6VAlATvtvOFx7bqOv6vicf20SP9kF33avJjy2w==}
     cpu: [arm64]
     os: [darwin]
 
-  '@turbo/linux-64@2.10.4':
-    resolution: {integrity: sha512-IzV1QovmwX7mfGnVinmE++2IB8tbeo38weltiuH5zNqwCTBjLs/DytyRKx+bmnhHdXIq9SheR8p0Nip/LBUPHg==}
+  '@turbo/linux-64@2.10.5':
+    resolution: {integrity: sha512-RoSSiNFUxi27zLJuM9F6GyWWjHgLch9t6nwD6K0FkXRirZkTLlzIj6IhFnK8H9++nefLtdFqylE4vGjZAv6AAA==}
     cpu: [x64]
     os: [linux]
 
-  '@turbo/linux-arm64@2.10.4':
-    resolution: {integrity: sha512-rfujSQkP5aYiRn0PgTM7F00WkJCP/bKDVZbOx3WmrZwa/vHA0bplhCl328kpX7VI9HH2vI90ISGwuSVgJgoqTw==}
+  '@turbo/linux-arm64@2.10.5':
+    resolution: {integrity: sha512-4ZComcpzmHGmVynQqvvi+iZOSq/tBvY1SltXB8g4NZRsrA01W8E+yRL8RNM+PLoyWsrCnJa8xa+DkWkv+xg4iQ==}
     cpu: [arm64]
     os: [linux]
 
-  '@turbo/windows-64@2.10.4':
-    resolution: {integrity: sha512-NnspP7Wd5fa3Wwnqv9bKfhegqZzuHBgbPxdZU/idTLQcazx/vgKu95JlCx2YHY0hdvKCnPcARrDwM+KEUmaO7A==}
+  '@turbo/windows-64@2.10.5':
+    resolution: {integrity: sha512-eL2Iyj4DbMINq1Sr1w0iAi6nAiZOF16KSlRGwCJpVh+IWZeY33MAsLHVOBMj1xoFtncVJXclCVpTPL2nBoYkFg==}
     cpu: [x64]
     os: [win32]
 
-  '@turbo/windows-arm64@2.10.4':
-    resolution: {integrity: sha512-Iv02YgOpaEShc2OkG7mgCJ2pEw1RUKiKbs0h8W5wAf4jZ5vpmraTEjuGTgHRuOORQnC1GN3KHo5WB+hu1abRMA==}
+  '@turbo/windows-arm64@2.10.5':
+    resolution: {integrity: sha512-sog+wP+8YSJrdWZ/rUJg8xghVTrwoG+BrSlDQpnK5fzSgJHn1INRWXbVWRH0d3vX8dBI01E3yxXRre9Dn+OXQA==}
     cpu: [arm64]
     os: [win32]
 
@@ -5249,8 +5249,8 @@ packages:
     resolution: {integrity: sha512-kQF8LGie/Hbdq9/psJxLE7owRTcqMQMhgybU04gCeR7cbQAr5t8OrjefDNColJv1QSSucFt4pLwRiARVmlOnug==}
     engines: {node: '>= 18'}
 
-  '@vercel/connect@0.3.2':
-    resolution: {integrity: sha512-l3EX/W5WTW2i5sUfl+2LiXJ1fXpjtTifMAaM2BLgkEzMbW8UR999g1F++6MTWHZWDbbufZdE+YqsIG5WNz+5Nw==}
+  '@vercel/connect@0.4.2':
+    resolution: {integrity: sha512-3Lr2yFI2Z2NPR+T3DWOqrygBpxZUK6H+wCesijT2pV7VmuG8l5ZYSxk4tdzZwF4SWYJOXQFzcELtFLCGvBw5mg==}
     peerDependencies:
       '@ai-sdk/mcp': ^1 || ^2
       '@auth/core': '>=0.37.0'
@@ -6253,11 +6253,11 @@ packages:
   chardet@2.1.1:
     resolution: {integrity: sha512-PsezH1rqdV9VvyNhxxOW32/d75r01NY7TQCmOqomRo15ZSOKbpTFVsfjghxo6JloQUCGnH4k1LGu0R4yCLlWQQ==}
 
-  chat@4.33.0:
-    resolution: {integrity: sha512-qaQyr6Nm7gLEPkYpfjlZzCxKKjvDyRe3GoVA5++RrzW9po5fe3ddH4l9JkGaFsTvSiRGAzuz12WJj/BB5+A6Hw==}
+  chat@4.34.0:
+    resolution: {integrity: sha512-g3c9ANavtCX7BwHcB5c3lWKIUm+8Oo7qlbgQ7/ni1rmVLLeCQa7FiMfeIyEyTAd/4HlRQu5jcS4EPdb0VyhUDQ==}
     engines: {node: '>=20'}
     peerDependencies:
-      ai: ^6.0.182
+      ai: ^6.0.182 || ^7.0.0
       zod: ^3.0.0 || ^4.0.0
     peerDependenciesMeta:
       ai:
@@ -7400,13 +7400,13 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
-  eve@0.19.0:
-    resolution: {integrity: sha512-fZ4gyBUoJ8FWtA+vUz6Q/OWJDXPf++RYsbVL+NrEAn2VJCrZyiuDj4todsBJlDib3+sZtzHMsNSn06EP0j0++w==}
+  eve@0.26.2:
+    resolution: {integrity: sha512-YyPaUwRC/uksiQkkl0b0TxcEjFIvFT5/vAoi+Am34KF74Arko8TeLmqmGAq24rvobPXAa/gQzEPI5r+U/0keXA==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
-      ai: ^7.0.0
+      ai: ^7.0.26
       braintrust: ^3.0.0
       just-bash: ^3.0.0
       microsandbox: ^0.5.0
@@ -7439,27 +7439,27 @@ packages:
     resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
     engines: {node: '>=18.0.0'}
 
-  evlog@2.20.0:
-    resolution: {integrity: sha512-S4r1+uHKRJg/1AH7LYHjuBAOJpe6Pdf3n9bb1lrIzeNNYzi4dvycrS+regpyriaalx69+IL6vB3OnPN7e7DVLw==}
+  evlog@2.22.0:
+    resolution: {integrity: sha512-xWLQIf93SPldkAuIKQPbeUlqfPrsurBOJIqbKu3KB+a5TQVqUp3qE3edvbKKmdZDmcB2v+w9pIt/RWknV9pQTw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      '@nestjs/common': '>=11.1.19'
+      '@nestjs/common': '>=11.1.28'
       '@nuxt/kit': ^4.4.2
-      '@orpc/server': '>=1.14.0'
-      '@tanstack/start-client-core': ^1.167.20
+      '@orpc/server': '>=1.14.8'
+      '@tanstack/start-client-core': ^1.170.14
       ai: '>=6.0.168 <8.0.0'
-      elysia: '>=1.4.28'
-      eve: '>=0.12.0'
+      elysia: '>=1.4.29'
+      eve: '>=0.24.3'
       express: '>=5.2.1'
-      fastify: '>=5.8.5'
+      fastify: '>=5.10.0'
       h3: ^1.15.11
-      hono: '>=4.11.0'
-      next: '>=16.2.4'
+      hono: '>=4.12.30'
+      next: '>=16.2.10'
       nitro: ^3.0.260311-beta
-      nitropack: ^2.13.3
+      nitropack: ^2.13.4
       ofetch: ^1.5.1
-      react: '>=19.2.5'
-      react-router: '>=7.14.2'
+      react: '>=19.2.7'
+      react-router: '>=7.18.1'
       vite: ^7.0.0 || ^8.0.0
     peerDependenciesMeta:
       '@nestjs/common':
@@ -10869,8 +10869,8 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
-  turbo@2.10.4:
-    resolution: {integrity: sha512-GQpduILaKjoaGljw097ScsSyKTtZSY7cZ3bJktzfTkPMyCf3ShKLuXK2IaOEN2Plziml+ArR7WJ1m+V4VbnaKQ==}
+  turbo@2.10.5:
+    resolution: {integrity: sha512-07Y/C7OUp23l4P92PJoYtFNbHjLhftrZH5Ce7dbczS4kX2Re+wtbXvZLoxn/pUtzgsQaRCBaRuZPJp4zmAn0WQ==}
     hasBin: true
 
   type-check@0.4.0:
@@ -12474,28 +12474,28 @@ snapshots:
       human-id: 4.1.3
       prettier: 2.8.8
 
-  '@chat-adapter/github@4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)':
+  '@chat-adapter/github@4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)':
     dependencies:
-      '@chat-adapter/shared': 4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
+      '@chat-adapter/shared': 4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
       '@octokit/auth-app': 8.2.0
       '@octokit/rest': 22.0.1
-      chat: 4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
+      chat: 4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - supports-color
       - zod
 
-  '@chat-adapter/shared@4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)':
+  '@chat-adapter/shared@4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)':
     dependencies:
-      chat: 4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
+      chat: 4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - supports-color
       - zod
 
-  '@chat-adapter/state-memory@4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)':
+  '@chat-adapter/state-memory@4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)':
     dependencies:
-      chat: 4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
+      chat: 4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - supports-color
@@ -16986,22 +16986,22 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@turbo/darwin-64@2.10.4':
+  '@turbo/darwin-64@2.10.5':
     optional: true
 
-  '@turbo/darwin-arm64@2.10.4':
+  '@turbo/darwin-arm64@2.10.5':
     optional: true
 
-  '@turbo/linux-64@2.10.4':
+  '@turbo/linux-64@2.10.5':
     optional: true
 
-  '@turbo/linux-arm64@2.10.4':
+  '@turbo/linux-arm64@2.10.5':
     optional: true
 
-  '@turbo/windows-64@2.10.4':
+  '@turbo/windows-64@2.10.5':
     optional: true
 
-  '@turbo/windows-arm64@2.10.4':
+  '@turbo/windows-arm64@2.10.5':
     optional: true
 
   '@turf/boolean-point-in-polygon@7.3.5':
@@ -17573,21 +17573,21 @@ snapshots:
     dependencies:
       execa: 5.1.1
 
-  '@vercel/connect@0.3.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.15(zod@4.4.3))(eve@0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@vercel/connect@0.4.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.15(zod@4.4.3))(eve@0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
       '@vercel/oidc': 3.8.0
     optionalDependencies:
       '@ai-sdk/mcp': 1.0.58(zod@4.4.3)
       ai: 7.0.15(zod@4.4.3)
-      eve: 0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
+      eve: 0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
 
-  '@vercel/connect@0.3.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.16(zod@4.4.3))(eve@0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@vercel/connect@0.4.2(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.16(zod@4.4.3))(eve@0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
       '@vercel/oidc': 3.8.0
     optionalDependencies:
       '@ai-sdk/mcp': 1.0.58(zod@4.4.3)
       ai: 7.0.16(zod@4.4.3)
-      eve: 0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
+      eve: 0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
 
   '@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49)':
     dependencies:
@@ -17626,7 +17626,7 @@ snapshots:
 
   '@vercel/queue@0.3.1':
     dependencies:
-      '@vercel/oidc': 3.4.0
+      '@vercel/oidc': 3.8.0
       minimatch: 10.2.5
       mixpart: 0.0.6
       picocolors: 1.1.1
@@ -19036,7 +19036,7 @@ snapshots:
 
   chardet@2.1.1: {}
 
-  chat@4.33.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3):
+  chat@4.34.0(ai@6.0.175(zod@4.4.3))(zod@4.4.3):
     dependencies:
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
@@ -20306,7 +20306,7 @@ snapshots:
 
   etag@1.8.1: {}
 
-  eve@0.19.0(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(@vercel/blob@2.3.3)(@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49))(@vercel/queue@0.3.1)(ai@6.0.175(zod@4.4.3))(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260507.1)(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(better-sqlite3@12.9.0)(pg@8.20.0))(giget@3.2.0)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)):
+  eve@0.26.2(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(@vercel/blob@2.3.3)(@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49))(@vercel/queue@0.3.1)(ai@6.0.175(zod@4.4.3))(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260507.1)(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(better-sqlite3@12.9.0)(pg@8.20.0))(giget@3.2.0)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       ai: 6.0.175(zod@4.4.3)
       nitro: 3.0.260610-beta(@libsql/client@0.17.3)(@vercel/blob@2.3.3)(@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49))(@vercel/queue@0.3.1)(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260507.1)(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(better-sqlite3@12.9.0)(pg@8.20.0))(giget@3.2.0)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -20353,7 +20353,7 @@ snapshots:
       - zephyr-agent
     optional: true
 
-  eve@0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)):
+  eve@0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.15(zod@4.4.3))(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(microsandbox@0.6.3)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       ai: 7.0.15(zod@4.4.3)
       nitro: 3.0.260610-beta(@vercel/queue@0.3.1)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -20400,7 +20400,7 @@ snapshots:
       - xml2js
       - zephyr-agent
 
-  eve@0.19.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)):
+  eve@0.26.2(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.16(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       ai: 7.0.16(zod@4.4.3)
       nitro: 3.0.260610-beta(@vercel/queue@0.3.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -20462,15 +20462,14 @@ snapshots:
     dependencies:
       eventsource-parser: 3.0.8
 
-  evlog@2.20.0(baf9dfdaf59b56c95f6f0af7706c3836):
+  evlog@2.22.0(39ebe393d732c11f2d0d4924daa09496):
     optionalDependencies:
       '@nestjs/common': 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nuxt/kit': 4.4.8(magicast@0.5.3)
       ai: 6.0.175(zod@4.4.3)
-      eve: 0.19.0(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(@vercel/blob@2.3.3)(@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49))(@vercel/queue@0.3.1)(ai@6.0.175(zod@4.4.3))(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260507.1)(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(better-sqlite3@12.9.0)(pg@8.20.0))(giget@3.2.0)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
+      eve: 0.26.2(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(@vercel/blob@2.3.3)(@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49))(@vercel/queue@0.3.1)(ai@6.0.175(zod@4.4.3))(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260507.1)(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(better-sqlite3@12.9.0)(pg@8.20.0))(giget@3.2.0)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
       express: 5.2.1
       h3: 1.15.11
-      hono: 4.12.18
       nitro: 3.0.260610-beta(@libsql/client@0.17.3)(@vercel/blob@2.3.3)(@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49))(@vercel/queue@0.3.1)(better-sqlite3@12.9.0)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260507.1)(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(better-sqlite3@12.9.0)(pg@8.20.0))(giget@3.2.0)(ioredis@5.10.1)(jiti@2.7.0)(lru-cache@11.3.6)(vite@8.0.11(@types/node@25.6.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.0)(tsx@4.21.0)(yaml@2.9.0))
       nitropack: 2.13.4(@libsql/client@0.17.3)(@vercel/blob@2.3.3)(@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49))(better-sqlite3@12.9.0)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260507.1)(@libsql/client@0.17.3)(@opentelemetry/api@1.9.0)(better-sqlite3@12.9.0)(pg@8.20.0))(oxc-parser@0.135.0)(rolldown@1.1.4)(srvx@0.11.21)
       ofetch: 2.0.0-alpha.3
@@ -25448,14 +25447,14 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
-  turbo@2.10.4:
+  turbo@2.10.5:
     optionalDependencies:
-      '@turbo/darwin-64': 2.10.4
-      '@turbo/darwin-arm64': 2.10.4
-      '@turbo/linux-64': 2.10.4
-      '@turbo/linux-arm64': 2.10.4
-      '@turbo/windows-64': 2.10.4
-      '@turbo/windows-arm64': 2.10.4
+      '@turbo/darwin-64': 2.10.5
+      '@turbo/darwin-arm64': 2.10.5
+      '@turbo/linux-64': 2.10.5
+      '@turbo/linux-arm64': 2.10.5
+      '@turbo/windows-64': 2.10.5
+      '@turbo/windows-arm64': 2.10.5
 
   type-check@0.4.0:
     dependencies:

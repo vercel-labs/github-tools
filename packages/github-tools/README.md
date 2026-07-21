@@ -250,6 +250,8 @@ export default connectGithubTools('github/my-connector', {
 })
 ```
 
+`connectGithubTools` mints tokens lazily at tool execution — do not `await getToken(...)` at module top level in `agent/tools/` (that runs at import/build time).
+
 Token provider only (custom factories):
 
 ```ts
