@@ -24,6 +24,7 @@ jobs:
           scopes: |
             sdk
             chat
+            eve
             deps
           types: |
             breaking

@@ -1,0 +1,17 @@
+{
+  "name": "@github-tools/eve-extension-agent",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "eve dev"
+  },
+  "dependencies": {
+    "@github-tools/eve-extension": "workspace:*",
+    "ai": "^7.0.0",
+    "eve": "^0.26.2",
+    "zod": "^4.3.6"
+  }
+}

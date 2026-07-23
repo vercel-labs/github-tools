@@ -1,0 +1,6 @@
+.env
+node_modules
+.eve
+.output
+.vercel
+.env*

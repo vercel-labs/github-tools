@@ -284,6 +284,8 @@ connectGithubTools('github/my-connector', {
 
 [eve](https://eve.dev) is Vercel's filesystem-first agent framework. The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic` — one file, zero CLI.
 
+> A mountable [eve extension](https://eve.dev/docs/extensions), `@github-tools/eve-extension`, is also available and is the direction this integration is moving toward — it will become the recommended way to add GitHub tools to an eve agent. The direct import below remains supported. See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve-extension-agent`](../../examples/eve-extension-agent).
+
 ```sh
 pnpm add @github-tools/sdk eve ai zod
 ```
