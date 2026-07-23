@@ -1,6 +1,6 @@
 {
   "name": "@github-tools/eve-extension",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "GitHub tools for eve, distributed as a mountable eve extension (https://eve.dev/docs/extensions)",
   "type": "module",

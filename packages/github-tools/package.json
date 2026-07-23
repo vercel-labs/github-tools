@@ -1,6 +1,6 @@
 {
   "name": "@github-tools/sdk",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK",
   "author": "HugoRCD <hugo.richard@vercel.com",
   "repository": {
