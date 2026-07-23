@@ -1,0 +1,52 @@
+{
+  "name": "@github-tools/eve-extension",
+  "version": "0.0.0",
+  "private": true,
+  "description": "GitHub tools for eve, distributed as a mountable eve extension (https://eve.dev/docs/extensions)",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "eve": {
+    "extension": {
+      "source": "./extension",
+      "dist": "./dist/extension"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "eve extension build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@github-tools/sdk": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "@vercel/connect": ">=0.3.2",
+    "eve": "*"
+  },
+  "peerDependenciesMeta": {
+    "@vercel/connect": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@vercel/connect": "^0.4.2",
+    "eve": "^0.26.2",
+    "typescript": "^6.0.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./tools": {
+      "types": "./dist/tools/index.d.ts",
+      "default": "./dist/tools/index.mjs"
+    }
+  }
+}
