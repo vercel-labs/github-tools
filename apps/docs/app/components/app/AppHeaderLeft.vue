@@ -62,7 +62,7 @@
 
     <ULink
       to="/"
-      aria-label="GitHub Tools"
+      aria-label="GitHub tools"
       class="text-highlighted!"
     >
       <AppHeaderLogo

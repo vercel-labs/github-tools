@@ -13,7 +13,7 @@ const octocatPath = 'M16 0C7.163 0 0 7.163 0 16c0 7.07 4.584 13.065 10.949 15.18
     viewBox="0 0 32 32"
     fill="none"
     role="img"
-    aria-label="GitHub Tools"
+    aria-label="GitHub tools"
     class="text-highlighted"
   >
     <path
@@ -27,7 +27,7 @@ const octocatPath = 'M16 0C7.163 0 0 7.163 0 16c0 7.07 4.584 13.065 10.949 15.18
     viewBox="0 0 420 32"
     fill="none"
     role="img"
-    aria-label="GitHub Tools"
+    aria-label="GitHub tools"
     class="text-highlighted"
   >
     <path
@@ -43,7 +43,7 @@ const octocatPath = 'M16 0C7.163 0 0 7.163 0 16c0 7.07 4.584 13.065 10.949 15.18
       font-weight="600"
       letter-spacing="-0.02em"
     >
-      GitHub Tools
+      GitHub tools
     </text>
   </svg>
 </template>

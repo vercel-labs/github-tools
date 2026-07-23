@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     head: {
       meta: [
         { name: 'twitter:card', content: 'summary_large_image' },
-        { property: 'og:site_name', content: 'GitHub Tools' },
+        { property: 'og:site_name', content: 'GitHub tools' },
       ],
     },
   },
@@ -33,15 +33,15 @@ export default defineNuxtConfig({
     fallback: 'dark',
   },
   site: {
-    name: 'GitHub Tools',
+    name: 'GitHub tools',
     url: docsSiteUrl,
   },
   llms: {
     domain: docsSiteUrl,
-    title: 'GitHub Tools',
+    title: 'GitHub tools',
     description: siteDescription,
     full: {
-      title: 'GitHub Tools',
+      title: 'GitHub tools',
       description: siteDescription,
     },
   },
@@ -57,7 +57,7 @@ export default defineNuxtConfig({
     }
   },
   mcp: {
-    name: 'GitHub Tools MCP',
+    name: 'GitHub tools MCP',
   },
   icon: {
     customCollections: [

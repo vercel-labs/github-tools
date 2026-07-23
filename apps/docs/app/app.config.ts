@@ -1,13 +1,13 @@
 export default defineAppConfig({
-  name: 'GitHub Tools',
+  name: 'GitHub tools',
   description: '42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.',
   landing: false,
   socials: {
     x: 'https://x.com/hugorcd',
   },
   seo: {
-    titleTemplate: '%s - GitHub Tools',
-    title: 'GitHub Tools',
+    titleTemplate: '%s - GitHub tools',
+    title: 'GitHub tools',
     description: '42 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.',
   },
   github: {

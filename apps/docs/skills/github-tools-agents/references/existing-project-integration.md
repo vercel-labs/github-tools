@@ -4,7 +4,7 @@ description: How to integrate GitHub tools into an existing codebase, including 
 tags: [setup, installation, integration, environment, preset, token, getting-started]
 ---
 
-# Adding GitHub Tools to an existing project
+# Adding GitHub tools to an existing project
 
 ## 1. Dependencies
 

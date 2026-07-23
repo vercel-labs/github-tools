@@ -10,7 +10,7 @@ metadata:
   keywords: "ai, agent, skill, vercel, ai sdk, github, tools, octokit, durable, workflow"
 ---
 
-# GitHub Tools for AI agents
+# GitHub tools for AI agents
 
 Use this skill when the user wants **GitHub API access from an LLM** via the [`@github-tools/sdk`](https://www.npmjs.com/package/@github-tools/sdk) package: `generateText` / `streamText`, `createGithubAgent`, or **durable** `createDurableGithubAgent` with the Vercel Workflow SDK.
 
