@@ -343,9 +343,20 @@ eve replays completed steps but re-runs steps interrupted mid-execution. Write t
 
 Gate non-idempotent writes behind `always()` or `once()` where replay safety matters.
 
-### Roadmap
+### Vercel Connect
 
-`// TODO(eve-auth)`: per-session GitHub tokens via eve connections (`auth: 'eve'`). For now, pass `token` explicitly or set `GITHUB_TOKEN`.
+Mint the token from a Connect connector instead of `GITHUB_TOKEN` — `connectGithubTools` derives scopes from `preset` and fetches the token lazily inside each tool call:
+
+```ts
+// agent/tools/github.ts
+import { connectGithubTools } from '@github-tools/sdk/connect/eve'
+
+export default connectGithubTools('github/my-connector', {
+  preset: 'maintainer',
+})
+```
+
+Add `build: { externalDependencies: ['@vercel/connect'] }` to `agent.ts` — see [Vercel Connect](#vercel-connect) above for the full setup checklist.
 
 > `eve` is an optional peer dependency — install it only when using the `/eve` subpath.
 
