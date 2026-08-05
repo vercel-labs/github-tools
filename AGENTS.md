@@ -30,7 +30,7 @@ pnpm workspaces + Turborepo. Three packages:
 
 - **`packages/github-tools`** — the SDK (`@github-tools/sdk`), published to npm. Built with `tsdown` to ESM (`.mjs`/`.d.mts`).
 - **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
-- **`apps/docs`** — Nuxt 4 docs site built on Docus.
+- **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.getting-started/4.agent-skills.md`).
 
 Turbo task dependencies: `lint`, `lint:fix`, and `typecheck` all depend on `^build` (upstream packages must build first).
 
@@ -38,41 +38,45 @@ Turbo task dependencies: `lint`, `lint:fix`, and `typecheck` all depend on `^bui
 
 ### Tool Pattern
 
-Every tool follows the same factory pattern. This is critical to maintain when adding tools:
+Every tool splits into a **core** function and a **tool factory**. This split is critical to maintain when adding tools:
 
 ```ts
-// 1. Named step function with "use step" directive (required for Vercel Workflow durable steps)
-async function myToolStep({ token, ...args }) {
-  "use step"
+// src/core/{domain}.ts — pure logic, no "use step", no approval concerns
+export const myToolInputSchema = z.object({ /* .describe() on every field */ })
+export const myToolDescription = 'One sentence, present tense.'
+export async function myToolCore({ token, ...args }: { token: string /* ... */ }) {
   const octokit = createOctokit(token)
   const { data } = await octokit.rest.someEndpoint(...)
-  return shapedResult  // Always shape the return — never return raw API responses
+  return shapedResult // Always shape the return — never return raw API responses
 }
 
-// 2. Tool factory: read tools take (token), write tools take (token, options: ToolOptions)
-export const myTool = (token: string, { needsApproval = true }: ToolOptions = {}) =>
+// src/tools/{domain}.ts — the "use step" directive + ai SDK wrapper
+async function myToolStep(args: Parameters<typeof myToolCore>[0]) {
+  "use step" // required for Vercel Workflow durable steps
+  return myToolCore(args)
+}
+
+// Read tools take (token). Write tools also take ToolOptions for needsApproval.
+export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
   tool({
-    description: '...',
-    needsApproval,  // only on write tools
-    inputSchema: z.object({ /* .describe() on every field */ }),
-    execute: async args => myToolStep({ token, ...args }),
+    description: myToolDescription,
+    needsApproval, // write tools only
+    inputSchema: myToolInputSchema,
+    execute: async args => myToolStep({ token: await resolveGithubToken(token), ...args }),
   })
 ```
 
+**Adding a new tool?** Follow the checklist in [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md#adding-a-new-tool) — registration files, chat metadata, docs, changeset.
+
 ### Key source files
 
-- `src/index.ts` — public API: `createGithubTools()`, preset definitions (`PRESET_TOOLS`), `GithubWriteToolName` union, all re-exports
+- `src/index.ts` — public API: `createGithubTools()`, `allTools` composition, re-exports
 - `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`) with preset-specific system prompts
 - `src/workflow.ts` — `createDurableGithubAgent()` (`WorkflowAgent` from `@ai-sdk/workflow`), exported from `@github-tools/sdk/workflow` subpath
 - `src/client.ts` — `createOctokit(token)` wrapper
-- `src/tools/` — 7 domain files: `repository.ts`, `pull-requests.ts`, `issues.ts`, `commits.ts`, `gists.ts`, `workflows.ts`, `search.ts`
-
-### Adding a New Tool
-
-1. Add the tool in the appropriate `src/tools/*.ts` file following the pattern above
-2. Register in `src/index.ts`: imports, `GithubWriteToolName` (if write), `PRESET_TOOLS`, `createGithubTools()` `allTools`, re-exports
-3. Add display metadata in `apps/chat/shared/utils/tools/github.ts` (`GITHUB_TOOL_META`)
-4. Update docs: `apps/docs/content/docs/3.api/1.tools-catalog.md`, approval docs (for write tools), `packages/github-tools/README.md`
+- `src/types.ts` — `ToolOptions`, `CommitToolOptions`, `ToolOverrides`, `GithubTool`
+- `src/tools/` — 7 domain files (the `ai` SDK wrapper layer): `repository.ts`, `pull-requests.ts`, `issues.ts`, `commits.ts`, `gists.ts`, `workflows.ts`, `search.ts`
+- `src/core/` — matching domain files (pure logic: schema, description, `*Core` function) plus `tool-names.ts` (`GITHUB_TOOL_NAMES`/`GithubToolName`), `write-tools.ts` (`GITHUB_WRITE_TOOLS`/`GithubWriteToolName`), `presets.ts` (`PRESET_TOOLS`), `token.ts` (`resolveGithubToken`), `approval.ts` (`resolveAiSdkApproval`)
 
 ### Dual-Mode Agents
 
@@ -85,7 +89,7 @@ export const myTool = (token: string, { needsApproval = true }: ToolOptions = {}
 
 ### Presets
 
-Five presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintainer`) defined in `src/index.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
+Five presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
 
 ## Chat App Architecture (`apps/chat`)
 
@@ -97,8 +101,96 @@ Five presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintai
 
 ## Conventions
 
-- **Commits**: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`)
-- **PRs**: One feature or fix per commit, create from `main`, include a changeset for user-facing changes
 - **TypeScript**: Strict mode, ESNext target, `verbatimModuleSyntax: true`
 - **ESLint**: `typescript-eslint` flat config for SDK; `@nuxt/eslint` with stylistic rules for apps (no trailing commas, 1tbs brace style)
 - **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath
+
+### Code style — no slop
+
+- **No gratuitous defensive code.** Don't add try/catch, null checks, or input validation the surrounding file doesn't have — especially on paths already validated upstream. Match the file's level of paranoia.
+- **No silent fallbacks.** No empty `catch`, no `?? default` that masks a bug, no `as any` to silence TypeScript. If something can fail, let it fail loudly or handle it explicitly.
+- **Comments are rare and earn their place.** Only for constraints the code can't express. Never paraphrase the code, never narrate a change.
+- **This extends to all prose**: test names, error/log messages, changeset descriptions, PR bodies. Factual and plain — no emoji, no superlatives, no filler.
+- **No speculative code.** No unrequested options or parameters, no "just in case" branches, no keeping the old code path alongside the new one.
+- **Shape every API response.** Never return a raw Octokit response from a tool's `*Core` function — pick the fields the model actually needs.
+
+### Changesets
+
+**Every user-facing change to `@github-tools/sdk` or `@github-tools/eve-extension` must include a changeset.** Before opening a PR for features, bug fixes, or breaking changes, run `pnpm changeset` and commit the generated `.changeset/*.md` file alongside the code.
+
+- **When to add one:** any change that affects the public API, adds a tool or preset, fixes a bug, or introduces a breaking change.
+- **When you can skip:** changes confined to `apps/*` or `examples/*` (docs included), CI config, or internal refactors that don't touch the published packages.
+- **Bump type:** `patch` for fixes, `minor` for features (new tools, new presets), `major` for breaking changes.
+- **Description:** write from the consumer's perspective — what changed and how to use it.
+
+### Commits & PR titles
+
+PR titles and commits follow [Conventional Commits](https://conventionalcommits.org). The CI source of truth is `.github/workflows/semantic-pull-request.yml` (lints PR titles via `amannn/action-semantic-pull-request`); `.github/pull_request_template.md` mirrors the same lists for contributors.
+
+- **Subject must not start with an uppercase letter.** `feat: add stream server` ✓ — `feat: Add stream server` ✗.
+- **Current scopes**: `chat`, `deps`, `docs`, `eve`, `sdk`. Individual tools/presets don't get their own scope — they use `sdk`.
+- **When you add a new scope**, register it in **both** the workflow and the template, alphabetically sorted. The check reads the scope list from the PR's base branch (`pull_request_target`), so a brand-new scope can't validate the PR that introduces it — register it in a preceding PR, or omit the scope on the introducing PR.
+
+### Keep the published skill in sync
+
+`apps/docs/skills/github-tools-agents/SKILL.md` is published to consumers via `/.well-known/skills/`. When a change affects what it documents — tools, presets, approval control, agent setup — update it in the same PR. A skill describing stale behavior is worse than no skill.
+
+## Definition of Done
+
+A task is complete when **all** of the following pass:
+
+1. `pnpm build`, `pnpm lint`, `pnpm typecheck` exit 0
+2. New tools follow the full checklist in [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md#adding-a-new-tool)
+3. A changeset is included for any user-facing change (`pnpm changeset`)
+4. New public APIs have JSDoc
+5. Docs are updated when behavior, tools, or paths change (`apps/docs/content/`, `packages/github-tools/README.md`)
+
+## Boundaries
+
+**Always do:**
+- Run `pnpm build`, `pnpm lint`, and `pnpm typecheck` before reporting done
+- Follow existing code patterns — read neighboring files (and the matching `core/`/`tools/` pair) before writing new ones
+- Add a changeset (`pnpm changeset`) for every user-facing change
+
+**Ask first:**
+- Adding new dependencies — `pnpm-workspace.yaml` sets `minimumReleaseAge: 2880`: a package published less than 48h ago fails to install unless added to `minimumReleaseAgeExclude`
+- Changing package exports, the tool factory pattern, or approval defaults for an existing write tool
+- Architectural decisions that affect multiple packages or presets
+
+**Never:**
+- Commit secrets, `.env` files, `GITHUB_TOKEN`, or API keys
+- Skip lint or typecheck to "fix later"
+- Widen a type (`as any`) or drop a `.describe()` to silence an error — fix the underlying issue
+- Return a raw, unshaped API response from a tool
+- Modify `node_modules/` or generated files (`dist/`, `.nuxt/`, `.output/`)
+- Open a PR for a user-facing change without a changeset
+
+## Git & PRs — local always OK, remote on explicit instruction
+
+Default: anything that stays on the local clone is fine, anything that touches the remote or GitHub requires an explicit instruction in the task at hand. Never act on assumption — if the maintainer didn't ask for a push or a PR, prepare the branch locally and stop there.
+
+**OK (local-only, no ask needed):**
+- `git branch`, `git checkout`, `git switch`, `git checkout -b` — create and move between branches freely
+- `git add`, `git commit` — staging and local commits are fine
+- `git status`, `git diff`, `git log`, `git show`, `git stash`, `git restore`, `git reset` (local only)
+- `gh pr view`, `gh pr list`, `gh pr diff`, `gh issue view`, `gh run view` — read-only GitHub queries
+
+**OK when the maintainer explicitly asks (in the current task):**
+- `git push -u origin <feature-branch>` — push a feature branch you just prepared
+- `gh pr create --base main --head <feature-branch>` — open a PR
+- Write a **PR title** (Conventional Commits, see above) and a **PR body** — keep the body factual, mirror the changeset, reference the issue (`Closes #X`)
+
+**Never (no exceptions, even when asked):**
+- Push directly to `main` — protected, always goes through a PR
+- `git push --force` without `--with-lease`, `git push --tags`
+- `gh pr merge`, `gh pr close`, `gh pr review`, `gh issue create`, `gh issue edit`, `gh release create`
+- Add a `Co-authored-by`, `Signed-off-by`, "Generated with…", "🤖", or any signature/attribution that names an agent, model, or tool
+
+## When Stuck
+
+- Unsure about the tool pattern or a touchpoint → read `.github/CONTRIBUTING.md` or ask
+- Unclear requirements → ask a clarifying question before making large speculative changes
+
+## Feedback & Self-Maintenance
+
+**This file is living documentation — keep it true.** If you catch it contradicting the repo (a command that doesn't exist, a path that moved, a described pattern that isn't real), flag it immediately and propose the fix, even if it's unrelated to your task. Update it when you encounter a recurring mistake, explicit guidance from the maintainer, or a new convention that should be applied consistently. A correction is a few lines, not a rewrite — keep this file lean.

@@ -45,27 +45,22 @@ pnpm --filter @github-tools/sdk typecheck  # Type-check the SDK
 
 ## Adding a new tool
 
-1. Add the tool function to the appropriate file in `packages/github-tools/src/tools/`. Follow the existing pattern:
-   - Separate step function with `"use step"` directive
-   - Tool factory that accepts `token: string` (and `ToolOptions` for write tools)
-   - Zod schema with `.describe()` on every field
-   - Shaped return objects (no raw API responses)
+Every tool splits into a **core** function (pure logic) and a **tool factory** (the `ai` SDK wrapper). See `getGistCore`/`getGist` (`packages/github-tools/src/core/gists.ts` / `src/tools/gists.ts`) for a read tool, `createIssue` (`src/tools/issues.ts`) for a write tool.
 
-2. Register the tool in `packages/github-tools/src/index.ts`:
-   - Add to imports
-   - Add write tool names to `GithubWriteToolName` (if applicable)
-   - Add to relevant preset arrays in `PRESET_TOOLS`
-   - Add to `allTools` in `createGithubTools()`
-   - Add to re-exports at the bottom
-
-3. Update the chat app metadata in `apps/chat/shared/utils/tools/github.ts`
-
-4. Update documentation:
-   - `apps/docs/content/docs/3.api/1.tools-catalog.md`
-   - `apps/docs/content/docs/2.guide/3.approval-control.md` (for write tools)
+1. **Core logic** — add `{name}InputSchema` (zod, `.describe()` on every field), `{name}Description`, and `{name}Core({ token, ...args })` to `packages/github-tools/src/core/{domain}.ts`. Shape the return — never return the raw Octokit response.
+2. **Tool factory** — add the `"use step"` wrapper and the exported factory to `packages/github-tools/src/tools/{domain}.ts`. Read tools take `(token)`; write tools also take `({ needsApproval = true }: ToolOptions = {})`.
+3. **Register**:
+   - `packages/github-tools/src/core/tool-names.ts` — add to `GITHUB_TOOL_NAMES`
+   - `packages/github-tools/src/core/write-tools.ts` — write tools only: add to `GITHUB_WRITE_TOOLS`
+   - `packages/github-tools/src/core/presets.ts` — add to every preset it belongs in
+   - `packages/github-tools/src/index.ts` — add to `allTools` in `createGithubTools()`, re-export at the bottom
+4. **Chat app metadata** — add a `GITHUB_TOOL_META` entry in `apps/chat/shared/utils/tools/github.ts`
+5. **Documentation**:
+   - `apps/docs/content/docs/4.api/1.tools-catalog.md`
+   - `apps/docs/content/docs/3.guide/2.approval-control.md` (write tools only)
    - `packages/github-tools/README.md` (tool tables, preset tables, write tools list, token permissions)
-
-5. Run checks:
+6. **Changeset** — `pnpm changeset` (`minor`)
+7. Run checks:
 
 ```sh
 pnpm build && pnpm lint && pnpm typecheck
