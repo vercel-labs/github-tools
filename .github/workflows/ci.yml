@@ -37,8 +37,10 @@ jobs:
           persist-credentials: false
 
       - parallel:
+          # A broken remote cache must degrade to local cache, not fail the job.
           - name: Set up Turborepo remote cache
             if: env.IS_INTERNAL == 'true' && vars.TURBO_TEAM != ''
+            continue-on-error: true
             uses: vercel/setup-turborepo-remote-cache-action@135046f5efcadb17337d9b29b8d5b4035ae64b10 # v1.0.0
             with:
               team: ${{ vars.TURBO_TEAM }}
@@ -66,8 +68,10 @@ jobs:
           persist-credentials: false
 
       - parallel:
+          # A broken remote cache must degrade to local cache, not fail the job.
           - name: Set up Turborepo remote cache
             if: env.IS_INTERNAL == 'true' && vars.TURBO_TEAM != ''
+            continue-on-error: true
             uses: vercel/setup-turborepo-remote-cache-action@135046f5efcadb17337d9b29b8d5b4035ae64b10 # v1.0.0
             with:
               team: ${{ vars.TURBO_TEAM }}
@@ -96,8 +100,10 @@ jobs:
           persist-credentials: false
 
       - parallel:
+          # A broken remote cache must degrade to local cache, not fail the job.
           - name: Set up Turborepo remote cache
             if: env.IS_INTERNAL == 'true' && vars.TURBO_TEAM != ''
+            continue-on-error: true
             uses: vercel/setup-turborepo-remote-cache-action@135046f5efcadb17337d9b29b8d5b4035ae64b10 # v1.0.0
             with:
               team: ${{ vars.TURBO_TEAM }}
