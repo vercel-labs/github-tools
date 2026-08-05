@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions: {}
 
@@ -12,30 +15,28 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      id-token: write
+      id-token: write # npm trusted publishing (OIDC) + remote cache
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      # changesets/action pushes the release branch, so credentials stay
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup
         with:
-          node-version: latest
           registry-url: https://registry.npmjs.org
 
-      - run: corepack enable
-      - run: pnpm install
-
-      - name: Create release PR or publish
+      - name: Create Release PR or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
-          version: pnpm run version-packages
-          publish: pnpm run release
           title: 'chore: version packages'
           commit: 'chore: version packages'
           commitMode: github-api
+          version: pnpm run version-packages
+          publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

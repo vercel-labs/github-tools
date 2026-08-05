@@ -18,9 +18,11 @@ Here are the available types and scopes:
 - revert (reverts a previous commit) 🔄
 
 ### Scopes
-- sdk (the @github-tools/sdk package)
 - chat (the chat application)
 - deps (dependencies)
+- docs (the documentation site)
+- eve (the eve extension package)
+- sdk (the @github-tools/sdk package)
 -->
 
 ### 🔗 Linked issue

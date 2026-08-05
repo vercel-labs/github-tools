@@ -1,24 +1,31 @@
-name: autofix.ci
+name: autofix.ci # needed to securely identify the workflow
 
 on:
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}
+  cancel-in-progress: true
+
 jobs:
   autofix:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
+      # autofix.ci pushes through its own GitHub App, not the checkout token
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          node-version: latest
+          persist-credentials: false
 
-      - run: corepack enable
-      - run: pnpm install
-      - run: pnpm run lint:fix
+      - uses: ./.github/actions/setup
+
+      - name: 💅 Lint code
+        run: pnpm run lint:fix
 
       - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8
         with:

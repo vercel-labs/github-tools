@@ -1,56 +1,124 @@
 name: ci
 
 on:
-  pull_request:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  # Fork PRs get no OIDC token, so they fall back to the local cache
+  IS_INTERNAL: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+  TURBO_CACHE: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'remote:rw' || 'local:rw' }}
+  # Without this, turbo silently treats every package as affected
+  TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+
 jobs:
-  build:
+  quality:
+    name: Lint & typecheck
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # remote cache OIDC
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          node-version: latest
-      - run: corepack enable
-      - run: pnpm install
-      - run: pnpm run build:packages
+          fetch-depth: 0 # --affected needs history
+          persist-credentials: false
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: latest
-      - run: corepack enable
-      - run: pnpm install
-      - run: pnpm run lint
+      - parallel:
+          - name: Set up Turborepo remote cache
+            if: env.IS_INTERNAL == 'true' && vars.TURBO_TEAM != ''
+            uses: vercel/setup-turborepo-remote-cache-action@135046f5efcadb17337d9b29b8d5b4035ae64b10 # v1.0.0
+            with:
+              team: ${{ vars.TURBO_TEAM }}
 
-  typecheck:
+          - name: Set up pnpm and Node
+            uses: ./.github/actions/setup
+
+      - name: Lint
+        run: pnpm exec turbo run lint --affected
+
+      - name: Typecheck
+        run: pnpm exec turbo run typecheck --affected
+
+  examples:
+    name: Build examples
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # remote cache OIDC
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          node-version: latest
-      - run: corepack enable
-      - run: pnpm install
-      - run: pnpm run typecheck
+          fetch-depth: 0
+          persist-credentials: false
+
+      - parallel:
+          - name: Set up Turborepo remote cache
+            if: env.IS_INTERNAL == 'true' && vars.TURBO_TEAM != ''
+            uses: vercel/setup-turborepo-remote-cache-action@135046f5efcadb17337d9b29b8d5b4035ae64b10 # v1.0.0
+            with:
+              team: ${{ vars.TURBO_TEAM }}
+
+          - name: Set up pnpm and Node
+            uses: ./.github/actions/setup
+
+      # --continue: one broken example must not cancel the others
+      - name: Build affected examples
+        run: pnpm exec turbo run build --affected --continue --filter='./examples/*'
 
   publish:
-    if: github.event_name == 'pull_request'
-    needs: [build, lint, typecheck]
+    name: Publish preview package
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Not gated on the other jobs: a preview is most useful while the PR is red
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write # remote cache OIDC
+      pull-requests: write # pkg-pr-new comments the preview install command
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          node-version: latest
-      - run: corepack enable
-      - run: pnpm install
-      - run: pnpx pkg-pr-new publish --compact --no-template --pnpm './packages/github-tools' './packages/github-tools-eve-extension'
+          fetch-depth: 0
+          persist-credentials: false
+
+      - parallel:
+          - name: Set up Turborepo remote cache
+            if: env.IS_INTERNAL == 'true' && vars.TURBO_TEAM != ''
+            uses: vercel/setup-turborepo-remote-cache-action@135046f5efcadb17337d9b29b8d5b4035ae64b10 # v1.0.0
+            with:
+              team: ${{ vars.TURBO_TEAM }}
+
+          - name: Set up pnpm and Node
+            uses: ./.github/actions/setup
+
+      - name: Build packages
+        run: pnpm run build:packages
+
+      - name: Publish
+        run: pnpx pkg-pr-new publish --compact --no-template --pnpm './packages/github-tools' './packages/github-tools-eve-extension'
         continue-on-error: true
+
+  # Single required check, so branch protection survives job renames
+  ci:
+    name: ci
+    runs-on: ubuntu-slim
+    needs: [quality, examples]
+    if: always()
+    steps:
+      - name: Verify every required job succeeded
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
