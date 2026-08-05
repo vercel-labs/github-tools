@@ -1,10 +1,10 @@
 import type { GithubConnectorInput } from '@github-tools/sdk/connect'
-import { GITHUB_TOOL_NAMES } from '@github-tools/sdk/eve'
+import { GITHUB_TOOL_NAMES, type GithubToolName } from '@github-tools/sdk/eve'
 import { defineExtension } from 'eve/extension'
 import { z } from 'zod'
 
 const presetNameSchema = z.enum(['code-review', 'issue-triage', 'ci-ops', 'repo-explorer', 'maintainer'])
-const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [string, ...string[]])
+const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [GithubToolName, ...GithubToolName[]])
 
 const commitIdentitySchema = z.object({
   name: z.string(),
