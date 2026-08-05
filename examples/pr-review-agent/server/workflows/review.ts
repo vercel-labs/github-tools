@@ -44,7 +44,7 @@ function buildContextInstructions(ctx: GitHubContext): string {
 3. **Always post your response as a comment** on the ${ctx.isPullRequest ? 'PR' : 'issue'} using the appropriate tool (addPullRequestComment or addIssueComment).
    - If you find issues, post a detailed review with specific feedback.
    - If everything looks good, post a summary of what you reviewed and confirm the code is solid.
-   - Never stay silent — the user expects a visible response on the ${ctx.isPullRequest ? 'PR' : 'issue'}.`
+   - Never stay silent: the user expects a visible response on the ${ctx.isPullRequest ? 'PR' : 'issue'}.`
 }
 
 export async function reviewWorkflow(prompt: string, ctx: GitHubContext) {

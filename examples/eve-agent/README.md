@@ -47,7 +47,7 @@ agent/
   tools/github.ts       # GitHub tools via connectGithubTools()
 ```
 
-`agent.ts` sets `build.externalDependencies: ['@vercel/connect']` so `eve dev` can bundle `connectGithubTools` — a workaround until [eve](https://eve.dev) handles transitive Connect imports from workspace-linked packages without extra config.
+`agent.ts` sets `build.externalDependencies: ['@vercel/connect']` so `eve dev` can bundle `connectGithubTools`, a workaround until [eve](https://eve.dev) handles transitive Connect imports from workspace-linked packages without extra config.
 
 ## Customize
 

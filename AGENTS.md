@@ -137,6 +137,29 @@ PR titles and commits follow [Conventional Commits](https://conventionalcommits.
 
 `apps/docs/skills/github-tools-agents/SKILL.md` is published to consumers via `/.well-known/skills/`. When a change affects what it documents — tools, presets, approval control, agent setup — update it in the same PR. A skill describing stale behavior is worse than no skill.
 
+### Docs site: package manager tabs
+
+Any install or CLI command in `apps/docs/content/**/*.md` that a reader would run in their own project must show all four package managers, wrapped in a `:::code-group` (see `apps/docs/content/docs/1.getting-started/2.installation.md` for the canonical pattern):
+
+````md
+:::code-group
+```bash [pnpm]
+pnpm add @github-tools/sdk
+```
+```bash [npm]
+npm install @github-tools/sdk
+```
+```bash [yarn]
+yarn add @github-tools/sdk
+```
+```bash [bun]
+bun add @github-tools/sdk
+```
+:::
+````
+
+This applies to every `pnpm add`/`pnpm install` in the docs site, including peer dependencies and framework-specific installs (eve extension, Vercel Connect, Workflow, Chat SDK). It does not apply to single, package-manager-agnostic commands (`npx eve dev`, `npx skills add ...`) or to `packages/github-tools/README.md` and the agent skill under `apps/docs/skills/`, which stay `pnpm`-only for brevity (npm's README renderer and Agent Skills consumed by an LLM don't support tabs).
+
 ## Definition of Done
 
 A task is complete when **all** of the following pass:

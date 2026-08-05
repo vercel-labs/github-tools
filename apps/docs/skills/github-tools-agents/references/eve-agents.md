@@ -1,12 +1,12 @@
 ---
 name: eve-agents
-description: Deprecated — register GitHub tools in eve via @github-tools/sdk/eve and defineDynamic. Prefer the eve-extension reference.
+description: Deprecated. Register GitHub tools in eve via @github-tools/sdk/eve and defineDynamic. Prefer the eve-extension reference.
 tags: [eve, defineDynamic, approval, filesystem, durable, human-in-the-loop, deprecated]
 ---
 
 # eve agents (deprecated direct import)
 
-**Deprecated.** Prefer `./eve-extension.md` — `@github-tools/eve-extension` mounted under `agent/extensions/` is now the recommended way to add GitHub tools to an eve agent. This direct `@github-tools/sdk/eve` import still works and is documented below for existing agents.
+**Deprecated.** Prefer `./eve-extension.md`. `@github-tools/eve-extension` mounted under `agent/extensions/` is now the recommended way to add GitHub tools to an eve agent. This direct `@github-tools/sdk/eve` import still works and is documented below for existing agents.
 
 ## Install
 
@@ -57,5 +57,5 @@ export default createGithubTools({
 
 ## Docs
 
-- `/frameworks/eve`
-- `examples/eve-agent/` — `pnpm dev:eve-agent` from monorepo root
+- `/deprecated/eve`
+- `examples/eve-agent/`: `pnpm dev:eve-agent` from monorepo root

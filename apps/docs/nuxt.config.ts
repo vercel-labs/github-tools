@@ -4,7 +4,7 @@ const docsSiteUrl =
   || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://github-tools.com')
 
 const siteDescription =
-  '53 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
+  'A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.'
 
 export default defineNuxtConfig({
   extends: ['docus'],
@@ -50,6 +50,8 @@ export default defineNuxtConfig({
     '/guide/eve-agents': { redirect: { to: '/frameworks/eve-extension', statusCode: 301 } },
     '/guide/durable-workflows': { redirect: { to: '/frameworks/vercel-workflow', statusCode: 301 } },
     '/guide/token-permissions': { redirect: { to: '/guide/tokens-and-auth', statusCode: 301 } },
+    '/guide/examples': { redirect: { to: '/examples/overview', statusCode: 301 } },
+    '/frameworks/eve': { redirect: { to: '/deprecated/eve', statusCode: 301 } },
   },
   content: {
     experimental: {

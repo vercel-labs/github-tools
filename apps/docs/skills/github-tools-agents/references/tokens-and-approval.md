@@ -15,10 +15,10 @@ tags: [token, PAT, permissions, approval, requireApproval, security, write-safet
 
 The docs site lists each tool and whether it writes:
 
-- **Contents** — files, branches, repos (read/write as needed).
-- **Issues** / **Pull requests** — read vs read-write for create/comment/close/merge.
-- **Actions** — workflow runs, dispatch, cancel, rerun.
-- **Gists** — read vs write/delete.
+- **Contents**: files, branches, repos (read/write as needed).
+- **Issues** / **Pull requests**: read vs read-write for create/comment/close/merge.
+- **Actions**: workflow runs, dispatch, cancel, rerun.
+- **Gists**: read vs write/delete.
 
 See `/api/tools-catalog` and `/guide/tokens-and-auth`.
 

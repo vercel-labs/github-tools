@@ -1,13 +1,13 @@
 # GitHub PR Review Agent
 
-A durable PR review agent in **~60 lines of code**. Tag it on any pull request, and it analyzes the changes, posts a structured review, and responds to follow-ups — all crash-safe.
+A durable PR review agent in **~60 lines of code**. Tag it on any pull request, and it analyzes the changes, posts a structured review, and responds to follow-ups, all crash-safe.
 
 Built with:
 
-- **[@github-tools/sdk](https://github-tools.com)** — 53 AI-callable GitHub tools (PRs, commits, issues, releases, code search...)
-- **[Chat SDK](https://chat-sdk.dev)** — multi-platform agent framework with the GitHub adapter
-- **[Vercel Workflow](https://useworkflow.dev)** — durable execution that survives timeouts and restarts
-- **[evlog](https://evlog.dev)** — AI observability (token usage, tool calls, cost, timing)
+- **[@github-tools/sdk](https://github-tools.com)**: 53 AI-callable GitHub tools (PRs, commits, issues, releases, code search...)
+- **[Chat SDK](https://chat-sdk.dev)**: multi-platform agent framework with the GitHub adapter
+- **[Vercel Workflow](https://useworkflow.dev)**: durable execution that survives timeouts and restarts
+- **[evlog](https://evlog.dev)**: AI observability (token usage, tool calls, cost, timing)
 
 ## How it works
 
@@ -30,7 +30,7 @@ Built with:
    Listens for follow-up messages
 ```
 
-Each tool call is a **durable step** — if the server crashes mid-review, the workflow resumes from the last completed step.
+Each tool call is a **durable step**: if the server crashes mid-review, the workflow resumes from the last completed step.
 
 ## Setup
 
@@ -45,7 +45,7 @@ GITHUB_TOKEN=ghp_...
 # Must match your GitHub webhook config
 GITHUB_WEBHOOK_SECRET=...
 
-# Agent username — this is how @mentions are detected
+# Agent username, this is how @mentions are detected
 GITHUB_AGENT_USERNAME=my-review-agent
 ```
 

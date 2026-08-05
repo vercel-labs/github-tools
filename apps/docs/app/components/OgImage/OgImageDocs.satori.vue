@@ -14,7 +14,7 @@ withDefaults(
 )
 
 const FALLBACK_DESCRIPTION =
-  '53 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.'
+  'A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.'
 
 function ogTitleLines(raw: string): string[] {
   const title = !raw ? 'Documentation' : (raw.length > 68 ? `${raw.slice(0, 65)}…` : raw)

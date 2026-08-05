@@ -8,9 +8,9 @@ tags: [workflow, durable, WorkflowAgent, use-step, use-workflow, streaming, verc
 
 ## Concepts
 
-- **`"use workflow"`** — Entry function runs as a Vercel Workflow: durable orchestration, replay, observability.
-- **`"use step"`** — Each GitHub tool invocation is implemented as a step (retries, isolation, full Node in the workflow runtime).
-- **`createDurableGithubAgent`** — From `@github-tools/sdk/workflow`, wraps tools in `WorkflowAgent` (`@ai-sdk/workflow`) so **model steps and tool calls** participate in the same durable execution model.
+- **`"use workflow"`**: Entry function runs as a Vercel Workflow: durable orchestration, replay, observability.
+- **`"use step"`**: Each GitHub tool invocation is implemented as a step (retries, isolation, full Node in the workflow runtime).
+- **`createDurableGithubAgent`**: From `@github-tools/sdk/workflow`, wraps tools in `WorkflowAgent` (`@ai-sdk/workflow`) so **model steps and tool calls** participate in the same durable execution model.
 
 ## Dependencies
 

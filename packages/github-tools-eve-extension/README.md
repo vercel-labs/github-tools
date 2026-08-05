@@ -7,11 +7,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-black?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![license](https://img.shields.io/github/license/vercel-labs/github-tools?color=black)](https://github.com/vercel-labs/github-tools/blob/main/LICENSE)
 
-GitHub tools for [eve](https://eve.dev), packaged as a mountable [eve extension](https://eve.dev/docs/extensions) — a single `pnpm add` and a one-line mount, with no CLI setup. Built on top of [`@github-tools/sdk/eve`](../github-tools#eve).
+GitHub tools for [eve](https://eve.dev), packaged as a mountable [eve extension](https://eve.dev/docs/extensions): a single `pnpm add` and a one-line mount, with no CLI setup. Built on top of [`@github-tools/sdk/eve`](../github-tools#eve).
 
 Docs: **[github-tools.com/frameworks/eve-extension](https://github-tools.com/frameworks/eve-extension)**
 
-This is **the recommended way** to add GitHub tools to an eve agent. The direct [`@github-tools/sdk/eve`](../github-tools#eve) import is **deprecated** in its favor — it keeps working for agents that already import tools directly into `agent/tools/`, but new agents should mount this extension instead.
+This is **the recommended way** to add GitHub tools to an eve agent. The direct [`@github-tools/sdk/eve`](../github-tools#eve) import is **deprecated** in its favor. It keeps working for agents that already import tools directly into `agent/tools/`, but new agents should mount this extension instead.
 
 ## Installation
 
@@ -40,7 +40,7 @@ export default githubExtension({
 })
 ```
 
-> `code-review` pairs cleanly with a Connect `connector` — `maintainer` and `repo-explorer` include gist tools, and GitHub only grants gist access to user access tokens, never the installation tokens Connect mints, so gist calls 403 over Connect. Write tools already require approval via `always()` by default, so a plain `{ someTool: true }` is a no-op — use a predicate (as above) when you actually want to narrow or loosen the default.
+> `code-review` pairs cleanly with a Connect `connector`. `maintainer` and `repo-explorer` include gist tools, and GitHub only grants gist access to user access tokens, never the installation tokens Connect mints, so gist calls 403 over Connect. Write tools already require approval via `always()` by default, so a plain `{ someTool: true }` is a no-op, use a predicate (as above) when you actually want to narrow or loosen the default.
 
 `connector` also accepts a `() => string | Promise<string>` resolver, so the same config can pick a connector dynamically (e.g. by environment):
 
@@ -51,7 +51,7 @@ export default githubExtension({
 })
 ```
 
-Tools are exposed to the model as `<namespace>__<toolName>`, where `<namespace>` comes from the mount file's name — `agent/extensions/github.ts` yields `github__listPullRequests`, `github__createIssue`, and so on.
+Tools are exposed to the model as `<namespace>__<toolName>`, where `<namespace>` comes from the mount file's name: `agent/extensions/github.ts` yields `github__listPullRequests`, `github__createIssue`, and so on.
 
 To hand-pick an exact set of tools instead of a preset, pass `include`:
 
@@ -61,7 +61,7 @@ export default githubExtension({
 })
 ```
 
-`include` **adds** to `preset` (union) — use it to pull in a tool a preset is missing. `exclude` **removes** tool names from the resolved `preset` + `include` set — use it to drop a couple of tools from a larger preset:
+`include` **adds** to `preset` (union), use it to pull in a tool a preset is missing. `exclude` **removes** tool names from the resolved `preset` + `include` set, use it to drop a couple of tools from a larger preset:
 
 ```ts
 export default githubExtension({

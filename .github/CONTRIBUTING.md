@@ -63,7 +63,6 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
    - `apps/docs/content/docs/3.guide/2.approval-control.md` (write tools only)
    - `apps/docs/content/docs/3.guide/1.presets.md` and `apps/docs/content/docs/3.guide/4.tokens-and-auth.md` if the tool changes a preset's tool list or scopes
    - `packages/github-tools/README.md` (tool tables, preset tables, write tools list, token permissions) — the root `README.md` is a symlink to this file, no separate edit needed
-   - `apps/docs/app/utils/preset-explorer-data.ts` — static mirror of `TOOL_CATALOG`/`PRESETS` used by the [Preset Explorer](https://github-tools.com/guide/presets#explore-presets); update it alongside `core/tool-names.ts` and `core/presets.ts`
    - New preset? Add it to `packages/github-tools-eve-extension/extension/extension.ts`'s `presetNameSchema` enum too
 6. **Changeset** — `pnpm changeset` (`minor`)
 7. Run checks:

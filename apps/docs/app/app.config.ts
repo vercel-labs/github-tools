@@ -1,6 +1,6 @@
 export default defineAppConfig({
   name: 'GitHub tools',
-  description: '53 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.',
+  description: 'A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.',
   landing: false,
   socials: {
     x: 'https://x.com/hugorcd',
@@ -8,7 +8,7 @@ export default defineAppConfig({
   seo: {
     titleTemplate: '%s - GitHub tools',
     title: 'GitHub tools',
-    description: '53 typed GitHub tools with presets, human approval, and durable execution — for the AI SDK, eve, Vercel Workflow, and Chat SDK.',
+    description: 'A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.',
   },
   github: {
     rootDir: 'apps/docs',
@@ -22,9 +22,10 @@ export default defineAppConfig({
       {
         category: 'Get started',
         items: [
-          'How do I add GitHub tools to my agent?',
+          'How do I build a GitHub agent with eve?',
+          'How do I pick the right integration for my agent?',
           'Which preset should I use?',
-          'What do the 53 tools cover?',
+          'How is this different from the GitHub MCP server or the gh CLI?',
         ],
       },
       {
@@ -228,7 +229,15 @@ export default defineAppConfig({
           { label: 'AI SDK', to: '/frameworks/ai-sdk' },
           { label: 'Vercel Workflow', to: '/frameworks/vercel-workflow' },
           { label: 'Chat SDK', to: '/frameworks/chat-sdk' },
-          { label: 'eve (direct import, deprecated)', to: '/frameworks/eve' },
+        ],
+      },
+      {
+        title: 'Examples',
+        links: [
+          { label: 'Overview', to: '/examples/overview' },
+          { label: 'eve Stale Issue Triager', to: '/examples/eve-stale-issue-triager' },
+          { label: 'Manager & Sub-agents', to: '/examples/manager-agent-with-subagents' },
+          { label: 'Recipes', to: '/examples/recipes' },
         ],
       },
       {
@@ -238,7 +247,7 @@ export default defineAppConfig({
           { label: 'Approval Control', to: '/guide/approval-control' },
           { label: 'Commit Attribution', to: '/guide/commit-attribution' },
           { label: 'Tokens & Auth', to: '/guide/tokens-and-auth' },
-          { label: 'Examples', to: '/guide/examples' },
+          { label: 'Vercel Connect', to: '/guide/vercel-connect' },
         ],
       },
       {
