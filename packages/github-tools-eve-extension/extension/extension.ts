@@ -1,3 +1,4 @@
+import type { GithubConnectorInput } from '@github-tools/sdk/connect'
 import { defineExtension } from 'eve/extension'
 import { z } from 'zod'
 
@@ -12,8 +13,14 @@ export default defineExtension({
   config: z.object({
     /** GitHub PAT. Falls back to `GITHUB_TOKEN` when omitted and `connector` is not set. */
     token: z.string().optional(),
-    /** Vercel Connect connector name (e.g. `github/my-connector`). Takes priority over `token`. */
-    connector: z.string().optional(),
+    /**
+     * Vercel Connect connector name (e.g. `github/my-connector`), or a
+     * `() => string | Promise<string>` resolver for picking one dynamically
+     * (e.g. per environment or tenant). Takes priority over `token`.
+     */
+    connector: z.custom<GithubConnectorInput>(
+      value => typeof value === 'string' || typeof value === 'function',
+    ).optional(),
     /** Vercel Connect token params passed through to `getToken` when `connector` is set. */
     connect: z.record(z.string(), z.unknown()).optional(),
     /** Restrict tools to a preset (or array of presets). Omit for all 42 tools. */

@@ -11,7 +11,7 @@ vi.mock('@vercel/connect', () => ({
 import { connectGithubToken } from './token'
 
 function resolveConnectToken(
-  connector: string,
+  connector: Parameters<typeof connectGithubToken>[0],
   options?: Parameters<typeof connectGithubToken>[1],
 ) {
   const resolve = connectGithubToken(connector, options)
@@ -95,5 +95,54 @@ describe('connectGithubToken', () => {
       expect.objectContaining({ subject: { type: 'app' } }),
       connectOptions,
     )
+  })
+
+  it('resolves a sync function connector', async () => {
+    const connectorFn = vi.fn(() => 'github/dynamic-connector')
+    const resolve = resolveConnectToken(connectorFn, { preset: 'code-review' })
+
+    expect(connectorFn).not.toHaveBeenCalled()
+
+    await resolve()
+    expect(connectorFn).toHaveBeenCalledTimes(1)
+    expect(getToken).toHaveBeenCalledWith(
+      'github/dynamic-connector',
+      expect.objectContaining({ subject: { type: 'app' } }),
+      undefined,
+    )
+  })
+
+  it('resolves an async function connector', async () => {
+    const connectorFn = vi.fn(async () => 'github/dynamic-connector')
+    const resolve = resolveConnectToken(connectorFn, { preset: 'code-review' })
+
+    await resolve()
+    expect(getToken).toHaveBeenCalledWith(
+      'github/dynamic-connector',
+      expect.objectContaining({ subject: { type: 'app' } }),
+      undefined,
+    )
+  })
+
+  it('re-resolves a function connector on every call', async () => {
+    let env = 'preview'
+    const connectorFn = vi.fn(() => `github/${env}-connector`)
+    const resolve = resolveConnectToken(connectorFn, { preset: 'code-review' })
+
+    await resolve()
+    expect(getToken).toHaveBeenLastCalledWith(
+      'github/preview-connector',
+      expect.anything(),
+      undefined,
+    )
+
+    env = 'production'
+    await resolve()
+    expect(getToken).toHaveBeenLastCalledWith(
+      'github/production-connector',
+      expect.anything(),
+      undefined,
+    )
+    expect(connectorFn).toHaveBeenCalledTimes(2)
   })
 })

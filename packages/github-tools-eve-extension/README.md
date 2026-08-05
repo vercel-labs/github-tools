@@ -42,6 +42,15 @@ export default githubExtension({
 
 > `code-review` pairs cleanly with a Connect `connector` — `maintainer` and `repo-explorer` include gist tools, and GitHub only grants gist access to user access tokens, never the installation tokens Connect mints, so gist calls 403 over Connect. Write tools already require approval via `always()` by default, so a plain `{ someTool: true }` is a no-op — use a predicate (as above) when you actually want to narrow or loosen the default.
 
+`connector` also accepts a `() => string | Promise<string>` resolver, so the same config can pick a connector dynamically (e.g. by environment):
+
+```ts
+export default githubExtension({
+  connector: () => (process.env.VERCEL_ENV === 'production' ? 'github/prod-connector' : 'github/preview-connector'),
+  preset: 'code-review',
+})
+```
+
 Tools are exposed to the model as `<namespace>__<toolName>`, where `<namespace>` comes from the mount file's name — `agent/extensions/github.ts` yields `github__listPullRequests`, `github__createIssue`, and so on.
 
 See the runnable consumer at [`examples/eve-extension-agent`](../../examples/eve-extension-agent).
@@ -60,7 +69,7 @@ extension/
 | Field | Type | Notes |
 |---|---|---|
 | `token` | `string?` | Falls back to `GITHUB_TOKEN` when omitted and `connector` is not set |
-| `connector` | `string?` | Vercel Connect connector name; takes priority over `token` |
+| `connector` | `string \| (() => string \| Promise<string>)` (optional) | Vercel Connect connector name, or a resolver to pick one dynamically (e.g. per environment/tenant); takes priority over `token` |
 | `connect` | `record?` | Passed through to `getToken` when `connector` is set |
 | `preset` | preset name or array | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer` |
 | `requireApproval` | `boolean \| record` | Global or per-tool; per-tool values may be predicate functions |

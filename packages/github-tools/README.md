@@ -280,6 +280,15 @@ connectGithubTools('github/my-connector', {
 
 > `@vercel/connect` is an optional peer dependency — install it only when using the `/connect` subpath.
 
+`connector` accepts a `() => string | Promise<string>` resolver instead of a static name, re-resolved on every call — useful to pick a connector per environment or tenant:
+
+```ts
+connectGithubTools(
+  () => (process.env.VERCEL_ENV === 'production' ? 'github/prod-connector' : 'github/preview-connector'),
+  { preset: 'code-review' },
+)
+```
+
 ## eve
 
 [eve](https://eve.dev) is Vercel's filesystem-first agent framework. The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic` — one file, zero CLI.
