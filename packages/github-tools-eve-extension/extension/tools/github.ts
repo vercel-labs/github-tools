@@ -6,7 +6,7 @@ import extension from '../extension'
 export default defineDynamic({
   events: {
     'session.started': async () => {
-      const { token, connector, connect, preset, tools, requireApproval, overrides, author, committer, coAuthors } = extension.config
+      const { token, connector, connect, preset, include, exclude, requireApproval, overrides, author, committer, coAuthors } = extension.config
 
       const resolvedToken = connector
         ? connectGithubToken(connector, { preset, params: connect })
@@ -15,7 +15,8 @@ export default defineDynamic({
       return buildEveToolMap({
         token: resolvedToken,
         preset,
-        tools: tools as GithubToolName[] | undefined,
+        include: include as GithubToolName[] | undefined,
+        exclude: exclude as GithubToolName[] | undefined,
         requireApproval: requireApproval as EveApprovalConfig | undefined,
         overrides: overrides as EveToolOverrides | undefined,
         author,

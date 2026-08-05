@@ -47,11 +47,11 @@ import { listPullRequests } from '@github-tools/sdk/eve'
 export default listPullRequests()
 ```
 
-Or pass an exact allow-list from one file via `tools` (also available on `./eve-extension.md`):
+Or pass an exact set from one file via `include` (also available on `./eve-extension.md`); `include` adds to `preset` (union), and `exclude` removes tool names from the result:
 
 ```ts
 export default createGithubTools({
-  tools: ['listPullRequests', 'mergePullRequest'],
+  include: ['listPullRequests', 'mergePullRequest'],
 })
 ```
 

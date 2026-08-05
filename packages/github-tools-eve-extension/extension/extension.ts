@@ -28,10 +28,12 @@ export default defineExtension({
     /** Restrict tools to a preset (or array of presets). Omit for all 42 tools. */
     preset: z.union([presetNameSchema, z.array(presetNameSchema)]).optional(),
     /**
-     * Hand-pick an exact allow-list of tool names, instead of (or on top of) `preset`.
-     * When combined with `preset`, the effective set is the intersection of both.
+     * Hand-pick tool names to add on top of `preset` (or standalone, without `preset`).
+     * When combined with `preset`, the effective set is the union of both.
      */
-    tools: z.array(toolNameSchema).optional(),
+    include: z.array(toolNameSchema).optional(),
+    /** Remove specific tool names from the resolved set, applied after `preset` + `include`. */
+    exclude: z.array(toolNameSchema).optional(),
     /** Global boolean or per-tool approval config — may hold predicate functions. */
     requireApproval: z.union([z.boolean(), z.record(z.string(), z.unknown())]).optional(),
     /** Per-tool overrides (description, approval, toModelOutput, outputSchema). */

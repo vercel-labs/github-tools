@@ -53,15 +53,22 @@ export default githubExtension({
 
 Tools are exposed to the model as `<namespace>__<toolName>`, where `<namespace>` comes from the mount file's name — `agent/extensions/github.ts` yields `github__listPullRequests`, `github__createIssue`, and so on.
 
-To hand-pick an exact set of tools instead of (or on top of) a preset, pass `tools`:
+To hand-pick an exact set of tools instead of a preset, pass `include`:
 
 ```ts
 export default githubExtension({
-  tools: ['getRepository', 'listPullRequests', 'mergePullRequest'],
+  include: ['getRepository', 'listPullRequests', 'mergePullRequest'],
 })
 ```
 
-`preset` and `tools` compose as an intersection when both are set.
+`include` **adds** to `preset` (union) — use it to pull in a tool a preset is missing. `exclude` **removes** tool names from the resolved `preset` + `include` set — use it to drop a couple of tools from a larger preset:
+
+```ts
+export default githubExtension({
+  preset: 'maintainer',
+  exclude: ['createRepository', 'deleteGist'],
+})
+```
 
 See the runnable consumer at [`examples/eve-extension-agent`](../../examples/eve-extension-agent).
 
@@ -69,9 +76,9 @@ See the runnable consumer at [`examples/eve-extension-agent`](../../examples/eve
 
 ```
 extension/
-  extension.ts        # defineExtension() config schema (token, connector, preset, tools, requireApproval, ...)
+  extension.ts        # defineExtension() config schema (token, connector, preset, include, exclude, requireApproval, ...)
   tools/
-    github.ts          # defineDynamic() returning buildEveToolMap(...) filtered by preset and/or tools
+    github.ts          # defineDynamic() returning buildEveToolMap(...) scoped by preset/include/exclude
 ```
 
 ## Config schema (`extension/extension.ts`)
@@ -82,7 +89,8 @@ extension/
 | `connector` | `string \| (() => string \| Promise<string>)` (optional) | Vercel Connect connector name, or a resolver to pick one dynamically (e.g. per environment/tenant); takes priority over `token` |
 | `connect` | `record?` | Passed through to `getToken` when `connector` is set |
 | `preset` | preset name or array | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer` |
-| `tools` | `string[]?` | Exact allow-list of tool names; intersects with `preset` when both are set |
+| `include` | `string[]?` | Tool names to add on top of `preset` (union), or the full set standalone |
+| `exclude` | `string[]?` | Tool names to remove from the resolved `preset` + `include` set |
 | `requireApproval` | `boolean \| record` | Global or per-tool; per-tool values may be predicate functions |
 | `overrides` | `record` | Per-tool `description` / `approval` / `toModelOutput` / `outputSchema` |
 | `author` / `committer` / `coAuthors` | commit identity | Attribution for commit-creating tools |

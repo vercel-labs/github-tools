@@ -36,13 +36,20 @@ Tools are exposed to the model as `<namespace>__<toolName>` — `agent/extension
 
 ## Config schema
 
-`token`, `connector`, `connect`, `preset`, `tools`, `requireApproval`, `overrides`, `author`/`committer`/`coAuthors` — see `/frameworks/eve-extension#config-schema`.
+`token`, `connector`, `connect`, `preset`, `include`, `exclude`, `requireApproval`, `overrides`, `author`/`committer`/`coAuthors` — see `/frameworks/eve-extension#config-schema`.
 
-`tools` is an exact allow-list of tool names for hand-picking a handful of tools instead of (or intersected with) a `preset`:
+`include` **adds** to `preset` (union) — use it standalone for an exact set, or on top of a preset to add a missing tool. `exclude` **removes** tool names from the resolved set — use it to drop a couple of tools from a larger preset:
 
 ```ts
 export default githubExtension({
-  tools: ['getRepository', 'listPullRequests', 'mergePullRequest'],
+  include: ['getRepository', 'listPullRequests', 'mergePullRequest'],
+})
+```
+
+```ts
+export default githubExtension({
+  preset: 'maintainer',
+  exclude: ['createRepository', 'deleteGist'],
 })
 ```
 
