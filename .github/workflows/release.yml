@@ -37,16 +37,24 @@ jobs:
           commitMode: github-api
           version: pnpm run version-packages
           publish: pnpm run release
+          # Releases are created here, then their bodies are rewritten below.
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create draft GitHub releases
+      # createGithubReleases gives us one release per package, tagged pkg@version — that part
+      # we keep. Its *body* is the CHANGELOG section, which for a dependent package is a wall of
+      # "Updated dependencies [<hash>, <hash>, …]" and is empty for packages with no changeset
+      # of their own. `--generate-notes` is not the answer either: GitHub builds those from a
+      # commit range, and monorepo tags interleave, so each package would list everybody's PRs.
+      # So we rewrite each body from the PRs that actually touched that package's directory,
+      # grouped by the same categories as .github/release.yml.
+      - name: Push tags
         if: steps.changesets.outputs.published == 'true'
-        run: |
-          for pkg in $(echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | .name + "@" + .version'); do
-            version="${pkg##*@}"
-            tag="v${version}"
-            gh release create "$tag" --draft --generate-notes --title "$tag"
-          done
+        run: git push --tags
+
+      - name: Rewrite release notes
+        if: steps.changesets.outputs.published == 'true'
+        run: node scripts/release-notes.mjs '${{ steps.changesets.outputs.publishedPackages }}'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

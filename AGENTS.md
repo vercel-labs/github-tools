@@ -123,6 +123,8 @@ Five presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintai
 - **Bump type:** `patch` for fixes, `minor` for features (new tools, new presets), `major` for breaking changes.
 - **Description:** write from the consumer's perspective — what changed and how to use it.
 
+On merge to `main`, `changesets/action` opens or updates the "Version Packages" PR; merging that publishes to npm and creates one GitHub release per package (tag `{name}@{version}`). `scripts/release-notes.mjs` then rewrites each release body from the PRs that actually touched that package's directory, grouped by the categories in `.github/release.yml` — see the script's header comment for why.
+
 ### Commits & PR titles
 
 PR titles and commits follow [Conventional Commits](https://conventionalcommits.org). The CI source of truth is `.github/workflows/semantic-pull-request.yml` (lints PR titles via `amannn/action-semantic-pull-request`); `.github/pull_request_template.md` mirrors the same lists for contributors.
