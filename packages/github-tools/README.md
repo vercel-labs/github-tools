@@ -229,26 +229,19 @@ const tools = connectGithubTools('github/my-connector', {
 })
 ```
 
-For eve agents, import from `@github-tools/sdk/connect/eve`:
+For eve agents, pass `connector` directly to the [eve extension](#eve-extension-recommended) (recommended) — no separate Connect import, and no `build.externalDependencies` workaround needed:
 
 ```ts
-// agent/agent.ts — TODO(eve-connect-bundle): drop externalDependencies when eve fixes upstream
-import { defineAgent } from 'eve'
+// agent/extensions/github.ts
+import githubExtension from '@github-tools/eve-extension'
 
-export default defineAgent({
-  model: 'anthropic/claude-sonnet-5',
-  build: { externalDependencies: ['@vercel/connect'] },
-})
-```
-
-```ts
-// agent/tools/github.ts
-import { connectGithubTools } from '@github-tools/sdk/connect/eve'
-
-export default connectGithubTools('github/my-connector', {
+export default githubExtension({
+  connector: 'github/my-connector',
   preset: 'maintainer',
 })
 ```
+
+For the deprecated direct import, use `connectGithubTools` from `@github-tools/sdk/connect/eve` the same way inside `agent/tools/github.ts` — that path does need `build: { externalDependencies: ['@vercel/connect'] }` in `agent.ts` (see [eve, direct import](#eve-direct-import-deprecated) below).
 
 `connectGithubTools` mints tokens lazily at tool execution — do not `await getToken(...)` at module top level in `agent/tools/` (that runs at import/build time).
 
@@ -291,9 +284,52 @@ connectGithubTools(
 
 ## eve
 
-[eve](https://eve.dev) is Vercel's filesystem-first agent framework. The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic` — one file, zero CLI.
+[eve](https://eve.dev) is Vercel's filesystem-first agent framework. `@github-tools/eve-extension` is the **recommended** way to add GitHub tools to an eve agent — a mountable [eve extension](https://eve.dev/docs/extensions), no CLI setup, no direct SDK import in `agent/tools/`. The lower-level `@github-tools/sdk/eve` subpath (`defineDynamic`) is **deprecated** in its favor; it keeps working and is documented below for existing agents.
 
-> A mountable [eve extension](https://eve.dev/docs/extensions), `@github-tools/eve-extension`, is also available and is the direction this integration is moving toward — it will become the recommended way to add GitHub tools to an eve agent. The direct import below remains supported. See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve-extension-agent`](../../examples/eve-extension-agent).
+### eve extension (recommended)
+
+```sh
+pnpm add @github-tools/eve-extension eve
+```
+
+`eve` is a required peer dependency (itself requiring **`ai` v7**).
+
+```ts
+// agent/extensions/github.ts
+import githubExtension from '@github-tools/eve-extension'
+
+export default githubExtension({
+  preset: ['code-review', 'issue-triage'],
+  requireApproval: {
+    mergePullRequest: true,
+    createIssue: 'once',
+    addPullRequestComment: false,
+    createOrUpdateFile: ({ toolInput }) => toolInput?.owner !== 'vercel-labs',
+  },
+})
+```
+
+Tools are exposed to the model as `<namespace>__<toolName>`, where `<namespace>` comes from the mount file's name — `agent/extensions/github.ts` yields `github__listPullRequests`, `github__createIssue`, and so on.
+
+For Vercel Connect, pass `connector` directly — no separate import needed:
+
+```ts
+// agent/extensions/github.ts
+import githubExtension from '@github-tools/eve-extension'
+
+export default githubExtension({
+  connector: 'github/my-connector',
+  preset: 'maintainer',
+})
+```
+
+No `build.externalDependencies` workaround is needed here — unlike the deprecated direct import below, the extension is pre-built via `eve extension build` and loaded through eve's extension mechanism rather than inlined from a workspace-linked source import.
+
+See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve-extension-agent`](../../examples/eve-extension-agent) for the full package README and a runnable agent.
+
+### eve, direct import (deprecated)
+
+The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic` — one file, zero CLI. This keeps working but new agents should use the extension above.
 
 ```sh
 pnpm add @github-tools/sdk eve ai zod
@@ -318,7 +354,7 @@ export default createGithubTools({
 
 Dynamic tools are named by their **bare map key** — the model sees `listPullRequests`, `createIssue`, and so on (same names as the AI SDK package). There is no automatic file-slug prefix when returning a tool map from `defineDynamic`.
 
-### Approval (eve)
+#### Approval (eve)
 
 | Value | Maps to | Behavior |
 |---|---|---|
@@ -332,7 +368,7 @@ Default (no `requireApproval`): all write tools → `always()`. Unlisted write t
 
 Unlike the Workflow SDK subpath, eve approval **works durably** — gated tools pause the session until a human approves.
 
-### Cherry-picking (one tool per file)
+#### Cherry-picking (one tool per file)
 
 ```ts
 // agent/tools/list_pull_requests.ts
@@ -341,7 +377,7 @@ import { listPullRequests } from '@github-tools/sdk/eve'
 export default listPullRequests()
 ```
 
-### Idempotency
+#### Idempotency
 
 eve replays completed steps but re-runs steps interrupted mid-execution. Write tools vary:
 
@@ -354,7 +390,7 @@ eve replays completed steps but re-runs steps interrupted mid-execution. Write t
 
 Gate non-idempotent writes behind `always()` or `once()` where replay safety matters.
 
-### Vercel Connect
+#### Vercel Connect
 
 Mint the token from a Connect connector instead of `GITHUB_TOKEN` — `connectGithubTools` derives scopes from `preset` and fetches the token lazily inside each tool call:
 

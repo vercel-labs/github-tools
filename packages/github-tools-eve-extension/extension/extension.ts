@@ -1,8 +1,10 @@
 import type { GithubConnectorInput } from '@github-tools/sdk/connect'
+import { GITHUB_TOOL_NAMES } from '@github-tools/sdk/eve'
 import { defineExtension } from 'eve/extension'
 import { z } from 'zod'
 
 const presetNameSchema = z.enum(['code-review', 'issue-triage', 'ci-ops', 'repo-explorer', 'maintainer'])
+const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [string, ...string[]])
 
 const commitIdentitySchema = z.object({
   name: z.string(),
@@ -25,6 +27,11 @@ export default defineExtension({
     connect: z.record(z.string(), z.unknown()).optional(),
     /** Restrict tools to a preset (or array of presets). Omit for all 42 tools. */
     preset: z.union([presetNameSchema, z.array(presetNameSchema)]).optional(),
+    /**
+     * Hand-pick an exact allow-list of tool names, instead of (or on top of) `preset`.
+     * When combined with `preset`, the effective set is the intersection of both.
+     */
+    tools: z.array(toolNameSchema).optional(),
     /** Global boolean or per-tool approval config — may hold predicate functions. */
     requireApproval: z.union([z.boolean(), z.record(z.string(), z.unknown())]).optional(),
     /** Per-tool overrides (description, approval, toModelOutput, outputSchema). */

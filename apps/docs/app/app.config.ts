@@ -30,7 +30,7 @@ export default defineAppConfig({
       {
         category: 'Build agents',
         items: [
-          'How do I build a GitHub agent with eve?',
+          'How do I add GitHub tools as an eve extension?',
           'How do I build a PR review bot?',
           'When should I use createGithubAgent vs createGithubTools?',
         ],
@@ -224,10 +224,11 @@ export default defineAppConfig({
       {
         title: 'Frameworks',
         links: [
-          { label: 'eve', to: '/frameworks/eve' },
+          { label: 'eve extension', to: '/frameworks/eve-extension' },
           { label: 'AI SDK', to: '/frameworks/ai-sdk' },
           { label: 'Vercel Workflow', to: '/frameworks/vercel-workflow' },
           { label: 'Chat SDK', to: '/frameworks/chat-sdk' },
+          { label: 'eve (direct import, deprecated)', to: '/frameworks/eve' },
         ],
       },
       {

@@ -14,6 +14,11 @@ import type { ConnectGithubEveToolsOptions } from './types'
  * SDK code and code-splits `@vercel/connect` unless the agent sets
  * `build.externalDependencies: ['@vercel/connect']` in `agent.ts`. Remove that
  * requirement when upstream eve externalizes this path.
+ *
+ * @deprecated Use the mountable `@github-tools/eve-extension` instead and pass `connector`
+ * directly to `githubExtension(...)` — no separate Connect import is needed. This direct
+ * import keeps working but is no longer the recommended path. See
+ * https://github-tools.com/frameworks/eve-extension#vercel-connect.
  */
 export function connectGithubTools(
   connector: GithubConnectorInput,

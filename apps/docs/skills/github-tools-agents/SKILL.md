@@ -6,7 +6,7 @@ metadata:
   author: "HugoRCD"
   repository: "https://github.com/vercel-labs/github-tools"
   url: "https://github-tools.com/.well-known/skills"
-  version: "1.0.0"
+  version: "1.1.0"
   keywords: "ai, agent, skill, vercel, ai sdk, github, tools, octokit, durable, workflow"
 ---
 
@@ -14,7 +14,7 @@ metadata:
 
 Use this skill when the user wants **GitHub API access from an LLM** via the [`@github-tools/sdk`](https://www.npmjs.com/package/@github-tools/sdk) package: `generateText` / `streamText`, `createGithubAgent`, or **durable** `createDurableGithubAgent` with the Vercel Workflow SDK.
 
-Official docs: **https://github-tools.com** — paths such as `/getting-started/installation`, `/getting-started/quick-start`, `/frameworks/ai-sdk`, `/frameworks/eve`, `/frameworks/vercel-workflow`, `/frameworks/chat-sdk`, `/guide/approval-control`, `/guide/tokens-and-auth`, `/api/reference`. Copy-prompts for assistants are embedded on those pages.
+Official docs: **https://github-tools.com** — paths such as `/getting-started/installation`, `/getting-started/quick-start`, `/frameworks/ai-sdk`, `/frameworks/eve-extension`, `/frameworks/eve` (deprecated direct import), `/frameworks/vercel-workflow`, `/frameworks/chat-sdk`, `/guide/approval-control`, `/guide/tokens-and-auth`, `/api/reference`. Copy-prompts for assistants are embedded on those pages.
 
 ## When to use
 
@@ -22,7 +22,7 @@ Official docs: **https://github-tools.com** — paths such as `/getting-started/
 - **Existing repo**: "We already use the AI SDK — add repo/PR/issue tools."
 - **Agents**: "Use `createGithubAgent` with a preset" / custom system instructions.
 - **Durable**: "Run the agent inside Vercel Workflow" / `"use workflow"` / crash-safe tool steps.
-- **eve**: "Add GitHub tools to an eve agent" / `defineDynamic` / `@github-tools/sdk/eve`.
+- **eve**: "Add GitHub tools to an eve agent" / `defineExtension` / `@github-tools/eve-extension` (recommended); the direct `@github-tools/sdk/eve` / `defineDynamic` import is deprecated.
 - **Safety**: "Gate merges / file writes with approval" / fine-grained PAT scopes.
 - **Narrow scope**: Presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintainer`) or cherry-picked tool factories.
 
@@ -78,11 +78,24 @@ export async function run(messages: ModelMessage[], token: string) {
 }
 ```
 
-**Limitation:** Durable agents require `@ai-sdk/workflow` and `WorkflowChatTransport` on the client for resumable streams. For predicate/`once` approval policies, use [eve agents](/frameworks/eve).
+**Limitation:** Durable agents require `@ai-sdk/workflow` and `WorkflowChatTransport` on the client for resumable streams. For predicate/`once` approval policies, use the [eve extension](/frameworks/eve-extension).
 
-### eve agent
+### eve extension (recommended for eve agents)
 
-Requires optional peers: `eve`, **`ai` v7`. Import from `@github-tools/sdk/eve`.
+Requires `eve` (transitively **`ai` v7**). Mount from `@github-tools/eve-extension` under `agent/extensions/`.
+
+```ts
+// agent/extensions/github.ts
+import githubExtension from '@github-tools/eve-extension'
+
+export default githubExtension({ preset: 'code-review' })
+```
+
+See `./references/eve-extension.md` and `/frameworks/eve-extension`.
+
+### eve agent, direct import (deprecated)
+
+Requires optional peers: `eve`, **`ai` v7**. Import from `@github-tools/sdk/eve`. Prefer the eve extension above for new agents.
 
 ```ts
 // agent/tools/github.ts
@@ -119,7 +132,8 @@ Each packaged tool uses a named module-level **`"use step"`** function so indivi
 Each reference file includes YAML frontmatter with `name`, `description`, and `tags` for searchability. Use the search script available in `scripts/search_references.py` to quickly find relevant references by tag or keyword.
 
 - [Durable Workflows](references/durable-workflows.md): Best practices for using GitHub tools within Vercel Workflow, including step directives and streaming responses.
-- [eve Agents](references/eve-agents.md): Register GitHub tools in eve via defineDynamic, approval policies, and the eve-agent example.
+- [eve Extension](references/eve-extension.md): Recommended way to add GitHub tools to an eve agent — mount as an extension via defineExtension, approval policies, and the eve-extension-agent example.
+- [eve Agents (deprecated)](references/eve-agents.md): Register GitHub tools in eve via the deprecated direct defineDynamic import.
 - [Existing Project Integration](references/existing-project-integration.md): How to integrate GitHub tools into an existing codebase, including environment variable management and framework-specific hooks.
 - [Tokens and Approval](references/tokens-and-approval.md): Guidance on mapping GitHub token scopes to specific tools and configuring approval flows for safe write operations.
 

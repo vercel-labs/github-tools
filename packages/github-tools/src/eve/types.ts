@@ -42,6 +42,12 @@ export type EveGithubToolsOptions = {
    */
   preset?: GithubToolPreset | GithubToolPreset[]
   /**
+   * Restrict tools to an exact allow-list of tool names, for hand-picking a
+   * handful of tools instead of (or on top of) a `preset`. When combined with
+   * `preset`, the effective set is the intersection of both.
+   */
+  tools?: GithubToolName[]
+  /**
    * Control whether write operations require user approval before execution.
    *
    * @see {@link EveApprovalConfig} for global and per-tool options.
@@ -61,4 +67,4 @@ export type EveGithubToolsOptions = {
   coAuthors?: CommitIdentity[]
 }
 
-export type EveToolFactoryOptions = Omit<EveGithubToolsOptions, 'preset'>
+export type EveToolFactoryOptions = Omit<EveGithubToolsOptions, 'preset' | 'tools'>

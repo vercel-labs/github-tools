@@ -60,6 +60,31 @@ describe('createGithubTools eve integration', () => {
     coreSpy.mockRestore()
   })
 
+  it('restricts to an exact allow-list via `tools`', () => {
+    const tools = buildEveToolMap({
+      token: 'ghp_test',
+      tools: ['getRepository', 'mergePullRequest'],
+    })
+
+    expect(Object.keys(tools).sort()).toEqual(['getRepository', 'mergePullRequest'])
+  })
+
+  it('intersects `preset` and `tools` when both are provided', () => {
+    const tools = buildEveToolMap({
+      token: 'ghp_test',
+      preset: 'code-review',
+      tools: ['getRepository', 'mergePullRequest'],
+    })
+
+    // mergePullRequest is not part of the code-review preset, so it's excluded.
+    expect(Object.keys(tools)).toEqual(['getRepository'])
+  })
+
+  it('resolves the same `tools` allow-list via listResolvedEveToolNames', () => {
+    expect(listResolvedEveToolNames({ tools: ['getRepository', 'mergePullRequest'] }).sort())
+      .toEqual(['getRepository', 'mergePullRequest'])
+  })
+
   it('maps approval config onto write tools in the dynamic set', async () => {
     const tools = buildEveToolMap({
       token: 'ghp_test',

@@ -47,7 +47,7 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/guide/quick-start': { redirect: { to: '/getting-started/quick-start', statusCode: 301 } },
-    '/guide/eve-agents': { redirect: { to: '/frameworks/eve', statusCode: 301 } },
+    '/guide/eve-agents': { redirect: { to: '/frameworks/eve-extension', statusCode: 301 } },
     '/guide/durable-workflows': { redirect: { to: '/frameworks/vercel-workflow', statusCode: 301 } },
     '/guide/token-permissions': { redirect: { to: '/guide/tokens-and-auth', statusCode: 301 } },
   },

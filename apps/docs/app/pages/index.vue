@@ -44,9 +44,9 @@ const frameworks = [
     icon: 'i-simple-icons-vercel',
   },
   {
-    title: 'eve',
-    description: 'A complete GitHub agent in 3 files, with durable approval — once, predicates, always.',
-    to: '/frameworks/eve',
+    title: 'eve extension',
+    description: 'A complete GitHub agent in 3 files, mounted under agent/extensions/, with durable approval — once, predicates, always.',
+    to: '/frameworks/eve-extension',
     icon: 'i-custom:eve',
   },
   {
@@ -171,7 +171,7 @@ const apiLinks = [
             </NuxtLink>
           </div>
           <NuxtLink
-            to="/frameworks/eve"
+            to="/frameworks/eve-extension"
             class="vercel-card group flex min-w-0 flex-col justify-between gap-4"
           >
             <pre class="min-w-0 overflow-x-auto whitespace-pre font-mono text-[11px] leading-relaxed text-toned sm:text-xs"><code><span class="text-muted">// instructions.md</span>
@@ -183,14 +183,14 @@ You are a GitHub code-review assistant.
   model: 'anthropic/claude-sonnet-5',
 })
 
-<span class="text-muted">// tools/github.ts</span>
-<span class="text-highlighted">import</span> { createGithubTools } <span class="text-highlighted">from</span> '@github-tools/sdk/eve'
-<span class="text-highlighted">export default</span> createGithubTools({
+<span class="text-muted">// extensions/github.ts</span>
+<span class="text-highlighted">import</span> githubExtension <span class="text-highlighted">from</span> '@github-tools/eve-extension'
+<span class="text-highlighted">export default</span> githubExtension({
   preset: 'maintainer',
 })</code></pre>
             <p class="text-sm/6 text-toned">
               <span class="font-semibold text-highlighted">A GitHub agent in 3 files.</span>
-              With eve, one tools file registers all 42 tools — durable approval included.
+              With the eve extension, one file registers all 42 tools — durable approval included.
             </p>
           </NuxtLink>
         </div>

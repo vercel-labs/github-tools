@@ -65,12 +65,14 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap
     coAuthors: options.coAuthors,
   }
 
-  const allowed = options.preset ? resolvePresetTools(options.preset) : null
+  const presetAllowed = options.preset ? resolvePresetTools(options.preset) : null
+  const toolsAllowed = options.tools ? new Set(options.tools) : null
   const registry = createToolRegistry(ctx)
   const tools = {} as EveToolMap
 
   for (const entry of registry) {
-    if (allowed && !allowed.has(entry.name)) continue
+    if (presetAllowed && !presetAllowed.has(entry.name)) continue
+    if (toolsAllowed && !toolsAllowed.has(entry.name)) continue
 
     const tool = defineTool({
       description: entry.description,
@@ -99,10 +101,14 @@ export function createEveGithubToolsDynamic(options: EveGithubToolsOptions = {})
   })
 }
 
-export function listResolvedEveToolNames(options?: { preset?: undefined }): GithubToolName[]
-export function listResolvedEveToolNames<P extends GithubToolPreset>(options: { preset: P }): PresetToolName<P>[]
-export function listResolvedEveToolNames<P extends readonly GithubToolPreset[]>(options: { preset: P }): CombinedPresetToolNames<P>[]
-export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'preset'> = {}): GithubToolName[] {
-  if (!options.preset) return [...ALL_GITHUB_TOOL_NAMES]
-  return ALL_GITHUB_TOOL_NAMES.filter(name => resolvePresetTools(options.preset!)!.has(name))
+export function listResolvedEveToolNames(options?: { preset?: undefined, tools?: undefined }): GithubToolName[]
+export function listResolvedEveToolNames<P extends GithubToolPreset>(options: { preset: P, tools?: undefined }): PresetToolName<P>[]
+export function listResolvedEveToolNames<P extends readonly GithubToolPreset[]>(options: { preset: P, tools?: undefined }): CombinedPresetToolNames<P>[]
+export function listResolvedEveToolNames(options: { preset?: undefined, tools: GithubToolName[] }): GithubToolName[]
+export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'preset' | 'tools'> = {}): GithubToolName[] {
+  const presetAllowed = options.preset ? resolvePresetTools(options.preset) : null
+  const toolsAllowed = options.tools ? new Set(options.tools) : null
+  return ALL_GITHUB_TOOL_NAMES.filter(name =>
+    (!presetAllowed || presetAllowed.has(name)) && (!toolsAllowed || toolsAllowed.has(name)),
+  )
 }
