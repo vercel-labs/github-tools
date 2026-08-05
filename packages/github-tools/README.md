@@ -7,11 +7,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-black?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![license](https://img.shields.io/github/license/vercel-labs/github-tools?color=black)](https://github.com/vercel-labs/github-tools/blob/main/LICENSE)
 
-**Connect GitHub to any agent.** 42 typed GitHub tools with presets, human approval, and durable execution — for the [AI SDK](https://ai-sdk.dev), [eve](https://eve.dev), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
+**Connect GitHub to any agent.** 53 typed GitHub tools with presets, human approval, and durable execution — for the [AI SDK](https://ai-sdk.dev), [eve](https://eve.dev), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
 
 Docs: **[github-tools.com](https://github-tools.com)**
 
-42 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
+53 tools covering repositories, branches, pull requests, issues, commits, releases, checks and statuses, search, gists, and workflows. Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -52,6 +52,12 @@ createGithubTools({ token, preset: 'issue-triage' })
 // Read-only exploration — browse repos without write access
 createGithubTools({ token, preset: 'repo-explorer' })
 
+// Security audit — read-only exploration, PR/CI visibility, plus issue creation to report findings
+createGithubTools({ token, preset: 'security-audit' })
+
+// Release manager — releases, compare diff, commits, workflow runs, pull requests
+createGithubTools({ token, preset: 'release-manager' })
+
 // Full maintenance — all tools
 createGithubTools({ token, preset: 'maintainer' })
 ```
@@ -64,13 +70,15 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 | Preset | Tools included |
 |---|---|
-| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment`, `createPullRequestReview` |
-| `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `listLabels`, `addLabels`, `removeLabel`, `getRepository`, `searchRepositories`, `searchCode` |
-| `repo-explorer` | All read-only tools including gists and workflows (no write operations) |
-| `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
-| `maintainer` | All 42 tools |
+| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`, `searchCode`, `listCheckRuns`, `getCombinedStatus`, `addPullRequestComment`, `createPullRequestReview`, `requestReviewers` |
+| `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `listLabels`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode` |
+| `repo-explorer` | All read-only tools including gists, workflows, checks/statuses, and releases (no write operations) |
+| `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `listCheckRuns`, `getCombinedStatus`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
+| `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility, plus `createIssue`, `addIssueComment`, `addLabels` to report findings — no destructive writes |
+| `release-manager` | `listReleases`, `getLatestRelease`, `getRelease`, `createRelease`, `compareCommits`, `listCommits`, `getCommit`, `listWorkflowRuns`, `getWorkflowRun`, `listPullRequests`, `getPullRequest`, `getRepository`, `listBranches` |
+| `maintainer` | All 53 tools |
 
-Omit `preset` to get all tools (same as `maintainer`).
+Omit `preset` to get all tools (same as `maintainer`). Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
 ### Cherry-Picking Tools
 
@@ -115,7 +123,7 @@ createGithubTools({
 })
 ```
 
-Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview`, `createIssue`, `addIssueComment`, `closeIssue`, `addLabels`, `removeLabel`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
+Write tools: `createBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview`, `requestReviewers`, `createIssue`, `addIssueComment`, `closeIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`.
 
 All other tools are read-only and never require approval.
 
@@ -386,7 +394,8 @@ eve replays completed steps but re-runs steps interrupted mid-execution. Write t
 | `createOrUpdateFile` | Natural when content + `sha` unchanged (skips no-op updates) |
 | `closeIssue` | Natural when already closed |
 | `createBranch` | Natural when branch exists at same SHA |
-| `addIssueComment`, `createIssue`, `mergePullRequest`, … | **Not** idempotent — each call creates new side effects |
+| `removeAssignees` | Natural — removing an assignee that isn't assigned is a no-op on GitHub |
+| `addIssueComment`, `createIssue`, `mergePullRequest`, `createRelease`, … | **Not** idempotent — each call creates new side effects |
 
 Gate non-idempotent writes behind `always()` or `once()` where replay safety matters.
 
@@ -411,6 +420,8 @@ See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 
 ## Available Tools
 
+List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`, `listCheckRuns`, `listReleases`) accept an optional `maxPages` alongside `perPage` — set it to sequentially fetch and combine up to that many pages in one call, stopping early once a page comes back short.
+
 ### Repository
 
 | Tool | Description |
@@ -418,6 +429,10 @@ See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 | `getRepository` | Get repository metadata (stars, language, default branch, …) |
 | `listBranches` | List branches |
 | `getFileContent` | Read a file or directory listing |
+| `getRepositoryTree` | List the file and directory structure at a given ref |
+| `createBranch` | Create a new branch from an existing branch or commit SHA |
+| `forkRepository` | Fork a repository to a user or organization |
+| `createRepository` | Create a new repository for a user or organization |
 | `createOrUpdateFile` | Create or update a file and commit it |
 
 ### Pull Requests
@@ -432,6 +447,7 @@ See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 | `mergePullRequest` | Merge a PR (merge, squash, or rebase) |
 | `addPullRequestComment` | Post a comment on a PR |
 | `createPullRequestReview` | Submit a formal review (approve, request changes, or comment) with inline comments |
+| `requestReviewers` | Request reviews from users or teams on a PR |
 
 ### Issues
 
@@ -445,6 +461,8 @@ See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 | `listLabels` | List labels available in a repository |
 | `addLabels` | Add labels to an issue or pull request |
 | `removeLabel` | Remove a label from an issue or pull request |
+| `addAssignees` | Assign users to an issue or pull request |
+| `removeAssignees` | Remove assignees from an issue or pull request |
 
 ### Gists
 
@@ -470,6 +488,22 @@ See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 | `cancelWorkflowRun` | Cancel an in-progress workflow run |
 | `rerunWorkflowRun` | Re-run a workflow run, optionally only failed jobs |
 
+### Checks and Statuses
+
+| Tool | Description |
+|---|---|
+| `listCheckRuns` | List check runs (Checks API — GitHub Actions and other CI providers) for a commit, branch, or tag |
+| `getCombinedStatus` | Get the combined commit status (Statuses API — legacy CI integrations) for a commit, branch, or tag |
+
+### Releases
+
+| Tool | Description |
+|---|---|
+| `listReleases` | List releases, newest first (includes drafts and prereleases) |
+| `getLatestRelease` | Get the latest published release (excludes drafts and prereleases) |
+| `getRelease` | Get a specific release by ID, including its assets |
+| `createRelease` | Create a new release (and its tag if needed) |
+
 ### Commits
 
 | Tool | Description |
@@ -477,6 +511,7 @@ See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 | `listCommits` | List commits, optionally filtered by file path, author, or date range |
 | `getCommit` | Get a commit's full details including changed files and diffs |
 | `getBlame` | Line-level git blame for a file (GitHub GraphQL) |
+| `compareCommits` | Compare two branches, tags, or commits — ahead/behind counts, commits in between, and files that differ |
 
 ### Search
 
@@ -496,17 +531,19 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | Permission | Level | Required for |
 |---|---|---|
 | **Metadata** | Read-only | Always required (auto-included) |
-| **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `listCommits`, `getCommit`, `getBlame` |
-| **Contents** | Read and write | `createOrUpdateFile` |
+| **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `getRepositoryTree`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease` |
+| **Contents** | Read and write | `createBranch`, `createOrUpdateFile`, `createRelease` |
+| **Administration** | Read and write | `forkRepository`, `createRepository` |
 | **Pull requests** | Read-only | `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviews` |
-| **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview` |
+| **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview`, `requestReviewers` |
 | **Issues** | Read-only | `listIssues`, `getIssue`, `listLabels` |
-| **Issues** | Read and write | `createIssue`, `addIssueComment`, `closeIssue`, `addLabels`, `removeLabel` |
-
+| **Issues** | Read and write | `createIssue`, `addIssueComment`, `closeIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees` |
 | **Gists** | Read-only | `listGists`, `getGist`, `listGistComments` |
 | **Gists** | Read and write | `createGist`, `updateGist`, `deleteGist`, `createGistComment` |
 | **Actions** | Read-only | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs` |
 | **Actions** | Read and write | `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
+| **Checks** | Read-only | `listCheckRuns` |
+| **Commit statuses** | Read-only | `getCombinedStatus` |
 
 Search tools (`searchCode`, `searchRepositories`) work with any token.
 
@@ -532,7 +569,7 @@ type GithubToolsOptions = {
 
 type GithubTokenInput = string | (() => Promise<string>)
 
-type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'maintainer'
+type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'security-audit' | 'release-manager' | 'maintainer'
 ```
 
 ### `createGithubAgent(options)`
@@ -636,7 +673,7 @@ async function agentTurn(prompt: string) {
 
 > See [`examples/pr-review-agent`](../../examples/pr-review-agent) for a complete PR review agent built with Chat SDK and Vercel Workflow.
 
-All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
+All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
 
 ### `resolveGithubToken(token?)`
 

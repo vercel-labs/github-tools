@@ -1,21 +1,26 @@
 import { z } from 'zod'
 import { createOctokit } from '../client'
 import type { CommitIdentity } from '../types'
+import { fetchAllPages, maxPagesSchema } from './pagination'
 import { composeCommitMessage } from './repository'
 
 export const listPullRequestsInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   state: z.enum(['open', 'closed', 'all']).optional().default('open').describe('Filter by state'),
-  perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+  perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
+  maxPages: maxPagesSchema,
 })
 
 export const listPullRequestsDescription = 'List pull requests for a GitHub repository'
 
-export async function listPullRequestsCore({ token, owner, repo, state, perPage }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', perPage: number }) {
+export async function listPullRequestsCore({ token, owner, repo, state, perPage, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', perPage: number, maxPages?: number }) {
   const octokit = createOctokit(token)
-  const { data } = await octokit.rest.pulls.list({ owner, repo, state, per_page: perPage })
-  return data.map(pr => ({
+  const pullRequests = await fetchAllPages(async page => {
+    const { data } = await octokit.rest.pulls.list({ owner, repo, state, per_page: perPage, page })
+    return data
+  }, perPage, maxPages)
+  return pullRequests.map(pr => ({
     number: pr.number,
     title: pr.title,
     state: pr.state,
@@ -238,5 +243,33 @@ export async function createPullRequestReviewCore({ token, owner, repo, pullNumb
     url: data.html_url,
     author: data.user?.login,
     submittedAt: data.submitted_at,
+  }
+}
+
+export const requestReviewersInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  pullNumber: z.number().describe('Pull request number'),
+  reviewers: z.array(z.string()).optional().describe('GitHub usernames to request a review from'),
+  teamReviewers: z.array(z.string()).optional().describe('Team slugs to request a review from'),
+})
+
+export const requestReviewersDescription = 'Request reviews from users or teams on a pull request'
+
+/** Not idempotent — re-requesting an existing reviewer is a no-op on GitHub but still mutates. */
+export async function requestReviewersCore({ token, owner, repo, pullNumber, reviewers, teamReviewers }: { token: string, owner: string, repo: string, pullNumber: number, reviewers?: string[], teamReviewers?: string[] }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.pulls.requestReviewers({
+    owner,
+    repo,
+    pull_number: pullNumber,
+    reviewers,
+    team_reviewers: teamReviewers,
+  })
+  return {
+    number: data.number,
+    url: data.html_url,
+    requestedReviewers: data.requested_reviewers?.map(r => r.login),
+    requestedTeams: data.requested_teams?.map(t => t.slug),
   }
 }

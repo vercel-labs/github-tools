@@ -10,34 +10,34 @@ export const PRESET_TOOLS = {
    * **Code review** — review pull requests and submit feedback.
    *
    * Tools: `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`,
-   * `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getRepository`, `listBranches`,
-   * `searchCode`, `addPullRequestComment`, `createPullRequestReview`.
+   * `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`,
+   * `searchCode`, `listCheckRuns`, `getCombinedStatus`, `addPullRequestComment`, `createPullRequestReview`, `requestReviewers`.
    *
    * Agent prompt: optimized for thorough PR review with inline feedback.
    */
   'code-review': [
-    'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'getFileContent', 'listCommits', 'getCommit', 'getBlame',
-    'getRepository', 'listBranches', 'searchCode',
-    'addPullRequestComment', 'createPullRequestReview',
+    'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'getFileContent', 'listCommits', 'getCommit', 'getBlame', 'compareCommits',
+    'getRepository', 'listBranches', 'searchCode', 'listCheckRuns', 'getCombinedStatus',
+    'addPullRequestComment', 'createPullRequestReview', 'requestReviewers',
   ],
   /**
    * **Issue triage** — manage and organize GitHub issues.
    *
    * Tools: `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`,
-   * `listLabels`, `addLabels`, `removeLabel`, `getRepository`, `searchRepositories`, `searchCode`.
+   * `listLabels`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode`.
    *
    * Agent prompt: optimized for categorizing, labeling, and responding to issues.
    */
   'issue-triage': [
     'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
-    'listLabels', 'addLabels', 'removeLabel',
+    'listLabels', 'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
     'getRepository', 'searchRepositories', 'searchCode',
   ],
   /**
    * **CI operations** — monitor and manage GitHub Actions workflows.
    *
    * Tools: `getRepository`, `listBranches`, `listCommits`, `getCommit`,
-   * `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`,
+   * `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `listCheckRuns`, `getCombinedStatus`,
    * `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
    *
    * Agent prompt: optimized for diagnosing CI failures and managing workflow runs.
@@ -45,43 +45,81 @@ export const PRESET_TOOLS = {
   'ci-ops': [
     'getRepository', 'listBranches',
     'listCommits', 'getCommit',
-    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs',
+    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'listCheckRuns', 'getCombinedStatus',
     'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',
   ],
   /**
    * **Repository explorer** — read-only access to browse codebases.
    *
-   * Tools: all read-only tools including repos, branches, PRs, issues, commits, blame,
-   * search, gists, and workflows. No write operations.
+   * Tools: all read-only tools including repos, branches, PRs, issues, commits, blame, comparisons,
+   * search, gists, workflows, checks, and releases. No write operations.
    *
    * Agent prompt: optimized for answering questions about code structure and history.
    */
   'repo-explorer': [
-    'getRepository', 'listBranches', 'getFileContent',
+    'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree',
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews',
     'listIssues', 'getIssue',
     'listLabels',
-    'listCommits', 'getCommit', 'getBlame',
+    'listCommits', 'getCommit', 'getBlame', 'compareCommits',
     'searchCode', 'searchRepositories',
     'listGists', 'getGist', 'listGistComments',
+    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'listCheckRuns', 'getCombinedStatus',
+    'listReleases', 'getLatestRelease', 'getRelease',
+  ],
+  /**
+   * **Security audit** — review repositories for security risks and report findings.
+   *
+   * Tools: read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`,
+   * `getBlame`, `compareCommits`), PR and CI visibility (`listPullRequests`, `getPullRequest`, `listPullRequestFiles`,
+   * `listCheckRuns`, `getCombinedStatus`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`),
+   * plus `createIssue`, `addIssueComment`, and `addLabels` to report findings. No destructive writes.
+   *
+   * Agent prompt: optimized for finding and reporting security risks without making changes.
+   */
+  'security-audit': [
+    'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree',
+    'listCommits', 'getCommit', 'getBlame', 'compareCommits',
+    'searchCode', 'searchRepositories',
+    'listPullRequests', 'getPullRequest', 'listPullRequestFiles',
+    'listCheckRuns', 'getCombinedStatus',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs',
+    'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'addLabels',
+  ],
+  /**
+   * **Release manager** — prepare and publish GitHub releases.
+   *
+   * Tools: `getRepository`, `listBranches`, `listCommits`, `getCommit`, `compareCommits`,
+   * `listReleases`, `getLatestRelease`, `getRelease`, `createRelease`,
+   * `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`,
+   * `listPullRequests`, `getPullRequest`.
+   *
+   * Agent prompt: optimized for summarizing changes and cutting releases safely.
+   */
+  'release-manager': [
+    'getRepository', 'listBranches', 'listCommits', 'getCommit', 'compareCommits',
+    'listReleases', 'getLatestRelease', 'getRelease', 'createRelease',
+    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow',
+    'listPullRequests', 'getPullRequest',
   ],
   /**
    * **Maintainer** — full repository maintenance with all read and write tools.
    *
-   * Tools: all 42 tools (same as omitting `preset`).
+   * Tools: all tools (same as omitting `preset`).
    *
    * Agent prompt: optimized for day-to-day repo maintenance with careful write operations.
    */
   'maintainer': [
-    'getRepository', 'listBranches', 'getFileContent', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
-    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'createPullRequest', 'mergePullRequest', 'addPullRequestComment', 'createPullRequestReview',
+    'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
+    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'createPullRequest', 'mergePullRequest', 'addPullRequestComment', 'createPullRequestReview', 'requestReviewers',
     'listIssues', 'getIssue', 'createIssue', 'addIssueComment', 'closeIssue',
-    'listLabels', 'addLabels', 'removeLabel',
-    'listCommits', 'getCommit', 'getBlame',
+    'listLabels', 'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
+    'listCommits', 'getCommit', 'getBlame', 'compareCommits',
     'searchCode', 'searchRepositories',
     'listGists', 'getGist', 'listGistComments', 'createGist', 'updateGist', 'deleteGist', 'createGistComment',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',
+    'listCheckRuns', 'getCombinedStatus',
+    'listReleases', 'getLatestRelease', 'getRelease', 'createRelease',
   ],
 } as const
 

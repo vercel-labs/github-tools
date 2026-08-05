@@ -1,26 +1,32 @@
 import { z } from 'zod'
 import { createOctokit } from '../client'
+import { fetchAllPages, maxPagesSchema } from './pagination'
 
 export const listIssuesInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   state: z.enum(['open', 'closed', 'all']).optional().default('open').describe('Filter by state'),
   labels: z.string().optional().describe('Comma-separated list of label names to filter by'),
-  perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+  perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
+  maxPages: maxPagesSchema,
 })
 
 export const listIssuesDescription = 'List issues for a GitHub repository (excludes pull requests)'
 
-export async function listIssuesCore({ token, owner, repo, state, labels, perPage }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', labels?: string, perPage: number }) {
+export async function listIssuesCore({ token, owner, repo, state, labels, perPage, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', labels?: string, perPage: number, maxPages?: number }) {
   const octokit = createOctokit(token)
-  const { data } = await octokit.rest.issues.listForRepo({
-    owner,
-    repo,
-    state,
-    labels,
-    per_page: perPage,
-  })
-  return data
+  const issues = await fetchAllPages(async page => {
+    const { data } = await octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      state,
+      labels,
+      per_page: perPage,
+      page,
+    })
+    return data
+  }, perPage, maxPages)
+  return issues
     .filter(issue => !issue.pull_request)
     .map(issue => ({
       number: issue.number,
@@ -199,4 +205,42 @@ export async function removeLabelCore({ token, owner, repo, issueNumber, label }
   const octokit = createOctokit(token)
   await octokit.rest.issues.removeLabel({ owner, repo, issue_number: issueNumber, name: label })
   return { removed: true, label, issueNumber }
+}
+
+export const addAssigneesInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  issueNumber: z.number().describe('Issue or pull request number'),
+  assignees: z.array(z.string()).describe('GitHub usernames to assign'),
+})
+
+export const addAssigneesDescription = 'Assign users to an issue or pull request'
+
+/** Not idempotent — re-adding an existing assignee is a no-op on GitHub but still mutates. */
+export async function addAssigneesCore({ token, owner, repo, issueNumber, assignees }: { token: string, owner: string, repo: string, issueNumber: number, assignees: string[] }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.addAssignees({ owner, repo, issue_number: issueNumber, assignees })
+  return {
+    number: data.number,
+    assignees: data.assignees?.map(a => a.login),
+  }
+}
+
+export const removeAssigneesInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  issueNumber: z.number().describe('Issue or pull request number'),
+  assignees: z.array(z.string()).describe('GitHub usernames to unassign'),
+})
+
+export const removeAssigneesDescription = 'Remove assignees from an issue or pull request'
+
+/** Idempotent — removing an assignee that is not assigned is a no-op on GitHub. */
+export async function removeAssigneesCore({ token, owner, repo, issueNumber, assignees }: { token: string, owner: string, repo: string, issueNumber: number, assignees: string[] }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.removeAssignees({ owner, repo, issue_number: issueNumber, assignees })
+  return {
+    number: data.number,
+    assignees: data.assignees?.map(a => a.login),
+  }
 }

@@ -68,6 +68,36 @@ export function getCommitToModelOutput({ output }: ToModelOutputOptions) {
   }
 }
 
+type CompareCommitsOutput = {
+  status: string
+  aheadBy: number
+  behindBy: number
+  totalCommits: number
+  url: string
+  commits: Array<{ sha: string, message: string, author?: string, authorLogin?: string }>
+  files?: Array<{
+    filename: string
+    status: string
+    additions: number
+    deletions: number
+    patch?: string
+  }>
+}
+
+export function compareCommitsToModelOutput({ output }: ToModelOutputOptions) {
+  const comparison = output as CompareCommitsOutput
+  return {
+    type: 'json' as const,
+    value: {
+      ...comparison,
+      files: comparison.files?.map(file => ({
+        ...file,
+        patch: file.patch ? truncateText(file.patch, MAX_PATCH_LENGTH) : file.patch,
+      })),
+    },
+  }
+}
+
 export function getFileContentToModelOutput({ output }: ToModelOutputOptions) {
   const result = output as GetFileContentOutput
   if ('content' in result && result.content.length > MAX_CONTENT_LENGTH) {

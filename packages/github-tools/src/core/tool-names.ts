@@ -9,6 +9,8 @@ export const GITHUB_TOOL_NAMES = {
   listBranches: 'listBranches',
   /** Get the content of a file from a GitHub repository. */
   getFileContent: 'getFileContent',
+  /** List the file and directory structure of a repository at a given ref. */
+  getRepositoryTree: 'getRepositoryTree',
   /** Create a new branch in a GitHub repository from an existing branch or commit SHA. Requires approval by default. */
   createBranch: 'createBranch',
   /** Fork a GitHub repository to the authenticated user account or a specified organization. Requires approval by default. */
@@ -33,6 +35,8 @@ export const GITHUB_TOOL_NAMES = {
   listPullRequestReviews: 'listPullRequestReviews',
   /** Submit a pull request review — approve, request changes, or comment with optional inline comments on specific lines. Requires approval by default. */
   createPullRequestReview: 'createPullRequestReview',
+  /** Request reviews from users or teams on a pull request. Requires approval by default. */
+  requestReviewers: 'requestReviewers',
   /** List issues for a GitHub repository (excludes pull requests). */
   listIssues: 'listIssues',
   /** Get detailed information about a specific issue. */
@@ -49,6 +53,10 @@ export const GITHUB_TOOL_NAMES = {
   addLabels: 'addLabels',
   /** Remove a label from an issue or pull request. Requires approval by default. */
   removeLabel: 'removeLabel',
+  /** Assign users to an issue or pull request. Requires approval by default. */
+  addAssignees: 'addAssignees',
+  /** Remove assignees from an issue or pull request. Requires approval by default. */
+  removeAssignees: 'removeAssignees',
   /** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. */
   searchCode: 'searchCode',
   /** Search for GitHub repositories by keyword, topic, language, or other qualifiers. */
@@ -59,6 +67,8 @@ export const GITHUB_TOOL_NAMES = {
   getCommit: 'getCommit',
   /** Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). Returns contiguous ranges mapping lines to the commits that last modified them. */
   getBlame: 'getBlame',
+  /** Compare two branches, tags, or commits — shows ahead/behind counts, the commits in between, and the files that differ. */
+  compareCommits: 'compareCommits',
   /** List gists for the authenticated user or a specific user. */
   listGists: 'listGists',
   /** Get a gist by ID, including file contents. */
@@ -87,6 +97,18 @@ export const GITHUB_TOOL_NAMES = {
   cancelWorkflowRun: 'cancelWorkflowRun',
   /** Re-run a workflow run, optionally only the failed jobs. Requires approval by default. */
   rerunWorkflowRun: 'rerunWorkflowRun',
+  /** List check runs (Checks API — GitHub Actions and other CI providers) for a commit, branch, or tag. */
+  listCheckRuns: 'listCheckRuns',
+  /** Get the combined commit status (Statuses API — legacy CI integrations) for a commit, branch, or tag. */
+  getCombinedStatus: 'getCombinedStatus',
+  /** List releases for a GitHub repository, newest first (includes drafts and prereleases). */
+  listReleases: 'listReleases',
+  /** Get the latest published release for a GitHub repository (excludes drafts and prereleases). */
+  getLatestRelease: 'getLatestRelease',
+  /** Get a specific release by ID, including its assets. */
+  getRelease: 'getRelease',
+  /** Create a new release (and its tag if needed) in a GitHub repository. Requires approval by default. */
+  createRelease: 'createRelease',
 } as const
 
 export type GithubToolName = typeof GITHUB_TOOL_NAMES[keyof typeof GITHUB_TOOL_NAMES]

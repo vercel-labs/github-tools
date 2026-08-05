@@ -24,6 +24,9 @@ import {
   createPullRequestReviewInputSchema,
   createPullRequestReviewDescription,
   createPullRequestReviewCore,
+  requestReviewersInputSchema,
+  requestReviewersDescription,
+  requestReviewersCore,
 } from '../core/pull-requests'
 import { listPullRequestFilesToModelOutput } from '../core/model-output'
 import { resolveGithubToken, type GithubTokenInput } from '../core/token'
@@ -140,4 +143,18 @@ export const createPullRequestReview = (token: GithubTokenInput, { needsApproval
     needsApproval,
     inputSchema: createPullRequestReviewInputSchema,
     execute: async args => createPullRequestReviewStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function requestReviewersStep(args: Parameters<typeof requestReviewersCore>[0]) {
+  "use step"
+  return requestReviewersCore(args)
+}
+
+/** Request reviews from users or teams on a pull request. Requires approval by default. */
+export const requestReviewers = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: requestReviewersDescription,
+    needsApproval,
+    inputSchema: requestReviewersInputSchema,
+    execute: async args => requestReviewersStep({ token: await resolveGithubToken(token), ...args }),
   })

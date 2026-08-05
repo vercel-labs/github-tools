@@ -6,7 +6,7 @@ metadata:
   author: "HugoRCD"
   repository: "https://github.com/vercel-labs/github-tools"
   url: "https://github-tools.com/.well-known/skills"
-  version: "1.1.0"
+  version: "1.2.0"
   keywords: "ai, agent, skill, vercel, ai sdk, github, tools, octokit, durable, workflow"
 ---
 
@@ -24,7 +24,7 @@ Official docs: **https://github-tools.com** — paths such as `/getting-started/
 - **Durable**: "Run the agent inside Vercel Workflow" / `"use workflow"` / crash-safe tool steps.
 - **eve**: "Add GitHub tools to an eve agent" / `defineExtension` / `@github-tools/eve-extension` (recommended); the direct `@github-tools/sdk/eve` / `defineDynamic` import is deprecated.
 - **Safety**: "Gate merges / file writes with approval" / fine-grained PAT scopes.
-- **Narrow scope**: Presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintainer`) or cherry-picked tool factories.
+- **Narrow scope**: Presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `maintainer`) or cherry-picked tool factories.
 
 ## Install (required)
 
@@ -114,7 +114,9 @@ See `./references/eve-agents.md` and `/frameworks/eve`.
 | `issue-triage` | Issues, comments, create/close |
 | `repo-explorer` | Read-only + search + gists/workflows reads |
 | `ci-ops` | Actions workflows, runs, trigger/cancel/rerun |
-| `maintainer` | All tools |
+| `security-audit` | Vulnerability scanning, risk reporting |
+| `release-manager` | Changelog generation, release cutting |
+| `maintainer` | All 53 tools |
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`.
 

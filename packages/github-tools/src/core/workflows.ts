@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { createOctokit } from '../client'
+import { fetchAllPages, maxPagesSchema } from './pagination'
 
 export const listWorkflowsInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
@@ -36,21 +37,27 @@ export const listWorkflowRunsInputSchema = z.object({
   branch: z.string().optional().describe('Branch name to filter by'),
   event: z.string().optional().describe('Event type to filter by (e.g. "push", "pull_request")'),
   status: z.enum(['completed', 'action_required', 'cancelled', 'failure', 'neutral', 'skipped', 'stale', 'success', 'timed_out', 'in_progress', 'queued', 'requested', 'waiting', 'pending']).optional().describe('Status to filter by'),
-  perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+  perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
   page: z.number().optional().default(1).describe('Page number for pagination'),
+  maxPages: maxPagesSchema,
 })
 
 export const listWorkflowRunsDescription = 'List workflow runs for a repository, optionally filtered by workflow, branch, status, or event'
 
-export async function listWorkflowRunsCore({ token, owner, repo, workflowId, branch, event, status, perPage, page }: { token: string, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: WorkflowRunStatus, perPage: number, page: number }) {
+export async function listWorkflowRunsCore({ token, owner, repo, workflowId, branch, event, status, perPage, page, maxPages }: { token: string, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: WorkflowRunStatus, perPage: number, page: number, maxPages?: number }) {
   const octokit = createOctokit(token)
-  const { data } = workflowId
-    ? await octokit.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: workflowId, per_page: perPage, page, ...branch && { branch }, ...event && { event }, ...status && { status } })
-    : await octokit.rest.actions.listWorkflowRunsForRepo({ owner, repo, per_page: perPage, page, ...branch && { branch }, ...event && { event }, ...status && { status } })
+  let totalCount = 0
+  const runs = await fetchAllPages(async currentPage => {
+    const { data } = workflowId
+      ? await octokit.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: workflowId, per_page: perPage, page: currentPage, ...branch && { branch }, ...event && { event }, ...status && { status } })
+      : await octokit.rest.actions.listWorkflowRunsForRepo({ owner, repo, per_page: perPage, page: currentPage, ...branch && { branch }, ...event && { event }, ...status && { status } })
+    totalCount = data.total_count
+    return data.workflow_runs
+  }, perPage, maxPages, page)
 
   return {
-    totalCount: data.total_count,
-    runs: data.workflow_runs.map(run => ({
+    totalCount,
+    runs: runs.map(run => ({
       id: run.id,
       name: run.name,
       status: run.status,

@@ -88,7 +88,7 @@ extension/
 | `token` | `string?` | Falls back to `GITHUB_TOKEN` when omitted and `connector` is not set |
 | `connector` | `string \| (() => string \| Promise<string>)` (optional) | Vercel Connect connector name, or a resolver to pick one dynamically (e.g. per environment/tenant); takes priority over `token` |
 | `connect` | `record?` | Passed through to `getToken` when `connector` is set |
-| `preset` | preset name or array | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer` |
+| `preset` | preset name or array | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `maintainer` |
 | `include` | `string[]?` | Tool names to add on top of `preset` (union), or the full set standalone |
 | `exclude` | `string[]?` | Tool names to remove from the resolved `preset` + `include` set |
 | `requireApproval` | `boolean \| record` | Global or per-tool; per-tool values may be predicate functions |

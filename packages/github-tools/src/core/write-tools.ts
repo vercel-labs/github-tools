@@ -19,6 +19,8 @@ export const GITHUB_WRITE_TOOLS = {
   addPullRequestComment: 'addPullRequestComment',
   /** Submit a pull request review with optional inline comments. Requires approval by default. */
   createPullRequestReview: 'createPullRequestReview',
+  /** Request reviews from users or teams on a pull request. Requires approval by default. */
+  requestReviewers: 'requestReviewers',
   /** Create a new issue in a GitHub repository. Requires approval by default. */
   createIssue: 'createIssue',
   /** Add a comment to a GitHub issue. Requires approval by default. */
@@ -29,6 +31,10 @@ export const GITHUB_WRITE_TOOLS = {
   addLabels: 'addLabels',
   /** Remove a label from an issue or pull request. Requires approval by default. */
   removeLabel: 'removeLabel',
+  /** Assign users to an issue or pull request. Requires approval by default. */
+  addAssignees: 'addAssignees',
+  /** Remove assignees from an issue or pull request. Requires approval by default. */
+  removeAssignees: 'removeAssignees',
   /** Create a new gist with one or more files. Requires approval by default. */
   createGist: 'createGist',
   /** Update an existing gist. Requires approval by default. */
@@ -43,6 +49,8 @@ export const GITHUB_WRITE_TOOLS = {
   cancelWorkflowRun: 'cancelWorkflowRun',
   /** Re-run a workflow run, optionally only the failed jobs. Requires approval by default. */
   rerunWorkflowRun: 'rerunWorkflowRun',
+  /** Create a new release (and its tag if needed) in a GitHub repository. Requires approval by default. */
+  createRelease: 'createRelease',
 } as const
 
 export type GithubWriteToolName = typeof GITHUB_WRITE_TOOLS[keyof typeof GITHUB_WRITE_TOOLS]

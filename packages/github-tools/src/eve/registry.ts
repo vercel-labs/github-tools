@@ -1,15 +1,18 @@
 import type { ToolModelOutput } from 'eve/tools'
 import type { z } from 'zod'
 import type { CommitIdentity } from '../types'
+import * as checks from '../core/checks'
 import * as commits from '../core/commits'
 import * as gists from '../core/gists'
 import * as issues from '../core/issues'
 import {
+  compareCommitsToModelOutput,
   getCommitToModelOutput,
   getFileContentToModelOutput,
   listPullRequestFilesToModelOutput,
 } from '../core/model-output'
 import * as pullRequests from '../core/pull-requests'
+import * as releases from '../core/releases'
 import * as repository from '../core/repository'
 import * as search from '../core/search'
 import * as workflows from '../core/workflows'
@@ -69,6 +72,12 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       inputSchema: repository.getFileContentInputSchema,
       execute: withToken(repository.getFileContentCore, ctx),
       toModelOutput: modelOutputAdapter(getFileContentToModelOutput),
+    },
+    {
+      name: 'getRepositoryTree',
+      description: repository.getRepositoryTreeDescription,
+      inputSchema: repository.getRepositoryTreeInputSchema,
+      execute: withToken(repository.getRepositoryTreeCore, ctx),
     },
     {
       name: 'createBranch',
@@ -156,6 +165,13 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(pullRequests.createPullRequestReviewCore, ctx),
     },
     {
+      name: 'requestReviewers',
+      writeTool: 'requestReviewers',
+      description: pullRequests.requestReviewersDescription,
+      inputSchema: pullRequests.requestReviewersInputSchema,
+      execute: withToken(pullRequests.requestReviewersCore, ctx),
+    },
+    {
       name: 'listIssues',
       description: issues.listIssuesDescription,
       inputSchema: issues.listIssuesInputSchema,
@@ -209,6 +225,20 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(issues.removeLabelCore, ctx),
     },
     {
+      name: 'addAssignees',
+      writeTool: 'addAssignees',
+      description: issues.addAssigneesDescription,
+      inputSchema: issues.addAssigneesInputSchema,
+      execute: withToken(issues.addAssigneesCore, ctx),
+    },
+    {
+      name: 'removeAssignees',
+      writeTool: 'removeAssignees',
+      description: issues.removeAssigneesDescription,
+      inputSchema: issues.removeAssigneesInputSchema,
+      execute: withToken(issues.removeAssigneesCore, ctx),
+    },
+    {
       name: 'searchCode',
       description: search.searchCodeDescription,
       inputSchema: search.searchCodeInputSchema,
@@ -238,6 +268,13 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: commits.getBlameDescription,
       inputSchema: commits.getBlameInputSchema,
       execute: withToken(commits.getBlameCore, ctx),
+    },
+    {
+      name: 'compareCommits',
+      description: commits.compareCommitsDescription,
+      inputSchema: commits.compareCommitsInputSchema,
+      execute: withToken(commits.compareCommitsCore, ctx),
+      toModelOutput: modelOutputAdapter(compareCommitsToModelOutput),
     },
     {
       name: 'listGists',
@@ -329,6 +366,43 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: workflows.rerunWorkflowRunDescription,
       inputSchema: workflows.rerunWorkflowRunInputSchema,
       execute: withToken(workflows.rerunWorkflowRunCore, ctx),
+    },
+    {
+      name: 'listCheckRuns',
+      description: checks.listCheckRunsDescription,
+      inputSchema: checks.listCheckRunsInputSchema,
+      execute: withToken(checks.listCheckRunsCore, ctx),
+    },
+    {
+      name: 'getCombinedStatus',
+      description: checks.getCombinedStatusDescription,
+      inputSchema: checks.getCombinedStatusInputSchema,
+      execute: withToken(checks.getCombinedStatusCore, ctx),
+    },
+    {
+      name: 'listReleases',
+      description: releases.listReleasesDescription,
+      inputSchema: releases.listReleasesInputSchema,
+      execute: withToken(releases.listReleasesCore, ctx),
+    },
+    {
+      name: 'getLatestRelease',
+      description: releases.getLatestReleaseDescription,
+      inputSchema: releases.getLatestReleaseInputSchema,
+      execute: withToken(releases.getLatestReleaseCore, ctx),
+    },
+    {
+      name: 'getRelease',
+      description: releases.getReleaseDescription,
+      inputSchema: releases.getReleaseInputSchema,
+      execute: withToken(releases.getReleaseCore, ctx),
+    },
+    {
+      name: 'createRelease',
+      writeTool: 'createRelease',
+      description: releases.createReleaseDescription,
+      inputSchema: releases.createReleaseInputSchema,
+      execute: withToken(releases.createReleaseCore, ctx),
     },
   ]
 }

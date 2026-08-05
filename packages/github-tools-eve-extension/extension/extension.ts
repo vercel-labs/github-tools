@@ -3,7 +3,7 @@ import { GITHUB_TOOL_NAMES, type GithubToolName } from '@github-tools/sdk/eve'
 import { defineExtension } from 'eve/extension'
 import { z } from 'zod'
 
-const presetNameSchema = z.enum(['code-review', 'issue-triage', 'ci-ops', 'repo-explorer', 'maintainer'])
+const presetNameSchema = z.enum(['code-review', 'issue-triage', 'ci-ops', 'repo-explorer', 'security-audit', 'release-manager', 'maintainer'])
 const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [GithubToolName, ...GithubToolName[]])
 
 const commitIdentitySchema = z.object({
@@ -25,7 +25,7 @@ export default defineExtension({
     ).optional(),
     /** Vercel Connect token params passed through to `getToken` when `connector` is set. */
     connect: z.record(z.string(), z.unknown()).optional(),
-    /** Restrict tools to a preset (or array of presets). Omit for all 42 tools. */
+    /** Restrict tools to a preset (or array of presets). Omit for all 53 tools. */
     preset: z.union([presetNameSchema, z.array(presetNameSchema)]).optional(),
     /**
      * Hand-pick tool names to add on top of `preset` (or standalone, without `preset`).

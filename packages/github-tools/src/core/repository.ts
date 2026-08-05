@@ -131,6 +131,31 @@ export async function getFileContentCore({ token, owner, repo, path, ref }: { to
   }
 }
 
+export const getRepositoryTreeInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  ref: z.string().optional().describe('Branch, tag, or commit SHA (defaults to the default branch)'),
+  recursive: z.boolean().optional().default(false).describe('Recursively list the entire tree instead of just the top level'),
+})
+
+export const getRepositoryTreeDescription = 'List the file and directory structure of a repository at a given ref'
+
+export async function getRepositoryTreeCore({ token, owner, repo, ref, recursive }: { token: string, owner: string, repo: string, ref?: string, recursive: boolean }) {
+  const octokit = createOctokit(token)
+  const treeSha = ref || (await octokit.rest.repos.get({ owner, repo })).data.default_branch
+  const { data } = await octokit.rest.git.getTree({ owner, repo, tree_sha: treeSha, recursive: recursive ? 'true' : undefined })
+  return {
+    sha: data.sha,
+    truncated: data.truncated,
+    entries: data.tree.map(entry => ({
+      path: entry.path,
+      type: entry.type,
+      size: entry.size,
+      sha: entry.sha,
+    })),
+  }
+}
+
 export const createBranchInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),

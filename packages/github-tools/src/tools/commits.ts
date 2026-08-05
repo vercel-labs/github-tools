@@ -11,8 +11,11 @@ import {
   getBlameInputSchema,
   getBlameDescription,
   getBlameCore,
+  compareCommitsInputSchema,
+  compareCommitsDescription,
+  compareCommitsCore,
 } from '../core/commits'
-import { getCommitToModelOutput } from '../core/model-output'
+import { getCommitToModelOutput, compareCommitsToModelOutput } from '../core/model-output'
 
 async function listCommitsStep(args: Parameters<typeof listCommitsCore>[0]) {
   "use step"
@@ -52,4 +55,18 @@ export const getBlame = (token: GithubTokenInput): GithubTool =>
     description: getBlameDescription,
     inputSchema: getBlameInputSchema,
     execute: async args => getBlameStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function compareCommitsStep(args: Parameters<typeof compareCommitsCore>[0]) {
+  "use step"
+  return compareCommitsCore(args)
+}
+
+/** Compare two branches, tags, or commits — shows ahead/behind counts, the commits in between, and the files that differ. */
+export const compareCommits = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: compareCommitsDescription,
+    inputSchema: compareCommitsInputSchema,
+    toModelOutput: compareCommitsToModelOutput,
+    execute: async args => compareCommitsStep({ token: await resolveGithubToken(token), ...args }),
   })

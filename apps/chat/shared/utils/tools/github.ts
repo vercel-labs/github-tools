@@ -14,6 +14,7 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   getRepository: { title: 'Get Repository', label: 'Repository fetched', labelActive: 'Fetching repository', icon: 'i-simple-icons-github' },
   listBranches: { title: 'List Branches', label: 'Branches listed', labelActive: 'Listing branches', icon: 'i-lucide-git-branch' },
   getFileContent: { title: 'Get File Content', label: 'File read', labelActive: 'Reading file', icon: 'i-lucide-file-code' },
+  getRepositoryTree: { title: 'Get Repository Tree', label: 'Tree fetched', labelActive: 'Fetching repository tree', icon: 'i-lucide-folder-tree' },
   createBranch: { title: 'Create Branch', label: 'Branch created', labelActive: 'Creating branch', icon: 'i-lucide-git-branch-plus' },
   forkRepository: { title: 'Fork Repository', label: 'Repository forked', labelActive: 'Forking repository', icon: 'i-lucide-git-fork' },
   createRepository: { title: 'Create Repository', label: 'Repository created', labelActive: 'Creating repository', icon: 'i-lucide-plus' },
@@ -26,6 +27,7 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   listPullRequestFiles: { title: 'List PR Files', label: 'Files listed', labelActive: 'Listing PR files', icon: 'i-lucide-file-diff' },
   listPullRequestReviews: { title: 'List PR Reviews', label: 'Reviews listed', labelActive: 'Listing PR reviews', icon: 'i-lucide-message-circle' },
   createPullRequestReview: { title: 'Submit PR Review', label: 'Review submitted', labelActive: 'Submitting PR review', icon: 'i-lucide-shield-check' },
+  requestReviewers: { title: 'Request Reviewers', label: 'Reviewers requested', labelActive: 'Requesting reviewers', icon: 'i-lucide-user-plus' },
   listIssues: { title: 'List Issues', label: 'Issues listed', labelActive: 'Listing issues', icon: 'i-lucide-circle-dot' },
   getIssue: { title: 'Get Issue', label: 'Issue fetched', labelActive: 'Fetching issue', icon: 'i-lucide-circle-dot' },
   createIssue: { title: 'Create Issue', label: 'Issue created', labelActive: 'Creating issue', icon: 'i-lucide-circle-plus' },
@@ -34,11 +36,14 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   listLabels: { title: 'List Labels', label: 'Labels listed', labelActive: 'Listing labels', icon: 'i-lucide-tags' },
   addLabels: { title: 'Add Labels', label: 'Labels added', labelActive: 'Adding labels', icon: 'i-lucide-tag' },
   removeLabel: { title: 'Remove Label', label: 'Label removed', labelActive: 'Removing label', icon: 'i-lucide-x' },
+  addAssignees: { title: 'Add Assignees', label: 'Assignees added', labelActive: 'Adding assignees', icon: 'i-lucide-user-plus' },
+  removeAssignees: { title: 'Remove Assignees', label: 'Assignees removed', labelActive: 'Removing assignees', icon: 'i-lucide-user-minus' },
   searchCode: { title: 'Search Code', label: 'Code searched', labelActive: 'Searching code', icon: 'i-lucide-search-code' },
   searchRepositories: { title: 'Search Repositories', label: 'Repositories searched', labelActive: 'Searching repositories', icon: 'i-lucide-search' },
   listCommits: { title: 'List Commits', label: 'Commits listed', labelActive: 'Listing commits', icon: 'i-lucide-git-commit-horizontal' },
   getCommit: { title: 'Get Commit', label: 'Commit fetched', labelActive: 'Fetching commit', icon: 'i-lucide-git-commit-horizontal' },
   getBlame: { title: 'Git Blame', label: 'Blame loaded', labelActive: 'Loading blame', icon: 'i-lucide-scroll-text' },
+  compareCommits: { title: 'Compare Commits', label: 'Comparison loaded', labelActive: 'Comparing commits', icon: 'i-lucide-git-compare' },
   listGists: { title: 'List Gists', label: 'Gists listed', labelActive: 'Listing gists', icon: 'i-lucide-file-code-2' },
   getGist: { title: 'Get Gist', label: 'Gist fetched', labelActive: 'Fetching gist', icon: 'i-lucide-file-code-2' },
   listGistComments: { title: 'List Gist Comments', label: 'Comments listed', labelActive: 'Listing gist comments', icon: 'i-lucide-message-square' },
@@ -52,7 +57,13 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   listWorkflowJobs: { title: 'List Workflow Jobs', label: 'Jobs listed', labelActive: 'Listing workflow jobs', icon: 'i-lucide-list-checks' },
   triggerWorkflow: { title: 'Trigger Workflow', label: 'Workflow triggered', labelActive: 'Triggering workflow', icon: 'i-lucide-rocket' },
   cancelWorkflowRun: { title: 'Cancel Workflow Run', label: 'Run cancelled', labelActive: 'Cancelling workflow run', icon: 'i-lucide-circle-x' },
-  rerunWorkflowRun: { title: 'Re-run Workflow', label: 'Workflow re-run', labelActive: 'Re-running workflow', icon: 'i-lucide-refresh-cw' }
+  rerunWorkflowRun: { title: 'Re-run Workflow', label: 'Workflow re-run', labelActive: 'Re-running workflow', icon: 'i-lucide-refresh-cw' },
+  listCheckRuns: { title: 'List Check Runs', label: 'Check runs listed', labelActive: 'Listing check runs', icon: 'i-lucide-list-checks' },
+  getCombinedStatus: { title: 'Get Combined Status', label: 'Status fetched', labelActive: 'Fetching combined status', icon: 'i-lucide-activity' },
+  listReleases: { title: 'List Releases', label: 'Releases listed', labelActive: 'Listing releases', icon: 'i-lucide-tag' },
+  getLatestRelease: { title: 'Get Latest Release', label: 'Latest release fetched', labelActive: 'Fetching latest release', icon: 'i-lucide-tag' },
+  getRelease: { title: 'Get Release', label: 'Release fetched', labelActive: 'Fetching release', icon: 'i-lucide-tag' },
+  createRelease: { title: 'Create Release', label: 'Release created', labelActive: 'Creating release', icon: 'i-lucide-rocket' }
 }
 
 export const GITHUB_TOOL_NAMES = new Set<string>(Object.keys(GITHUB_TOOL_META))

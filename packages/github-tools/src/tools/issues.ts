@@ -24,6 +24,12 @@ import {
   removeLabelInputSchema,
   removeLabelDescription,
   removeLabelCore,
+  addAssigneesInputSchema,
+  addAssigneesDescription,
+  addAssigneesCore,
+  removeAssigneesInputSchema,
+  removeAssigneesDescription,
+  removeAssigneesCore,
 } from '../core/issues'
 import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
@@ -135,4 +141,32 @@ export const removeLabel = (token: GithubTokenInput, { needsApproval = true }: T
     needsApproval,
     inputSchema: removeLabelInputSchema,
     execute: async args => removeLabelStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function addAssigneesStep(args: Parameters<typeof addAssigneesCore>[0]) {
+  "use step"
+  return addAssigneesCore(args)
+}
+
+/** Assign users to an issue or pull request. Requires approval by default. */
+export const addAssignees = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: addAssigneesDescription,
+    needsApproval,
+    inputSchema: addAssigneesInputSchema,
+    execute: async args => addAssigneesStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function removeAssigneesStep(args: Parameters<typeof removeAssigneesCore>[0]) {
+  "use step"
+  return removeAssigneesCore(args)
+}
+
+/** Remove assignees from an issue or pull request. Requires approval by default. */
+export const removeAssignees = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: removeAssigneesDescription,
+    needsApproval,
+    inputSchema: removeAssigneesInputSchema,
+    execute: async args => removeAssigneesStep({ token: await resolveGithubToken(token), ...args }),
   })

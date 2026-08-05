@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { createOctokit } from '../client'
+import { fetchAllPages, maxPagesSchema } from './pagination'
 
 export const BLAME_QUERY = `
   query ($owner: String!, $name: String!, $expression: String!, $path: String!) {
@@ -69,25 +70,30 @@ export const listCommitsInputSchema = z.object({
   author: z.string().optional().describe('GitHub username or email to filter commits by'),
   since: z.string().optional().describe('Only commits after this date (ISO 8601 format)'),
   until: z.string().optional().describe('Only commits before this date (ISO 8601 format)'),
-  perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+  perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
+  maxPages: maxPagesSchema,
 })
 
 export const listCommitsDescription =
   'List commits for a GitHub repository. Filter by file path to see commits that touched a file. For line-by-line attribution at a given ref, use getBlame instead.'
 
-export async function listCommitsCore({ token, owner, repo, path, sha, author, since, until, perPage }: { token: string, owner: string, repo: string, path?: string, sha?: string, author?: string, since?: string, until?: string, perPage: number }) {
+export async function listCommitsCore({ token, owner, repo, path, sha, author, since, until, perPage, maxPages }: { token: string, owner: string, repo: string, path?: string, sha?: string, author?: string, since?: string, until?: string, perPage: number, maxPages?: number }) {
   const octokit = createOctokit(token)
-  const { data } = await octokit.rest.repos.listCommits({
-    owner,
-    repo,
-    path,
-    sha,
-    author,
-    since,
-    until,
-    per_page: perPage,
-  })
-  return data.map(commit => ({
+  const commits = await fetchAllPages(async page => {
+    const { data } = await octokit.rest.repos.listCommits({
+      owner,
+      repo,
+      path,
+      sha,
+      author,
+      since,
+      until,
+      per_page: perPage,
+      page,
+    })
+    return data
+  }, perPage, maxPages)
+  return commits.map(commit => ({
     sha: commit.sha,
     message: commit.commit.message,
     author: commit.commit.author?.name,
@@ -218,5 +224,39 @@ export async function getBlameCore({ token, owner, repo, path, ref, line, lineSt
     path,
     rangeCount: ranges.length,
     ranges,
+  }
+}
+
+export const compareCommitsInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  base: z.string().describe('Base branch, tag, or commit SHA'),
+  head: z.string().describe('Head branch, tag, or commit SHA to compare against base'),
+})
+
+export const compareCommitsDescription = 'Compare two branches, tags, or commits — shows ahead/behind counts, the commits in between, and the files that differ'
+
+export async function compareCommitsCore({ token, owner, repo, base, head }: { token: string, owner: string, repo: string, base: string, head: string }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${base}...${head}` })
+  return {
+    status: data.status,
+    aheadBy: data.ahead_by,
+    behindBy: data.behind_by,
+    totalCommits: data.total_commits,
+    url: data.html_url,
+    commits: data.commits.map(commit => ({
+      sha: commit.sha,
+      message: commit.commit.message,
+      author: commit.commit.author?.name,
+      authorLogin: commit.author?.login,
+    })),
+    files: data.files?.map(file => ({
+      filename: file.filename,
+      status: file.status,
+      additions: file.additions,
+      deletions: file.deletions,
+      patch: file.patch,
+    })),
   }
 }

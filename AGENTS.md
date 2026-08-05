@@ -1,6 +1,6 @@
 ## Overview
 
-`@github-tools/sdk` wraps GitHub's REST API as 42 AI SDK-compatible tools for agents and `generateText`/`streamText` calls — with presets, approval control, and integrations for eve, Vercel Workflow, and Chat SDK. Docs: [github-tools.com](https://github-tools.com).
+`@github-tools/sdk` wraps GitHub's REST API as 53 AI SDK-compatible tools for agents and `generateText`/`streamText` calls — with presets, approval control, and integrations for eve, Vercel Workflow, and Chat SDK. Docs: [github-tools.com](https://github-tools.com).
 
 ## Commands
 
@@ -89,7 +89,7 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 
 ### Presets
 
-Five presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
+Seven presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
 
 ## Chat App Architecture (`apps/chat`)
 

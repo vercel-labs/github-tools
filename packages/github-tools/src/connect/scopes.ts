@@ -4,8 +4,10 @@ import type { GithubToolPreset } from '../core/presets'
  * Vercel Connect scope strings mapped to each {@link GithubToolPreset}.
  *
  * Scopes mirror GitHub App permissions (`contents`, `pull_requests`, `issues`,
- * `actions`, `administration`, `metadata`) and must cover every read/write
- * family a preset's tools touch, not just its primary domain.
+ * `actions`, `checks`, `statuses`, `administration`, `metadata`) and must cover
+ * every read/write family a preset's tools touch, not just its primary domain.
+ * Release tools fall under the `contents` permission on GitHub Apps, so they
+ * need no scope of their own.
  *
  * Gist tools in `repo-explorer` and `maintainer` are intentionally left
  * unscoped: the Gists API only accepts GitHub App *user* access tokens, never
@@ -21,12 +23,16 @@ export const PRESET_CONNECT_SCOPES = {
     'pull_requests:read',
     'issues:read',
     'actions:read',
+    'checks:read',
+    'statuses:read',
   ],
   'code-review': [
     'contents:read',
     'metadata:read',
     'pull_requests:read',
     'pull_requests:write',
+    'checks:read',
+    'statuses:read',
   ],
   'issue-triage': [
     'contents:read',
@@ -37,6 +43,26 @@ export const PRESET_CONNECT_SCOPES = {
   'ci-ops': [
     'contents:read',
     'metadata:read',
+    'actions:read',
+    'actions:write',
+    'checks:read',
+    'statuses:read',
+  ],
+  'security-audit': [
+    'contents:read',
+    'metadata:read',
+    'pull_requests:read',
+    'issues:read',
+    'issues:write',
+    'actions:read',
+    'checks:read',
+    'statuses:read',
+  ],
+  'release-manager': [
+    'contents:read',
+    'contents:write',
+    'metadata:read',
+    'pull_requests:read',
     'actions:read',
     'actions:write',
   ],
@@ -50,6 +76,8 @@ export const PRESET_CONNECT_SCOPES = {
     'issues:write',
     'actions:read',
     'actions:write',
+    'checks:read',
+    'statuses:read',
     'administration:read',
     'administration:write',
   ],

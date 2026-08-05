@@ -9,6 +9,9 @@ import {
   getFileContentInputSchema,
   getFileContentDescription,
   getFileContentCore,
+  getRepositoryTreeInputSchema,
+  getRepositoryTreeDescription,
+  getRepositoryTreeCore,
   createBranchInputSchema,
   createBranchDescription,
   createBranchCore,
@@ -67,6 +70,19 @@ export const getFileContent = (token: GithubTokenInput): GithubTool =>
     inputSchema: getFileContentInputSchema,
     toModelOutput: getFileContentToModelOutput,
     execute: async args => getFileContentStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function getRepositoryTreeStep(args: Parameters<typeof getRepositoryTreeCore>[0]) {
+  "use step"
+  return getRepositoryTreeCore(args)
+}
+
+/** List the file and directory structure of a repository at a given ref. */
+export const getRepositoryTree = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: getRepositoryTreeDescription,
+    inputSchema: getRepositoryTreeInputSchema,
+    execute: async args => getRepositoryTreeStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function createBranchStep(args: Parameters<typeof createBranchCore>[0]) {
