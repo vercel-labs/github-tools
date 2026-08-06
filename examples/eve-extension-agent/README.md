@@ -54,14 +54,14 @@ agent/
   agent.ts               # eve agent config
   instructions.md        # system prompt
   channels/
+    eve.ts               # HTTP API (TUI / curl / frontend) + OIDC auth
     github.ts            # inbound GitHub (@mentions / webhooks)
   extensions/
     github.ts            # GitHub API tools via @github-tools/eve-extension
 ```
 
-The **channel** is how GitHub reaches the agent. The **extension** is how the agent calls the
-GitHub API. You can use either alone (HTTP `eve` channel + extension for tools-only, or
-channel + other tools); this example wires both through the same Connect connector.
+The **channels** are how clients reach the agent (HTTP or GitHub). The **extension** is how the
+agent calls the GitHub API. GitHub turns only dispatch when the comment `@mention`s `botName`.
 
 ## Customize
 
