@@ -25,7 +25,7 @@ export default defineExtension({
     ).optional(),
     /** Vercel Connect token params passed through to `getToken` when `connector` is set. */
     connect: z.record(z.string(), z.unknown()).optional(),
-    /** Restrict tools to a preset (or array of presets). Omit for all 53 tools. */
+    /** Restrict tools to a preset (or array of presets). Omit for all 57 tools. */
     preset: z.union([presetNameSchema, z.array(presetNameSchema)]).optional(),
     /**
      * Hand-pick tool names to add on top of `preset` (or standalone, without `preset`).
@@ -34,6 +34,17 @@ export default defineExtension({
     include: z.array(toolNameSchema).optional(),
     /** Remove specific tool names from the resolved set, applied after `preset` + `include`. */
     exclude: z.array(toolNameSchema).optional(),
+    /**
+     * Default owner / repo / pullNumber / issueNumber / ref for tool inputs
+     * (matching fields become optional and fill from context when omitted).
+     */
+    context: z.object({
+      owner: z.string().optional(),
+      repo: z.string().optional(),
+      pullNumber: z.number().optional(),
+      issueNumber: z.number().optional(),
+      ref: z.string().optional(),
+    }).optional(),
     /** Global boolean or per-tool approval config — may hold predicate functions. */
     requireApproval: z.union([z.boolean(), z.record(z.string(), z.unknown())]).optional(),
     /** Per-tool overrides (description, approval, toModelOutput, outputSchema). */

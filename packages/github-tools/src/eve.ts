@@ -1,7 +1,8 @@
 import { buildEveToolDefinition, createEveGithubToolsDynamic } from './eve/build'
 import type { EveToolFactoryOptions } from './eve/types'
 
-export { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, listResolvedEveToolNames } from './eve/build'
+export { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, listResolvedEveToolNames, listEveToolDescriptors, executeGithubEveTool } from './eve/build'
+export { mapEveApprovalValue, resolveEveApproval } from './eve/approval'
 export type { EveApprovalConfig, EveApprovalValue, EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './eve/types'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
 export type { GithubToolName } from './core/tool-names'

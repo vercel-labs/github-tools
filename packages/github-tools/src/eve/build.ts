@@ -110,6 +110,7 @@ export function createEveGithubToolsDynamic(options: EveGithubToolsOptions = {})
   const { defineDynamic } = getEveTools()
 
   // TODO(eve-auth): resolve token from ctx.getToken('github') when eve-managed auth lands.
+  // Deferred — eve does not yet expose managed GitHub tokens on the session context.
   return defineDynamic({
     events: {
       'session.started': async () => buildEveToolMap(options),
@@ -124,4 +125,48 @@ export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'p
 export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'preset' | 'include' | 'exclude'> = {}): GithubToolName[] {
   const isAllowed = resolveAllowedToolNames(options)
   return ALL_GITHUB_TOOL_NAMES.filter(isAllowed)
+}
+
+/**
+ * Tool descriptors (no `execute`) for authored eve `defineTool` loops.
+ * Prefer this when registering tools outside the SDK package so durable transforms can hoist inline execute.
+ */
+export function listEveToolDescriptors(options: EveGithubToolsOptions = {}) {
+  const ctx: ToolBuildContext = {
+    token: createGithubTokenResolver(options.token),
+    context: options.context,
+    author: options.author,
+    committer: options.committer,
+    coAuthors: options.coAuthors,
+  }
+
+  const isAllowed = resolveAllowedToolNames(options)
+  return createToolRegistry(ctx)
+    .filter(entry => isAllowed(entry.name))
+    .map(entry => ({
+      name: entry.name,
+      description: entry.description,
+      inputSchema: entry.inputSchema,
+      writeTool: entry.writeTool,
+      toModelOutput: entry.toModelOutput,
+    }))
+}
+
+/**
+ * Execute a GitHub tool by name with the given eve options (token/context/attribution).
+ * Used by `@github-tools/eve-extension` so `execute` only closes over a serializable tool name.
+ */
+export async function executeGithubEveTool(
+  name: GithubToolName,
+  input: Record<string, unknown>,
+  options: EveGithubToolsOptions = {},
+) {
+  const ctx: ToolBuildContext = {
+    token: createGithubTokenResolver(options.token),
+    context: options.context,
+    author: options.author,
+    committer: options.committer,
+    coAuthors: options.coAuthors,
+  }
+  return runGithubToolStep(name, input, ctx)
 }

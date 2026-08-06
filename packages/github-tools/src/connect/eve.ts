@@ -10,15 +10,17 @@ import type { ConnectGithubEveToolsOptions } from './types'
  * `connector` may be a static name or a resolver function — e.g. to pick a
  * different connector per environment (production vs. preview) or tenant.
  *
- * TODO(eve-connect-bundle): eve's authored-module bundler inlines workspace-linked
- * SDK code and code-splits `@vercel/connect` unless the agent sets
- * `build.externalDependencies: ['@vercel/connect']` in `agent.ts`. Remove that
- * requirement when upstream eve externalizes this path.
- *
  * @deprecated Use the mountable `@github-tools/eve-extension` instead and pass `connector`
  * directly to `githubExtension(...)` — no separate Connect import is needed. This direct
- * import keeps working but is no longer the recommended path. See
- * https://github-tools.com/frameworks/eve-extension#vercel-connect.
+ * import is also **not durable** under multi-turn eve Workflow replay (`defineTool` inside
+ * `node_modules` is not hoisted); mount `@github-tools/eve-extension` instead
+ * (see https://github.com/vercel-labs/github-tools/issues/51 and
+ * https://github-tools.com/frameworks/eve-extension).
+ *
+ * TODO(eve-connect-bundle): eve's authored-module bundler inlines workspace-linked
+ * SDK code and code-splits `@vercel/connect` unless the agent sets
+ * `build.externalDependencies: ['@vercel/connect']` in `agent.ts`. Prefer the
+ * eve extension (pre-built) so that workaround is unnecessary.
  */
 export function connectGithubTools(
   connector: GithubConnectorInput,

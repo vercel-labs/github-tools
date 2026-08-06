@@ -34,6 +34,7 @@ import githubExtension from '@github-tools/eve-extension'
 export default githubExtension({
   connector: 'github/my-connector', // or token: process.env.GITHUB_TOKEN
   preset: 'code-review',
+  context: { owner: 'vercel-labs', repo: 'github-tools' },
   requireApproval: {
     addPullRequestComment: ({ toolInput }) => toolInput?.owner !== 'vercel-labs',
   },
@@ -41,6 +42,8 @@ export default githubExtension({
 ```
 
 > `code-review` pairs cleanly with a Connect `connector`. `maintainer` and `repo-explorer` include gist tools, and GitHub only grants gist access to user access tokens, never the installation tokens Connect mints, so gist calls 403 over Connect. Write tools already require approval via `always()` by default, so a plain `{ someTool: true }` is a no-op, use a predicate (as above) when you actually want to narrow or loosen the default.
+
+Tools are registered with **inline** `execute` handlers in the extension package so they survive multi-turn durable eve Workflow replay (see [#51](https://github.com/vercel-labs/github-tools/issues/51)). Do not use the deprecated `@github-tools/sdk/connect/eve` one-liner for durable Slack/multi-turn agents.
 
 `connector` also accepts a `() => string | Promise<string>` resolver, so the same config can pick a connector dynamically (e.g. by environment):
 
@@ -91,6 +94,7 @@ extension/
 | `preset` | preset name or array | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `maintainer` |
 | `include` | `string[]?` | Tool names to add on top of `preset` (union), or the full set standalone |
 | `exclude` | `string[]?` | Tool names to remove from the resolved `preset` + `include` set |
+| `context` | `{ owner?, repo?, pullNumber?, issueNumber?, ref? }?` | Default working context for tool inputs and schemas |
 | `requireApproval` | `boolean \| record` | Global or per-tool; per-tool values may be predicate functions |
 | `overrides` | `record` | Per-tool `description` / `approval` / `toModelOutput` / `outputSchema` |
 | `author` / `committer` / `coAuthors` | commit identity | Attribution for commit-creating tools |
