@@ -61,7 +61,9 @@ agent/
 ```
 
 The **channels** are how clients reach the agent (HTTP or GitHub). The **extension** is how the
-agent calls the GitHub API. GitHub turns only dispatch when the comment `@mention`s `botName`.
+agent calls the GitHub API. GitHub turns only dispatch when **HugoRCD** `@mention`s `botName`.
+Write-tool approval is posted as a comment (`Yes` / `No` reply) via `events["input.requested"]`
+— eve's GitHub channel does not ship that handler by default.
 
 ## Customize
 
