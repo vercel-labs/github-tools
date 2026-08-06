@@ -96,6 +96,55 @@ export async function createPullRequestCore({ token, owner, repo, title, body, h
   }
 }
 
+const MARK_READY_FOR_REVIEW_MUTATION = `
+  mutation($pullRequestId: ID!) {
+    markPullRequestReadyForReview(input: { pullRequestId: $pullRequestId }) {
+      pullRequest { id }
+    }
+  }
+`
+
+const CONVERT_TO_DRAFT_MUTATION = `
+  mutation($pullRequestId: ID!) {
+    convertPullRequestToDraft(input: { pullRequestId: $pullRequestId }) {
+      pullRequest { id }
+    }
+  }
+`
+
+export const updatePullRequestInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  pullNumber: z.number().describe('Pull request number'),
+  title: z.string().optional().describe('New pull request title'),
+  body: z.string().optional().describe('New pull request description (supports Markdown)'),
+  state: z.enum(['open', 'closed']).optional().describe('Open or close the pull request'),
+  base: z.string().optional().describe('Change the base branch to merge into'),
+  draft: z.boolean().optional().describe('Convert to draft (true) or mark as ready for review (false)'),
+})
+
+export const updatePullRequestDescription = 'Update a pull request — title, body, state, base branch, or draft status. Draft toggling uses the GitHub GraphQL API since the REST update endpoint does not support it'
+
+/** Not idempotent — each call applies a new revision. */
+export async function updatePullRequestCore({ token, owner, repo, pullNumber, title, body, state, base, draft }: { token: string, owner: string, repo: string, pullNumber: number, title?: string, body?: string, state?: 'open' | 'closed', base?: string, draft?: boolean }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.pulls.update({ owner, repo, pull_number: pullNumber, title, body, state, base })
+
+  if (draft !== undefined && draft !== data.draft) {
+    await octokit.graphql(draft ? CONVERT_TO_DRAFT_MUTATION : MARK_READY_FOR_REVIEW_MUTATION, { pullRequestId: data.node_id })
+  }
+
+  return {
+    number: data.number,
+    title: data.title,
+    state: data.state,
+    draft: draft ?? data.draft,
+    url: data.html_url,
+    base: data.base.ref,
+    updatedAt: data.updated_at,
+  }
+}
+
 export const mergePullRequestInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
@@ -164,6 +213,42 @@ export async function addPullRequestCommentCore({ token, owner, repo, pullNumber
     author: data.user?.login,
     createdAt: data.created_at,
   }
+}
+
+export const updatePullRequestCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commentId: z.number().describe('Comment ID (from the comment returned by addPullRequestComment)'),
+  body: z.string().describe('New comment text (supports Markdown)'),
+})
+
+export const updatePullRequestCommentDescription = 'Update the body of a comment on a pull request'
+
+/** Not idempotent — each call applies a new revision. */
+export async function updatePullRequestCommentCore({ token, owner, repo, commentId, body }: { token: string, owner: string, repo: string, commentId: number, body: string }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.updateComment({ owner, repo, comment_id: commentId, body })
+  return {
+    id: data.id,
+    url: data.html_url,
+    body: data.body,
+    updatedAt: data.updated_at,
+  }
+}
+
+export const deletePullRequestCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commentId: z.number().describe('Comment ID to delete'),
+})
+
+export const deletePullRequestCommentDescription = 'Delete a comment from a pull request permanently'
+
+/** Not idempotent — deleting an already-deleted comment returns 404 from GitHub. */
+export async function deletePullRequestCommentCore({ token, owner, repo, commentId }: { token: string, owner: string, repo: string, commentId: number }) {
+  const octokit = createOctokit(token)
+  await octokit.rest.issues.deleteComment({ owner, repo, comment_id: commentId })
+  return { deleted: true, commentId }
 }
 
 export const listPullRequestFilesInputSchema = z.object({

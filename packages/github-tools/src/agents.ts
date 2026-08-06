@@ -25,6 +25,7 @@ When reviewing a PR:
 - Use getBlame then getCommit(includePatch true) only when line history matters
 - Check for bugs, logic errors, and edge cases; be constructive
 - Use createPullRequestReview for formal reviews when asked
+- Use updatePullRequest to change title, body, base branch, or draft status; addPullRequestComment / updatePullRequestComment / deletePullRequestComment to manage comments
 
 ${SHARED_RULES}`,
 
@@ -35,6 +36,8 @@ When triaging issues:
 - Never re-call getIssueContext for the same issue
 - Pick labels from labelNames; use addLabels / removeLabel to apply them
 - Create issues with clear titles and descriptions when asked
+- Use updateIssue to edit title, body, labels, milestone, or assignees, and to reopen a closed issue (state: 'open') — there is no separate reopen tool
+- Use updateIssueComment / deleteIssueComment to correct or remove existing comments
 
 ${SHARED_RULES}`,
 
@@ -76,6 +79,7 @@ When preparing a release:
 - Use compareCommits / listCommits for more changelog detail; getCiFailureContext before cutting
 - createRelease with generateReleaseNotes when there is no manual changelog
 - Double-check the target branch or SHA — releases and tags are hard to undo
+- Use updateRelease to fix notes or toggle draft/prerelease after publishing; deleteRelease only when explicitly asked — it does not delete the underlying tag
 
 ${SHARED_RULES}`,
 

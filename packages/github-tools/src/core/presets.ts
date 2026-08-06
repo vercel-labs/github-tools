@@ -11,26 +11,29 @@ export const PRESET_TOOLS = {
    *
    * Tools: `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getPullRequestContext`,
    * `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`,
-   * `searchCode`, `listCheckRuns`, `getCombinedStatus`, `addPullRequestComment`, `createPullRequestReview`, `requestReviewers`.
+   * `searchCode`, `listCheckRuns`, `getCombinedStatus`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`,
+   * `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers`.
    *
    * Agent prompt: optimized for thorough PR review with inline feedback.
    */
   'code-review': [
     'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'getPullRequestContext', 'getFileContent', 'listCommits', 'getCommit', 'getBlame', 'compareCommits',
     'getRepository', 'listBranches', 'searchCode', 'listCheckRuns', 'getCombinedStatus',
-    'addPullRequestComment', 'createPullRequestReview', 'requestReviewers',
+    'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'requestReviewers',
   ],
   /**
    * **Issue triage** — manage and organize GitHub issues.
    *
-   * Tools: `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `closeIssue`,
-   * `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode`.
+   * Tools: `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`,
+   * `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`,
+   * `searchRepositories`, `searchCode`.
    *
    * Prefer `getIssueContext` (issue + `labelNames` + recent comments) over separate get/list calls.
+   * Reopen a closed issue with `updateIssue` (`state: 'open'`) — there is no separate reopen tool.
    * Agent prompt: optimized for categorizing, labeling, and responding to issues.
    */
   'issue-triage': [
-    'listIssues', 'getIssueContext', 'createIssue', 'addIssueComment', 'closeIssue',
+    'listIssues', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
     'getRepository', 'searchRepositories', 'searchCode',
   ],
@@ -92,7 +95,7 @@ export const PRESET_TOOLS = {
    * **Release manager** — prepare and publish GitHub releases.
    *
    * Tools: `getRepository`, `listBranches`, `listCommits`, `getCommit`, `compareCommits`,
-   * `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`,
+   * `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`,
    * `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`,
    * `listPullRequests`, `getPullRequest`.
    *
@@ -100,7 +103,7 @@ export const PRESET_TOOLS = {
    */
   'release-manager': [
     'getRepository', 'listBranches', 'listCommits', 'getCommit', 'compareCommits',
-    'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext', 'createRelease',
+    'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext', 'createRelease', 'updateRelease', 'deleteRelease',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow',
     'listPullRequests', 'getPullRequest',
   ],
@@ -113,15 +116,15 @@ export const PRESET_TOOLS = {
    */
   'maintainer': [
     'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
-    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'getPullRequestContext', 'createPullRequest', 'mergePullRequest', 'addPullRequestComment', 'createPullRequestReview', 'requestReviewers',
-    'listIssues', 'getIssue', 'getIssueContext', 'createIssue', 'addIssueComment', 'closeIssue',
+    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'getPullRequestContext', 'createPullRequest', 'mergePullRequest', 'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'requestReviewers',
+    'listIssues', 'getIssue', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'listLabels', 'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
     'listCommits', 'getCommit', 'getBlame', 'compareCommits',
     'searchCode', 'searchRepositories',
     'listGists', 'getGist', 'listGistComments', 'createGist', 'updateGist', 'deleteGist', 'createGistComment',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',
     'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
-    'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext', 'createRelease',
+    'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext', 'createRelease', 'updateRelease', 'deleteRelease',
   ],
 } as const
 

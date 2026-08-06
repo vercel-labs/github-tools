@@ -147,11 +147,32 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(pullRequests.mergePullRequestCore, ctx, { coAuthors: ctx.coAuthors }),
     },
     {
+      name: 'updatePullRequest',
+      writeTool: 'updatePullRequest',
+      description: pullRequests.updatePullRequestDescription,
+      inputSchema: pullRequests.updatePullRequestInputSchema,
+      execute: withToken(pullRequests.updatePullRequestCore, ctx),
+    },
+    {
       name: 'addPullRequestComment',
       writeTool: 'addPullRequestComment',
       description: pullRequests.addPullRequestCommentDescription,
       inputSchema: pullRequests.addPullRequestCommentInputSchema,
       execute: withToken(pullRequests.addPullRequestCommentCore, ctx),
+    },
+    {
+      name: 'updatePullRequestComment',
+      writeTool: 'updatePullRequestComment',
+      description: pullRequests.updatePullRequestCommentDescription,
+      inputSchema: pullRequests.updatePullRequestCommentInputSchema,
+      execute: withToken(pullRequests.updatePullRequestCommentCore, ctx),
+    },
+    {
+      name: 'deletePullRequestComment',
+      writeTool: 'deletePullRequestComment',
+      description: pullRequests.deletePullRequestCommentDescription,
+      inputSchema: pullRequests.deletePullRequestCommentInputSchema,
+      execute: withToken(pullRequests.deletePullRequestCommentCore, ctx),
     },
     {
       name: 'listPullRequestFiles',
@@ -220,11 +241,32 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(issues.addIssueCommentCore, ctx),
     },
     {
+      name: 'updateIssueComment',
+      writeTool: 'updateIssueComment',
+      description: issues.updateIssueCommentDescription,
+      inputSchema: issues.updateIssueCommentInputSchema,
+      execute: withToken(issues.updateIssueCommentCore, ctx),
+    },
+    {
+      name: 'deleteIssueComment',
+      writeTool: 'deleteIssueComment',
+      description: issues.deleteIssueCommentDescription,
+      inputSchema: issues.deleteIssueCommentInputSchema,
+      execute: withToken(issues.deleteIssueCommentCore, ctx),
+    },
+    {
       name: 'closeIssue',
       writeTool: 'closeIssue',
       description: issues.closeIssueDescription,
       inputSchema: issues.closeIssueInputSchema,
       execute: withToken(issues.closeIssueCore, ctx),
+    },
+    {
+      name: 'updateIssue',
+      writeTool: 'updateIssue',
+      description: issues.updateIssueDescription,
+      inputSchema: issues.updateIssueInputSchema,
+      execute: withToken(issues.updateIssueCore, ctx),
     },
     {
       name: 'listLabels',
@@ -437,6 +479,20 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: releases.createReleaseDescription,
       inputSchema: releases.createReleaseInputSchema,
       execute: withToken(releases.createReleaseCore, ctx),
+    },
+    {
+      name: 'updateRelease',
+      writeTool: 'updateRelease',
+      description: releases.updateReleaseDescription,
+      inputSchema: releases.updateReleaseInputSchema,
+      execute: withToken(releases.updateReleaseCore, ctx),
+    },
+    {
+      name: 'deleteRelease',
+      writeTool: 'deleteRelease',
+      description: releases.deleteReleaseDescription,
+      inputSchema: releases.deleteReleaseInputSchema,
+      execute: withToken(releases.deleteReleaseCore, ctx),
     },
   ]
 

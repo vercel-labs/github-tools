@@ -27,8 +27,14 @@ export const GITHUB_TOOL_NAMES = {
   createPullRequest: 'createPullRequest',
   /** Merge a pull request. Requires approval by default. */
   mergePullRequest: 'mergePullRequest',
+  /** Update a pull request — title, body, state, base branch, or draft status. Requires approval by default. */
+  updatePullRequest: 'updatePullRequest',
   /** Add a comment to a pull request. Requires approval by default. */
   addPullRequestComment: 'addPullRequestComment',
+  /** Update the body of a comment on a pull request. Requires approval by default. */
+  updatePullRequestComment: 'updatePullRequestComment',
+  /** Delete a comment from a pull request permanently. Requires approval by default. */
+  deletePullRequestComment: 'deletePullRequestComment',
   /** List files changed in a pull request with status and stats. Patches omitted by default — set includePatch true for diffs. */
   listPullRequestFiles: 'listPullRequestFiles',
   /** List reviews on a pull request (approvals, change requests, and comments). */
@@ -49,8 +55,14 @@ export const GITHUB_TOOL_NAMES = {
   createIssue: 'createIssue',
   /** Add a comment to a GitHub issue. Requires approval by default. */
   addIssueComment: 'addIssueComment',
+  /** Update the body of a comment on a GitHub issue. Requires approval by default. */
+  updateIssueComment: 'updateIssueComment',
+  /** Delete a comment from a GitHub issue permanently. Requires approval by default. */
+  deleteIssueComment: 'deleteIssueComment',
   /** Close an open GitHub issue. Requires approval by default. */
   closeIssue: 'closeIssue',
+  /** Update a GitHub issue — title, body, state, labels, milestone, or assignees. Requires approval by default. */
+  updateIssue: 'updateIssue',
   /** List labels available in a GitHub repository. */
   listLabels: 'listLabels',
   /** Add labels to an issue or pull request. Requires approval by default. */
@@ -117,6 +129,10 @@ export const GITHUB_TOOL_NAMES = {
   getReleaseContext: 'getReleaseContext',
   /** Create a new release (and its tag if needed) in a GitHub repository. Requires approval by default. */
   createRelease: 'createRelease',
+  /** Update an existing release — tag, target, title, notes, draft, or prerelease status. Requires approval by default. */
+  updateRelease: 'updateRelease',
+  /** Delete a release permanently. Requires approval by default. */
+  deleteRelease: 'deleteRelease',
 } as const
 
 export type GithubToolName = typeof GITHUB_TOOL_NAMES[keyof typeof GITHUB_TOOL_NAMES]

@@ -12,9 +12,18 @@ import {
   mergePullRequestInputSchema,
   mergePullRequestDescription,
   mergePullRequestCore,
+  updatePullRequestInputSchema,
+  updatePullRequestDescription,
+  updatePullRequestCore,
   addPullRequestCommentInputSchema,
   addPullRequestCommentDescription,
   addPullRequestCommentCore,
+  updatePullRequestCommentInputSchema,
+  updatePullRequestCommentDescription,
+  updatePullRequestCommentCore,
+  deletePullRequestCommentInputSchema,
+  deletePullRequestCommentDescription,
+  deletePullRequestCommentCore,
   listPullRequestFilesInputSchema,
   listPullRequestFilesDescription,
   listPullRequestFilesCore,
@@ -90,6 +99,20 @@ export const mergePullRequest = (token: GithubTokenInput, { needsApproval = true
     execute: async args => mergePullRequestStep({ token: await resolveGithubToken(token), coAuthors, ...args }),
   })
 
+async function updatePullRequestStep(args: Parameters<typeof updatePullRequestCore>[0]) {
+  "use step"
+  return updatePullRequestCore(args)
+}
+
+/** Update a pull request — title, body, state, base branch, or draft status. Requires approval by default. */
+export const updatePullRequest = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: updatePullRequestDescription,
+    needsApproval,
+    inputSchema: updatePullRequestInputSchema,
+    execute: async args => updatePullRequestStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
 async function addPullRequestCommentStep(args: Parameters<typeof addPullRequestCommentCore>[0]) {
   "use step"
   return addPullRequestCommentCore(args)
@@ -102,6 +125,34 @@ export const addPullRequestComment = (token: GithubTokenInput, { needsApproval =
     needsApproval,
     inputSchema: addPullRequestCommentInputSchema,
     execute: async args => addPullRequestCommentStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function updatePullRequestCommentStep(args: Parameters<typeof updatePullRequestCommentCore>[0]) {
+  "use step"
+  return updatePullRequestCommentCore(args)
+}
+
+/** Update the body of a comment on a pull request. Requires approval by default. */
+export const updatePullRequestComment = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: updatePullRequestCommentDescription,
+    needsApproval,
+    inputSchema: updatePullRequestCommentInputSchema,
+    execute: async args => updatePullRequestCommentStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function deletePullRequestCommentStep(args: Parameters<typeof deletePullRequestCommentCore>[0]) {
+  "use step"
+  return deletePullRequestCommentCore(args)
+}
+
+/** Delete a comment from a pull request permanently. Requires approval by default. */
+export const deletePullRequestComment = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: deletePullRequestCommentDescription,
+    needsApproval,
+    inputSchema: deletePullRequestCommentInputSchema,
+    execute: async args => deletePullRequestCommentStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function listPullRequestFilesStep(args: Parameters<typeof listPullRequestFilesCore>[0]) {

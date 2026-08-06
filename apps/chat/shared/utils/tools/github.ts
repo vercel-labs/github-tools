@@ -23,7 +23,10 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   getPullRequest: { title: 'Get Pull Request', label: 'Pull request fetched', labelActive: 'Fetching pull request', icon: 'i-lucide-git-pull-request' },
   createPullRequest: { title: 'Create Pull Request', label: 'Pull request created', labelActive: 'Creating pull request', icon: 'i-lucide-git-pull-request-arrow' },
   mergePullRequest: { title: 'Merge Pull Request', label: 'Pull request merged', labelActive: 'Merging pull request', icon: 'i-lucide-git-merge' },
+  updatePullRequest: { title: 'Update Pull Request', label: 'Pull request updated', labelActive: 'Updating pull request', icon: 'i-lucide-git-pull-request-arrow' },
   addPullRequestComment: { title: 'Comment on PR', label: 'Comment posted', labelActive: 'Posting PR comment', icon: 'i-lucide-message-square-plus' },
+  updatePullRequestComment: { title: 'Update PR Comment', label: 'Comment updated', labelActive: 'Updating PR comment', icon: 'i-lucide-message-square-text' },
+  deletePullRequestComment: { title: 'Delete PR Comment', label: 'Comment deleted', labelActive: 'Deleting PR comment', icon: 'i-lucide-message-square-x' },
   listPullRequestFiles: { title: 'List PR Files', label: 'Files listed', labelActive: 'Listing PR files', icon: 'i-lucide-file-diff' },
   listPullRequestReviews: { title: 'List PR Reviews', label: 'Reviews listed', labelActive: 'Listing PR reviews', icon: 'i-lucide-message-circle' },
   createPullRequestReview: { title: 'Submit PR Review', label: 'Review submitted', labelActive: 'Submitting PR review', icon: 'i-lucide-shield-check' },
@@ -34,7 +37,10 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   getIssueContext: { title: 'Issue Context', label: 'Issue context loaded', labelActive: 'Loading issue context', icon: 'i-lucide-layers' },
   createIssue: { title: 'Create Issue', label: 'Issue created', labelActive: 'Creating issue', icon: 'i-lucide-circle-plus' },
   addIssueComment: { title: 'Comment on Issue', label: 'Comment posted', labelActive: 'Posting issue comment', icon: 'i-lucide-message-square-plus' },
+  updateIssueComment: { title: 'Update Issue Comment', label: 'Comment updated', labelActive: 'Updating issue comment', icon: 'i-lucide-message-square-text' },
+  deleteIssueComment: { title: 'Delete Issue Comment', label: 'Comment deleted', labelActive: 'Deleting issue comment', icon: 'i-lucide-message-square-x' },
   closeIssue: { title: 'Close Issue', label: 'Issue closed', labelActive: 'Closing issue', icon: 'i-lucide-circle-check' },
+  updateIssue: { title: 'Update Issue', label: 'Issue updated', labelActive: 'Updating issue', icon: 'i-lucide-circle-dot' },
   listLabels: { title: 'List Labels', label: 'Labels listed', labelActive: 'Listing labels', icon: 'i-lucide-tags' },
   addLabels: { title: 'Add Labels', label: 'Labels added', labelActive: 'Adding labels', icon: 'i-lucide-tag' },
   removeLabel: { title: 'Remove Label', label: 'Label removed', labelActive: 'Removing label', icon: 'i-lucide-x' },
@@ -67,7 +73,9 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   getLatestRelease: { title: 'Get Latest Release', label: 'Latest release fetched', labelActive: 'Fetching latest release', icon: 'i-lucide-tag' },
   getRelease: { title: 'Get Release', label: 'Release fetched', labelActive: 'Fetching release', icon: 'i-lucide-tag' },
   getReleaseContext: { title: 'Release Context', label: 'Release context loaded', labelActive: 'Loading release context', icon: 'i-lucide-layers' },
-  createRelease: { title: 'Create Release', label: 'Release created', labelActive: 'Creating release', icon: 'i-lucide-rocket' }
+  createRelease: { title: 'Create Release', label: 'Release created', labelActive: 'Creating release', icon: 'i-lucide-rocket' },
+  updateRelease: { title: 'Update Release', label: 'Release updated', labelActive: 'Updating release', icon: 'i-lucide-tag' },
+  deleteRelease: { title: 'Delete Release', label: 'Release deleted', labelActive: 'Deleting release', icon: 'i-lucide-trash-2' }
 }
 
 export const GITHUB_TOOL_NAMES = new Set<string>(Object.keys(GITHUB_TOOL_META))

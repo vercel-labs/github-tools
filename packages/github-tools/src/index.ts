@@ -1,13 +1,13 @@
 import type { ToolSet } from 'ai'
 import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
-import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
-import { listIssues, getIssue, createIssue, addIssueComment, closeIssue, listLabels, addLabels, removeLabel, addAssignees, removeAssignees } from './tools/issues'
+import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
+import { listIssues, getIssue, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, addAssignees, removeAssignees } from './tools/issues'
 import { searchCode, searchRepositories } from './tools/search'
 import { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 import { listCheckRuns, getCombinedStatus } from './tools/checks'
-import { listReleases, getLatestRelease, getRelease, createRelease } from './tools/releases'
+import { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 import { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
 import { resolveAiSdkApproval } from './core/approval'
 import { bindToolsContext } from './core/context'
@@ -127,7 +127,10 @@ export function createGithubTools({
     createOrUpdateFile: createOrUpdateFile(resolveToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
     createPullRequest: createPullRequest(resolveToken, approval('createPullRequest')),
     mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors }),
+    updatePullRequest: updatePullRequest(resolveToken, approval('updatePullRequest')),
     addPullRequestComment: addPullRequestComment(resolveToken, approval('addPullRequestComment')),
+    updatePullRequestComment: updatePullRequestComment(resolveToken, approval('updatePullRequestComment')),
+    deletePullRequestComment: deletePullRequestComment(resolveToken, approval('deletePullRequestComment')),
     listPullRequestFiles: listPullRequestFiles(resolveToken),
     listPullRequestReviews: listPullRequestReviews(resolveToken),
     createPullRequestReview: createPullRequestReview(resolveToken, approval('createPullRequestReview')),
@@ -136,7 +139,10 @@ export function createGithubTools({
     getIssueContext: getIssueContext(resolveToken),
     createIssue: createIssue(resolveToken, approval('createIssue')),
     addIssueComment: addIssueComment(resolveToken, approval('addIssueComment')),
+    updateIssueComment: updateIssueComment(resolveToken, approval('updateIssueComment')),
+    deleteIssueComment: deleteIssueComment(resolveToken, approval('deleteIssueComment')),
     closeIssue: closeIssue(resolveToken, approval('closeIssue')),
+    updateIssue: updateIssue(resolveToken, approval('updateIssue')),
     listLabels: listLabels(resolveToken),
     addLabels: addLabels(resolveToken, approval('addLabels')),
     removeLabel: removeLabel(resolveToken, approval('removeLabel')),
@@ -164,6 +170,8 @@ export function createGithubTools({
     getRelease: getRelease(resolveToken),
     getReleaseContext: getReleaseContext(resolveToken),
     createRelease: createRelease(resolveToken, approval('createRelease')),
+    updateRelease: updateRelease(resolveToken, approval('updateRelease')),
+    deleteRelease: deleteRelease(resolveToken, approval('deleteRelease')),
   } satisfies AllGithubTools
 
   if (overrides) {
@@ -189,14 +197,14 @@ export type GithubTools = AllGithubTools & ToolSet
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'
 export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
-export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, addPullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
-export { listIssues, getIssue, createIssue, addIssueComment, closeIssue, listLabels, addLabels, removeLabel, addAssignees, removeAssignees } from './tools/issues'
+export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
+export { listIssues, getIssue, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, addAssignees, removeAssignees } from './tools/issues'
 export { searchCode, searchRepositories } from './tools/search'
 export { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 export { listCheckRuns, getCombinedStatus } from './tools/checks'
-export { listReleases, getLatestRelease, getRelease, createRelease } from './tools/releases'
+export { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 export { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
 export type { CommitIdentity, CommitToolOptions, GithubTool, Octokit, ToolOptions, ToolOverrides } from './types'
 export type { GithubTokenInput } from './core/token'

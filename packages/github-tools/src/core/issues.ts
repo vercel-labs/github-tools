@@ -178,6 +178,85 @@ export async function closeIssueCore({ token, owner, repo, issueNumber, stateRea
   }
 }
 
+export const updateIssueInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  issueNumber: z.number().describe('Issue number'),
+  title: z.string().optional().describe('New issue title'),
+  body: z.string().optional().describe('New issue description (supports Markdown)'),
+  state: z.enum(['open', 'closed']).optional().describe('Open or close the issue — set open to reopen a closed issue, closed to close it'),
+  stateReason: z.enum(['completed', 'not_planned', 'reopened']).optional().describe('Reason for the state change (ignored unless state changes)'),
+  labels: z.array(z.string()).optional().describe('Labels to set on the issue — replaces the existing set'),
+  milestone: z.number().nullable().optional().describe('Milestone number to associate, or null to remove the milestone'),
+  assignees: z.array(z.string()).optional().describe('GitHub usernames to set as assignees — replaces the existing set'),
+})
+
+export const updateIssueDescription = 'Update a GitHub issue — title, body, labels, milestone, or assignees. Set state open to reopen a closed issue, or closed to close it'
+
+/** Not idempotent — each call applies a new revision. */
+export async function updateIssueCore({ token, owner, repo, issueNumber, title, body, state, stateReason, labels, milestone, assignees }: { token: string, owner: string, repo: string, issueNumber: number, title?: string, body?: string, state?: 'open' | 'closed', stateReason?: 'completed' | 'not_planned' | 'reopened', labels?: string[], milestone?: number | null, assignees?: string[] }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.update({
+    owner,
+    repo,
+    issue_number: issueNumber,
+    title,
+    body,
+    state,
+    state_reason: stateReason,
+    labels,
+    milestone,
+    assignees,
+  })
+  return {
+    number: data.number,
+    title: data.title,
+    state: data.state,
+    url: data.html_url,
+    labels: data.labels.map(l => (typeof l === 'string' ? l : l.name)),
+    assignees: data.assignees?.map(a => a.login),
+    milestone: data.milestone?.number ?? null,
+    closedAt: data.closed_at,
+    updatedAt: data.updated_at,
+  }
+}
+
+export const updateIssueCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commentId: z.number().describe('Comment ID (from listIssueComments)'),
+  body: z.string().describe('New comment text (supports Markdown)'),
+})
+
+export const updateIssueCommentDescription = 'Update the body of a comment on a GitHub issue'
+
+/** Not idempotent — each call applies a new revision. */
+export async function updateIssueCommentCore({ token, owner, repo, commentId, body }: { token: string, owner: string, repo: string, commentId: number, body: string }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.updateComment({ owner, repo, comment_id: commentId, body })
+  return {
+    id: data.id,
+    url: data.html_url,
+    body: data.body,
+    updatedAt: data.updated_at,
+  }
+}
+
+export const deleteIssueCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  commentId: z.number().describe('Comment ID to delete'),
+})
+
+export const deleteIssueCommentDescription = 'Delete a comment from a GitHub issue permanently'
+
+/** Not idempotent — deleting an already-deleted comment returns 404 from GitHub. */
+export async function deleteIssueCommentCore({ token, owner, repo, commentId }: { token: string, owner: string, repo: string, commentId: number }) {
+  const octokit = createOctokit(token)
+  await octokit.rest.issues.deleteComment({ owner, repo, comment_id: commentId })
+  return { deleted: true, commentId }
+}
+
 export const listLabelsInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),

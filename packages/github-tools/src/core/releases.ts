@@ -133,3 +133,58 @@ export async function createReleaseCore({ token, owner, repo, tagName, target, n
     createdAt: data.created_at,
   }
 }
+
+export const updateReleaseInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  releaseId: z.number().describe('Release ID (from listReleases or getLatestRelease)'),
+  tagName: z.string().optional().describe('New tag name for the release'),
+  target: z.string().optional().describe('Branch name or commit SHA to tag'),
+  name: z.string().optional().describe('New release title'),
+  body: z.string().optional().describe('New release notes (supports Markdown)'),
+  draft: z.boolean().optional().describe('Mark as a draft release'),
+  prerelease: z.boolean().optional().describe('Mark as a prerelease'),
+})
+
+export const updateReleaseDescription = 'Update an existing release — tag, target, title, notes, draft, or prerelease status'
+
+/** Not idempotent — each call applies a new revision. */
+export async function updateReleaseCore({ token, owner, repo, releaseId, tagName, target, name, body, draft, prerelease }: { token: string, owner: string, repo: string, releaseId: number, tagName?: string, target?: string, name?: string, body?: string, draft?: boolean, prerelease?: boolean }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.repos.updateRelease({
+    owner,
+    repo,
+    release_id: releaseId,
+    tag_name: tagName,
+    target_commitish: target,
+    name,
+    body,
+    draft,
+    prerelease,
+  })
+  return {
+    id: data.id,
+    tagName: data.tag_name,
+    name: data.name,
+    body: data.body,
+    url: data.html_url,
+    draft: data.draft,
+    prerelease: data.prerelease,
+    publishedAt: data.published_at,
+  }
+}
+
+export const deleteReleaseInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  releaseId: z.number().describe('Release ID to delete'),
+})
+
+export const deleteReleaseDescription = 'Delete a release permanently (does not delete the underlying git tag)'
+
+/** Not idempotent — deleting an already-deleted release returns 404 from GitHub. */
+export async function deleteReleaseCore({ token, owner, repo, releaseId }: { token: string, owner: string, repo: string, releaseId: number }) {
+  const octokit = createOctokit(token)
+  await octokit.rest.repos.deleteRelease({ owner, repo, release_id: releaseId })
+  return { deleted: true, releaseId }
+}

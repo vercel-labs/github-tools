@@ -15,6 +15,15 @@ import {
   closeIssueInputSchema,
   closeIssueDescription,
   closeIssueCore,
+  updateIssueInputSchema,
+  updateIssueDescription,
+  updateIssueCore,
+  updateIssueCommentInputSchema,
+  updateIssueCommentDescription,
+  updateIssueCommentCore,
+  deleteIssueCommentInputSchema,
+  deleteIssueCommentDescription,
+  deleteIssueCommentCore,
   listLabelsInputSchema,
   listLabelsDescription,
   listLabelsCore,
@@ -100,6 +109,48 @@ export const closeIssue = (token: GithubTokenInput, { needsApproval = true }: To
     needsApproval,
     inputSchema: closeIssueInputSchema,
     execute: async args => closeIssueStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function updateIssueStep(args: Parameters<typeof updateIssueCore>[0]) {
+  "use step"
+  return updateIssueCore(args)
+}
+
+/** Update a GitHub issue — title, body, state, labels, milestone, or assignees. Requires approval by default. */
+export const updateIssue = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: updateIssueDescription,
+    needsApproval,
+    inputSchema: updateIssueInputSchema,
+    execute: async args => updateIssueStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function updateIssueCommentStep(args: Parameters<typeof updateIssueCommentCore>[0]) {
+  "use step"
+  return updateIssueCommentCore(args)
+}
+
+/** Update the body of a comment on a GitHub issue. Requires approval by default. */
+export const updateIssueComment = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: updateIssueCommentDescription,
+    needsApproval,
+    inputSchema: updateIssueCommentInputSchema,
+    execute: async args => updateIssueCommentStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function deleteIssueCommentStep(args: Parameters<typeof deleteIssueCommentCore>[0]) {
+  "use step"
+  return deleteIssueCommentCore(args)
+}
+
+/** Delete a comment from a GitHub issue permanently. Requires approval by default. */
+export const deleteIssueComment = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: deleteIssueCommentDescription,
+    needsApproval,
+    inputSchema: deleteIssueCommentInputSchema,
+    execute: async args => deleteIssueCommentStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function listLabelsStep(args: Parameters<typeof listLabelsCore>[0]) {

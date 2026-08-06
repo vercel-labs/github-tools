@@ -12,6 +12,12 @@ import {
   createReleaseInputSchema,
   createReleaseDescription,
   createReleaseCore,
+  updateReleaseInputSchema,
+  updateReleaseDescription,
+  updateReleaseCore,
+  deleteReleaseInputSchema,
+  deleteReleaseDescription,
+  deleteReleaseCore,
 } from '../core/releases'
 import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
@@ -67,4 +73,32 @@ export const createRelease = (token: GithubTokenInput, { needsApproval = true }:
     needsApproval,
     inputSchema: createReleaseInputSchema,
     execute: async args => createReleaseStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function updateReleaseStep(args: Parameters<typeof updateReleaseCore>[0]) {
+  "use step"
+  return updateReleaseCore(args)
+}
+
+/** Update an existing release — tag, target, title, notes, draft, or prerelease status. Requires approval by default. */
+export const updateRelease = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: updateReleaseDescription,
+    needsApproval,
+    inputSchema: updateReleaseInputSchema,
+    execute: async args => updateReleaseStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function deleteReleaseStep(args: Parameters<typeof deleteReleaseCore>[0]) {
+  "use step"
+  return deleteReleaseCore(args)
+}
+
+/** Delete a release permanently. Requires approval by default. */
+export const deleteRelease = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: deleteReleaseDescription,
+    needsApproval,
+    inputSchema: deleteReleaseInputSchema,
+    execute: async args => deleteReleaseStep({ token: await resolveGithubToken(token), ...args }),
   })
