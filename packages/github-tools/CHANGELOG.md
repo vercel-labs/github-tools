@@ -1,5 +1,31 @@
 # @github-tools/sdk
 
+## 1.9.0
+
+### Minor Changes
+
+- [#56](https://github.com/vercel-labs/github-tools/pull/56) [`304d0cf`](https://github.com/vercel-labs/github-tools/commit/304d0cfa366b17db6a9466e79e6172bc5bd743e7) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `listCheckRuns` (Checks API) and `getCombinedStatus` (Statuses API) to read CI results from providers beyond GitHub Actions. Included in the `repo-explorer`, `code-review`, `ci-ops`, `security-audit`, and `maintainer` presets, which now request the `checks:read` and `statuses:read` Vercel Connect scopes.
+
+- [#56](https://github.com/vercel-labs/github-tools/pull/56) [`304d0cf`](https://github.com/vercel-labs/github-tools/commit/304d0cfa366b17db6a9466e79e6172bc5bd743e7) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `compareCommits` (ahead/behind counts, commits, and file diffs between two refs) and `getRepositoryTree` (recursive file/directory listing at a ref). `compareCommits` is available in all presets; `getRepositoryTree` is included in `repo-explorer`, `security-audit`, and `maintainer`.
+
+- [#56](https://github.com/vercel-labs/github-tools/pull/56) [`304d0cf`](https://github.com/vercel-labs/github-tools/commit/304d0cfa366b17db6a9466e79e6172bc5bd743e7) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add an optional `maxPages` input to `listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`, `listCheckRuns`, and `listReleases`. Set it alongside `perPage` to sequentially fetch and combine up to that many pages in one tool call, stopping early once a page comes back short — omit it to keep fetching a single page as before.
+
+- [#56](https://github.com/vercel-labs/github-tools/pull/56) [`304d0cf`](https://github.com/vercel-labs/github-tools/commit/304d0cfa366b17db6a9466e79e6172bc5bd743e7) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add release tools: `listReleases`, `getLatestRelease`, `getRelease`, and `createRelease`. Included in the `repo-explorer`, `release-manager`, and `maintainer` presets.
+
+- [#56](https://github.com/vercel-labs/github-tools/pull/56) [`304d0cf`](https://github.com/vercel-labs/github-tools/commit/304d0cfa366b17db6a9466e79e6172bc5bd743e7) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `requestReviewers` (pull requests) and `addAssignees` / `removeAssignees` (issues and pull requests). `requestReviewers` is included in `code-review` and `maintainer`; `addAssignees` / `removeAssignees` are included in `issue-triage` and `maintainer`.
+
+- [#56](https://github.com/vercel-labs/github-tools/pull/56) [`304d0cf`](https://github.com/vercel-labs/github-tools/commit/304d0cfa366b17db6a9466e79e6172bc5bd743e7) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add two presets: `security-audit` (read-only repository, PR, and CI exploration plus issue reporting — no destructive writes) and `release-manager` (releases, diffs, and CI status for cutting releases). Both come with tailored `createGithubAgent` system prompts and Vercel Connect scope mappings, and are available on the `githubExtension()` `preset` option.
+
+- [`48da771`](https://github.com/vercel-labs/github-tools/commit/48da77108fc6dd44c3f5297c19e5607f4205fa19) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add composite context tools (`getPullRequestContext`, `getIssueContext`, `getReleaseContext`, `getCiFailureContext`), omit diff patches by default (`includePatch`), truncate bodies by default (`detail: summary`), support line ranges on `getFileContent`, and add a `context` option to default owner/repo/PR/issue/ref on tools and agents.
+
+- [#53](https://github.com/vercel-labs/github-tools/pull/53) [`9f3eadd`](https://github.com/vercel-labs/github-tools/commit/9f3eadd85d93ae152b40a08d42f17f36c69f419d) Thanks [@HugoRCD](https://github.com/HugoRCD)! - `connectGithubTools` and `connectGithubToken` now accept a `() => string | Promise<string>` resolver in place of a static connector name, re-resolved on every call. Use it to pick a Vercel Connect connector dynamically — e.g. per environment (production vs. preview) or per tenant — instead of hardcoding one connector name.
+
+- [#55](https://github.com/vercel-labs/github-tools/pull/55) [`55fadcc`](https://github.com/vercel-labs/github-tools/commit/55fadcc39683aa77d60cade0a2bb3de4caf790c4) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `include` and `exclude` options for eve integrations. `include` adds tool names on top of a `preset` (union), or serves as the full set standalone; `exclude` removes tool names from the resolved `preset` + `include` set. Available on `EveGithubToolsOptions` (`buildEveToolMap`, `createGithubTools` from `@github-tools/sdk/eve`) and on the `githubExtension()` config schema.
+
+### Patch Changes
+
+- [#55](https://github.com/vercel-labs/github-tools/pull/55) [`55fadcc`](https://github.com/vercel-labs/github-tools/commit/55fadcc39683aa77d60cade0a2bb3de4caf790c4) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Deprecate the direct `@github-tools/sdk/eve` import — `createGithubTools`, the standalone per-tool eve factories, and `connectGithubTools` from `/connect/eve` are now marked `@deprecated` in favor of `@github-tools/eve-extension`, the recommended way to add GitHub tools to an eve agent. Direct imports continue to work; only the documentation and JSDoc guidance changed. See the new [eve extension guide](https://github-tools.com/frameworks/eve-extension).
+
 ## 1.8.2
 
 ### Patch Changes
