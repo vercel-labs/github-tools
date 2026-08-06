@@ -112,6 +112,45 @@ export const PRESET_TOOLS = {
     'listPullRequests', 'getPullRequest',
   ],
   /**
+   * **Discussion moderator** — answer and moderate repository Discussions.
+   *
+   * Tools: `listDiscussions`, `getDiscussion`, `addDiscussionComment`,
+   * `getRepository`, `searchIssues`, `getIssueContext`, `addIssueComment`.
+   *
+   * Prefer discussions for Q&A; link related issues with `getIssueContext` / `addIssueComment` when needed.
+   * Agent prompt: optimized for clear, on-topic discussion replies.
+   */
+  'discussion-moderator': [
+    'listDiscussions', 'getDiscussion', 'addDiscussionComment',
+    'getRepository', 'searchIssues', 'getIssueContext', 'addIssueComment',
+  ],
+  /**
+   * **Notification inbox** — triage authenticated-user notification threads.
+   *
+   * Tools: `listNotifications`, `markNotificationRead`, `getIssue`, `getPullRequest`, `getRepository`.
+   *
+   * Requires a user PAT with the Notifications account permission — not available on Connect installation tokens.
+   * Agent prompt: optimized for clearing inbox noise and following up on actionable threads.
+   */
+  'notification-inbox': [
+    'listNotifications', 'markNotificationRead',
+    'getIssue', 'getPullRequest', 'getRepository',
+  ],
+  /**
+   * **PR author** — open pull requests without the full write surface.
+   *
+   * Tools: `getRepository`, `listBranches`, `getFileContent`, `createBranch`, `createOrUpdateFile`,
+   * `createPullRequest`, `updatePullRequest`, `getPullRequest`, `listPullRequestFiles`,
+   * `compareCommits`, `getCommit`.
+   *
+   * Agent prompt: optimized for branching, editing files, and opening focused PRs.
+   */
+  'pr-author': [
+    'getRepository', 'listBranches', 'getFileContent', 'createBranch', 'createOrUpdateFile',
+    'createPullRequest', 'updatePullRequest', 'getPullRequest', 'listPullRequestFiles',
+    'compareCommits', 'getCommit',
+  ],
+  /**
    * **Maintainer** — full repository maintenance with all read and write tools.
    *
    * Tools: all tools (same as omitting `preset`).

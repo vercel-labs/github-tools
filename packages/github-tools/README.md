@@ -81,7 +81,16 @@ createGithubTools({ token, preset: 'security-audit' })
 // Release manager: releases, compare diff, commits, workflow runs, pull requests
 createGithubTools({ token, preset: 'release-manager' })
 
-// Full maintenance: all tools
+// Discussion moderator: Discussions plus light issue context
+createGithubTools({ token, preset: 'discussion-moderator' })
+
+// Notification inbox: triage user notifications (needs a Notifications PAT)
+createGithubTools({ token, preset: 'notification-inbox' })
+
+// PR author: branches, file edits, and opening PRs
+createGithubTools({ token, preset: 'pr-author' })
+
+// Full catalog: all tools (same as omitting preset)
 createGithubTools({ token, preset: 'maintainer' })
 ```
 
@@ -99,9 +108,12 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
 | `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility, plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
 | `release-manager` | `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`, `compareCommits`, `listCommits`, `getCommit`, `listWorkflowRuns`, `getWorkflowRun`, `listPullRequests`, `getPullRequest`, `getRepository`, `listBranches` |
+| `discussion-moderator` | `listDiscussions`, `getDiscussion`, `addDiscussionComment`, `getRepository`, `searchIssues`, `getIssueContext`, `addIssueComment` |
+| `notification-inbox` | `listNotifications`, `markNotificationRead`, `getIssue`, `getPullRequest`, `getRepository` (requires a Notifications PAT) |
+| `pr-author` | `getRepository`, `listBranches`, `getFileContent`, `createBranch`, `createOrUpdateFile`, `createPullRequest`, `updatePullRequest`, `getPullRequest`, `listPullRequestFiles`, `compareCommits`, `getCommit` |
 | `maintainer` | All 75 tools |
 
-Omit `preset` to get all tools (same as `maintainer`). Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
+Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
 ### Cherry-Picking Tools
 
@@ -639,7 +651,7 @@ type GithubToolsOptions = {
 
 type GithubTokenInput = string | (() => Promise<string>)
 
-type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'security-audit' | 'release-manager' | 'maintainer'
+type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'security-audit' | 'release-manager' | 'discussion-moderator' | 'notification-inbox' | 'pr-author' | 'maintainer'
 ```
 
 ### `createGithubAgent(options)`
@@ -649,13 +661,7 @@ Returns a `ToolLoopAgent` instance with `.generate()` and `.stream()` methods, p
 ```ts
 import { createGithubAgent } from '@github-tools/sdk'
 
-// Minimal: all tools, generic prompt
-const agent = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
-  token: process.env.GITHUB_TOKEN!,
-})
-
-// With preset: scoped tools + tailored prompt
+// Prefer a preset: scoped tools + tailored prompt
 const reviewer = createGithubAgent({
   model: 'anthropic/claude-sonnet-4.6',
   token: process.env.GITHUB_TOKEN!,
@@ -669,6 +675,13 @@ const triager = createGithubAgent({
   token: process.env.GITHUB_TOKEN!,
   preset: 'issue-triage',
   additionalInstructions: 'Focus on the nuxt/ui repository. Always respond in French.',
+})
+
+// Full catalog (omit preset or use maintainer)
+const agent = createGithubAgent({
+  model: 'anthropic/claude-sonnet-4.6',
+  token: process.env.GITHUB_TOKEN!,
+  preset: 'maintainer',
 })
 
 // Full override: replace the built-in prompt entirely
@@ -747,7 +760,7 @@ async function agentTurn(prompt: string) {
 
 > See [`examples/pr-review-agent`](../../examples/pr-review-agent) for a complete PR review agent built with Chat SDK and Vercel Workflow.
 
-All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
+All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
 
 ### `resolveGithubToken(token?)`
 

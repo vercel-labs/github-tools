@@ -43,4 +43,17 @@ describe('connectGithubScopesForPreset', () => {
       expect.arrayContaining(['administration:read', 'administration:write']),
     )
   })
+
+  it('maps discussion-moderator and pr-author scopes', () => {
+    expect(connectGithubScopesForPreset('discussion-moderator')).toEqual(
+      expect.arrayContaining(['discussions:read', 'discussions:write', 'issues:write']),
+    )
+    expect(connectGithubScopesForPreset('pr-author')).toEqual([
+      'contents:read',
+      'contents:write',
+      'metadata:read',
+      'pull_requests:read',
+      'pull_requests:write',
+    ])
+  })
 })

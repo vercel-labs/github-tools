@@ -6,7 +6,7 @@ metadata:
   author: "HugoRCD"
   repository: "https://github.com/vercel-labs/github-tools"
   url: "https://github-tools.com/.well-known/skills"
-  version: "1.2.0"
+  version: "1.3.0"
   keywords: "ai, agent, skill, vercel, ai sdk, github, tools, octokit, durable, workflow"
 ---
 
@@ -24,7 +24,7 @@ Official docs: **https://github-tools.com**, with paths such as `/getting-starte
 - **Reusable agent**: "Use `createGithubAgent` with a preset" / custom system instructions.
 - **Durable**: "Run the agent inside Vercel Workflow" / `"use workflow"` / crash-safe tool steps.
 - **Safety**: "Gate merges / file writes with approval" / fine-grained PAT scopes.
-- **Narrow scope**: Presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `maintainer`) or cherry-picked tool factories.
+- **Narrow scope**: Prefer a preset (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) or cherry-picked tool factories. For multi-role products, use a manager with preset-scoped sub-agents (`/examples/manager-agent-with-subagents`).
 
 ## Install (required)
 
@@ -116,9 +116,12 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 | `ci-ops` | Actions workflows, runs, trigger/cancel/rerun |
 | `security-audit` | Vulnerability scanning, risk reporting |
 | `release-manager` | Changelog generation, release cutting |
+| `discussion-moderator` | Discussions list/get/comment plus light issue context |
+| `notification-inbox` | User notification triage (needs Notifications PAT) |
+| `pr-author` | Branches, file edits, open/update PRs |
 | `maintainer` | All 75 tools |
 
-Array presets merge: `preset: ['code-review', 'issue-triage']`.
+Array presets merge: `preset: ['code-review', 'issue-triage']`. Start with the smallest preset that fits; use `maintainer` when you need the full catalog. Multi-role: manager + sub-agents each with one preset.
 
 ## Working context
 

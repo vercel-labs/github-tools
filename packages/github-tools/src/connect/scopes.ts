@@ -16,10 +16,10 @@ import type { GithubToolPreset } from '../core/presets'
  * regardless of requested scopes — use a fine-grained PAT with the "Gists"
  * account permission for those tools instead.
  *
- * Notification tools in `maintainer` are unscoped for the same reason:
- * `notifications` is an account-level GitHub App permission that only applies
- * to user access tokens, so `listNotifications` / `markNotificationRead` need
- * a PAT with the "Notifications" account permission.
+ * Notification tools in `maintainer` and `notification-inbox` are unscoped for
+ * the same reason: `notifications` is an account-level GitHub App permission
+ * that only applies to user access tokens, so `listNotifications` /
+ * `markNotificationRead` need a PAT with the "Notifications" account permission.
  */
 export const PRESET_CONNECT_SCOPES = {
   'repo-explorer': [
@@ -71,6 +71,27 @@ export const PRESET_CONNECT_SCOPES = {
     'pull_requests:read',
     'actions:read',
     'actions:write',
+  ],
+  'discussion-moderator': [
+    'contents:read',
+    'metadata:read',
+    'issues:read',
+    'issues:write',
+    'discussions:read',
+    'discussions:write',
+  ],
+  'notification-inbox': [
+    'contents:read',
+    'metadata:read',
+    'pull_requests:read',
+    'issues:read',
+  ],
+  'pr-author': [
+    'contents:read',
+    'contents:write',
+    'metadata:read',
+    'pull_requests:read',
+    'pull_requests:write',
   ],
   'maintainer': [
     'contents:read',

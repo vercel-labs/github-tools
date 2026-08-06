@@ -91,7 +91,7 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 
 ### Presets
 
-Seven presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
+Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
 
 ## Chat App Architecture (`apps/chat`)
 

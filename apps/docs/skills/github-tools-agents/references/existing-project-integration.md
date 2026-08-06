@@ -33,8 +33,9 @@ pnpm add workflow @ai-sdk/workflow
 
 ## 4. Scope tools
 
-- Start with a **preset** to limit reachable GitHub APIs (`code-review`, `issue-triage`, …).
-- Expand to `maintainer` or omit preset only when the app must perform every operation.
+- Start with a **preset** to limit reachable GitHub APIs (`code-review`, `issue-triage`, `discussion-moderator`, `pr-author`, …).
+- Use `maintainer` or omit preset when the app needs the full catalog.
+- Multi-role products: manager + sub-agents each with one preset (`/examples/manager-agent-with-subagents`).
 
 ## 5. Token permissions
 

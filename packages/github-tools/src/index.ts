@@ -33,7 +33,7 @@ export { GITHUB_WRITE_TOOLS } from './core/write-tools'
 export type GithubToolsOptions = GithubToolsBaseOptions & {
   /**
    * Restrict the returned tools to a predefined preset.
-   * Omit to get all tools.
+   * Prefer a focused preset for most agents. Omit or use `maintainer` for the full catalog.
    *
    * @see {@link GithubToolPreset} for available presets and included tools.
    *
@@ -44,6 +44,9 @@ export type GithubToolsOptions = GithubToolsBaseOptions & {
    *
    * // Combine presets
    * createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
+   *
+   * // Full catalog
+   * createGithubTools({ token, preset: 'maintainer' })
    * ```
    */
   preset?: GithubToolPreset | GithubToolPreset[]
@@ -62,14 +65,11 @@ export function createGithubTools(options?: GithubToolsOptions): AllGithubTools 
  *
  * Write operations require user approval by default.
  * Control this globally or per-tool via `requireApproval`.
- * Use `preset` to get only the tools you need.
+ * Prefer `preset` to expose only the tools your agent needs.
  * Pass `context` to default owner/repo/PR/issue/ref on tool inputs.
  *
  * @example
  * ```ts
- * // All tools (default)
- * createGithubTools({ token })
- *
  * // Code-review agent — only PR & commit tools
  * createGithubTools({ token, preset: 'code-review' })
  *
@@ -82,6 +82,9 @@ export function createGithubTools(options?: GithubToolsOptions): AllGithubTools 
  *
  * // Combine presets
  * createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
+ *
+ * // Full catalog (same as omitting preset)
+ * createGithubTools({ token, preset: 'maintainer' })
  *
  * // Granular approval
  * createGithubTools({
