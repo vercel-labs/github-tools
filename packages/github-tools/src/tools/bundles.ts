@@ -36,7 +36,7 @@ async function getIssueContextStep(args: Parameters<typeof getIssueContextCore>[
   return getIssueContextCore(args)
 }
 
-/** Fetch an issue plus available labels and recent comments in one call. */
+/** Fetch an issue plus available label names and recent comments in one call. */
 export const getIssueContext = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getIssueContextDescription,

@@ -89,13 +89,18 @@ export const getIssueContextInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   issueNumber: z.number().describe('Issue number'),
-  includeLabels: z.boolean().optional().default(true).describe('Include available repository labels for triage'),
+  includeLabels: z.boolean().optional().default(true).describe('Include available repository label names for triage (names only — use listLabels for descriptions)'),
   includeComments: z.boolean().optional().default(true).describe('Include recent issue comments'),
-  maxComments: z.number().optional().default(20).describe('Max recent comments to include'),
-  detail: detailSchema,
+  maxComments: z.number().optional().default(5).describe('Max recent comments to include (keep small — fetch more only when needed)'),
+  // Context tools are one-shot — default to the full body so the agent does not re-fetch with detail full
+  detail: z
+    .enum(['summary', 'full'])
+    .optional()
+    .default('full')
+    .describe('full returns the complete body (default for this one-shot tool); summary truncates to ~500 chars'),
 })
 
-export const getIssueContextDescription = 'Fetch an issue plus available labels and recent comments in one call — prefer this over separate getIssue / listLabels / comment calls when triaging'
+export const getIssueContextDescription = 'Fetch an issue plus available label names and recent comments in one call — prefer this over separate getIssue / listLabels / comment calls when triaging. Call once; do not re-fetch the same issue.'
 
 export async function getIssueContextCore({
   token,
@@ -105,7 +110,7 @@ export async function getIssueContextCore({
   includeLabels,
   includeComments,
   maxComments,
-  detail = 'summary',
+  detail = 'full',
 }: {
   token: string
   owner: string
@@ -136,7 +141,8 @@ export async function getIssueContextCore({
 
   return {
     issue,
-    ...labels !== undefined ? { labels } : {},
+    // Names only — full label objects (color/description) dominate triage payloads on large repos
+    ...labels !== undefined ? { labelNames: labels.map(label => label.name) } : {},
     ...comments !== undefined ? { comments } : {},
   }
 }

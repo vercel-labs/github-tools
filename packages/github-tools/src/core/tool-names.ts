@@ -43,7 +43,7 @@ export const GITHUB_TOOL_NAMES = {
   listIssues: 'listIssues',
   /** Get detailed information about a specific issue. Body truncated by default (detail: summary). */
   getIssue: 'getIssue',
-  /** Fetch an issue plus available labels and recent comments in one call. */
+  /** Fetch an issue plus available label names and recent comments in one call. */
   getIssueContext: 'getIssueContext',
   /** Create a new issue in a GitHub repository. Requires approval by default. */
   createIssue: 'createIssue',

@@ -111,7 +111,7 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 | Preset | Purpose |
 |--------|---------|
 | `code-review` | PRs, commits, files, review comments |
-| `issue-triage` | Issues, comments, create/close |
+| `issue-triage` | Issues via getIssueContext, comments, create/close, assignees |
 | `repo-explorer` | Read-only + search + gists/workflows reads |
 | `ci-ops` | Actions workflows, runs, trigger/cancel/rerun |
 | `security-audit` | Vulnerability scanning, risk reporting |
@@ -122,7 +122,7 @@ Array presets merge: `preset: ['code-review', 'issue-triage']`.
 
 ## Working context
 
-Pass `context: { owner, repo, pullNumber?, issueNumber?, ref? }` to `createGithubTools` / `createGithubAgent` / `createDurableGithubAgent` to default those fields on tool inputs and inject them into the agent system prompt. Prefer composite tools (`getPullRequestContext`, `getIssueContext`, `getReleaseContext`, `getCiFailureContext`) for multi-part reads. Diff patches are omitted by default — set `includePatch: true` (optionally with `filenames`) when you need specific diffs. Bodies are truncated by default (`detail: 'summary'`) — pass `detail: 'full'` for complete text. Prefer `getFileContent` with `startLine`/`endLine` or `maxLines` for large files.
+Pass `context: { owner, repo, pullNumber?, issueNumber?, ref? }` to `createGithubTools` / `createGithubAgent` / `createDurableGithubAgent` to default those fields on tool inputs and inject them into the agent system prompt. Prefer composite tools (`getPullRequestContext`, `getIssueContext`, `getReleaseContext`, `getCiFailureContext`) for multi-part reads — call follow-up reads in the same step when possible. Diff patches are omitted by default — set `includePatch: true` (optionally with `filenames`) when you need specific diffs. Bodies are truncated by default (`detail: 'summary'`). `getIssueContext` returns `labelNames` (strings) rather than full label objects. Prefer `getFileContent` with `startLine`/`endLine` or `maxLines` for large files.
 
 ## Write safety
 

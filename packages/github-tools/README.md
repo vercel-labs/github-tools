@@ -94,7 +94,7 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | Preset | Tools included |
 |---|---|
 | `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getPullRequestContext`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`, `searchCode`, `listCheckRuns`, `getCombinedStatus`, `addPullRequestComment`, `createPullRequestReview`, `requestReviewers` |
-| `issue-triage` | `listIssues`, `getIssue`, `getIssueContext`, `createIssue`, `addIssueComment`, `closeIssue`, `listLabels`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode` |
+| `issue-triage` | `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `closeIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode` |
 | `repo-explorer` | All read-only tools including gists, workflows, checks/statuses, and releases (no write operations) |
 | `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
 | `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility, plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
@@ -479,7 +479,7 @@ List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`,
 |---|---|
 | `listIssues` | List issues filtered by state and labels |
 | `getIssue` | Get an issue's details (body truncated by default; set `detail: full` for complete text) |
-| `getIssueContext` | Fetch an issue plus available labels and recent comments in one call |
+| `getIssueContext` | Fetch an issue plus label names and recent comments in one call |
 | `createIssue` | Open a new issue |
 | `addIssueComment` | Post a comment on an issue |
 | `closeIssue` | Close an issue (completed or not planned) |

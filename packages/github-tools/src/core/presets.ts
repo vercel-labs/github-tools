@@ -23,14 +23,15 @@ export const PRESET_TOOLS = {
   /**
    * **Issue triage** — manage and organize GitHub issues.
    *
-   * Tools: `listIssues`, `getIssue`, `getIssueContext`, `createIssue`, `addIssueComment`, `closeIssue`,
-   * `listLabels`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode`.
+   * Tools: `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `closeIssue`,
+   * `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode`.
    *
+   * Prefer `getIssueContext` (issue + `labelNames` + recent comments) over separate get/list calls.
    * Agent prompt: optimized for categorizing, labeling, and responding to issues.
    */
   'issue-triage': [
-    'listIssues', 'getIssue', 'getIssueContext', 'createIssue', 'addIssueComment', 'closeIssue',
-    'listLabels', 'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
+    'listIssues', 'getIssueContext', 'createIssue', 'addIssueComment', 'closeIssue',
+    'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
     'getRepository', 'searchRepositories', 'searchCode',
   ],
   /**
