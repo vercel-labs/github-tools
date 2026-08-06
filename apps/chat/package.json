@@ -22,6 +22,7 @@
     "@iconify-json/lucide": "^1.2.121",
     "@iconify-json/simple-icons": "^1.2.93",
     "@libsql/client": "^0.17.4",
+    "@nuxt/fonts": "^0.14.0",
     "@nuxt/ui": "^4.10.0",
     "@nuxthub/core": "^0.10.8",
     "@nuxtjs/mdc": "^0.22.2",
