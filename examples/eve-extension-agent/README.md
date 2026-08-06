@@ -66,9 +66,10 @@ Write-tool approval is posted as a comment via `events["input.requested"]` — e
 channel does not ship that handler by default.
 
 To approve a parked write, reply with exactly `Yes` or `No` (no quote-reply, no `@mention`
-needed). The monorepo applies a temporary `eve@0.30.6` patch so GitHub context is sent as
-turn `context` instead of being prepended onto the comment text — without that, `Yes` never
-matches the approval option.
+needed). The monorepo applies a temporary `eve@0.30.6` patch so (1) GitHub context is turn
+`context` instead of being prepended onto the comment text (which broke `Yes`/`No` matching),
+and (2) bare approval replies send no deferred context (otherwise the model follows up asking
+what to do with “empty” metadata).
 
 ## Customize
 
