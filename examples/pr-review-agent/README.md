@@ -4,7 +4,7 @@ A durable PR review agent in **~60 lines of code**. Tag it on any pull request, 
 
 Built with:
 
-- **[@github-tools/sdk](https://github-tools.com)**: 53 AI-callable GitHub tools (PRs, commits, issues, releases, code search...)
+- **[@github-tools/sdk](https://github-tools.com)**: 57 AI-callable GitHub tools (PRs, commits, issues, releases, code search...)
 - **[Chat SDK](https://chat-sdk.dev)**: multi-platform agent framework with the GitHub adapter
 - **[Vercel Workflow](https://useworkflow.dev)**: durable execution that survives timeouts and restarts
 - **[evlog](https://evlog.dev)**: AI observability (token usage, tool calls, cost, timing)
@@ -36,11 +36,14 @@ Each tool call is a **durable step**: if the server crashes mid-review, the work
 
 ### 1. Environment variables
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env`, then link the Vercel project and pull the OIDC token for [Vercel Connect](https://github-tools.com/guide/vercel-connect):
 
 ```bash
-# GitHub PAT with repo scope (or fine-grained with Issues + PRs read/write)
-GITHUB_TOKEN=ghp_...
+vercel link    # select the project that has the GitHub connector
+vercel env pull
+
+# Connector name must match the linked Connect connector
+GITHUB_CONNECT_CONNECTOR=github/test-github-tools
 
 # Must match your GitHub webhook config
 GITHUB_WEBHOOK_SECRET=...
@@ -48,6 +51,8 @@ GITHUB_WEBHOOK_SECRET=...
 # Agent username, this is how @mentions are detected
 GITHUB_AGENT_USERNAME=my-review-agent
 ```
+
+The workflow mints a short-lived token via `connectGithubToken` from `@github-tools/sdk/connect` (preset `code-review`). Set `GITHUB_TOKEN` only if you prefer a PAT instead of Connect.
 
 > **Important**: use a different GitHub account for the agent than the one commenting. The Chat SDK filters self-messages to prevent loops.
 

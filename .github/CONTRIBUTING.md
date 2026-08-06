@@ -59,9 +59,10 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
    - `packages/github-tools/src/agents.ts` — mention the tool in `PRESET_INSTRUCTIONS` for presets where it changes the agent's behavior
 4. **Chat app metadata** — add a `GITHUB_TOOL_META` entry in `apps/chat/shared/utils/tools/github.ts`
 5. **Documentation**:
-   - `apps/docs/content/docs/4.api/1.tools-catalog.md`
-   - `apps/docs/content/docs/3.guide/2.approval-control.md` (write tools only)
-   - `apps/docs/content/docs/3.guide/1.presets.md` and `apps/docs/content/docs/3.guide/4.tokens-and-auth.md` if the tool changes a preset's tool list or scopes
+   - `apps/docs/content/docs/5.api/1.tools-catalog.md`
+   - `apps/docs/content/docs/4.guide/2.approval-control.md` (write tools only)
+   - `apps/docs/content/docs/4.guide/1.presets.md` and `apps/docs/content/docs/4.guide/4.tokens-and-auth.md` if the tool changes a preset's tool list or scopes
+   - `apps/docs/content/docs/4.guide/6.working-context.md` if the tool is a composite or changes default payload behavior (`detail`, `includePatch`, ranges)
    - `packages/github-tools/README.md` (tool tables, preset tables, write tools list, token permissions) — the root `README.md` is a symlink to this file, no separate edit needed
    - New preset? Add it to `packages/github-tools-eve-extension/extension/extension.ts`'s `presetNameSchema` enum too
 6. **Changeset** — `pnpm changeset` (`minor`)

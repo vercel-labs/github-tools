@@ -1,10 +1,13 @@
-import { createHook, getWorkflowMetadata } from 'workflow'
 import { createGithubAgent } from '@github-tools/sdk'
+import { connectGithubToken } from '@github-tools/sdk/connect'
+import { createHook, getWorkflowMetadata } from 'workflow'
 import { createLogger } from 'evlog'
 import { createAILogger, createEvlogIntegration } from 'evlog/ai'
 import type { ChatTurnPayload, GitHubContext } from '../lib/agent'
 
-async function runAgentTurn(prompt: string, instructions: string) {
+const CONNECTOR = process.env.GITHUB_CONNECT_CONNECTOR || 'github/test-github-tools'
+
+async function runAgentTurn(prompt: string, instructions: string, ctx: GitHubContext) {
   'use step'
   const log = createLogger()
   const ai = createAILogger(log, {
@@ -14,8 +17,14 @@ async function runAgentTurn(prompt: string, instructions: string) {
 
   const agent = createGithubAgent({
     model: ai.wrap('anthropic/claude-sonnet-4.6') as any,
+    token: connectGithubToken(CONNECTOR, { preset: 'code-review' }),
     preset: 'code-review',
     requireApproval: false,
+    context: {
+      owner: ctx.owner,
+      repo: ctx.repo,
+      ...(ctx.isPullRequest ? { pullNumber: ctx.issueNumber } : { issueNumber: ctx.issueNumber }),
+    },
     additionalInstructions: instructions,
     experimental_telemetry: {
       isEnabled: true,
@@ -55,9 +64,9 @@ export async function reviewWorkflow(prompt: string, ctx: GitHubContext) {
 
   using hook = createHook<ChatTurnPayload>({ token: workflowRunId })
 
-  await runAgentTurn(prompt, instructions)
+  await runAgentTurn(prompt, instructions, ctx)
 
   for await (const event of hook) {
-    await runAgentTurn(event.text, instructions)
+    await runAgentTurn(event.text, instructions, ctx)
   }
 }
