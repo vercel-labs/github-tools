@@ -77,6 +77,9 @@ export default defineDynamic({
           ...(override?.toModelOutput !== undefined
             ? { toModelOutput: override.toModelOutput }
             : entry.toModelOutput ? { toModelOutput: entry.toModelOutput } : {}),
+          ...(override?.outputSchema !== undefined && {
+            outputSchema: override.outputSchema,
+          }),
           execute: async (input) => runGithubEveTool(name, input),
         })
       }

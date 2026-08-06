@@ -30,7 +30,8 @@ export type EveToolOverrides = Partial<Record<GithubToolName, {
   description?: string
   approval?: EveApprovalValue
   toModelOutput?: (output: unknown) => ToolModelOutput | Promise<ToolModelOutput>
-  outputSchema?: z.ZodType | Record<string, unknown>
+  /** Zod (or Standard Schema) output schema — plain JSON objects are not supported by eve `defineTool`. */
+  outputSchema?: z.ZodType
 }>>
 
 export type EveGithubToolsOptions = {
