@@ -7,11 +7,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-black?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![license](https://img.shields.io/github/license/vercel-labs/github-tools?color=black)](https://github.com/vercel-labs/github-tools/blob/main/LICENSE)
 
-GitHub tools for [eve](https://eve.dev), packaged as a mountable [eve extension](https://eve.dev/docs/extensions): a single `pnpm add` and a one-line mount, with no CLI setup. Built on top of [`@github-tools/sdk/eve`](../github-tools#eve).
+GitHub tools for [eve](https://eve.dev), packaged as a mountable [eve extension](https://eve.dev/docs/extensions): a single `pnpm add` and a one-line mount, with no CLI setup. Built on [`@github-tools/sdk/eve-runtime`](../github-tools) (shared descriptors, execution, and approval helpers).
 
 Docs: **[github-tools.com/frameworks/eve-extension](https://github-tools.com/frameworks/eve-extension)**
 
-This is **the recommended way** to add GitHub tools to an eve agent. The direct [`@github-tools/sdk/eve`](../github-tools#eve) import is **deprecated** in its favor. It keeps working for agents that already import tools directly into `agent/tools/`, but new agents should mount this extension instead.
+This is **the recommended way** to add GitHub tools to an eve agent. The legacy [`createGithubTools`](../github-tools) / per-tool factories from `@github-tools/sdk/eve` (direct `agent/tools/` registration) are **deprecated** in its favor. They keep working for existing agents, but new agents should mount this extension instead.
 
 ## Installation
 

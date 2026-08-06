@@ -5,6 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     workflow: 'src/workflow.ts',
     eve: 'src/eve.ts',
+    'eve-runtime': 'src/eve-runtime.ts',
     connect: 'src/connect/index.ts',
     'connect/eve': 'src/connect/eve.ts',
   },

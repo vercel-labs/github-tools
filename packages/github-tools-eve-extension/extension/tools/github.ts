@@ -8,7 +8,7 @@ import {
   type EveGithubToolsOptions,
   type EveToolOverrides,
   type GithubToolName,
-} from '@github-tools/sdk/eve'
+} from '@github-tools/sdk/eve-runtime'
 import { defineDynamic, defineTool, type ToolDefinition } from 'eve/tools'
 import extension from '../extension'
 

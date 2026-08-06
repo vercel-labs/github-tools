@@ -1,18 +1,44 @@
+/**
+ * Legacy eve registration for `agent/tools/` (direct import).
+ *
+ * Prefer `@github-tools/eve-extension` for new agents. Shared runtime helpers
+ * used by the extension live on `@github-tools/sdk/eve-runtime` — import those
+ * from there rather than this subpath.
+ */
+
 import { buildEveToolDefinition, createEveGithubToolsDynamic } from './eve/build'
 import type { EveToolFactoryOptions } from './eve/types'
 
-export { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, listResolvedEveToolNames, listEveToolDescriptors, executeGithubEveTool } from './eve/build'
-export { mapEveApprovalValue, resolveEveApproval } from './eve/approval'
-export type { EveApprovalConfig, EveApprovalValue, EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './eve/types'
-export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
-export type { GithubToolName } from './core/tool-names'
-export type { GithubWriteToolName } from './core/write-tools'
-export type { AllGithubTools, GithubToolsForPreset, PickGithubTools } from './core/tool-types'
-export type { CommitIdentity } from './types'
-export { PRESET_TOOLS } from './core/presets'
-export { GITHUB_TOOL_NAMES } from './core/tool-names'
-export { GITHUB_WRITE_TOOLS } from './core/write-tools'
-export { MISSING_EVE_MESSAGE } from './eve/load-eve'
+export {
+  buildEveToolDefinition,
+  buildEveToolMap,
+  createEveGithubToolsDynamic,
+  listResolvedEveToolNames,
+  listEveToolDescriptors,
+  executeGithubEveTool,
+  mapEveApprovalValue,
+  resolveEveApproval,
+  PRESET_TOOLS,
+  GITHUB_TOOL_NAMES,
+  GITHUB_WRITE_TOOLS,
+  MISSING_EVE_MESSAGE,
+} from './eve-runtime'
+export type {
+  EveApprovalConfig,
+  EveApprovalValue,
+  EveGithubToolsOptions,
+  EveToolFactoryOptions,
+  EveToolOverrides,
+  GithubToolPreset,
+  PresetToolName,
+  CombinedPresetToolNames,
+  GithubToolName,
+  GithubWriteToolName,
+  AllGithubTools,
+  GithubToolsForPreset,
+  PickGithubTools,
+  CommitIdentity,
+} from './eve-runtime'
 
 /**
  * Register all GitHub tools (or a preset subset) as eve dynamic capabilities.

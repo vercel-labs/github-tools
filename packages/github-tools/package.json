@@ -29,6 +29,10 @@
       "types": "./dist/eve.d.mts",
       "import": "./dist/eve.mjs"
     },
+    "./eve-runtime": {
+      "types": "./dist/eve-runtime.d.mts",
+      "import": "./dist/eve-runtime.mjs"
+    },
     "./connect": {
       "types": "./dist/connect.d.mts",
       "import": "./dist/connect.mjs"

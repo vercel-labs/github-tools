@@ -17,6 +17,9 @@ import type { ConnectGithubEveToolsOptions } from './types'
  * (see https://github.com/vercel-labs/github-tools/issues/51 and
  * https://github-tools.com/frameworks/eve-extension).
  *
+ * Shared runtime helpers used by the extension are on `@github-tools/sdk/eve-runtime`
+ * (not deprecated).
+ *
  * TODO(eve-connect-bundle): eve's authored-module bundler inlines workspace-linked
  * SDK code and code-splits `@vercel/connect` unless the agent sets
  * `build.externalDependencies: ['@vercel/connect']` in `agent.ts`. Prefer the

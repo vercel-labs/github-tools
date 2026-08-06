@@ -73,6 +73,8 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 - `src/index.ts` — public API: `createGithubTools()`, `allTools` composition, re-exports
 - `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`) with preset-specific system prompts
 - `src/workflow.ts` — `createDurableGithubAgent()` (`WorkflowAgent` from `@ai-sdk/workflow`), exported from `@github-tools/sdk/workflow` subpath
+- `src/eve-runtime.ts` — shared eve primitives for `@github-tools/eve-extension` (`listEveToolDescriptors`, `executeGithubEveTool`, approval helpers); public export `@github-tools/sdk/eve-runtime`
+- `src/eve.ts` — deprecated consumer `createGithubTools` / per-tool factories for `agent/tools/` (`@github-tools/sdk/eve`)
 - `src/client.ts` — `createOctokit(token)` wrapper
 - `src/types.ts` — `ToolOptions`, `CommitToolOptions`, `ToolOverrides`, `GithubTool`
 - `src/tools/` — domain files (the `ai` SDK wrapper layer): `repository.ts`, `pull-requests.ts`, `issues.ts`, `commits.ts`, `gists.ts`, `workflows.ts`, `search.ts`, `checks.ts`, `releases.ts`, `bundles.ts`

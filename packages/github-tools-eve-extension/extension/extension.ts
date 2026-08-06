@@ -1,5 +1,5 @@
 import type { GithubConnectorInput } from '@github-tools/sdk/connect'
-import { GITHUB_TOOL_NAMES, type GithubToolName } from '@github-tools/sdk/eve'
+import { GITHUB_TOOL_NAMES, type GithubToolName } from '@github-tools/sdk/eve-runtime'
 import { defineExtension } from 'eve/extension'
 import { z } from 'zod'
 

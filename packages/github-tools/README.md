@@ -315,7 +315,7 @@ connectGithubTools(
 
 ## eve
 
-[eve](https://eve.dev) is Vercel's filesystem-first agent framework. `@github-tools/eve-extension` is the **recommended** way to add GitHub tools to an eve agent: a mountable [eve extension](https://eve.dev/docs/extensions), no CLI setup, no direct SDK import in `agent/tools/`. The lower-level `@github-tools/sdk/eve` subpath (`defineDynamic`) is **deprecated** in its favor; it keeps working and is documented below for existing agents.
+[eve](https://eve.dev) is Vercel's filesystem-first agent framework. `@github-tools/eve-extension` is the **recommended** way to add GitHub tools to an eve agent: a mountable [eve extension](https://eve.dev/docs/extensions), no CLI setup, no direct SDK import in `agent/tools/`. The legacy `createGithubTools` / per-tool factories on `@github-tools/sdk/eve` are **deprecated** for that registration pattern; they keep working and are documented below for existing agents. Shared runtime helpers for the extension live on `@github-tools/sdk/eve-runtime` (not deprecated).
 
 ### eve extension (recommended)
 
