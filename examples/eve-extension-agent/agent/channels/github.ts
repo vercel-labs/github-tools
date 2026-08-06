@@ -7,12 +7,20 @@ const mentionPattern = new RegExp(
   'iu',
 )
 
+/** Bare HITL replies — must be the whole comment (no quote-reply). */
+const approvalReplyPattern = /^(yes|no|approve|deny)$/i
+
+function isApprovalReply(body: string): boolean {
+  return approvalReplyPattern.test(body.trim())
+}
+
 export default githubChannel({
   botName,
   credentials: connectGitHubCredentials('github/test-github-tools'),
   onComment: (ctx, comment) => {
     if (ctx.sender.login.toLowerCase() !== 'hugorcd') return null
-    if (!mentionPattern.test(comment.body)) return null
+    // Mentions start turns; bare Yes/No resume parked tool approvals.
+    if (!mentionPattern.test(comment.body) && !isApprovalReply(comment.body)) return null
     return { auth: defaultGitHubAuth(ctx) }
   },
   // eve's GitHub defaults omit input.requested (unlike Slack/Linear/Discord).
@@ -23,12 +31,15 @@ export default githubChannel({
         const lines = [request.prompt]
         if (request.kind === 'tool-approval' && request.action) {
           lines.push('', `Tool: \`${request.action.toolName}\``)
-          lines.push('```json', JSON.stringify(request.action.input, null, 2), '```')
+          // Keep the comment short — full JSON bodies get split by GitHub's
+          // comment size limit and break the approval UX.
+          const summary = summarizeToolInput(request.action.input)
+          if (summary) lines.push(summary)
         }
         if (request.options?.length) {
           lines.push(
             '',
-            `Reply with ${request.options.map(option => `\`${option.label}\``).join(' or ')}.`,
+            `Reply with ${request.options.map(option => `\`${option.label}\``).join(' or ')} (exact word, no quote-reply).`,
           )
         }
         await channel.thread.post(lines.join('\n'))
@@ -36,3 +47,14 @@ export default githubChannel({
     },
   },
 })
+
+function summarizeToolInput(input: Record<string, unknown>): string | undefined {
+  const parts: string[] = []
+  for (const key of ['owner', 'repo', 'title', 'number', 'pullNumber', 'issueNumber'] as const) {
+    const value = input[key]
+    if (typeof value === 'string' || typeof value === 'number') {
+      parts.push(`${key}: ${value}`)
+    }
+  }
+  return parts.length > 0 ? parts.join(' · ') : undefined
+}

@@ -62,8 +62,13 @@ agent/
 
 The **channels** are how clients reach the agent (HTTP or GitHub). The **extension** is how the
 agent calls the GitHub API. GitHub turns only dispatch when **HugoRCD** `@mention`s `botName`.
-Write-tool approval is posted as a comment (`Yes` / `No` reply) via `events["input.requested"]`
-— eve's GitHub channel does not ship that handler by default.
+Write-tool approval is posted as a comment via `events["input.requested"]` — eve's GitHub
+channel does not ship that handler by default.
+
+To approve a parked write, reply with exactly `Yes` or `No` (no quote-reply, no `@mention`
+needed). The monorepo applies a temporary `eve@0.30.6` patch so GitHub context is sent as
+turn `context` instead of being prepended onto the comment text — without that, `Yes` never
+matches the approval option.
 
 ## Customize
 

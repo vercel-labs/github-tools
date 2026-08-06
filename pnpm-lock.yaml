@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  eve@0.30.6: 7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811
+
 importers:
 
   .:
@@ -189,13 +192,13 @@ importers:
         version: link:../../packages/github-tools
       '@vercel/connect':
         specifier: ^0.6.1
-        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
       ai:
         specifier: ^7.0.52
         version: 7.0.52(zod@4.4.3)
       eve:
         specifier: ^0.30.6
-        version: 0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -211,13 +214,13 @@ importers:
         version: link:../../packages/github-tools-eve-extension
       '@vercel/connect':
         specifier: ^0.6.1
-        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
       ai:
         specifier: ^7.0.52
         version: 7.0.52(zod@4.4.3)
       eve:
         specifier: ^0.30.6
-        version: 0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -244,7 +247,7 @@ importers:
         version: 4.36.0(ai@6.0.242(zod@4.4.3))(workflow@4.8.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.0)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(typescript@6.0.3)(ws@8.21.1))(zod@4.4.3)
       evlog:
         specifier: latest
-        version: 2.24.0(78eaab7d137a0091faac3e15be3cb302)
+        version: 2.24.0(f41d9b3dfac8e07aa06ec6b20a18ea06)
       workflow:
         specifier: latest
         version: 4.8.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.0)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(typescript@6.0.3)(ws@8.21.1)
@@ -291,7 +294,7 @@ importers:
         version: 26.1.2
       '@vercel/connect':
         specifier: ^0.6.1
-        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
       ai:
         specifier: ^7.0.52
         version: 7.0.52(zod@4.4.3)
@@ -300,7 +303,7 @@ importers:
         version: 10.8.0(jiti@2.7.0)
       eve:
         specifier: ^0.30.6
-        version: 0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(@volar/typescript@2.4.28)(tsx@4.21.0)(typescript@6.0.3)(unrun@0.2.39)(vue-tsc@3.3.9(typescript@6.0.3))
@@ -328,13 +331,13 @@ importers:
         version: 26.1.2
       '@vercel/connect':
         specifier: ^0.6.1
-        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
       eslint:
         specifier: ^10.8.0
         version: 10.8.0(jiti@2.7.0)
       eve:
         specifier: ^0.30.6
-        version: 0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -17937,21 +17940,21 @@ snapshots:
     dependencies:
       execa: 5.1.1
 
-  '@vercel/connect@0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@vercel/connect@0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
       '@vercel/oidc': 3.8.2
     optionalDependencies:
       '@ai-sdk/mcp': 1.0.58(zod@4.4.3)
       ai: 7.0.52(zod@4.4.3)
-      eve: 0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+      eve: 0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
 
-  '@vercel/connect@0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@vercel/connect@0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
       '@vercel/oidc': 3.8.2
     optionalDependencies:
       '@ai-sdk/mcp': 1.0.58(zod@4.4.3)
       ai: 7.0.52(zod@4.4.3)
-      eve: 0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+      eve: 0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
 
   '@vercel/functions@3.5.0(@aws-sdk/credential-provider-web-identity@3.972.49)':
     dependencies:
@@ -20811,7 +20814,7 @@ snapshots:
 
   etag@1.8.1: {}
 
-  eve@0.30.6(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(@vercel/blob@2.6.1)(@vercel/functions@3.7.7(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.1))(@vercel/queue@0.3.1)(ai@6.0.242(zod@4.4.3))(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(better-sqlite3@12.11.1)(pg@8.22.0))(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)):
+  eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(@vercel/blob@2.6.1)(@vercel/functions@3.7.7(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.1))(@vercel/queue@0.3.1)(ai@6.0.242(zod@4.4.3))(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(better-sqlite3@12.11.1)(pg@8.22.0))(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       ai: 6.0.242(zod@4.4.3)
       nitro: 3.0.260610-beta(@libsql/client@0.17.4)(@vercel/blob@2.6.1)(@vercel/functions@3.7.7(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.1))(@vercel/queue@0.3.1)(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(better-sqlite3@12.11.1)(pg@8.22.0))(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -20859,7 +20862,7 @@ snapshots:
       - zephyr-agent
     optional: true
 
-  eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)):
+  eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       ai: 7.0.52(zod@4.4.3)
       nitro: 3.0.260610-beta(@vercel/queue@0.3.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -20906,7 +20909,7 @@ snapshots:
       - xml2js
       - zephyr-agent
 
-  eve@0.30.6(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)):
+  eve@0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       ai: 7.0.52(zod@4.4.3)
       nitro: 3.0.260610-beta(@vercel/queue@0.3.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -20970,12 +20973,12 @@ snapshots:
     dependencies:
       eventsource-parser: 3.1.0
 
-  evlog@2.24.0(78eaab7d137a0091faac3e15be3cb302):
+  evlog@2.24.0(f41d9b3dfac8e07aa06ec6b20a18ea06):
     optionalDependencies:
       '@nestjs/common': 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nuxt/kit': 4.5.1(magic-string@1.1.0)(magicast@0.5.4)(oxc-parser@0.135.0)(rolldown@1.2.2)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
       ai: 6.0.242(zod@4.4.3)
-      eve: 0.30.6(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(@vercel/blob@2.6.1)(@vercel/functions@3.7.7(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.1))(@vercel/queue@0.3.1)(ai@6.0.242(zod@4.4.3))(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(better-sqlite3@12.11.1)(pg@8.22.0))(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+      eve: 0.30.6(patch_hash=7aa913ddcb2055528feaf36d86ed572074f41a519f0bdc9ccad1c76e476c5811)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(@vercel/blob@2.6.1)(@vercel/functions@3.7.7(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.1))(@vercel/queue@0.3.1)(ai@6.0.242(zod@4.4.3))(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(better-sqlite3@12.11.1)(pg@8.22.0))(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
       express: 5.2.1
       h3: 1.15.11
       nitro: 3.0.260610-beta(@libsql/client@0.17.4)(@vercel/blob@2.6.1)(@vercel/functions@3.7.7(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.1))(@vercel/queue@0.3.1)(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(better-sqlite3@12.11.1)(pg@8.22.0))(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
