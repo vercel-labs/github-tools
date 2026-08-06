@@ -81,9 +81,6 @@ export default defineAppConfig({
       },
     },
     contentToc: {
-      defaultVariants: {
-        highlightVariant: 'straight',
-      },
       slots: {
         trigger: 'text-sm font-normal text-highlighted',
         link: 'text-sm font-normal py-1',
