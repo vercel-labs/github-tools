@@ -48,6 +48,7 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   removeAssignees: { title: 'Remove Assignees', label: 'Assignees removed', labelActive: 'Removing assignees', icon: 'i-lucide-user-minus' },
   searchCode: { title: 'Search Code', label: 'Code searched', labelActive: 'Searching code', icon: 'i-lucide-search-code' },
   searchRepositories: { title: 'Search Repositories', label: 'Repositories searched', labelActive: 'Searching repositories', icon: 'i-lucide-search' },
+  searchIssues: { title: 'Search Issues', label: 'Issues searched', labelActive: 'Searching issues', icon: 'i-lucide-search' },
   listCommits: { title: 'List Commits', label: 'Commits listed', labelActive: 'Listing commits', icon: 'i-lucide-git-commit-horizontal' },
   getCommit: { title: 'Get Commit', label: 'Commit fetched', labelActive: 'Fetching commit', icon: 'i-lucide-git-commit-horizontal' },
   getBlame: { title: 'Git Blame', label: 'Blame loaded', labelActive: 'Loading blame', icon: 'i-lucide-scroll-text' },

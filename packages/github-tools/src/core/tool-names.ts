@@ -73,10 +73,12 @@ export const GITHUB_TOOL_NAMES = {
   addAssignees: 'addAssignees',
   /** Remove assignees from an issue or pull request. Requires approval by default. */
   removeAssignees: 'removeAssignees',
-  /** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. */
+  /** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. Results include matching text snippets when GitHub returns them. */
   searchCode: 'searchCode',
   /** Search for GitHub repositories by keyword, topic, language, or other qualifiers. */
   searchRepositories: 'searchRepositories',
+  /** Search for issues and pull requests across GitHub using search qualifiers like "repo:owner/name is:open". */
+  searchIssues: 'searchIssues',
   /** List commits for a GitHub repository. Filter by file path to see commits that touched a file. For line-by-line attribution at a given ref, use getBlame instead. */
   listCommits: 'listCommits',
   /** Get detailed information about a specific commit, including the list of files changed. Patches omitted by default. */

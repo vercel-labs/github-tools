@@ -315,6 +315,12 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(search.searchRepositoriesCore, ctx),
     },
     {
+      name: 'searchIssues',
+      description: search.searchIssuesDescription,
+      inputSchema: search.searchIssuesInputSchema,
+      execute: withToken(search.searchIssuesCore, ctx),
+    },
+    {
       name: 'listCommits',
       description: commits.listCommitsDescription,
       inputSchema: commits.listCommitsInputSchema,

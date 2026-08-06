@@ -116,7 +116,7 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 | `ci-ops` | Actions workflows, runs, trigger/cancel/rerun |
 | `security-audit` | Vulnerability scanning, risk reporting |
 | `release-manager` | Changelog generation, release cutting |
-| `maintainer` | All 65 tools |
+| `maintainer` | All 66 tools |
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`.
 

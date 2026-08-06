@@ -8,6 +8,9 @@ import {
   searchRepositoriesInputSchema,
   searchRepositoriesDescription,
   searchRepositoriesCore,
+  searchIssuesInputSchema,
+  searchIssuesDescription,
+  searchIssuesCore,
 } from '../core/search'
 
 async function searchCodeStep(args: Parameters<typeof searchCodeCore>[0]) {
@@ -15,7 +18,7 @@ async function searchCodeStep(args: Parameters<typeof searchCodeCore>[0]) {
   return searchCodeCore(args)
 }
 
-/** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. */
+/** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. Results include matching text snippets when GitHub returns them. */
 export const searchCode = (token: GithubTokenInput): GithubTool =>
   tool({
     description: searchCodeDescription,
@@ -34,4 +37,17 @@ export const searchRepositories = (token: GithubTokenInput): GithubTool =>
     description: searchRepositoriesDescription,
     inputSchema: searchRepositoriesInputSchema,
     execute: async args => searchRepositoriesStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function searchIssuesStep(args: Parameters<typeof searchIssuesCore>[0]) {
+  "use step"
+  return searchIssuesCore(args)
+}
+
+/** Search for issues and pull requests across GitHub using search qualifiers like "repo:owner/name is:open". */
+export const searchIssues = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: searchIssuesDescription,
+    inputSchema: searchIssuesInputSchema,
+    execute: async args => searchIssuesStep({ token: await resolveGithubToken(token), ...args }),
   })

@@ -26,7 +26,7 @@ export const PRESET_TOOLS = {
    *
    * Tools: `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`,
    * `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`,
-   * `searchRepositories`, `searchCode`.
+   * `searchRepositories`, `searchCode`, `searchIssues`.
    *
    * Prefer `getIssueContext` (issue + `labelNames` + recent comments) over separate get/list calls.
    * Reopen a closed issue with `updateIssue` (`state: 'open'`) — there is no separate reopen tool.
@@ -35,7 +35,7 @@ export const PRESET_TOOLS = {
   'issue-triage': [
     'listIssues', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
-    'getRepository', 'searchRepositories', 'searchCode',
+    'getRepository', 'searchRepositories', 'searchCode', 'searchIssues',
   ],
   /**
    * **CI operations** — monitor and manage GitHub Actions workflows.
@@ -66,7 +66,7 @@ export const PRESET_TOOLS = {
     'listIssues', 'getIssue', 'getIssueContext',
     'listLabels',
     'listCommits', 'getCommit', 'getBlame', 'compareCommits',
-    'searchCode', 'searchRepositories',
+    'searchCode', 'searchRepositories', 'searchIssues',
     'listGists', 'getGist', 'listGistComments',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext',
@@ -74,7 +74,7 @@ export const PRESET_TOOLS = {
   /**
    * **Security audit** — review repositories for security risks and report findings.
    *
-   * Tools: read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`,
+   * Tools: read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `searchIssues`, `listCommits`, `getCommit`,
    * `getBlame`, `compareCommits`), PR and CI visibility (`listPullRequests`, `getPullRequest`, `listPullRequestFiles`,
    * `getPullRequestContext`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `listWorkflows`, `listWorkflowRuns`,
    * `getWorkflowRun`, `listWorkflowJobs`), plus `createIssue`, `addIssueComment`, and `addLabels` to report findings.
@@ -85,7 +85,7 @@ export const PRESET_TOOLS = {
   'security-audit': [
     'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree',
     'listCommits', 'getCommit', 'getBlame', 'compareCommits',
-    'searchCode', 'searchRepositories',
+    'searchCode', 'searchRepositories', 'searchIssues',
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'getPullRequestContext',
     'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs',
@@ -120,7 +120,7 @@ export const PRESET_TOOLS = {
     'listIssues', 'getIssue', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'listLabels', 'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
     'listCommits', 'getCommit', 'getBlame', 'compareCommits',
-    'searchCode', 'searchRepositories',
+    'searchCode', 'searchRepositories', 'searchIssues',
     'listGists', 'getGist', 'listGistComments', 'createGist', 'updateGist', 'deleteGist', 'createGistComment',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',
     'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',

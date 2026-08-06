@@ -33,7 +33,7 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 | Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
 | A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
 
-65 tools cover repositories, branches, pull requests, issues, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
+66 tools cover repositories, branches, pull requests, issues, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -94,12 +94,12 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | Preset | Tools included |
 |---|---|
 | `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getPullRequestContext`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`, `searchCode`, `listCheckRuns`, `getCombinedStatus`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers` |
-| `issue-triage` | `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode` |
+| `issue-triage` | `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode`, `searchIssues` |
 | `repo-explorer` | All read-only tools including gists, workflows, checks/statuses, and releases (no write operations) |
 | `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
 | `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility, plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
 | `release-manager` | `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`, `compareCommits`, `listCommits`, `getCommit`, `listWorkflowRuns`, `getWorkflowRun`, `listPullRequests`, `getPullRequest`, `getRepository`, `listBranches` |
-| `maintainer` | All 65 tools |
+| `maintainer` | All 66 tools |
 
 Omit `preset` to get all tools (same as `maintainer`). Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
@@ -554,8 +554,9 @@ List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`,
 
 | Tool | Description |
 |---|---|
-| `searchCode` | Search code across GitHub with qualifier support |
+| `searchCode` | Search code across GitHub with qualifier support (includes matching text snippets when available) |
 | `searchRepositories` | Search repositories by keyword, topic, language, stars, … |
+| `searchIssues` | Search issues and pull requests using qualifiers like `is:open`, `type:pr`, or `label:bug` |
 
 ## GitHub Token
 
@@ -582,7 +583,7 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | **Checks** | Read-only | `listCheckRuns`, `getCiFailureContext` |
 | **Commit statuses** | Read-only | `getCombinedStatus`, `getCiFailureContext` |
 
-Search tools (`searchCode`, `searchRepositories`) work with any token.
+Search tools (`searchCode`, `searchRepositories`, `searchIssues`) work with any token.
 
 ### Classic token
 
