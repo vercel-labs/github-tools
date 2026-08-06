@@ -10,6 +10,15 @@ Minimal [eve](https://eve.dev) agent mounting `@github-tools/eve-extension` with
 The connector `github/test-github-tools` must be linked to your Vercel project and installed on
 the GitHub org/repos you want the agent to access.
 
+For GitHub @mentions / webhooks, attach the Connect trigger to eve's GitHub route (not the
+default Connect path):
+
+```bash
+vercel connect attach github/test-github-tools --triggers --trigger-path /eve/v1/github --yes
+```
+
+Set `botName` in `agent/channels/github.ts` to the GitHub App slug people `@mention`.
+
 ### 2. Pull the OIDC token for local dev
 
 ```bash
@@ -44,9 +53,15 @@ pnpm dev:eve-extension-agent
 agent/
   agent.ts               # eve agent config
   instructions.md        # system prompt
+  channels/
+    github.ts            # inbound GitHub (@mentions / webhooks)
   extensions/
-    github.ts            # GitHub tools via @github-tools/eve-extension
+    github.ts            # GitHub API tools via @github-tools/eve-extension
 ```
+
+The **channel** is how GitHub reaches the agent. The **extension** is how the agent calls the
+GitHub API. You can use either alone (HTTP `eve` channel + extension for tools-only, or
+channel + other tools); this example wires both through the same Connect connector.
 
 ## Customize
 

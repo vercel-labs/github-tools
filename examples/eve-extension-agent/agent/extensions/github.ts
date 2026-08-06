@@ -4,6 +4,7 @@ export default githubExtension({
   connector: 'github/test-github-tools',
   preset: 'code-review',
   // include: ['getRepository', 'listPullRequests', 'mergePullRequest'],
+  include: ['createIssue'],
   requireApproval: {
     addPullRequestComment: ({ toolInput }: { toolInput?: { owner?: string } }) => toolInput?.owner !== 'vercel-labs',
   },
