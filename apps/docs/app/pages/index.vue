@@ -63,7 +63,7 @@ const pillars = [
   },
   {
     title: 'Token-efficient',
-    description: 'Shaped outputs, truncated patches, paginated list tools, and toolpick integration, built for the context window.',
+    description: 'Shaped outputs, truncated patches, paginated list tools, and toolpick integration keep token usage down.',
     to: '/api/tools-catalog',
     icon: 'i-lucide-gauge',
   },
@@ -118,7 +118,7 @@ const activeEveFile = ref(0)
             Give any agent GitHub access
           </h1>
           <p class="max-w-2xl text-lg/8 text-toned">
-            A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution, built for the context window. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.
+            A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.
           </p>
           <div class="flex flex-wrap items-center gap-3">
             <UButton
@@ -160,6 +160,12 @@ const activeEveFile = ref(0)
           </p>
           <div class="grid min-w-0 gap-4 lg:grid-cols-2">
           <div class="flex min-w-0 flex-col overflow-hidden rounded-xl border border-default bg-elevated">
+            <div class="border-b border-default px-4 py-3.5">
+              <p class="text-sm/6 text-toned">
+                <span class="font-semibold text-highlighted">Build a standalone agent in 3 files.</span>
+                With the eve extension, one file registers every tool your agent needs, durable approval included.
+              </p>
+            </div>
             <div class="flex items-center gap-1 overflow-x-auto border-b border-default px-2 pt-2">
               <button
                 v-for="(file, index) in eveFiles"
@@ -173,11 +179,7 @@ const activeEveFile = ref(0)
               </button>
             </div>
             <pre class="min-h-32 min-w-0 flex-1 overflow-x-auto whitespace-pre px-4 py-4 font-mono text-xs leading-relaxed text-toned sm:text-sm"><code>{{ eveFiles[activeEveFile]!.code }}</code></pre>
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-default px-4 py-3.5">
-              <p class="text-sm/6 text-toned">
-                <span class="font-semibold text-highlighted">A GitHub agent in 3 files.</span>
-                One file registers every tool your agent needs, durable approval included.
-              </p>
+            <div class="flex items-center justify-end border-t border-default px-4 py-3.5">
               <UButton
                 to="/frameworks/eve-extension"
                 variant="link"
@@ -228,14 +230,14 @@ const activeEveFile = ref(0)
               v-for="item in pillars"
               :key="item.title"
               :to="item.to"
-              class="vercel-card group flex flex-col justify-between"
+              class="vercel-card group flex flex-col gap-3"
               :class="item.featured ? 'lg:row-span-2 min-h-64' : 'min-h-36'"
             >
-              <UIcon :name="item.icon" class="size-5 text-toned transition group-hover:text-highlighted" />
-              <div class="space-y-2">
+              <div class="flex items-center gap-2.5">
+                <UIcon :name="item.icon" class="size-5 shrink-0 text-toned transition group-hover:text-highlighted" />
                 <p class="text-lg font-semibold text-highlighted">{{ item.title }}</p>
-                <p class="text-sm/6 text-toned">{{ item.description }}</p>
               </div>
+              <p class="text-sm/6 text-toned">{{ item.description }}</p>
             </NuxtLink>
           </div>
         </section>
