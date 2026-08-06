@@ -33,7 +33,7 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 | Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
 | A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
 
-66 tools cover repositories, branches, pull requests, issues, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
+75 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -94,12 +94,12 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | Preset | Tools included |
 |---|---|
 | `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getPullRequestContext`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`, `searchCode`, `listCheckRuns`, `getCombinedStatus`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers` |
-| `issue-triage` | `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `getRepository`, `searchRepositories`, `searchCode`, `searchIssues` |
-| `repo-explorer` | All read-only tools including gists, workflows, checks/statuses, and releases (no write operations) |
+| `issue-triage` | `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`, `searchRepositories`, `searchCode`, `searchIssues` |
+| `repo-explorer` | All read-only tools including discussions, gists, workflows, checks/statuses, and releases (no write operations) |
 | `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
 | `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility, plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
 | `release-manager` | `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`, `compareCommits`, `listCommits`, `getCommit`, `listWorkflowRuns`, `getWorkflowRun`, `listPullRequests`, `getPullRequest`, `getRepository`, `listBranches` |
-| `maintainer` | All 66 tools |
+| `maintainer` | All 75 tools |
 
 Omit `preset` to get all tools (same as `maintainer`). Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
@@ -146,7 +146,7 @@ createGithubTools({
 })
 ```
 
-Write tools: `createBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`, `updateRelease`, `deleteRelease`.
+Write tools: `createBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction`, `addDiscussionComment`, `markNotificationRead`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`, `updateRelease`, `deleteRelease`.
 
 All other tools are read-only and never require approval.
 
@@ -418,9 +418,11 @@ eve replays completed steps but re-runs steps interrupted mid-execution. Write t
 | `closeIssue` | Natural when already closed |
 | `createBranch` | Natural when branch exists at same SHA |
 | `removeAssignees` | Natural: removing an assignee that isn't assigned is a no-op on GitHub |
+| `addIssueReaction`, `addCommentReaction` | Natural: GitHub returns the existing reaction when the user already reacted with the same content |
+| `markNotificationRead` | Natural when the thread is already read |
 | `updateIssue`, `updatePullRequest`, `updateRelease`, `updateIssueComment`, `updatePullRequestComment` | **Not** idempotent: each call applies a new revision |
 | `deleteIssueComment`, `deletePullRequestComment`, `deleteRelease` | **Not** idempotent: deleting an already-deleted resource returns 404 from GitHub |
-| `addIssueComment`, `createIssue`, `mergePullRequest`, `createRelease`, … | **Not** idempotent: each call creates new side effects |
+| `addIssueComment`, `addDiscussionComment`, `createIssue`, `mergePullRequest`, `createRelease`, … | **Not** idempotent: each call creates new side effects |
 
 Gate non-idempotent writes behind `always()` or `once()` where replay safety matters.
 
@@ -496,6 +498,32 @@ List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`,
 | `removeLabel` | Remove a label from an issue or pull request |
 | `addAssignees` | Assign users to an issue or pull request |
 | `removeAssignees` | Remove assignees from an issue or pull request |
+
+### Reactions
+
+Pull request conversations share the issue numbering, so the issue-level tools work on PRs too.
+
+| Tool | Description |
+|---|---|
+| `listIssueReactions` | List reactions on an issue or pull request, with per-emoji counts |
+| `addIssueReaction` | React to an issue or pull request (`+1`, `-1`, `laugh`, `confused`, `heart`, `hooray`, `rocket`, `eyes`) |
+| `listCommentReactions` | List reactions on an issue or pull request comment |
+| `addCommentReaction` | React to an issue or pull request comment |
+
+### Discussions
+
+| Tool | Description |
+|---|---|
+| `listDiscussions` | List discussions, most recently updated first, optionally filtered by category name (cursor-paginated) |
+| `getDiscussion` | Get a discussion by number (body truncated by default; set `detail: full` for complete text) |
+| `addDiscussionComment` | Post a comment on a discussion |
+
+### Notifications
+
+| Tool | Description |
+|---|---|
+| `listNotifications` | List notification threads for the authenticated user (unread only unless `all: true`) |
+| `markNotificationRead` | Mark a single notification thread as read |
 
 ### Gists
 
@@ -574,10 +602,13 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | **Administration** | Read and write | `forkRepository`, `createRepository` |
 | **Pull requests** | Read-only | `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviews`, `getPullRequestContext` |
 | **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers` |
-| **Issues** | Read-only | `listIssues`, `getIssue`, `getIssueContext`, `listLabels` |
-| **Issues** | Read and write | `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees` |
+| **Issues** | Read-only | `listIssues`, `getIssue`, `getIssueContext`, `listLabels`, `listIssueReactions`, `listCommentReactions` |
+| **Issues** | Read and write | `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction` |
+| **Discussions** | Read-only | `listDiscussions`, `getDiscussion` |
+| **Discussions** | Read and write | `addDiscussionComment` |
 | **Gists** | Read-only | `listGists`, `getGist`, `listGistComments` |
 | **Gists** | Read and write | `createGist`, `updateGist`, `deleteGist`, `createGistComment` |
+| **Notifications** (account) | Read and write | `listNotifications`, `markNotificationRead` |
 | **Actions** | Read-only | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getCiFailureContext` |
 | **Actions** | Read and write | `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
 | **Checks** | Read-only | `listCheckRuns`, `getCiFailureContext` |

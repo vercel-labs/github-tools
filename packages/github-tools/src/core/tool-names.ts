@@ -121,6 +121,24 @@ export const GITHUB_TOOL_NAMES = {
   getCombinedStatus: 'getCombinedStatus',
   /** Diagnose CI failures for a ref — combined status, failing checks, and failed workflow jobs in one call. */
   getCiFailureContext: 'getCiFailureContext',
+  /** List discussions in a GitHub repository, most recently updated first, optionally filtered by category. */
+  listDiscussions: 'listDiscussions',
+  /** Get a GitHub discussion by number. Body truncated by default (detail: summary). */
+  getDiscussion: 'getDiscussion',
+  /** Add a comment to a GitHub discussion. Requires approval by default. */
+  addDiscussionComment: 'addDiscussionComment',
+  /** List notification threads for the authenticated user. Requires a token with notifications access. */
+  listNotifications: 'listNotifications',
+  /** Mark a single notification thread as read. Requires approval by default. */
+  markNotificationRead: 'markNotificationRead',
+  /** List reactions on an issue or pull request conversation, with per-emoji counts. */
+  listIssueReactions: 'listIssueReactions',
+  /** React to an issue or pull request with an emoji. Requires approval by default. */
+  addIssueReaction: 'addIssueReaction',
+  /** List reactions on an issue or pull request comment, with per-emoji counts. */
+  listCommentReactions: 'listCommentReactions',
+  /** React to an issue or pull request comment with an emoji. Requires approval by default. */
+  addCommentReaction: 'addCommentReaction',
   /** List releases for a GitHub repository, newest first (includes drafts and prereleases). */
   listReleases: 'listReleases',
   /** Get the latest published release for a GitHub repository (excludes drafts and prereleases). Body truncated by default. */

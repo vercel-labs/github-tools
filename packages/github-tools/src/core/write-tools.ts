@@ -55,6 +55,14 @@ export const GITHUB_WRITE_TOOLS = {
   deleteGist: 'deleteGist',
   /** Add a comment to a gist. Requires approval by default. */
   createGistComment: 'createGistComment',
+  /** Add a comment to a GitHub discussion. Requires approval by default. */
+  addDiscussionComment: 'addDiscussionComment',
+  /** Mark a single notification thread as read. Requires approval by default. */
+  markNotificationRead: 'markNotificationRead',
+  /** React to an issue or pull request with an emoji. Requires approval by default. */
+  addIssueReaction: 'addIssueReaction',
+  /** React to an issue or pull request comment with an emoji. Requires approval by default. */
+  addCommentReaction: 'addCommentReaction',
   /** Trigger a workflow via workflow_dispatch event. Requires approval by default. */
   triggerWorkflow: 'triggerWorkflow',
   /** Cancel an in-progress workflow run. Requires approval by default. */

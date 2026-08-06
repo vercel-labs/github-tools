@@ -4,10 +4,10 @@ import type { GithubToolPreset } from '../core/presets'
  * Vercel Connect scope strings mapped to each {@link GithubToolPreset}.
  *
  * Scopes mirror GitHub App permissions (`contents`, `pull_requests`, `issues`,
- * `actions`, `checks`, `statuses`, `administration`, `metadata`) and must cover
- * every read/write family a preset's tools touch, not just its primary domain.
- * Release tools fall under the `contents` permission on GitHub Apps, so they
- * need no scope of their own.
+ * `discussions`, `actions`, `checks`, `statuses`, `administration`, `metadata`)
+ * and must cover every read/write family a preset's tools touch, not just its
+ * primary domain. Release tools fall under the `contents` permission on GitHub
+ * Apps, and reaction tools under `issues`, so neither needs a scope of its own.
  *
  * Gist tools in `repo-explorer` and `maintainer` are intentionally left
  * unscoped: the Gists API only accepts GitHub App *user* access tokens, never
@@ -15,6 +15,11 @@ import type { GithubToolPreset } from '../core/presets'
  * installation tokens. Gist calls made with a Connect-derived token 403
  * regardless of requested scopes — use a fine-grained PAT with the "Gists"
  * account permission for those tools instead.
+ *
+ * Notification tools in `maintainer` are unscoped for the same reason:
+ * `notifications` is an account-level GitHub App permission that only applies
+ * to user access tokens, so `listNotifications` / `markNotificationRead` need
+ * a PAT with the "Notifications" account permission.
  */
 export const PRESET_CONNECT_SCOPES = {
   'repo-explorer': [
@@ -22,6 +27,7 @@ export const PRESET_CONNECT_SCOPES = {
     'metadata:read',
     'pull_requests:read',
     'issues:read',
+    'discussions:read',
     'actions:read',
     'checks:read',
     'statuses:read',
@@ -74,6 +80,8 @@ export const PRESET_CONNECT_SCOPES = {
     'pull_requests:write',
     'issues:read',
     'issues:write',
+    'discussions:read',
+    'discussions:write',
     'actions:read',
     'actions:write',
     'checks:read',

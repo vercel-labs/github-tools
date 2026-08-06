@@ -5,8 +5,10 @@ import * as bundles from '../core/bundles'
 import * as checks from '../core/checks'
 import * as commits from '../core/commits'
 import { mergeContextArgs, softenContextSchema, type GithubToolsContext } from '../core/context'
+import * as discussions from '../core/discussions'
 import * as gists from '../core/gists'
 import * as issues from '../core/issues'
+import * as notifications from '../core/notifications'
 import {
   compareCommitsToModelOutput,
   getCommitToModelOutput,
@@ -15,6 +17,7 @@ import {
   listPullRequestFilesToModelOutput,
 } from '../core/model-output'
 import * as pullRequests from '../core/pull-requests'
+import * as reactions from '../core/reactions'
 import * as releases from '../core/releases'
 import * as repository from '../core/repository'
 import * as search from '../core/search'
@@ -301,6 +304,64 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: issues.removeAssigneesDescription,
       inputSchema: issues.removeAssigneesInputSchema,
       execute: withToken(issues.removeAssigneesCore, ctx),
+    },
+    {
+      name: 'listIssueReactions',
+      description: reactions.listIssueReactionsDescription,
+      inputSchema: reactions.listIssueReactionsInputSchema,
+      execute: withToken(reactions.listIssueReactionsCore, ctx),
+    },
+    {
+      name: 'addIssueReaction',
+      writeTool: 'addIssueReaction',
+      description: reactions.addIssueReactionDescription,
+      inputSchema: reactions.addIssueReactionInputSchema,
+      execute: withToken(reactions.addIssueReactionCore, ctx),
+    },
+    {
+      name: 'listCommentReactions',
+      description: reactions.listCommentReactionsDescription,
+      inputSchema: reactions.listCommentReactionsInputSchema,
+      execute: withToken(reactions.listCommentReactionsCore, ctx),
+    },
+    {
+      name: 'addCommentReaction',
+      writeTool: 'addCommentReaction',
+      description: reactions.addCommentReactionDescription,
+      inputSchema: reactions.addCommentReactionInputSchema,
+      execute: withToken(reactions.addCommentReactionCore, ctx),
+    },
+    {
+      name: 'listDiscussions',
+      description: discussions.listDiscussionsDescription,
+      inputSchema: discussions.listDiscussionsInputSchema,
+      execute: withToken(discussions.listDiscussionsCore, ctx),
+    },
+    {
+      name: 'getDiscussion',
+      description: discussions.getDiscussionDescription,
+      inputSchema: discussions.getDiscussionInputSchema,
+      execute: withToken(discussions.getDiscussionCore, ctx),
+    },
+    {
+      name: 'addDiscussionComment',
+      writeTool: 'addDiscussionComment',
+      description: discussions.addDiscussionCommentDescription,
+      inputSchema: discussions.addDiscussionCommentInputSchema,
+      execute: withToken(discussions.addDiscussionCommentCore, ctx),
+    },
+    {
+      name: 'listNotifications',
+      description: notifications.listNotificationsDescription,
+      inputSchema: notifications.listNotificationsInputSchema,
+      execute: withToken(notifications.listNotificationsCore, ctx),
+    },
+    {
+      name: 'markNotificationRead',
+      writeTool: 'markNotificationRead',
+      description: notifications.markNotificationReadDescription,
+      inputSchema: notifications.markNotificationReadInputSchema,
+      execute: withToken(notifications.markNotificationReadCore, ctx),
     },
     {
       name: 'searchCode',

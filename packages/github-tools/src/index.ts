@@ -2,6 +2,9 @@ import type { ToolSet } from 'ai'
 import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
 import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
 import { listIssues, getIssue, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, addAssignees, removeAssignees } from './tools/issues'
+import { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
+import { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
+import { listNotifications, markNotificationRead } from './tools/notifications'
 import { searchCode, searchRepositories, searchIssues } from './tools/search'
 import { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
@@ -149,6 +152,15 @@ export function createGithubTools({
     removeLabel: removeLabel(resolveToken, approval('removeLabel')),
     addAssignees: addAssignees(resolveToken, approval('addAssignees')),
     removeAssignees: removeAssignees(resolveToken, approval('removeAssignees')),
+    listIssueReactions: listIssueReactions(resolveToken),
+    addIssueReaction: addIssueReaction(resolveToken, approval('addIssueReaction')),
+    listCommentReactions: listCommentReactions(resolveToken),
+    addCommentReaction: addCommentReaction(resolveToken, approval('addCommentReaction')),
+    listDiscussions: listDiscussions(resolveToken),
+    getDiscussion: getDiscussion(resolveToken),
+    addDiscussionComment: addDiscussionComment(resolveToken, approval('addDiscussionComment')),
+    listNotifications: listNotifications(resolveToken),
+    markNotificationRead: markNotificationRead(resolveToken, approval('markNotificationRead')),
     listGists: listGists(resolveToken),
     getGist: getGist(resolveToken),
     listGistComments: listGistComments(resolveToken),
@@ -200,6 +212,9 @@ export { createOctokit } from './client'
 export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
 export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
 export { listIssues, getIssue, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, addAssignees, removeAssignees } from './tools/issues'
+export { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
+export { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
+export { listNotifications, markNotificationRead } from './tools/notifications'
 export { searchCode, searchRepositories, searchIssues } from './tools/search'
 export { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'

@@ -8,6 +8,7 @@ describe('connectGithubScopesForPreset', () => {
       'metadata:read',
       'pull_requests:read',
       'issues:read',
+      'discussions:read',
       'actions:read',
       'checks:read',
       'statuses:read',
@@ -21,12 +22,13 @@ describe('connectGithubScopesForPreset', () => {
       'metadata:read',
       'pull_requests:read',
       'issues:read',
+      'discussions:read',
       'actions:read',
       'checks:read',
       'statuses:read',
       'pull_requests:write',
     ]))
-    expect(scopes).toHaveLength(8)
+    expect(scopes).toHaveLength(9)
   })
 
   it('returns the union of all preset scopes when no preset is given', () => {

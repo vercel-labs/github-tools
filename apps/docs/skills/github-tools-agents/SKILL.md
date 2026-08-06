@@ -111,12 +111,12 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 | Preset | Purpose |
 |--------|---------|
 | `code-review` | PRs, commits, files, review comments |
-| `issue-triage` | Issues via getIssueContext, comments, create/close, assignees |
-| `repo-explorer` | Read-only + search + gists/workflows reads |
+| `issue-triage` | Issues via getIssueContext, comments, reactions, create/close, assignees |
+| `repo-explorer` | Read-only + search + discussions/gists/workflows reads |
 | `ci-ops` | Actions workflows, runs, trigger/cancel/rerun |
 | `security-audit` | Vulnerability scanning, risk reporting |
 | `release-manager` | Changelog generation, release cutting |
-| `maintainer` | All 66 tools |
+| `maintainer` | All 75 tools |
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`.
 
@@ -127,7 +127,8 @@ Pass `context: { owner, repo, pullNumber?, issueNumber?, ref? }` to `createGithu
 ## Write safety
 
 - Default: writes go through **approval** (AI SDK tool approval flow) unless `requireApproval: false` or per-tool overrides.
-- Map token scopes to tools (Actions, Contents, Issues, Pull requests, Gists, …).
+- Map token scopes to tools (Actions, Contents, Issues, Pull requests, Discussions, Gists, …). Reactions fall under Issues. Gist and notification tools need account-level PAT permissions and do not work with a Vercel Connect installation token.
+- Prefer `addIssueReaction` / `addCommentReaction` over a comment when only acknowledging a thread.
 
 ## Durable steps
 
