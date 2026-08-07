@@ -1,5 +1,29 @@
 # @github-tools/sdk
 
+## 1.10.0
+
+### Minor Changes
+
+- [#62](https://github.com/vercel-labs/github-tools/pull/62) [`6887d70`](https://github.com/vercel-labs/github-tools/commit/6887d709b0d094a2925d0ce00993648bc64c05f4) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add 8 mutation tools: `updateIssue` (also reopens closed issues via `state: 'open'`), `updateIssueComment`, `deleteIssueComment`, `updatePullRequest` (title, body, state, base, and draft status — draft toggling uses the GitHub GraphQL API), `updatePullRequestComment`, `deletePullRequestComment`, `updateRelease`, and `deleteRelease`. Added to the `code-review`, `issue-triage`, `release-manager`, and `maintainer` presets.
+
+- [#61](https://github.com/vercel-labs/github-tools/pull/61) [`df53f0f`](https://github.com/vercel-labs/github-tools/commit/df53f0f9016d8d0b4ff8dea67f2ba26dccb5825f) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Make eve-extension tools durable across multi-turn Workflow replay (inline execute + serializable tool names, fixes [#51](https://github.com/vercel-labs/github-tools/issues/51)), add a `context` option to the extension config, and introduce `@github-tools/sdk/eve-runtime` for shared eve primitives used by the extension. Only the legacy `createGithubTools` / per-tool factories on `@github-tools/sdk/eve` (and `@github-tools/sdk/connect/eve`) stay deprecated for direct `agent/tools/` registration.
+
+- [#64](https://github.com/vercel-labs/github-tools/pull/64) [`eb48422`](https://github.com/vercel-labs/github-tools/commit/eb484226c97e835343f543b90d303273aaf8f5ca) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add discussion, notification, and reaction tools (75 total).
+
+  - Discussions (GraphQL): `listDiscussions`, `getDiscussion`, `addDiscussionComment`. `listDiscussions` filters by category name and paginates by cursor (`after` / `endCursor`); `getDiscussion` truncates the body unless `detail: 'full'`. Added to `repo-explorer` (reads) and `maintainer`.
+  - Notifications: `listNotifications`, `markNotificationRead`. Added to `maintainer`. Notifications are account-level, so they need a PAT with the "Notifications" permission and do not work with a Vercel Connect installation token.
+  - Reactions: `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, covering issues, pull request conversations, and their comments. Added to `issue-triage` and `maintainer`. Covered by the existing Issues permission.
+
+  `PRESET_CONNECT_SCOPES` now requests `discussions:read` for `repo-explorer` and `discussions:read` / `discussions:write` for `maintainer`.
+
+- [#67](https://github.com/vercel-labs/github-tools/pull/67) [`2937d88`](https://github.com/vercel-labs/github-tools/commit/2937d8832158f85c54e4f966006abfcc97f8454a) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add three focused presets: `discussion-moderator`, `notification-inbox`, and `pr-author`. Prefer a preset for most agents; use `maintainer` or omit `preset` when you need the full catalog. Docs and the agent skill lead with presets and the manager/sub-agents composition pattern.
+
+- [#63](https://github.com/vercel-labs/github-tools/pull/63) [`239f43d`](https://github.com/vercel-labs/github-tools/commit/239f43dac7ca1366ba03cad3e2b812f5dfe66e32) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `searchIssues` to search issues and pull requests with GitHub qualifiers (`is:open`, `type:pr`, `label:bug`, …), with `sort` and `order` options. Added to the `issue-triage`, `repo-explorer`, `security-audit`, and `maintainer` presets. `searchCode` now requests text-match snippets from GitHub and returns them as `textMatches` on each result.
+
+### Patch Changes
+
+- [#58](https://github.com/vercel-labs/github-tools/pull/58) [`a0df8d9`](https://github.com/vercel-labs/github-tools/commit/a0df8d96e73ff47d9dc828d2994b699e56819d11) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Make `getIssueContext` return `labelNames` (strings only), default to the full issue body (one-shot, no re-fetch), use fewer comments, slim the `issue-triage` preset (drop redundant `getIssue` / `listLabels`), and tighten agent presets so independent reads run in the same step.
+
 ## 1.9.0
 
 ### Minor Changes
