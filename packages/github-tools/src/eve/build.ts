@@ -1,9 +1,10 @@
 import type { ToolDefinition } from 'eve/tools'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from '../core/presets'
 import { createGithubTokenResolver } from '../core/token'
-import { mapEveApprovalValue, resolveEveApproval } from './approval'
+import { resolveEveApprovalDefinition } from './approval'
 import { getEveTools } from './load-eve'
 import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
+import type { GithubWriteToolName } from '../core/write-tools'
 import { runGithubToolStep } from './steps'
 import type { EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './types'
 
@@ -20,10 +21,24 @@ function applyOverrides<T extends ToolDefinition>(
   return {
     ...tool,
     ...override.description !== undefined && { description: override.description },
-    ...override.approval !== undefined && { approval: mapEveApprovalValue(override.approval) },
     ...override.toModelOutput !== undefined && { toModelOutput: override.toModelOutput },
     ...override.outputSchema !== undefined && { outputSchema: override.outputSchema },
   }
+}
+
+function resolveToolApproval(
+  name: GithubToolName,
+  writeTool: GithubWriteToolName | undefined,
+  options: BuildOptions,
+): ToolDefinition['approval'] | undefined {
+  if (!writeTool) return undefined
+
+  return resolveEveApprovalDefinition(
+    writeTool,
+    options.requireApproval,
+    options.authorizeApprovalResponse,
+    options.overrides?.[name]?.approval,
+  )
 }
 
 export function buildEveToolDefinition(
@@ -46,9 +61,7 @@ export function buildEveToolDefinition(
   const tool = defineTool({
     description: entry.description,
     inputSchema: entry.inputSchema,
-    ...(entry.writeTool && {
-      approval: resolveEveApproval(entry.writeTool, options.requireApproval),
-    }),
+    ...(entry.writeTool && { approval: resolveToolApproval(name, entry.writeTool, options) }),
     ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
     execute: async (input) => runGithubToolStep(name, input as Record<string, unknown>, ctx),
   })
@@ -75,9 +88,7 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap
     const tool = defineTool({
       description: entry.description,
       inputSchema: entry.inputSchema,
-      ...(entry.writeTool && {
-        approval: resolveEveApproval(entry.writeTool, options.requireApproval),
-      }),
+      ...(entry.writeTool && { approval: resolveToolApproval(entry.name, entry.writeTool, options) }),
       ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
       execute: async (input) => runGithubToolStep(entry.name, input as Record<string, unknown>, ctx),
     })

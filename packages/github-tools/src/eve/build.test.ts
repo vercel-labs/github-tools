@@ -11,7 +11,7 @@ describe('createGithubTools eve integration', () => {
     }
   })
 
-  it('returns a defineDynamic wrapper with session.started resolver', async () => {
+  it('resolves tools once when a session starts', async () => {
     const dynamic = createEveGithubToolsDynamic({ token: 'ghp_test', preset: 'code-review' })
     expect(dynamic).toMatchObject({ kind: expect.any(String), events: { 'session.started': expect.any(Function) } })
 
@@ -60,18 +60,30 @@ describe('createGithubTools eve integration', () => {
     coreSpy.mockRestore()
   })
 
-  it('maps approval config onto write tools in the dynamic set', async () => {
+  it('composes response authorization with global and overridden request policies', () => {
+    const response = vi.fn()
     const tools = buildEveToolMap({
       token: 'ghp_test',
       preset: 'issue-triage',
-      requireApproval: {
-        createIssue: 'once',
-        addIssueComment: false,
-      },
+      requireApproval: { createIssue: 'once' },
+      authorizeApprovalResponse: response,
+      overrides: { createIssue: { approval: 'never' } },
     })
 
-    expect(tools.createIssue?.approval).toBeDefined()
-    expect(tools.addIssueComment?.approval).toBeDefined()
+    expect(tools.createIssue?.approval).toEqual({
+      request: expect.any(Function),
+      response,
+    })
     expect(tools.listIssues?.approval).toBeUndefined()
+  })
+
+  it('uses a per-tool response authorization policy', () => {
+    const response = vi.fn()
+    const tool = buildEveToolDefinition('createIssue', {
+      token: 'ghp_test',
+      authorizeApprovalResponse: { createIssue: response },
+    })
+
+    expect(tool.approval).toEqual({ request: expect.any(Function), response })
   })
 })

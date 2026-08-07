@@ -1,4 +1,4 @@
-import type { Approval, ToolModelOutput } from 'eve/tools'
+import type { ApprovalPolicy, ApprovalResponsePolicy, ToolModelOutput } from 'eve/tools'
 import type { z } from 'zod'
 import type { GithubToolPreset } from '../core/presets'
 import type { GithubTokenInput } from '../core/token'
@@ -11,15 +11,22 @@ import type { CommitIdentity } from '../types'
  * - `true` / `'always'` → require approval on every call
  * - `false` / `'never'` → skip approval
  * - `'once'` → require approval only the first time per session
- * - predicate → input-dependent gate (eve `Approval` shape)
+ * - predicate → input-dependent request gate (eve `ApprovalPolicy`)
  * - eve helpers (`always()`, `once()`, `never()`) → passthrough
+ *
+ * Response authorization is configured separately with
+ * `authorizeApprovalResponse`, ensuring request overrides cannot remove it.
  */
 export type EveApprovalValue =
   | boolean
   | 'always'
   | 'once'
   | 'never'
-  | Approval
+  | ApprovalPolicy
+
+export type EveResponseApprovalConfig =
+  | ApprovalResponsePolicy
+  | Partial<Record<GithubWriteToolName, ApprovalResponsePolicy>>
 
 export type EveApprovalConfig =
   | boolean
@@ -47,6 +54,8 @@ export type EveGithubToolsOptions = {
    * @see {@link EveApprovalConfig} for global and per-tool options.
    */
   requireApproval?: EveApprovalConfig
+  /** Authorize the authenticated responder before an approval is settled. */
+  authorizeApprovalResponse?: EveResponseApprovalConfig
   /**
    * Per-tool overrides for description, approval, output shaping, and output schema.
    *

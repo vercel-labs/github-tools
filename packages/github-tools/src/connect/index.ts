@@ -1,3 +1,4 @@
+export { connectGithubApproverAuth } from './approver'
 export { PRESET_CONNECT_SCOPES, connectGithubScopesForPreset } from './scopes'
 export { connectGithubToken } from './token'
 export { connectGithubTools } from './tools'

@@ -1,7 +1,7 @@
 import type { ApprovalContext } from 'eve/tools'
 import { describe, expect, it } from 'vitest'
 import { always, never, once } from 'eve/tools/approval'
-import { mapEveApprovalValue, resolveEveApproval } from './approval'
+import { mapEveApprovalValue, resolveEveApproval, resolveEveApprovalDefinition } from './approval'
 
 const approvalCtx = {
   session: { id: 's1', auth: {}, turn: 1 },
@@ -48,6 +48,14 @@ describe('resolveEveApproval', () => {
   })
 
   it('keeps unlisted write tools on always() fail-safe default', () => {
-    expect(resolveEveApproval('deleteGist', { mergePullRequest: false })!(approvalCtx)).toBe('user-approval')
+    expect(resolveEveApproval('deleteGist', { mergePullRequest: false })(approvalCtx)).toBe('user-approval')
+  })
+
+  it('keeps response authorization when an override replaces the request policy', () => {
+    const response = async () => ({ status: 'allowed' as const })
+    const approval = resolveEveApprovalDefinition('mergePullRequest', undefined, response, 'never')
+
+    expect(approval).toEqual({ request: expect.any(Function), response })
+    expect((approval as { request: import('eve/tools').ApprovalPolicy }).request(approvalCtx)).toBe('not-applicable')
   })
 })
