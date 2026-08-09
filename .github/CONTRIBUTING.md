@@ -55,7 +55,7 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
    - `packages/github-tools/src/core/presets.ts` — add to every preset it belongs in (update each preset's JSDoc tool list too)
    - `packages/github-tools/src/index.ts` — add to `allTools` in `createGithubTools()`, re-export the factory at the bottom
    - `packages/github-tools/src/eve/registry.ts` — add an entry so the tool is reachable from `defineDynamic` (direct eve import) and the eve extension
-   - `packages/github-tools/src/connect/scopes.ts` — add any new Vercel Connect scope the tool needs to `PRESET_CONNECT_SCOPES` for every preset that includes it
+   - `packages/github-tools/src/connect/scopes.ts` — add any new Vercel Connect scope the tool needs to `PRESET_CONNECT_SCOPES` for every preset that includes it, and to `TOOL_CONNECT_SCOPES` for the tool itself (used when `include` / `exclude` derive scopes)
    - `packages/github-tools/src/agents.ts` — mention the tool in `PRESET_INSTRUCTIONS` for presets where it changes the agent's behavior
 4. **Chat app metadata** — add a `GITHUB_TOOL_META` entry in `apps/chat/shared/utils/tools/github.ts`
 5. **Documentation**:
