@@ -1,7 +1,7 @@
 import type { ToolDefinition } from 'eve/tools'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from '../core/presets'
 import { createGithubTokenResolver } from '../core/token'
-import { mapEveApprovalValue, resolveEveApproval } from './approval'
+import { isEveApprovalDisabled, mapEveApprovalValue, resolveEveToolApproval } from './approval'
 import { getEveTools } from './load-eve'
 import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
 import { runGithubToolStep } from './steps'
@@ -33,13 +33,21 @@ function applyOverrides<T extends ToolDefinition>(
 ): T {
   const override = overrides?.[name]
   if (!override) return tool
-  return {
+
+  const next: T = {
     ...tool,
     ...override.description !== undefined && { description: override.description },
-    ...override.approval !== undefined && { approval: mapEveApprovalValue(override.approval) },
     ...override.toModelOutput !== undefined && { toModelOutput: override.toModelOutput },
     ...override.outputSchema !== undefined && { outputSchema: override.outputSchema },
   }
+
+  if (override.approval === undefined) return next
+  if (isEveApprovalDisabled(override.approval)) {
+    const rest = { ...next }
+    delete (rest as { approval?: unknown }).approval
+    return rest
+  }
+  return { ...next, approval: mapEveApprovalValue(override.approval) }
 }
 
 export function buildEveToolDefinition(
@@ -60,12 +68,14 @@ export function buildEveToolDefinition(
     throw new Error(`Unknown GitHub tool: ${name}`)
   }
 
+  const approval = entry.writeTool
+    ? resolveEveToolApproval(entry.writeTool, options.requireApproval)
+    : undefined
+
   const tool = defineTool({
     description: entry.description,
     inputSchema: entry.inputSchema,
-    ...(entry.writeTool && {
-      approval: resolveEveApproval(entry.writeTool, options.requireApproval),
-    }),
+    ...(approval && { approval }),
     ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
     execute: async (input) => runGithubToolStep(name, input as Record<string, unknown>, ctx),
   })
@@ -90,12 +100,14 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap
   for (const entry of registry) {
     if (!isAllowed(entry.name)) continue
 
+    const approval = entry.writeTool
+      ? resolveEveToolApproval(entry.writeTool, options.requireApproval)
+      : undefined
+
     const tool = defineTool({
       description: entry.description,
       inputSchema: entry.inputSchema,
-      ...(entry.writeTool && {
-        approval: resolveEveApproval(entry.writeTool, options.requireApproval),
-      }),
+      ...(approval && { approval }),
       ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
       execute: async (input) => runGithubToolStep(entry.name, input as Record<string, unknown>, ctx),
     })
@@ -113,7 +125,7 @@ export function createEveGithubToolsDynamic(options: EveGithubToolsOptions = {})
   // Deferred — eve does not yet expose managed GitHub tokens on the session context.
   return defineDynamic({
     events: {
-      'session.started': async () => buildEveToolMap(options),
+      'step.started': async () => buildEveToolMap(options),
     },
   })
 }

@@ -13,7 +13,7 @@ export {
   listEveToolDescriptors,
   executeGithubEveTool,
 } from './eve/build'
-export { mapEveApprovalValue, resolveEveApproval } from './eve/approval'
+export { mapEveApprovalValue, resolveEveApproval, resolveEveToolApproval, isEveApprovalDisabled } from './eve/approval'
 export type {
   EveApprovalConfig,
   EveApprovalValue,

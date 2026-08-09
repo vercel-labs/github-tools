@@ -187,6 +187,7 @@ export const TOOL_CONNECT_SCOPES = {
   listIssues: ISSUES_READ,
   getIssue: ISSUES_READ,
   getIssueContext: ISSUES_READ,
+  listIssueComments: ISSUES_READ,
   createIssue: ISSUES_WRITE,
   addIssueComment: ISSUES_WRITE,
   updateIssueComment: ISSUES_WRITE,

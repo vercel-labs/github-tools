@@ -18,6 +18,8 @@ export {
   executeGithubEveTool,
   mapEveApprovalValue,
   resolveEveApproval,
+  resolveEveToolApproval,
+  isEveApprovalDisabled,
   PRESET_TOOLS,
   GITHUB_TOOL_NAMES,
   GITHUB_WRITE_TOOLS,

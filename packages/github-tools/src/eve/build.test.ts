@@ -11,11 +11,11 @@ describe('createGithubTools eve integration', () => {
     }
   })
 
-  it('returns a defineDynamic wrapper with session.started resolver', async () => {
+  it('returns a defineDynamic wrapper with step.started resolver', async () => {
     const dynamic = createEveGithubToolsDynamic({ token: 'ghp_test', preset: 'code-review' })
-    expect(dynamic).toMatchObject({ kind: expect.any(String), events: { 'session.started': expect.any(Function) } })
+    expect(dynamic).toMatchObject({ kind: expect.any(String), events: { 'step.started': expect.any(Function) } })
 
-    const tools = await dynamic.events['session.started']!({}, {} as never)
+    const tools = await dynamic.events['step.started']!({}, {} as never)
     expect(Object.keys(tools!).sort()).toEqual([...PRESET_TOOLS['code-review']].sort())
   })
 
@@ -123,7 +123,7 @@ describe('createGithubTools eve integration', () => {
     })
 
     expect(tools.createIssue?.approval).toBeDefined()
-    expect(tools.addIssueComment?.approval).toBeDefined()
+    expect(tools.addIssueComment?.approval).toBeUndefined()
     expect(tools.listIssues?.approval).toBeUndefined()
   })
 })

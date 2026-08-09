@@ -402,7 +402,7 @@ Dynamic tools are named by their **bare map key**: the model sees `listPullReque
 | Value | Maps to | Behavior |
 |---|---|---|
 | `true` / `'always'` | `always()` | Require approval on every call |
-| `false` / `'never'` | `never()` | Skip approval |
+| `false` / `'never'` | omit `approval` | Skip approval (eve default) |
 | `'once'` | `once()` | Approve once per session, then auto-allow |
 | predicate | custom `Approval` | Input-dependent gate; booleans map to `user-approval` / `not-applicable` |
 | `always()` / `once()` / `never()` | passthrough | Use eve helpers directly |

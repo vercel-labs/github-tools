@@ -1,7 +1,12 @@
 import type { ApprovalContext } from 'eve/tools'
 import { describe, expect, it } from 'vitest'
 import { always, never, once } from 'eve/tools/approval'
-import { mapEveApprovalValue, resolveEveApproval } from './approval'
+import {
+  isEveApprovalDisabled,
+  mapEveApprovalValue,
+  resolveEveApproval,
+  resolveEveToolApproval,
+} from './approval'
 
 const approvalCtx = {
   session: { id: 's1', auth: {}, turn: 1 },
@@ -11,6 +16,16 @@ const approvalCtx = {
   getSandbox: () => { throw new Error('not implemented') },
   getSkill: () => { throw new Error('not implemented') },
 } as unknown as ApprovalContext
+
+describe('isEveApprovalDisabled', () => {
+  it('treats false and never as disabled', () => {
+    expect(isEveApprovalDisabled(false)).toBe(true)
+    expect(isEveApprovalDisabled('never')).toBe(true)
+    expect(isEveApprovalDisabled(true)).toBe(false)
+    expect(isEveApprovalDisabled('always')).toBe(false)
+    expect(isEveApprovalDisabled(undefined)).toBe(false)
+  })
+})
 
 describe('resolveEveApproval', () => {
   it('defaults write tools to always()', () => {
@@ -49,5 +64,21 @@ describe('resolveEveApproval', () => {
 
   it('keeps unlisted write tools on always() fail-safe default', () => {
     expect(resolveEveApproval('deleteGist', { mergePullRequest: false })!(approvalCtx)).toBe('user-approval')
+  })
+})
+
+describe('resolveEveToolApproval', () => {
+  it('omits approval when false or never', () => {
+    expect(resolveEveToolApproval('createIssue', false)).toBeUndefined()
+    expect(resolveEveToolApproval('createIssue', { createIssue: false })).toBeUndefined()
+    expect(resolveEveToolApproval('createIssue', { createIssue: 'never' })).toBeUndefined()
+    expect(resolveEveToolApproval('createIssue', undefined, false)).toBeUndefined()
+    expect(resolveEveToolApproval('createIssue', undefined, 'never')).toBeUndefined()
+  })
+
+  it('still attaches always/once and predicates', () => {
+    expect(resolveEveToolApproval('createIssue', undefined)).toBeDefined()
+    expect(resolveEveToolApproval('createIssue', { createIssue: 'once' })).toBeDefined()
+    expect(resolveEveToolApproval('createIssue', undefined, () => 'not-applicable')).toBeDefined()
   })
 })

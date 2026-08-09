@@ -1,70 +1,91 @@
 import { connectGithubToken } from '@github-tools/sdk/connect'
 import {
   executeGithubEveTool,
+  isEveApprovalDisabled,
   listEveToolDescriptors,
   mapEveApprovalValue,
   resolveEveApproval,
   type EveApprovalConfig,
+  type EveApprovalValue,
   type EveGithubToolsOptions,
   type EveToolOverrides,
   type GithubToolName,
+  type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import { defineDynamic, defineTool, type ToolDefinition } from 'eve/tools'
 import extension from '../extension'
 
 /**
- * Session options stored at module level so durable `execute` closures only capture
- * a serializable tool `name` (see https://github.com/vercel-labs/github-tools/issues/51).
+ * Rebuild options from extension config on every call.
+ * Durable `execute` only closes over a serializable tool `name` (#51); reading
+ * config here avoids a module-level store that races across concurrent sessions.
  */
-let sessionOptions: EveGithubToolsOptions = {}
+function buildSessionOptions(): EveGithubToolsOptions {
+  const {
+    token,
+    connector,
+    connect,
+    preset,
+    include,
+    exclude,
+    requireApproval,
+    overrides,
+    context,
+    author,
+    committer,
+    coAuthors,
+  } = extension.config
+
+  const includeNames = include as GithubToolName[] | undefined
+  const excludeNames = exclude as GithubToolName[] | undefined
+
+  const resolvedToken = connector
+    ? connectGithubToken(connector, {
+        preset,
+        include: includeNames,
+        exclude: excludeNames,
+        params: connect,
+      })
+    : token
+
+  return {
+    token: resolvedToken,
+    preset,
+    include: includeNames,
+    exclude: excludeNames,
+    requireApproval: requireApproval as EveApprovalConfig | undefined,
+    overrides: overrides as EveToolOverrides | undefined,
+    context,
+    author,
+    committer,
+    coAuthors,
+  }
+}
+
+function approvalDisabled(
+  writeTool: GithubWriteToolName | undefined,
+  requireApproval: EveApprovalConfig | undefined,
+  override: EveApprovalValue | undefined,
+): boolean {
+  if (override !== undefined) return isEveApprovalDisabled(override)
+  if (!writeTool) return true
+  if (requireApproval === false) return true
+  if (typeof requireApproval === 'object' && requireApproval !== null) {
+    return isEveApprovalDisabled(requireApproval[writeTool])
+  }
+  return false
+}
 
 async function runGithubEveTool(name: GithubToolName, input: unknown) {
-  return executeGithubEveTool(name, input as Record<string, unknown>, sessionOptions)
+  return executeGithubEveTool(name, input as Record<string, unknown>, buildSessionOptions())
 }
 
 export default defineDynamic({
   events: {
-    'session.started': async () => {
-      const {
-        token,
-        connector,
-        connect,
-        preset,
-        include,
-        exclude,
-        requireApproval,
-        overrides,
-        context,
-        author,
-        committer,
-        coAuthors,
-      } = extension.config
-
-      const includeNames = include as GithubToolName[] | undefined
-      const excludeNames = exclude as GithubToolName[] | undefined
-
-      const resolvedToken = connector
-        ? connectGithubToken(connector, {
-            preset,
-            include: includeNames,
-            exclude: excludeNames,
-            params: connect,
-          })
-        : token
-
-      sessionOptions = {
-        token: resolvedToken,
-        preset,
-        include: includeNames,
-        exclude: excludeNames,
-        requireApproval: requireApproval as EveApprovalConfig | undefined,
-        overrides: overrides as EveToolOverrides | undefined,
-        context,
-        author,
-        committer,
-        coAuthors,
-      }
-
+    // Re-resolve each model step (not once per session) so tool registration
+    // stays fresh across durable steps; execute still rebuilds options above.
+    'step.started': async () => {
+      const sessionOptions = buildSessionOptions()
       const descriptors = listEveToolDescriptors(sessionOptions)
       const tools: Record<string, ToolDefinition> = {}
       const toolOverrides = sessionOptions.overrides
@@ -72,14 +93,19 @@ export default defineDynamic({
       for (const entry of descriptors) {
         const name = entry.name
         const override = toolOverrides?.[name]
+        const skipApproval = approvalDisabled(
+          entry.writeTool,
+          sessionOptions.requireApproval,
+          override?.approval,
+        )
 
         tools[name] = defineTool({
           description: override?.description ?? entry.description,
           inputSchema: entry.inputSchema,
-          ...(entry.writeTool && {
+          ...(entry.writeTool && !skipApproval && {
             approval: resolveEveApproval(entry.writeTool, sessionOptions.requireApproval),
           }),
-          ...(override?.approval !== undefined && {
+          ...(override?.approval !== undefined && !skipApproval && {
             approval: mapEveApprovalValue(override.approval),
           }),
           ...(override?.toModelOutput !== undefined
