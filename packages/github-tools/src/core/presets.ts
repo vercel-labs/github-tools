@@ -25,7 +25,8 @@ export const PRESET_TOOLS = {
    * **Issue triage** — manage and organize GitHub issues.
    *
    * Tools: `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`,
-   * `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `addAssignees`, `removeAssignees`,
+   * `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`,
+   * `addAssignees`, `removeAssignees`,
    * `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`,
    * `searchRepositories`, `searchCode`, `searchIssues`.
    *
@@ -36,7 +37,7 @@ export const PRESET_TOOLS = {
    */
   'issue-triage': [
     'listIssues', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
-    'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
+    'addLabels', 'removeLabel', 'createLabel', 'updateLabel', 'deleteLabel', 'addAssignees', 'removeAssignees',
     'listIssueReactions', 'addIssueReaction', 'listCommentReactions', 'addCommentReaction',
     'getRepository', 'searchRepositories', 'searchCode', 'searchIssues',
   ],
@@ -161,7 +162,7 @@ export const PRESET_TOOLS = {
     'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'getPullRequestContext', 'createPullRequest', 'mergePullRequest', 'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'requestReviewers',
     'listIssues', 'getIssue', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
-    'listLabels', 'addLabels', 'removeLabel', 'addAssignees', 'removeAssignees',
+    'listLabels', 'addLabels', 'removeLabel', 'createLabel', 'updateLabel', 'deleteLabel', 'addAssignees', 'removeAssignees',
     'listIssueReactions', 'addIssueReaction', 'listCommentReactions', 'addCommentReaction',
     'listDiscussions', 'getDiscussion', 'addDiscussionComment',
     'listNotifications', 'markNotificationRead',

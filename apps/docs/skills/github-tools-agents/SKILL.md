@@ -119,7 +119,7 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 | `discussion-moderator` | Discussions list/get/comment plus light issue context |
 | `notification-inbox` | User notification triage (needs Notifications PAT) |
 | `pr-author` | Branches, file edits, open/update PRs |
-| `maintainer` | All 75 tools |
+| `maintainer` | All 78 tools |
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`. Start with the smallest preset that fits; use `maintainer` when you need the full catalog. Multi-role: manager + sub-agents each with one preset.
 

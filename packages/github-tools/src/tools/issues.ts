@@ -33,6 +33,15 @@ import {
   removeLabelInputSchema,
   removeLabelDescription,
   removeLabelCore,
+  createLabelInputSchema,
+  createLabelDescription,
+  createLabelCore,
+  updateLabelInputSchema,
+  updateLabelDescription,
+  updateLabelCore,
+  deleteLabelInputSchema,
+  deleteLabelDescription,
+  deleteLabelCore,
   addAssigneesInputSchema,
   addAssigneesDescription,
   addAssigneesCore,
@@ -192,6 +201,48 @@ export const removeLabel = (token: GithubTokenInput, { needsApproval = true }: T
     needsApproval,
     inputSchema: removeLabelInputSchema,
     execute: async args => removeLabelStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function createLabelStep(args: Parameters<typeof createLabelCore>[0]) {
+  "use step"
+  return createLabelCore(args)
+}
+
+/** Create a label in a GitHub repository. Requires approval by default. */
+export const createLabel = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: createLabelDescription,
+    needsApproval,
+    inputSchema: createLabelInputSchema,
+    execute: async args => createLabelStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function updateLabelStep(args: Parameters<typeof updateLabelCore>[0]) {
+  "use step"
+  return updateLabelCore(args)
+}
+
+/** Update a label in a GitHub repository. Requires approval by default. */
+export const updateLabel = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: updateLabelDescription,
+    needsApproval,
+    inputSchema: updateLabelInputSchema,
+    execute: async args => updateLabelStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function deleteLabelStep(args: Parameters<typeof deleteLabelCore>[0]) {
+  "use step"
+  return deleteLabelCore(args)
+}
+
+/** Delete a label from a GitHub repository permanently. Requires approval by default. */
+export const deleteLabel = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: deleteLabelDescription,
+    needsApproval,
+    inputSchema: deleteLabelInputSchema,
+    execute: async args => deleteLabelStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function addAssigneesStep(args: Parameters<typeof addAssigneesCore>[0]) {

@@ -312,6 +312,71 @@ export async function removeLabelCore({ token, owner, repo, issueNumber, label }
   return { removed: true, label, issueNumber }
 }
 
+export const createLabelInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  name: z.string().describe('Label name'),
+  color: z.string().describe('Label color as 6 hex digits without a leading # (e.g. "d73a4a")'),
+  description: z.string().optional().describe('Short label description'),
+})
+
+export const createLabelDescription = 'Create a label in a GitHub repository'
+
+/** Not idempotent — creating a label that already exists returns 422 from GitHub. */
+export async function createLabelCore({ token, owner, repo, name, color, description }: { token: string, owner: string, repo: string, name: string, color: string, description?: string }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.createLabel({ owner, repo, name, color, description })
+  return {
+    name: data.name,
+    color: data.color,
+    description: data.description,
+  }
+}
+
+export const updateLabelInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  name: z.string().describe('Current label name'),
+  newName: z.string().optional().describe('New label name (rename)'),
+  color: z.string().optional().describe('New color as 6 hex digits without a leading #'),
+  description: z.string().nullable().optional().describe('New description, or null to clear it'),
+})
+
+export const updateLabelDescription = 'Update a label in a GitHub repository — name, color, or description'
+
+/** Not idempotent — each call applies a new revision. */
+export async function updateLabelCore({ token, owner, repo, name, newName, color, description }: { token: string, owner: string, repo: string, name: string, newName?: string, color?: string, description?: string | null }) {
+  const octokit = createOctokit(token)
+  const { data } = await octokit.rest.issues.updateLabel({
+    owner,
+    repo,
+    name,
+    new_name: newName,
+    color,
+    description: description === null ? '' : description,
+  })
+  return {
+    name: data.name,
+    color: data.color,
+    description: data.description,
+  }
+}
+
+export const deleteLabelInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  name: z.string().describe('Label name to delete'),
+})
+
+export const deleteLabelDescription = 'Delete a label from a GitHub repository permanently'
+
+/** Not idempotent — deleting a missing label returns 404 from GitHub. */
+export async function deleteLabelCore({ token, owner, repo, name }: { token: string, owner: string, repo: string, name: string }) {
+  const octokit = createOctokit(token)
+  await octokit.rest.issues.deleteLabel({ owner, repo, name })
+  return { deleted: true, name }
+}
+
 export const addAssigneesInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),

@@ -292,6 +292,27 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(issues.removeLabelCore, ctx),
     },
     {
+      name: 'createLabel',
+      writeTool: 'createLabel',
+      description: issues.createLabelDescription,
+      inputSchema: issues.createLabelInputSchema,
+      execute: withToken(issues.createLabelCore, ctx),
+    },
+    {
+      name: 'updateLabel',
+      writeTool: 'updateLabel',
+      description: issues.updateLabelDescription,
+      inputSchema: issues.updateLabelInputSchema,
+      execute: withToken(issues.updateLabelCore, ctx),
+    },
+    {
+      name: 'deleteLabel',
+      writeTool: 'deleteLabel',
+      description: issues.deleteLabelDescription,
+      inputSchema: issues.deleteLabelInputSchema,
+      execute: withToken(issues.deleteLabelCore, ctx),
+    },
+    {
       name: 'addAssignees',
       writeTool: 'addAssignees',
       description: issues.addAssigneesDescription,

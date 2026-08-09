@@ -34,7 +34,7 @@ ${SHARED_RULES}`,
 When triaging issues:
 - Call getIssueContext exactly once (full body + labelNames + recent comments). In that same step, call listIssues or searchIssues if you need duplicate checks
 - Never re-call getIssueContext for the same issue
-- Pick labels from labelNames; use addLabels / removeLabel to apply them
+- Pick labels from labelNames; use addLabels / removeLabel to apply them. Use createLabel / updateLabel / deleteLabel when the repository taxonomy itself needs changing
 - Create issues with clear titles and descriptions when asked
 - Use updateIssue to edit title, body, labels, milestone, or assignees, and to reopen a closed issue (state: 'open') — there is no separate reopen tool
 - Use updateIssueComment / deleteIssueComment to correct or remove existing comments

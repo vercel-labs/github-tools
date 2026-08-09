@@ -238,6 +238,27 @@ export const addLabels = factory('addLabels')
  */
 export const removeLabel = factory('removeLabel')
 /**
+ * Create a label in a GitHub repository. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const createLabel = factory('createLabel')
+/**
+ * Update a label in a GitHub repository. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const updateLabel = factory('updateLabel')
+/**
+ * Delete a label from a GitHub repository permanently. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const deleteLabel = factory('deleteLabel')
+/**
  * Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search.
  *
  * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`

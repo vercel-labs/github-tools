@@ -43,6 +43,12 @@ export const GITHUB_WRITE_TOOLS = {
   addLabels: 'addLabels',
   /** Remove a label from an issue or pull request. Requires approval by default. */
   removeLabel: 'removeLabel',
+  /** Create a label in a GitHub repository. Requires approval by default. */
+  createLabel: 'createLabel',
+  /** Update a label in a GitHub repository. Requires approval by default. */
+  updateLabel: 'updateLabel',
+  /** Delete a label from a GitHub repository permanently. Requires approval by default. */
+  deleteLabel: 'deleteLabel',
   /** Assign users to an issue or pull request. Requires approval by default. */
   addAssignees: 'addAssignees',
   /** Remove assignees from an issue or pull request. Requires approval by default. */
