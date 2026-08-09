@@ -89,6 +89,16 @@ describe('connectGithubScopesForTools', () => {
       'administration:write',
     ])
   })
+
+  it('does not request pull_requests:write for getPullRequestContext', () => {
+    expect(connectGithubScopesForTools(['getPullRequestContext'])).toEqual([
+      'contents:read',
+      'metadata:read',
+      'pull_requests:read',
+      'checks:read',
+      'statuses:read',
+    ])
+  })
 })
 
 describe('connectGithubScopesForSelection', () => {

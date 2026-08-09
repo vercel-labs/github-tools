@@ -141,7 +141,8 @@ const CONTENTS_READ = ['contents:read', 'metadata:read'] as const
 const CONTENTS_WRITE = ['contents:read', 'contents:write', 'metadata:read'] as const
 const PR_READ = ['contents:read', 'metadata:read', 'pull_requests:read'] as const
 const PR_WRITE = ['contents:read', 'metadata:read', 'pull_requests:read', 'pull_requests:write'] as const
-const PR_REVIEW = ['contents:read', 'metadata:read', 'pull_requests:read', 'pull_requests:write', 'checks:read', 'statuses:read'] as const
+/** Read-only PR context (details, files, reviews) plus optional CI checks. */
+const PR_CONTEXT = ['contents:read', 'metadata:read', 'pull_requests:read', 'checks:read', 'statuses:read'] as const
 const ISSUES_READ = ['contents:read', 'metadata:read', 'issues:read'] as const
 const ISSUES_WRITE = ['contents:read', 'metadata:read', 'issues:read', 'issues:write'] as const
 const DISCUSSIONS_READ = ['contents:read', 'metadata:read', 'discussions:read'] as const
@@ -181,7 +182,7 @@ export const TOOL_CONNECT_SCOPES = {
   listPullRequestReviews: PR_READ,
   createPullRequestReview: PR_WRITE,
   requestReviewers: PR_WRITE,
-  getPullRequestContext: PR_REVIEW,
+  getPullRequestContext: PR_CONTEXT,
 
   listIssues: ISSUES_READ,
   getIssue: ISSUES_READ,
@@ -195,6 +196,9 @@ export const TOOL_CONNECT_SCOPES = {
   listLabels: ISSUES_READ,
   addLabels: ISSUES_WRITE,
   removeLabel: ISSUES_WRITE,
+  createLabel: ISSUES_WRITE,
+  updateLabel: ISSUES_WRITE,
+  deleteLabel: ISSUES_WRITE,
   addAssignees: ISSUES_WRITE,
   removeAssignees: ISSUES_WRITE,
 
