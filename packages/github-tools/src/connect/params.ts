@@ -1,12 +1,12 @@
 import type { ConnectTokenParams } from '@vercel/connect'
-import { connectGithubScopesForPreset } from './scopes'
+import { connectGithubScopesForSelection } from './scopes'
 import type { ConnectGithubTokenOptions, GithubConnectParams } from './types'
 
 export function resolveGithubConnectTokenParams(
   options: ConnectGithubTokenOptions = {},
 ): ConnectTokenParams {
-  const { preset, params } = options
-  const scopes = params?.scopes ?? connectGithubScopesForPreset(preset)
+  const { preset, include, exclude, params } = options
+  const scopes = params?.scopes ?? connectGithubScopesForSelection({ preset, include, exclude })
   return buildConnectTokenParams(scopes, params)
 }
 

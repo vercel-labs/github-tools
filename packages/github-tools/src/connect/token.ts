@@ -6,7 +6,8 @@ import type { ConnectGithubTokenOptions } from './types'
 
 /**
  * Returns a lazy GitHub token provider backed by a Vercel Connect connector.
- * Scopes are derived from `preset` unless overridden in `params.scopes`.
+ * Scopes are derived from `preset`, or from the resolved `include`/`exclude`
+ * tool set when those are set, unless overridden in `params.scopes`.
  *
  * `connector` may be a static name or a resolver function — e.g. to pick a
  * different connector per environment (production vs. preview) or tenant.

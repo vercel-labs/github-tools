@@ -5,7 +5,8 @@ import type { ConnectGithubEveToolsOptions } from './types'
 
 /**
  * Register eve GitHub tools backed by a Vercel Connect connector.
- * Scopes are derived from `preset` unless overridden in `connect.scopes`.
+ * Scopes are derived from `preset`, or from the resolved `include`/`exclude`
+ * tool set when those are set, unless overridden in `connect.scopes`.
  *
  * `connector` may be a static name or a resolver function — e.g. to pick a
  * different connector per environment (production vs. preview) or tenant.
@@ -29,11 +30,13 @@ export function connectGithubTools(
   connector: GithubConnectorInput,
   options: ConnectGithubEveToolsOptions = {},
 ) {
-  const { connect, preset, ...rest } = options
+  const { connect, preset, include, exclude, ...rest } = options
 
   return createEveGithubTools({
     ...rest,
     preset,
-    token: connectGithubToken(connector, { preset, params: connect }),
+    include,
+    exclude,
+    token: connectGithubToken(connector, { preset, include, exclude, params: connect }),
   })
 }

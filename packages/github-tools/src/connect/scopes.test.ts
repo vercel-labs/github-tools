@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { PRESET_CONNECT_SCOPES, connectGithubScopesForPreset } from './scopes'
+import {
+  PRESET_CONNECT_SCOPES,
+  connectGithubScopesForPreset,
+  connectGithubScopesForSelection,
+  connectGithubScopesForTools,
+} from './scopes'
 
 describe('connectGithubScopesForPreset', () => {
   it('returns scopes for a single preset', () => {
@@ -55,5 +60,64 @@ describe('connectGithubScopesForPreset', () => {
       'pull_requests:read',
       'pull_requests:write',
     ])
+  })
+})
+
+describe('connectGithubScopesForTools', () => {
+  it('always includes metadata:read', () => {
+    expect(connectGithubScopesForTools(['getRepository'])).toEqual([
+      'contents:read',
+      'metadata:read',
+    ])
+  })
+
+  it('does not request administration for a hand-picked read set', () => {
+    const scopes = connectGithubScopesForTools(['getRepository', 'listIssues', 'addLabels'])
+    expect(scopes).toEqual([
+      'contents:read',
+      'metadata:read',
+      'issues:read',
+      'issues:write',
+    ])
+    expect(scopes).not.toEqual(expect.arrayContaining(['administration:write']))
+  })
+
+  it('requests administration only when createRepository is selected', () => {
+    expect(connectGithubScopesForTools(['createRepository'])).toEqual([
+      'metadata:read',
+      'administration:read',
+      'administration:write',
+    ])
+  })
+})
+
+describe('connectGithubScopesForSelection', () => {
+  it('falls back to preset mapping when include/exclude are omitted', () => {
+    expect(connectGithubScopesForSelection({ preset: 'code-review' })).toEqual(
+      connectGithubScopesForPreset('code-review'),
+    )
+  })
+
+  it('derives scopes from include without minting the full union', () => {
+    const scopes = connectGithubScopesForSelection({
+      include: ['getRepository', 'listIssues', 'addLabels'],
+    })
+    expect(scopes).toEqual([
+      'contents:read',
+      'metadata:read',
+      'issues:read',
+      'issues:write',
+    ])
+    expect(scopes).not.toContain('administration:write')
+  })
+
+  it('drops administration when createRepository is excluded from maintainer', () => {
+    const scopes = connectGithubScopesForSelection({
+      preset: 'maintainer',
+      exclude: ['createRepository'],
+    })
+    expect(scopes).not.toContain('administration:write')
+    expect(scopes).not.toContain('administration:read')
+    expect(scopes).toEqual(expect.arrayContaining(['issues:write', 'pull_requests:write']))
   })
 })

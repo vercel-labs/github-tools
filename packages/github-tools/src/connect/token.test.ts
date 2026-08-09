@@ -58,6 +58,23 @@ describe('connectGithubToken', () => {
     }, undefined)
   })
 
+  it('derives scopes from include without requesting administration', async () => {
+    const resolve = resolveConnectToken('github/my-connector', {
+      include: ['getRepository', 'listIssues', 'addLabels'],
+    })
+
+    await resolve()
+    expect(getToken).toHaveBeenCalledWith('github/my-connector', {
+      subject: { type: 'app' },
+      scopes: [
+        'contents:read',
+        'metadata:read',
+        'issues:read',
+        'issues:write',
+      ],
+    }, undefined)
+  })
+
   it('maps repositories to github_app_installation authorization details', async () => {
     const resolve = resolveConnectToken('github/my-connector', {
       preset: 'issue-triage',

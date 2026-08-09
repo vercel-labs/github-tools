@@ -1,5 +1,6 @@
 import type { ConnectOptions, ConnectTokenParams } from '@vercel/connect'
 import type { GithubToolPreset } from '../core/presets'
+import type { GithubToolName } from '../core/tool-names'
 import type { GithubToolsBaseOptions } from '../core/tool-types'
 import type { EveGithubToolsOptions } from '../eve/types'
 
@@ -23,6 +24,10 @@ export type ConnectGithubEveToolsOptions = Omit<EveGithubToolsOptions, 'token'> 
 
 export type ConnectGithubTokenOptions = {
   preset?: GithubToolPreset | GithubToolPreset[]
+  /** Same allow-list semantics as eve `include` — scopes derive from the resolved tools when set. */
+  include?: readonly GithubToolName[]
+  /** Same deny-list semantics as eve `exclude` — scopes derive from the resolved tools when set. */
+  exclude?: readonly GithubToolName[]
   params?: GithubConnectParams
   connectOptions?: ConnectOptions
 }

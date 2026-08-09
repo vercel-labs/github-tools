@@ -40,15 +40,23 @@ export default defineDynamic({
         coAuthors,
       } = extension.config
 
+      const includeNames = include as GithubToolName[] | undefined
+      const excludeNames = exclude as GithubToolName[] | undefined
+
       const resolvedToken = connector
-        ? connectGithubToken(connector, { preset, params: connect })
+        ? connectGithubToken(connector, {
+            preset,
+            include: includeNames,
+            exclude: excludeNames,
+            params: connect,
+          })
         : token
 
       sessionOptions = {
         token: resolvedToken,
         preset,
-        include: include as GithubToolName[] | undefined,
-        exclude: exclude as GithubToolName[] | undefined,
+        include: includeNames,
+        exclude: excludeNames,
         requireApproval: requireApproval as EveApprovalConfig | undefined,
         overrides: overrides as EveToolOverrides | undefined,
         context,
