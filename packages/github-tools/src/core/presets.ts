@@ -24,19 +24,20 @@ export const PRESET_TOOLS = {
   /**
    * **Issue triage** — manage and organize GitHub issues.
    *
-   * Tools: `listIssues`, `getIssueContext`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`,
+   * Tools: `listIssues`, `getIssueContext`, `listIssueComments`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`,
    * `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`,
    * `addAssignees`, `removeAssignees`,
    * `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`,
    * `searchRepositories`, `searchCode`, `searchIssues`.
    *
    * Prefer `getIssueContext` (issue + `labelNames` + recent comments) over separate get/list calls.
+   * Use `listIssueComments` to paginate beyond the comments returned by `getIssueContext`.
    * Reopen a closed issue with `updateIssue` (`state: 'open'`) — there is no separate reopen tool.
    * Acknowledge a report with `addIssueReaction` / `addCommentReaction` instead of a comment when no reply is needed.
    * Agent prompt: optimized for categorizing, labeling, and responding to issues.
    */
   'issue-triage': [
-    'listIssues', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
+    'listIssues', 'getIssueContext', 'listIssueComments', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'addLabels', 'removeLabel', 'createLabel', 'updateLabel', 'deleteLabel', 'addAssignees', 'removeAssignees',
     'listIssueReactions', 'addIssueReaction', 'listCommentReactions', 'addCommentReaction',
     'getRepository', 'searchRepositories', 'searchCode', 'searchIssues',
@@ -67,7 +68,7 @@ export const PRESET_TOOLS = {
   'repo-explorer': [
     'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree',
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'getPullRequestContext',
-    'listIssues', 'getIssue', 'getIssueContext',
+    'listIssues', 'getIssue', 'getIssueContext', 'listIssueComments',
     'listDiscussions', 'getDiscussion',
     'listLabels',
     'listCommits', 'getCommit', 'getBlame', 'compareCommits',
@@ -161,7 +162,7 @@ export const PRESET_TOOLS = {
   'maintainer': [
     'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree', 'createBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'getPullRequestContext', 'createPullRequest', 'mergePullRequest', 'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'requestReviewers',
-    'listIssues', 'getIssue', 'getIssueContext', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
+    'listIssues', 'getIssue', 'getIssueContext', 'listIssueComments', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'listLabels', 'addLabels', 'removeLabel', 'createLabel', 'updateLabel', 'deleteLabel', 'addAssignees', 'removeAssignees',
     'listIssueReactions', 'addIssueReaction', 'listCommentReactions', 'addCommentReaction',
     'listDiscussions', 'getDiscussion', 'addDiscussionComment',

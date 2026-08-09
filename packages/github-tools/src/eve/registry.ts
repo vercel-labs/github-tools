@@ -230,6 +230,12 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(issues.getIssueCore, ctx),
     },
     {
+      name: 'listIssueComments',
+      description: issues.listIssueCommentsDescription,
+      inputSchema: issues.listIssueCommentsInputSchema,
+      execute: withToken(issues.listIssueCommentsCore, ctx),
+    },
+    {
       name: 'createIssue',
       writeTool: 'createIssue',
       description: issues.createIssueDescription,

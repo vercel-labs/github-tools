@@ -1,7 +1,7 @@
 import type { ToolSet } from 'ai'
 import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
 import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
-import { listIssues, getIssue, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
+import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
 import { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 import { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
 import { listNotifications, markNotificationRead } from './tools/notifications'
@@ -144,6 +144,7 @@ export function createGithubTools({
     requestReviewers: requestReviewers(resolveToken, approval('requestReviewers')),
     getPullRequestContext: getPullRequestContext(resolveToken),
     getIssueContext: getIssueContext(resolveToken),
+    listIssueComments: listIssueComments(resolveToken),
     createIssue: createIssue(resolveToken, approval('createIssue')),
     addIssueComment: addIssueComment(resolveToken, approval('addIssueComment')),
     updateIssueComment: updateIssueComment(resolveToken, approval('updateIssueComment')),
@@ -217,7 +218,7 @@ export type GithubTools = AllGithubTools & ToolSet
 export { createOctokit } from './client'
 export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
 export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
-export { listIssues, getIssue, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
+export { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
 export { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 export { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
 export { listNotifications, markNotificationRead } from './tools/notifications'

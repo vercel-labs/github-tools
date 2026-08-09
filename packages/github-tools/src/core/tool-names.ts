@@ -51,6 +51,8 @@ export const GITHUB_TOOL_NAMES = {
   getIssue: 'getIssue',
   /** Fetch an issue plus available label names and recent comments in one call. */
   getIssueContext: 'getIssueContext',
+  /** List comments on a GitHub issue. Bodies are truncated by default (detail: summary). Prefer getIssueContext for the first page when triaging. */
+  listIssueComments: 'listIssueComments',
   /** Create a new issue in a GitHub repository. Requires approval by default. */
   createIssue: 'createIssue',
   /** Add a comment to a GitHub issue. Requires approval by default. */

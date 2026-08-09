@@ -35,6 +35,7 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   listIssues: { title: 'List Issues', label: 'Issues listed', labelActive: 'Listing issues', icon: 'i-lucide-circle-dot' },
   getIssue: { title: 'Get Issue', label: 'Issue fetched', labelActive: 'Fetching issue', icon: 'i-lucide-circle-dot' },
   getIssueContext: { title: 'Issue Context', label: 'Issue context loaded', labelActive: 'Loading issue context', icon: 'i-lucide-layers' },
+  listIssueComments: { title: 'List Issue Comments', label: 'Comments listed', labelActive: 'Listing comments', icon: 'i-lucide-messages-square' },
   createIssue: { title: 'Create Issue', label: 'Issue created', labelActive: 'Creating issue', icon: 'i-lucide-circle-plus' },
   addIssueComment: { title: 'Comment on Issue', label: 'Comment posted', labelActive: 'Posting issue comment', icon: 'i-lucide-message-square-plus' },
   updateIssueComment: { title: 'Update Issue Comment', label: 'Comment updated', labelActive: 'Updating issue comment', icon: 'i-lucide-message-square-text' },

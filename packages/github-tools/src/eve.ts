@@ -196,6 +196,13 @@ export const listIssues = factory('listIssues')
  */
 export const getIssue = factory('getIssue')
 /**
+ * List comments on a GitHub issue. Prefer getIssueContext for the first page when triaging.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const listIssueComments = factory('listIssueComments')
+/**
  * Create a new issue in a GitHub repository. Requires approval by default.
  *
  * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`

@@ -6,6 +6,9 @@ import {
   getIssueInputSchema,
   getIssueDescription,
   getIssueCore,
+  listIssueCommentsInputSchema,
+  listIssueCommentsDescription,
+  listIssueCommentsCore,
   createIssueInputSchema,
   createIssueDescription,
   createIssueCore,
@@ -76,6 +79,19 @@ export const getIssue = (token: GithubTokenInput): GithubTool =>
     description: getIssueDescription,
     inputSchema: getIssueInputSchema,
     execute: async args => getIssueStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function listIssueCommentsStep(args: Parameters<typeof listIssueCommentsCore>[0]) {
+  "use step"
+  return listIssueCommentsCore(args)
+}
+
+/** List comments on a GitHub issue. Prefer getIssueContext for the first page when triaging. */
+export const listIssueComments = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: listIssueCommentsDescription,
+    inputSchema: listIssueCommentsInputSchema,
+    execute: async args => listIssueCommentsStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function createIssueStep(args: Parameters<typeof createIssueCore>[0]) {
