@@ -36,7 +36,7 @@ export type ToolBuildContext = {
   coAuthors?: CommitIdentity[]
 }
 
-type ToolRegistryEntry = {
+export type ToolRegistryEntry = {
   name: GithubToolName
   writeTool?: GithubWriteToolName
   description: string

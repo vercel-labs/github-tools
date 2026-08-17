@@ -3,7 +3,7 @@ import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset
 import { createGithubTokenResolver } from '../core/token'
 import { mapEveApprovalValue, resolveEveApprovalDefinition } from './approval'
 import { getEveTools } from './load-eve'
-import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
+import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext, type ToolRegistryEntry } from './registry'
 import type { GithubWriteToolName } from '../core/write-tools'
 import { runGithubToolStep } from './steps'
 import type { EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './types'
@@ -42,11 +42,27 @@ function resolveToolApproval(
   )
 }
 
+function defineGithubTool(
+  entry: ToolRegistryEntry,
+  ctx: ToolBuildContext,
+  options: BuildOptions,
+): ToolDefinition {
+  const { defineTool } = getEveTools()
+  const approval = resolveToolApproval(entry.name, entry.writeTool, options)
+
+  return defineTool({
+    description: entry.description,
+    inputSchema: entry.inputSchema,
+    ...(approval !== undefined && { approval }),
+    ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
+    execute: async (input) => runGithubToolStep(entry.name, input as Record<string, unknown>, ctx),
+  })
+}
+
 export function buildEveToolDefinition(
   name: GithubToolName,
   options: BuildOptions = {},
 ): ToolDefinition {
-  const { defineTool } = getEveTools()
   const ctx: ToolBuildContext = {
     token: createGithubTokenResolver(options.token),
     author: options.author,
@@ -59,21 +75,10 @@ export function buildEveToolDefinition(
     throw new Error(`Unknown GitHub tool: ${name}`)
   }
 
-  const tool = defineTool({
-    description: entry.description,
-    inputSchema: entry.inputSchema,
-    ...(entry.writeTool || options.overrides?.[name]?.approval !== undefined) && {
-      approval: resolveToolApproval(name, entry.writeTool, options),
-    },
-    ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
-    execute: async (input) => runGithubToolStep(name, input as Record<string, unknown>, ctx),
-  })
-
-  return applyOverrides(tool, name, options.overrides)
+  return applyOverrides(defineGithubTool(entry, ctx, options), name, options.overrides)
 }
 
 export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap {
-  const { defineTool } = getEveTools()
   const ctx: ToolBuildContext = {
     token: createGithubTokenResolver(options.token),
     author: options.author,
@@ -88,17 +93,7 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap
   for (const entry of registry) {
     if (allowed && !allowed.has(entry.name)) continue
 
-    const tool = defineTool({
-      description: entry.description,
-      inputSchema: entry.inputSchema,
-      ...(entry.writeTool || options.overrides?.[entry.name]?.approval !== undefined) && {
-        approval: resolveToolApproval(entry.name, entry.writeTool, options),
-      },
-      ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
-      execute: async (input) => runGithubToolStep(entry.name, input as Record<string, unknown>, ctx),
-    })
-
-    tools[entry.name] = applyOverrides(tool, entry.name, options.overrides)
+    tools[entry.name] = applyOverrides(defineGithubTool(entry, ctx, options), entry.name, options.overrides)
   }
 
   return tools
