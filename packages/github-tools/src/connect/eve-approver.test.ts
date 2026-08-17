@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { connect } from '@vercel/connect/eve'
-import { connectGithubApproverAuth } from './approver'
+import { connectGithubApproverAuth } from './eve-approver'
 
 vi.mock('@vercel/connect/eve', () => ({ connect: vi.fn() }))
 

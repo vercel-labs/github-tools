@@ -7,33 +7,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-black?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![license](https://img.shields.io/github/license/vercel-labs/github-tools?color=black)](https://github.com/vercel-labs/github-tools/blob/main/LICENSE)
 
-**Give any agent GitHub access.** A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with [eve](https://eve.dev), the [AI SDK](https://ai-sdk.dev), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
+**Connect GitHub to any agent.** 42 typed GitHub tools with presets, human approval, and durable execution — for the [AI SDK](https://ai-sdk.dev), [eve](https://eve.dev), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
 
 Docs: **[github-tools.com](https://github-tools.com)**
 
-## Why not the GitHub MCP server, `gh` CLI, or raw Octokit?
-
-They all reach the GitHub API, but none of them were built as an agent's tool layer. An agent still needs a schema it can fill reliably, a safety gate before it merges a PR, output shaped to fit a context window, and a way to survive a crash mid-task.
-
-| | `@github-tools/sdk` | GitHub MCP server | `gh` CLI | Raw Octokit |
-|---|---|---|---|---|
-| Integration | Native AI SDK `tool()` objects | MCP wire protocol via a separate process | Shell-out from the agent | Hand-written per call |
-| Human approval | Built in, on by default | Host-dependent, inconsistent | None | You build it |
-| Durable / retryable | Every call is a `"use step"` | No | No | No |
-| Scoped by task | Presets (7 built-in) | Full server surface, or manual filtering | Full CLI surface | You build it |
-| Token-efficient output | Shaped and truncated by design | Raw API responses | Raw text, needs parsing | Raw API responses |
-| Native eve / Workflow / Chat SDK | Yes | No | No | No |
-
-## Pick your path
-
-| What are you building | Start here |
-|---|---|
-| A standalone GitHub agent, fast: 3 files, durable approval | [eve extension](#eve-extension-recommended) |
-| Scripts, chat backends, or an existing AI SDK app | Quick Start below |
-| Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
-| A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
-
-79 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
+42 tools covering repositories, branches, pull requests, issues, commits, search, gists, and workflows. Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -50,7 +28,6 @@ pnpm add ai zod
 ## Quick Start
 
 ```ts
-// list-prs.ts
 import { createGithubTools } from '@github-tools/sdk'
 import { generateText } from 'ai'
 
@@ -66,35 +43,20 @@ const result = await generateText({
 Use `preset` to get only the tools relevant to a specific use case:
 
 ```ts
-// Code-review agent: PRs, commits, file content, and comments
+// Code-review agent — PRs, commits, file content, and comments
 createGithubTools({ token, preset: 'code-review' })
 
-// Issue triage: read/create/close issues, search
+// Issue triage — read/create/close issues, search
 createGithubTools({ token, preset: 'issue-triage' })
 
-// Read-only exploration: browse repos without write access
+// Read-only exploration — browse repos without write access
 createGithubTools({ token, preset: 'repo-explorer' })
 
-// Security audit: read-only exploration, PR/CI visibility, plus issue creation to report findings
-createGithubTools({ token, preset: 'security-audit' })
-
-// Release manager: releases, compare diff, commits, workflow runs, pull requests
-createGithubTools({ token, preset: 'release-manager' })
-
-// Discussion moderator: Discussions plus light issue context
-createGithubTools({ token, preset: 'discussion-moderator' })
-
-// Notification inbox: triage user notifications (needs a Notifications PAT)
-createGithubTools({ token, preset: 'notification-inbox' })
-
-// PR author: branches, file edits, and opening PRs
-createGithubTools({ token, preset: 'pr-author' })
-
-// Full catalog: all tools (same as omitting preset)
+// Full maintenance — all tools
 createGithubTools({ token, preset: 'maintainer' })
 ```
 
-Presets are composable, pass an array to combine them:
+Presets are composable — pass an array to combine them:
 
 ```ts
 createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
@@ -102,18 +64,13 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 | Preset | Tools included |
 |---|---|
-| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getPullRequestContext`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`, `searchCode`, `listCheckRuns`, `getCombinedStatus`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers` |
-| `issue-triage` | `listIssues`, `getIssueContext`, `listIssueComments`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`, `searchRepositories`, `searchCode`, `searchIssues` |
-| `repo-explorer` | All read-only tools including discussions, gists, workflows, checks/statuses, and releases (no write operations) |
-| `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
-| `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility, plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
-| `release-manager` | `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`, `compareCommits`, `listCommits`, `getCommit`, `listWorkflowRuns`, `getWorkflowRun`, `listPullRequests`, `getPullRequest`, `getRepository`, `listBranches` |
-| `discussion-moderator` | `listDiscussions`, `getDiscussion`, `addDiscussionComment`, `getRepository`, `searchIssues`, `getIssueContext`, `addIssueComment` |
-| `notification-inbox` | `listNotifications`, `markNotificationRead`, `getIssue`, `getPullRequest`, `getRepository` (requires a Notifications PAT) |
-| `pr-author` | `getRepository`, `listBranches`, `getFileContent`, `createBranch`, `createOrUpdateFile`, `createPullRequest`, `updatePullRequest`, `getPullRequest`, `listPullRequestFiles`, `compareCommits`, `getCommit` |
-| `maintainer` | All 79 tools |
+| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `getRepository`, `listBranches`, `searchCode`, `addPullRequestComment`, `createPullRequestReview` |
+| `issue-triage` | `listIssues`, `getIssue`, `createIssue`, `addIssueComment`, `closeIssue`, `listLabels`, `addLabels`, `removeLabel`, `getRepository`, `searchRepositories`, `searchCode` |
+| `repo-explorer` | All read-only tools including gists and workflows (no write operations) |
+| `ci-ops` | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `getRepository`, `listBranches`, `listCommits`, `getCommit` |
+| `maintainer` | All 42 tools |
 
-Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
+Omit `preset` to get all tools (same as `maintainer`).
 
 ### Cherry-Picking Tools
 
@@ -158,7 +115,7 @@ createGithubTools({
 })
 ```
 
-Write tools: `createBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction`, `addDiscussionComment`, `markNotificationRead`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`, `updateRelease`, `deleteRelease`.
+Write tools: `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview`, `createIssue`, `addIssueComment`, `closeIssue`, `addLabels`, `removeLabel`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
 
 All other tools are read-only and never require approval.
 
@@ -234,7 +191,7 @@ const result = await generateText({
 })
 ```
 
-Each step, toolpick picks the best ~5 tools using keyword + semantic search. All tools remain callable, only the visible set changes. See [toolpick docs](https://github.com/pontusab/toolpick) for LLM re-ranking, caching, and model-driven discovery options.
+Each step, toolpick picks the best ~5 tools using keyword + semantic search. All tools remain callable — only the visible set changes. See [toolpick docs](https://github.com/pontusab/toolpick) for LLM re-ranking, caching, and model-driven discovery options.
 
 ## Durable Agents (Vercel Workflow SDK)
 
@@ -252,13 +209,13 @@ const agent = createDurableGithubAgent({
 })
 ```
 
-All presets work with `createDurableGithubAgent`. Write tools honor `requireApproval` via `needsApproval`: the workflow pauses until the user approves or denies.
+All presets work with `createDurableGithubAgent`. Write tools honor `requireApproval` via `needsApproval` — the workflow pauses until the user approves or denies.
 
-> `workflow` and `@ai-sdk/workflow` are optional peer dependencies, install them only when using the workflow subpath.
+> `workflow` and `@ai-sdk/workflow` are optional peer dependencies — install them only when using the workflow subpath.
 
 ## Vercel Connect
 
-[Vercel Connect](https://vercel.com/docs/connect) mints short-lived GitHub tokens from a connector, with no PAT to store. The `@github-tools/sdk/connect` subpath derives scopes from your preset automatically.
+[Vercel Connect](https://vercel.com/docs/connect) mints short-lived GitHub tokens from a connector — no PAT to store. The `@github-tools/sdk/connect` subpath derives scopes from your preset automatically.
 
 ```sh
 pnpm add @vercel/connect
@@ -272,21 +229,28 @@ const tools = connectGithubTools('github/my-connector', {
 })
 ```
 
-For eve agents, pass `connector` directly to the [eve extension](#eve-extension-recommended) (recommended): no separate Connect import, and no `build.externalDependencies` workaround needed:
+For eve agents, import from `@github-tools/sdk/connect/eve`:
 
 ```ts
-// agent/extensions/github.ts
-import githubExtension from '@github-tools/eve-extension'
+// agent/agent.ts — TODO(eve-connect-bundle): drop externalDependencies when eve fixes upstream
+import { defineAgent } from 'eve'
 
-export default githubExtension({
-  connector: 'github/my-connector',
+export default defineAgent({
+  model: 'anthropic/claude-sonnet-5',
+  build: { externalDependencies: ['@vercel/connect'] },
+})
+```
+
+```ts
+// agent/tools/github.ts
+import { connectGithubTools } from '@github-tools/sdk/connect/eve'
+
+export default connectGithubTools('github/my-connector', {
   preset: 'maintainer',
 })
 ```
 
-For the deprecated direct import, use `connectGithubTools` from `@github-tools/sdk/connect/eve` the same way inside `agent/tools/github.ts`. That path does need `build: { externalDependencies: ['@vercel/connect'] }` in `agent.ts` (see [eve, direct import](#eve-direct-import-deprecated) below).
-
-`connectGithubTools` mints tokens lazily at tool execution. Do not `await getToken(...)` at module top level in `agent/tools/` (that runs at import/build time).
+`connectGithubTools` mints tokens lazily at tool execution — do not `await getToken(...)` at module top level in `agent/tools/` (that runs at import/build time).
 
 Token provider only (custom factories):
 
@@ -299,7 +263,7 @@ createGithubTools({
 })
 ```
 
-Pass the same `preset` to `connectGithubToken`: it derives Connect scopes independently of the `preset` given to `createGithubTools`.
+Pass the same `preset` to `connectGithubToken` — it derives Connect scopes independently of the `preset` given to `createGithubTools`.
 
 Override installation, repositories, or scopes via `connect`:
 
@@ -314,71 +278,19 @@ connectGithubTools('github/my-connector', {
 })
 ```
 
-> `@vercel/connect` is an optional peer dependency, install it only when using the `/connect` subpath.
-
-`connector` accepts a `() => string | Promise<string>` resolver instead of a static name, re-resolved on every call. Useful to pick a connector per environment or tenant:
-
-```ts
-connectGithubTools(
-  () => (process.env.VERCEL_ENV === 'production' ? 'github/prod-connector' : 'github/preview-connector'),
-  { preset: 'code-review' },
-)
-```
+> `@vercel/connect` is an optional peer dependency — install it only when using the `/connect` subpath.
 
 ## eve
 
-[eve](https://eve.dev) is Vercel's filesystem-first agent framework. `@github-tools/eve-extension` is the **recommended** way to add GitHub tools to an eve agent: a mountable [eve extension](https://eve.dev/docs/extensions), no CLI setup, no direct SDK import in `agent/tools/`. The legacy `createGithubTools` / per-tool factories on `@github-tools/sdk/eve` are **deprecated** for that registration pattern; they keep working and are documented below for existing agents. Shared runtime helpers for the extension live on `@github-tools/sdk/eve-runtime` (not deprecated).
+[eve](https://eve.dev) is Vercel's filesystem-first agent framework. The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic` — one file, zero CLI.
 
-### eve extension (recommended)
-
-```sh
-pnpm add @github-tools/eve-extension eve
-```
-
-`eve` is a required peer dependency (itself requiring **`ai` v7**).
-
-```ts
-// agent/extensions/github.ts
-import githubExtension from '@github-tools/eve-extension'
-
-export default githubExtension({
-  preset: ['code-review', 'issue-triage'],
-  requireApproval: {
-    mergePullRequest: true,
-    createIssue: 'once',
-    addPullRequestComment: false,
-    createOrUpdateFile: ({ toolInput }) => toolInput?.owner !== 'vercel-labs',
-  },
-})
-```
-
-Tools are exposed to the model as `<namespace>__<toolName>`, where `<namespace>` comes from the mount file's name: `agent/extensions/github.ts` yields `github__listPullRequests`, `github__createIssue`, and so on.
-
-For Vercel Connect, pass `connector` directly, no separate import needed:
-
-```ts
-// agent/extensions/github.ts
-import githubExtension from '@github-tools/eve-extension'
-
-export default githubExtension({
-  connector: 'github/my-connector',
-  preset: 'maintainer',
-})
-```
-
-No `build.externalDependencies` workaround is needed here. Unlike the deprecated direct import below, the extension is pre-built via `eve extension build` and loaded through eve's extension mechanism rather than inlined from a workspace-linked source import.
-
-See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve-extension-agent`](../../examples/eve-extension-agent) for the full package README and a runnable agent.
-
-### eve, direct import (deprecated)
-
-The `@github-tools/sdk/eve` subpath registers all GitHub tools via `defineDynamic`: one file, zero CLI. This keeps working but new agents should use the extension above.
+> A mountable [eve extension](https://eve.dev/docs/extensions), `@github-tools/eve-extension`, is also available and is the direction this integration is moving toward — it will become the recommended way to add GitHub tools to an eve agent. The direct import below remains supported. See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve-extension-agent`](../../examples/eve-extension-agent).
 
 ```sh
 pnpm add @github-tools/sdk eve ai zod
 ```
 
-`eve` v0.19+ requires **`ai` v7** as a peer dependency.
+`eve` `>=0.34.0` requires **`ai` v7** as a peer dependency.
 
 ```ts
 // agent/tools/github.ts
@@ -395,23 +307,41 @@ export default createGithubTools({
 })
 ```
 
-Dynamic tools are named by their **bare map key**: the model sees `listPullRequests`, `createIssue`, and so on (same names as the AI SDK package). There is no automatic file-slug prefix when returning a tool map from `defineDynamic`.
+Dynamic tools are named by their **bare map key** — the model sees `listPullRequests`, `createIssue`, and so on (same names as the AI SDK package). There is no automatic file-slug prefix when returning a tool map from `defineDynamic`.
 
-#### Approval (eve)
+### Approval (eve)
 
 | Value | Maps to | Behavior |
 |---|---|---|
 | `true` / `'always'` | `always()` | Require approval on every call |
-| `false` / `'never'` | omit `approval` | Skip approval (eve default) |
+| `false` / `'never'` | `never()` | Skip approval |
 | `'once'` | `once()` | Approve once per session, then auto-allow |
 | predicate | custom `Approval` | Input-dependent gate; booleans map to `user-approval` / `not-applicable` |
 | `always()` / `once()` / `never()` | passthrough | Use eve helpers directly |
 
-Default (no `requireApproval`): all write tools → `always()`. Unlisted write tools keep the `always()` fail-safe default.
+Default (no `requireApproval`): all write tools → `always()`. Unlisted write tools keep the `always()` fail-safe default. Read tools only require approval when explicitly configured with `overrides.<tool>.approval`.
 
-Unlike the Workflow SDK subpath, eve approval **works durably**: gated tools pause the session until a human approves.
+#### Authorize approval responders
 
-#### Cherry-picking (one tool per file)
+`authorizeApprovalResponse` is optional. Use it to require that the person approving a write has the permissions you specify. Set one policy for every write tool or use a per-tool map.
+
+```ts
+import { createGithubTools, githubRepositoryApprover } from '@github-tools/sdk/eve'
+import { connectGithubApproverAuth } from '@github-tools/sdk/connect/eve'
+
+export default createGithubTools({
+  authorizeApprovalResponse: githubRepositoryApprover({
+    auth: connectGithubApproverAuth('github/my-connector'),
+    minimumPermission: 'write',
+  }),
+})
+```
+
+`connectGithubApproverAuth()` uses a separate user-scoped Connect credential, requesting `read:user` by default to identify the responder. `githubRepositoryApprover()` uses the agent GitHub credential to check that person's permission for the input `owner` and `repo`; it uses `GITHUB_TOKEN` unless you pass `agentToken`. It rejects tools without string `owner` and `repo` inputs; use a per-tool map when only repository tools should require authorization.
+
+Unlike the Workflow SDK subpath, eve approval **works durably** — gated tools pause the session until a human approves.
+
+### Cherry-picking (one tool per file)
 
 ```ts
 // agent/tools/list_pull_requests.ts
@@ -420,7 +350,7 @@ import { listPullRequests } from '@github-tools/sdk/eve'
 export default listPullRequests()
 ```
 
-#### Idempotency
+### Idempotency
 
 eve replays completed steps but re-runs steps interrupted mid-execution. Write tools vary:
 
@@ -429,18 +359,13 @@ eve replays completed steps but re-runs steps interrupted mid-execution. Write t
 | `createOrUpdateFile` | Natural when content + `sha` unchanged (skips no-op updates) |
 | `closeIssue` | Natural when already closed |
 | `createBranch` | Natural when branch exists at same SHA |
-| `removeAssignees` | Natural: removing an assignee that isn't assigned is a no-op on GitHub |
-| `addIssueReaction`, `addCommentReaction` | Natural: GitHub returns the existing reaction when the user already reacted with the same content |
-| `markNotificationRead` | Natural when the thread is already read |
-| `updateIssue`, `updatePullRequest`, `updateRelease`, `updateIssueComment`, `updatePullRequestComment` | **Not** idempotent: each call applies a new revision |
-| `deleteIssueComment`, `deletePullRequestComment`, `deleteRelease` | **Not** idempotent: deleting an already-deleted resource returns 404 from GitHub |
-| `addIssueComment`, `addDiscussionComment`, `createIssue`, `mergePullRequest`, `createRelease`, … | **Not** idempotent: each call creates new side effects |
+| `addIssueComment`, `createIssue`, `mergePullRequest`, … | **Not** idempotent — each call creates new side effects |
 
 Gate non-idempotent writes behind `always()` or `once()` where replay safety matters.
 
-#### Vercel Connect
+### Vercel Connect
 
-Mint the token from a Connect connector instead of `GITHUB_TOKEN`. `connectGithubTools` derives scopes from `preset` and fetches the token lazily inside each tool call:
+Mint the token from a Connect connector instead of `GITHUB_TOKEN` — `connectGithubTools` derives scopes from `preset` and fetches the token lazily inside each tool call:
 
 ```ts
 // agent/tools/github.ts
@@ -451,15 +376,15 @@ export default connectGithubTools('github/my-connector', {
 })
 ```
 
-Add `build: { externalDependencies: ['@vercel/connect'] }` to `agent.ts`. See [Vercel Connect](#vercel-connect) above for the full setup checklist.
+For responder authorization with a Connect-backed eve agent, import `connectGithubApproverAuth` from `@github-tools/sdk/connect/eve` and pass it to `githubRepositoryApprover()` as shown above.
 
-> `eve` is an optional peer dependency, install it only when using the `/eve` subpath.
+Add `build: { externalDependencies: ['@vercel/connect'] }` to `agent.ts` — see [Vercel Connect](#vercel-connect) above for the full setup checklist.
+
+> `eve` is an optional peer dependency — install it only when using the `/eve` subpath.
 
 See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
 
 ## Available Tools
-
-List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`, `listCheckRuns`, `listReleases`) accept an optional `maxPages` alongside `perPage`. Set it to sequentially fetch and combine up to that many pages in one call, stopping early once a page comes back short.
 
 ### Repository
 
@@ -467,11 +392,7 @@ List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`,
 |---|---|
 | `getRepository` | Get repository metadata (stars, language, default branch, …) |
 | `listBranches` | List branches |
-| `getFileContent` | Read a file or directory listing (prefer `startLine`/`endLine` or `maxLines` for large files) |
-| `getRepositoryTree` | List the file and directory structure at a given ref |
-| `createBranch` | Create a new branch from an existing branch or commit SHA |
-| `forkRepository` | Fork a repository to a user or organization |
-| `createRepository` | Create a new repository for a user or organization |
+| `getFileContent` | Read a file or directory listing |
 | `createOrUpdateFile` | Create or update a file and commit it |
 
 ### Pull Requests
@@ -479,67 +400,26 @@ List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`,
 | Tool | Description |
 |---|---|
 | `listPullRequests` | List PRs filtered by state |
-| `getPullRequest` | Get a PR's full details (diff stats, body, merge status; body truncated by default) |
-| `listPullRequestFiles` | List files changed in a PR (patches omitted by default; set `includePatch` / `filenames` for diffs) |
+| `getPullRequest` | Get a PR's full details (diff stats, body, merge status) |
+| `listPullRequestFiles` | List files changed in a PR with diff status and patches |
 | `listPullRequestReviews` | List reviews on a PR (approvals, change requests, comments) |
-| `getPullRequestContext` | Fetch PR details plus files, reviews, and optional CI checks in one call |
 | `createPullRequest` | Open a new PR |
 | `mergePullRequest` | Merge a PR (merge, squash, or rebase) |
-| `updatePullRequest` | Update a PR's title, body, state, base branch, or draft status |
 | `addPullRequestComment` | Post a comment on a PR |
-| `updatePullRequestComment` | Edit the body of a PR comment |
-| `deletePullRequestComment` | Permanently delete a PR comment |
 | `createPullRequestReview` | Submit a formal review (approve, request changes, or comment) with inline comments |
-| `requestReviewers` | Request reviews from users or teams on a PR |
 
 ### Issues
 
 | Tool | Description |
 |---|---|
 | `listIssues` | List issues filtered by state and labels |
-| `getIssue` | Get an issue's details (body truncated by default; set `detail: full` for complete text) |
-| `getIssueContext` | Fetch an issue plus label names and recent comments in one call |
-| `listIssueComments` | List comments on an issue (paginated; prefer `getIssueContext` for the first page) |
+| `getIssue` | Get an issue's full details |
 | `createIssue` | Open a new issue |
 | `addIssueComment` | Post a comment on an issue |
-| `updateIssueComment` | Edit the body of an issue comment |
-| `deleteIssueComment` | Permanently delete an issue comment |
 | `closeIssue` | Close an issue (completed or not planned) |
-| `updateIssue` | Update an issue's title, body, labels, milestone, or assignees — set `state: 'open'` to reopen |
 | `listLabels` | List labels available in a repository |
 | `addLabels` | Add labels to an issue or pull request |
 | `removeLabel` | Remove a label from an issue or pull request |
-| `createLabel` | Create a label in a repository |
-| `updateLabel` | Update a label's name, color, or description |
-| `deleteLabel` | Delete a label from a repository permanently |
-| `addAssignees` | Assign users to an issue or pull request |
-| `removeAssignees` | Remove assignees from an issue or pull request |
-
-### Reactions
-
-Pull request conversations share the issue numbering, so the issue-level tools work on PRs too.
-
-| Tool | Description |
-|---|---|
-| `listIssueReactions` | List reactions on an issue or pull request, with per-emoji counts |
-| `addIssueReaction` | React to an issue or pull request (`+1`, `-1`, `laugh`, `confused`, `heart`, `hooray`, `rocket`, `eyes`) |
-| `listCommentReactions` | List reactions on an issue or pull request comment |
-| `addCommentReaction` | React to an issue or pull request comment |
-
-### Discussions
-
-| Tool | Description |
-|---|---|
-| `listDiscussions` | List discussions, most recently updated first, optionally filtered by category name (cursor-paginated) |
-| `getDiscussion` | Get a discussion by number (body truncated by default; set `detail: full` for complete text) |
-| `addDiscussionComment` | Post a comment on a discussion |
-
-### Notifications
-
-| Tool | Description |
-|---|---|
-| `listNotifications` | List notification threads for the authenticated user (unread only unless `all: true`) |
-| `markNotificationRead` | Mark a single notification thread as read |
 
 ### Gists
 
@@ -565,26 +445,6 @@ Pull request conversations share the issue numbering, so the issue-level tools w
 | `cancelWorkflowRun` | Cancel an in-progress workflow run |
 | `rerunWorkflowRun` | Re-run a workflow run, optionally only failed jobs |
 
-### Checks and Statuses
-
-| Tool | Description |
-|---|---|
-| `listCheckRuns` | List check runs (Checks API: GitHub Actions and other CI providers) for a commit, branch, or tag |
-| `getCombinedStatus` | Get the combined commit status (Statuses API: legacy CI integrations) for a commit, branch, or tag |
-| `getCiFailureContext` | Diagnose CI failures for a ref — combined status, failing checks, and failed workflow jobs in one call |
-
-### Releases
-
-| Tool | Description |
-|---|---|
-| `listReleases` | List releases, newest first (includes drafts and prereleases) |
-| `getLatestRelease` | Get the latest published release (body truncated by default; set `detail: full` for complete notes) |
-| `getRelease` | Get a specific release by ID, including its assets |
-| `getReleaseContext` | Fetch a release plus the previous release and tag comparison in one call |
-| `createRelease` | Create a new release (and its tag if needed) |
-| `updateRelease` | Update a release's tag, target, title, notes, draft, or prerelease status |
-| `deleteRelease` | Permanently delete a release (does not delete the underlying git tag) |
-
 ### Commits
 
 | Tool | Description |
@@ -592,15 +452,13 @@ Pull request conversations share the issue numbering, so the issue-level tools w
 | `listCommits` | List commits, optionally filtered by file path, author, or date range |
 | `getCommit` | Get a commit's full details including changed files and diffs |
 | `getBlame` | Line-level git blame for a file (GitHub GraphQL) |
-| `compareCommits` | Compare two branches, tags, or commits: ahead/behind counts, commits in between, and files that differ |
 
 ### Search
 
 | Tool | Description |
 |---|---|
-| `searchCode` | Search code across GitHub with qualifier support (includes matching text snippets when available) |
+| `searchCode` | Search code across GitHub with qualifier support |
 | `searchRepositories` | Search repositories by keyword, topic, language, stars, … |
-| `searchIssues` | Search issues and pull requests using qualifiers like `is:open`, `type:pr`, or `label:bug` |
 
 ## GitHub Token
 
@@ -613,24 +471,19 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | Permission | Level | Required for |
 |---|---|---|
 | **Metadata** | Read-only | Always required (auto-included) |
-| **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `getRepositoryTree`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext` |
-| **Contents** | Read and write | `createBranch`, `createOrUpdateFile`, `createRelease`, `updateRelease`, `deleteRelease` |
-| **Administration** | Read and write | `forkRepository`, `createRepository` |
-| **Pull requests** | Read-only | `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviews`, `getPullRequestContext` |
-| **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `requestReviewers` |
-| **Issues** | Read-only | `listIssues`, `getIssue`, `getIssueContext`, `listIssueComments`, `listLabels`, `listIssueReactions`, `listCommentReactions` |
-| **Issues** | Read and write | `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction` |
-| **Discussions** | Read-only | `listDiscussions`, `getDiscussion` |
-| **Discussions** | Read and write | `addDiscussionComment` |
+| **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `listCommits`, `getCommit`, `getBlame` |
+| **Contents** | Read and write | `createOrUpdateFile` |
+| **Pull requests** | Read-only | `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviews` |
+| **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `addPullRequestComment`, `createPullRequestReview` |
+| **Issues** | Read-only | `listIssues`, `getIssue`, `listLabels` |
+| **Issues** | Read and write | `createIssue`, `addIssueComment`, `closeIssue`, `addLabels`, `removeLabel` |
+
 | **Gists** | Read-only | `listGists`, `getGist`, `listGistComments` |
 | **Gists** | Read and write | `createGist`, `updateGist`, `deleteGist`, `createGistComment` |
-| **Notifications** (account) | Read and write | `listNotifications`, `markNotificationRead` |
-| **Actions** | Read-only | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getCiFailureContext` |
+| **Actions** | Read-only | `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs` |
 | **Actions** | Read and write | `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
-| **Checks** | Read-only | `listCheckRuns`, `getCiFailureContext` |
-| **Commit statuses** | Read-only | `getCombinedStatus`, `getCiFailureContext` |
 
-Search tools (`searchCode`, `searchRepositories`, `searchIssues`) work with any token.
+Search tools (`searchCode`, `searchRepositories`) work with any token.
 
 ### Classic token
 
@@ -650,12 +503,11 @@ type GithubToolsOptions = {
   token?: GithubTokenInput // defaults to process.env.GITHUB_TOKEN
   requireApproval?: boolean | Partial<Record<GithubWriteToolName, boolean>>
   preset?: GithubToolPreset | GithubToolPreset[]
-  context?: GithubToolsContext // default owner / repo / PR / issue / ref
 }
 
 type GithubTokenInput = string | (() => Promise<string>)
 
-type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'security-audit' | 'release-manager' | 'discussion-moderator' | 'notification-inbox' | 'pr-author' | 'maintainer'
+type GithubToolPreset = 'code-review' | 'issue-triage' | 'repo-explorer' | 'ci-ops' | 'maintainer'
 ```
 
 ### `createGithubAgent(options)`
@@ -665,12 +517,17 @@ Returns a `ToolLoopAgent` instance with `.generate()` and `.stream()` methods, p
 ```ts
 import { createGithubAgent } from '@github-tools/sdk'
 
-// Prefer a preset: scoped tools + tailored prompt
+// Minimal — all tools, generic prompt
+const agent = createGithubAgent({
+  model: 'anthropic/claude-sonnet-4.6',
+  token: process.env.GITHUB_TOKEN!,
+})
+
+// With preset — scoped tools + tailored prompt
 const reviewer = createGithubAgent({
   model: 'anthropic/claude-sonnet-4.6',
   token: process.env.GITHUB_TOKEN!,
   preset: 'code-review',
-  context: { owner: 'vercel', repo: 'ai', pullNumber: 42 },
 })
 
 // Add context to the built-in prompt
@@ -681,14 +538,7 @@ const triager = createGithubAgent({
   additionalInstructions: 'Focus on the nuxt/ui repository. Always respond in French.',
 })
 
-// Full catalog (omit preset or use maintainer)
-const agent = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
-  token: process.env.GITHUB_TOKEN!,
-  preset: 'maintainer',
-})
-
-// Full override: replace the built-in prompt entirely
+// Full override — replace the built-in prompt entirely
 const custom = createGithubAgent({
   model: 'anthropic/claude-sonnet-4.6',
   token: process.env.GITHUB_TOKEN!,
@@ -696,18 +546,17 @@ const custom = createGithubAgent({
 })
 
 // Use the agent
-const result = await reviewer.generate({ prompt: 'Review this PR' })
-const stream = reviewer.stream({ prompt: 'Review this PR' })
+const result = await reviewer.generate({ prompt: 'Review PR #42 on vercel/ai' })
+const stream = reviewer.stream({ prompt: 'Review PR #42 on vercel/ai' })
 ```
 
 | Option | Description |
 |---|---|
-| `model` | Language model: string (`'anthropic/claude-sonnet-4.6'`) or provider instance |
+| `model` | Language model — string (`'anthropic/claude-sonnet-4.6'`) or provider instance |
 | `token` | GitHub token string or async provider |
 | `preset` | Optional preset or array of presets to scope tools |
-| `context` | Default owner / repo / pullNumber / issueNumber / ref for tools and the system prompt |
 | `requireApproval` | Approval config (same as `createGithubTools`) |
-| `instructions` | Replaces the built-in system prompt entirely (`context` is still appended) |
+| `instructions` | Replaces the built-in system prompt entirely |
 | `additionalInstructions` | Appended to the built-in system prompt |
 
 All other `ToolLoopAgent` options (`stopWhen`, `toolChoice`, `onStepFinish`, etc.) are passed through.
@@ -727,7 +576,6 @@ pnpm add workflow @workflow/ai
 #### Streaming (chat UI)
 
 ```ts
-// durable-chat.workflow.ts
 import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
 import { getWritable } from 'workflow'
 import type { ModelMessage, UIMessageChunk } from 'ai'
@@ -744,10 +592,9 @@ async function chatWorkflow(messages: ModelMessage[], token: string) {
 }
 ```
 
-#### Non-streaming (bot / background job, needs `"use step"`)
+#### Non-streaming (bot / background job — needs `"use step"`)
 
 ```ts
-// agent-turn.step.ts
 import { createGithubAgent } from '@github-tools/sdk'
 
 async function agentTurn(prompt: string) {
@@ -764,7 +611,7 @@ async function agentTurn(prompt: string) {
 
 > See [`examples/pr-review-agent`](../../examples/pr-review-agent) for a complete PR review agent built with Chat SDK and Vercel Workflow.
 
-All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
+All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
 
 ### `resolveGithubToken(token?)`
 

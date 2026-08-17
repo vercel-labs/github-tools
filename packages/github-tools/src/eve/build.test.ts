@@ -11,11 +11,11 @@ describe('createGithubTools eve integration', () => {
     }
   })
 
-  it('returns a defineDynamic wrapper with step.started resolver', async () => {
+  it('resolves tools once when a session starts', async () => {
     const dynamic = createEveGithubToolsDynamic({ token: 'ghp_test', preset: 'code-review' })
-    expect(dynamic).toMatchObject({ kind: expect.any(String), events: { 'step.started': expect.any(Function) } })
+    expect(dynamic).toMatchObject({ kind: expect.any(String), events: { 'session.started': expect.any(Function) } })
 
-    const tools = await dynamic.events['step.started']!({}, {} as never)
+    const tools = await dynamic.events['session.started']!({}, {} as never)
     expect(Object.keys(tools!).sort()).toEqual([...PRESET_TOOLS['code-review']].sort())
   })
 
@@ -60,70 +60,40 @@ describe('createGithubTools eve integration', () => {
     coreSpy.mockRestore()
   })
 
-  it('restricts to an exact allow-list via `include`', () => {
-    const tools = buildEveToolMap({
-      token: 'ghp_test',
-      include: ['getRepository', 'mergePullRequest'],
-    })
-
-    expect(Object.keys(tools).sort()).toEqual(['getRepository', 'mergePullRequest'])
-  })
-
-  it('unions `preset` and `include` when both are provided', () => {
-    const tools = buildEveToolMap({
-      token: 'ghp_test',
-      preset: 'code-review',
-      // mergePullRequest is not part of the code-review preset — `include` adds it.
-      include: ['mergePullRequest'],
-    })
-
-    expect(Object.keys(tools).sort()).toEqual([...PRESET_TOOLS['code-review'], 'mergePullRequest'].sort())
-  })
-
-  it('removes tools via `exclude`, applied after `preset` + `include`', () => {
-    const tools = buildEveToolMap({
-      token: 'ghp_test',
-      preset: 'code-review',
-      include: ['mergePullRequest'],
-      exclude: ['getBlame', 'mergePullRequest'],
-    })
-
-    const expected = [...PRESET_TOOLS['code-review'], 'mergePullRequest']
-      .filter(name => !['getBlame', 'mergePullRequest'].includes(name))
-
-    expect(Object.keys(tools).sort()).toEqual(expected.sort())
-  })
-
-  it('resolves the same `include` allow-list via listResolvedEveToolNames', () => {
-    expect(listResolvedEveToolNames({ include: ['getRepository', 'mergePullRequest'] }).sort())
-      .toEqual(['getRepository', 'mergePullRequest'])
-  })
-
-  it('unions preset + include and applies exclude via listResolvedEveToolNames', () => {
-    const names = listResolvedEveToolNames({
-      preset: 'code-review',
-      include: ['mergePullRequest'],
-      exclude: ['getBlame', 'mergePullRequest'],
-    })
-
-    const expected = [...PRESET_TOOLS['code-review'], 'mergePullRequest']
-      .filter(name => !['getBlame', 'mergePullRequest'].includes(name))
-
-    expect(names.sort()).toEqual(expected.sort())
-  })
-
-  it('maps approval config onto write tools in the dynamic set', async () => {
+  it('composes response authorization with global and overridden request policies', () => {
+    const response = vi.fn()
     const tools = buildEveToolMap({
       token: 'ghp_test',
       preset: 'issue-triage',
-      requireApproval: {
-        createIssue: 'once',
-        addIssueComment: false,
-      },
+      requireApproval: { createIssue: 'once' },
+      authorizeApprovalResponse: response,
+      overrides: { createIssue: { approval: 'never' } },
     })
 
-    expect(tools.createIssue?.approval).toBeDefined()
-    expect(tools.addIssueComment?.approval).toBeUndefined()
+    expect(tools.createIssue?.approval).toEqual({
+      request: expect.any(Function),
+      response,
+    })
     expect(tools.listIssues?.approval).toBeUndefined()
+  })
+
+  it('uses a per-tool response authorization policy', () => {
+    const response = vi.fn()
+    const tool = buildEveToolDefinition('createIssue', {
+      token: 'ghp_test',
+      authorizeApprovalResponse: { createIssue: response },
+    })
+
+    expect(tool.approval).toEqual({ request: expect.any(Function), response })
+  })
+
+  it('keeps explicit approval overrides on read tools', () => {
+    const approval = vi.fn()
+    const tool = buildEveToolDefinition('getFileContent', {
+      token: 'ghp_test',
+      overrides: { getFileContent: { approval } },
+    })
+
+    expect(tool.approval).toBe(approval)
   })
 })

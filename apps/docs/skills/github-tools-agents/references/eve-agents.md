@@ -14,7 +14,7 @@ tags: [eve, defineDynamic, approval, filesystem, durable, human-in-the-loop, dep
 pnpm add @github-tools/sdk eve ai zod
 ```
 
-- **`ai` v7** required (eve v0.19+ peer)
+- `eve` `>=0.34.0` and **`ai` v7** required
 - `GITHUB_TOKEN` or explicit `token`
 
 ## One-file registration
