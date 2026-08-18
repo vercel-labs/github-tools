@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  eve@0.30.6: c9106edc7e55c1234e6d86213b5d9632c4f3f888cf608a880213925826c22534
+
 importers:
 
   .:
