@@ -47,15 +47,19 @@ function resolveResponsePolicy(
 export function resolveEveToolApproval(
   toolName: GithubWriteToolName,
   config: EveApprovalConfig | undefined,
-  responseConfig?: EveResponseApprovalConfig,
   override?: EveApprovalValue,
+  responseConfig?: EveResponseApprovalConfig,
 ): Approval | undefined {
-  if (override !== undefined && isEveApprovalDisabled(override)) return undefined
-  if (override === undefined && (config === false || (typeof config === 'object' && config !== null && isEveApprovalDisabled(config[toolName])))) {
-    return undefined
-  }
+  const response = resolveResponsePolicy(toolName, responseConfig)
+  const disabled = override !== undefined
+    ? isEveApprovalDisabled(override)
+    : config === false || (typeof config === 'object' && config !== null && isEveApprovalDisabled(config[toolName]))
+
+  // Omit disabled approvals unless a response policy was explicitly configured.
+  // In that case retain the complete definition so request-policy overrides do
+  // not silently discard responder authorization.
+  if (disabled && response === undefined) return undefined
 
   const request = resolveRequestPolicy(toolName, config, override)
-  const response = resolveResponsePolicy(toolName, responseConfig)
   return response === undefined ? request : { request, response }
 }

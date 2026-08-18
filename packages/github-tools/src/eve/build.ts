@@ -61,8 +61,8 @@ function defineGithubTool(
     ? resolveEveToolApproval(
         entry.writeTool,
         options.requireApproval,
-        options.authorizeApprovalResponse,
         options.overrides?.[name]?.approval,
+        options.authorizeApprovalResponse,
       )
     : options.overrides?.[name]?.approval === undefined
       ? undefined
