@@ -14,7 +14,7 @@ tags: [eve, defineDynamic, approval, filesystem, durable, human-in-the-loop, dep
 pnpm add @github-tools/sdk eve ai zod
 ```
 
-- `eve` `>=0.34.0` and **`ai` v7** required
+- **`ai` v7** required (eve v0.19+ peer)
 - `GITHUB_TOKEN` or explicit `token`
 
 ## One-file registration
@@ -38,6 +38,8 @@ Tool names in the dynamic map match the AI SDK package (`listPullRequests`, `cre
 
 - Default: write tools → `always()`
 - `'once'`, predicates, `always()` / `never()` passthrough
+- `authorizeApprovalResponse` accepts a global or per-write-tool response policy
+- `githubRepositoryApprover` from `@github-tools/sdk/eve-runtime` checks the authenticated responder's repository permission; pair it with `connectGithubApproverAuth` from `@github-tools/sdk/connect/eve`
 - Unlike `createDurableGithubAgent`, eve approval **works durably**
 
 ## Cherry-pick
