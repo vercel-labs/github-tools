@@ -214,13 +214,13 @@ importers:
         version: link:../../packages/github-tools-eve-extension
       '@vercel/connect':
         specifier: ^0.6.1
-        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=c9106edc7e55c1234e6d86213b5d9632c4f3f888cf608a880213925826c22534)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.34.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
       ai:
         specifier: ^7.0.52
         version: 7.0.52(zod@4.4.3)
       eve:
-        specifier: ^0.30.6
-        version: 0.30.6(patch_hash=c9106edc7e55c1234e6d86213b5d9632c4f3f888cf608a880213925826c22534)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^0.34.0
+        version: 0.34.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -331,13 +331,13 @@ importers:
         version: 26.1.2
       '@vercel/connect':
         specifier: ^0.6.1
-        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.30.6(patch_hash=c9106edc7e55c1234e6d86213b5d9632c4f3f888cf608a880213925826c22534)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 0.6.1(@ai-sdk/mcp@1.0.58(zod@4.4.3))(ai@7.0.52(zod@4.4.3))(eve@0.34.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0)))
       eslint:
         specifier: ^10.8.0
         version: 10.8.0(jiti@2.7.0)
       eve:
-        specifier: ^0.30.6
-        version: 0.30.6(patch_hash=c9106edc7e55c1234e6d86213b5d9632c4f3f888cf608a880213925826c22534)(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(microsandbox@0.6.8)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^0.34.0
+        version: 0.34.0(@opentelemetry/api@1.9.0)(@vercel/queue@0.3.1)(ai@7.0.52(zod@4.4.3))(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
