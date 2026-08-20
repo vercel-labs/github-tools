@@ -38,6 +38,8 @@ Tool names in the dynamic map match the AI SDK package (`listPullRequests`, `cre
 
 - Default: write tools → `always()`
 - `'once'`, predicates, `always()` / `never()` passthrough
+- `authorizeApprovalResponse` accepts a global or per-write-tool response policy
+- `githubRepositoryApprover` from `@github-tools/sdk/eve-runtime` checks the authenticated responder's repository permission; pair it with `connectGithubApproverAuth` from `@github-tools/sdk/connect/eve`
 - Unlike `createDurableGithubAgent`, eve approval **works durably**
 
 ## Cherry-pick

@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@ai-sdk/provider-utils': 5.0.28
+  '@ai-sdk/gateway@3>@ai-sdk/provider-utils': 4.0.41
 
 importers:
 
@@ -411,6 +412,12 @@ packages:
 
   '@ai-sdk/openai@3.0.90':
     resolution: {integrity: sha512-GIucFshCN7JZwTDur25PsnLEMRUFfAKuLaA9TP9fzGxPC2Zxzl94tvat93ZdZLURkKOrDukU0E4fj73tKDWjTA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/provider-utils@4.0.41':
+    resolution: {integrity: sha512-I7hhjfw01yEI8NkuAsT8Mv6xbWFr/lqLXMdaJQ2zWfXEpxog1eT7skDcv1+RY29/+5btzH8wD+vVvy48bk9oNQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1557,6 +1564,10 @@ packages:
 
   '@fastify/accept-negotiator@2.0.1':
     resolution: {integrity: sha512-/c/TW2bO/v9JeEgoD/g1G5GxGeCF1Hafdf79WPmUlgYiBXummY0oX3VVq4yFkKKVBKDNlaDUYoab7g38RpPqCQ==}
+
+  '@fastify/busboy@2.1.1':
+    resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
+    engines: {node: '>=14'}
 
   '@fingerprintjs/botd@2.0.0':
     resolution: {integrity: sha512-yhuz23NKEcBDTHmGz/ULrXlGnbHenO+xZmVwuBkuqHUkqvaZ5TAA0kAgcRy4Wyo5dIBdkIf57UXX8/c9UlMLJg==}
@@ -11070,6 +11081,10 @@ packages:
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
+  undici@5.29.0:
+    resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
+    engines: {node: '>=14.0'}
+
   undici@6.28.0:
     resolution: {integrity: sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==}
     engines: {node: '>=18.17'}
@@ -11999,7 +12014,7 @@ snapshots:
   '@ai-sdk/gateway@3.0.143(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 3.0.13
-      '@ai-sdk/provider-utils': 5.0.28(zod@4.3.6)
+      '@ai-sdk/provider-utils': 4.0.41(zod@4.3.6)
       '@vercel/oidc': 3.2.0
       zod: 4.3.6
     optional: true
@@ -12007,7 +12022,7 @@ snapshots:
   '@ai-sdk/gateway@3.0.164(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 3.0.14
-      '@ai-sdk/provider-utils': 5.0.28(zod@4.3.6)
+      '@ai-sdk/provider-utils': 4.0.41(zod@4.3.6)
       '@vercel/oidc': 3.2.0
       zod: 4.3.6
     optional: true
@@ -12015,7 +12030,7 @@ snapshots:
   '@ai-sdk/gateway@3.0.164(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 3.0.14
-      '@ai-sdk/provider-utils': 5.0.28(zod@4.4.3)
+      '@ai-sdk/provider-utils': 4.0.41(zod@4.4.3)
       '@vercel/oidc': 3.2.0
       zod: 4.4.3
 
@@ -12081,6 +12096,23 @@ snapshots:
       '@ai-sdk/provider-utils': 5.0.28(zod@4.3.6)
       zod: 4.3.6
     optional: true
+
+  '@ai-sdk/provider-utils@4.0.41(zod@4.3.6)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.14
+      '@standard-schema/spec': 1.1.0
+      eventsource-parser: 3.1.0
+      undici: 5.29.0
+      zod: 4.3.6
+    optional: true
+
+  '@ai-sdk/provider-utils@4.0.41(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.14
+      '@standard-schema/spec': 1.1.0
+      eventsource-parser: 3.1.0
+      undici: 5.29.0
+      zod: 4.4.3
 
   '@ai-sdk/provider-utils@5.0.28(zod@4.3.6)':
     dependencies:
@@ -13202,6 +13234,8 @@ snapshots:
 
   '@fastify/accept-negotiator@2.0.1':
     optional: true
+
+  '@fastify/busboy@2.1.1': {}
 
   '@fingerprintjs/botd@2.0.0': {}
 
@@ -26178,6 +26212,10 @@ snapshots:
       unplugin: 3.3.0(esbuild@0.28.1)(rolldown@1.2.2)(rollup@4.62.4)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
 
   undici-types@8.3.0: {}
+
+  undici@5.29.0:
+    dependencies:
+      '@fastify/busboy': 2.1.1
 
   undici@6.28.0: {}
 

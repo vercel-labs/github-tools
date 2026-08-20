@@ -14,10 +14,13 @@ export {
   executeGithubEveTool,
 } from './eve/build'
 export { mapEveApprovalValue, resolveEveApproval, resolveEveToolApproval, isEveApprovalDisabled } from './eve/approval'
+export { githubRepositoryApprover } from './eve/approver'
+export type { GithubRepositoryApproverOptions } from './eve/approver'
 export type {
   EveApprovalConfig,
   EveApprovalValue,
   EveGithubToolsOptions,
+  EveResponseApprovalConfig,
   EveToolFactoryOptions,
   EveToolOverrides,
 } from './eve/types'

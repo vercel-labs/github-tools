@@ -409,6 +409,22 @@ Dynamic tools are named by their **bare map key**: the model sees `listPullReque
 
 Default (no `requireApproval`): all write tools → `always()`. Unlisted write tools keep the `always()` fail-safe default.
 
+Use `authorizeApprovalResponse` to restrict who can settle approvals. The repository policy identifies the responder with a user-scoped Connect credential, then checks that user’s repository permission with the agent token:
+
+```ts
+import { connectGithubApproverAuth } from '@github-tools/sdk/connect/eve'
+import { githubRepositoryApprover } from '@github-tools/sdk/eve-runtime'
+
+export default createGithubTools({
+  authorizeApprovalResponse: githubRepositoryApprover({
+    auth: connectGithubApproverAuth('github/my-connector'),
+    minimumPermission: 'write',
+  }),
+})
+```
+
+`minimumPermission` accepts `read`, `triage`, `write` (default), `maintain`, or `admin`. The policy requires string `owner` and `repo` tool inputs. Pass a per-tool map to `authorizeApprovalResponse` when only selected repository tools should use it.
+
 Unlike the Workflow SDK subpath, eve approval **works durably**: gated tools pause the session until a human approves.
 
 #### Cherry-picking (one tool per file)
