@@ -34,3 +34,8 @@ minimumReleaseAgeExclude:
 
 overrides:
   '@ai-sdk/provider-utils': 5.0.28
+  # @ai-sdk/gateway@3 requires provider-utils v4 (it imports
+  # createProviderToolFactoryWithOutputSchema, which was removed in v5).
+  # Scope the override so gateway v3's subtree keeps v4 while first-party
+  # ai v7 packages continue to dedupe on v5.
+  '@ai-sdk/gateway@3>@ai-sdk/provider-utils': 4.0.41
