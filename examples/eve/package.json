@@ -1,5 +1,5 @@
 {
-  "name": "@github-tools/eve-extension-agent",
+  "name": "@github-tools/eve",
   "private": true,
   "type": "module",
   "engines": {

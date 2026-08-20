@@ -4,3 +4,4 @@ node_modules
 .output
 .vercel
 .env*
+!.env.example

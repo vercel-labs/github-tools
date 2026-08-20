@@ -73,7 +73,7 @@ export default githubExtension({
 })
 ```
 
-See the runnable consumer at [`examples/eve-extension-agent`](../../examples/eve-extension-agent).
+See the runnable consumer at [`examples/eve`](../../examples/eve).
 
 ## Structure
 

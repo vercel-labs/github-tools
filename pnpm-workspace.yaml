@@ -32,9 +32,3 @@ minimumReleaseAgeExclude:
   - 'eve'
   - 'create-eve'
 
-# Temporary: GitHub HITL Yes/No matching breaks when <github_context> is
-# prepended onto the comment text (Linear puts context in turn.context instead).
-# Remove once eve ships the equivalent fix.
-patchedDependencies:
-  eve@0.30.6: patches/eve@0.30.6.patch
-

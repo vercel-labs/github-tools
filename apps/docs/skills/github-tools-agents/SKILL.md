@@ -142,7 +142,7 @@ Each packaged tool uses a named module-level **`"use step"`** function so indivi
 Each reference file includes YAML frontmatter with `name`, `description`, and `tags` for searchability. Use the search script available in `scripts/search_references.py` to quickly find relevant references by tag or keyword.
 
 - [Durable Workflows](references/durable-workflows.md): Best practices for using GitHub tools within Vercel Workflow, including step directives and streaming responses.
-- [eve Extension](references/eve-extension.md): Recommended way to add GitHub tools to an eve agent, mount as an extension via defineExtension, approval policies, and the eve-extension-agent example.
+- [eve Extension](references/eve-extension.md): Recommended way to add GitHub tools to an eve agent, mount as an extension via defineExtension, approval policies, and the examples/eve starter.
 - [eve Agents (deprecated)](references/eve-agents.md): Register GitHub tools in eve via the deprecated direct defineDynamic import.
 - [Existing Project Integration](references/existing-project-integration.md): How to integrate GitHub tools into an existing codebase, including environment variable management and framework-specific hooks.
 - [Tokens and Approval](references/tokens-and-approval.md): Guidance on mapping GitHub token scopes to specific tools and configuring approval flows for safe write operations.

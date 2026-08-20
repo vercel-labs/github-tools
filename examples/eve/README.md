@@ -1,4 +1,4 @@
-# GitHub eve Extension Agent
+# GitHub eve Agent
 
 Minimal [eve](https://eve.dev) agent mounting `@github-tools/eve-extension` with the
 `code-review` preset and a [Vercel Connect](https://vercel.com/docs/connect) connector.
@@ -23,7 +23,7 @@ Set `botName` in `agent/channels/github.ts` to the GitHub App slug people `@ment
 
 ```bash
 pnpm install
-cd examples/eve-extension-agent
+cd examples/eve
 vercel link    # select the github-tools-docs project (or your linked project)
 vercel env pull
 ```
@@ -44,7 +44,7 @@ pnpm dev
 From the monorepo root:
 
 ```bash
-pnpm dev:eve-extension-agent
+pnpm dev:eve
 ```
 
 ## Project structure
@@ -66,24 +66,21 @@ Write-tool approval is posted as a comment via `events["input.requested"]` — e
 channel does not ship that handler by default.
 
 To approve a parked write, reply with exactly `Yes` or `No` (no quote-reply, no `@mention`
-needed). The monorepo applies a temporary `eve@0.30.6` patch so (1) GitHub context is turn
-`context` instead of being prepended onto the comment text (which broke `Yes`/`No` matching),
-and (2) bare approval replies send no deferred context (otherwise the model follows up asking
-what to do with “empty” metadata).
+needed).
 
 ## Customize
 
-Swap the preset or configure approval:
+Swap the preset, add tools a preset is missing, or configure approval:
 
 ```ts
 import githubExtension from '@github-tools/eve-extension'
 
 export default githubExtension({
   connector: 'github/test-github-tools',
-  preset: ['code-review', 'issue-triage'],
+  preset: 'code-review',
+  include: ['createIssue'],
   requireApproval: {
-    mergePullRequest: true,
-    addPullRequestComment: 'once',
+    addPullRequestComment: ({ toolInput }) => toolInput?.owner !== 'vercel-labs',
   },
 })
 ```

@@ -368,7 +368,7 @@ export default githubExtension({
 
 No `build.externalDependencies` workaround is needed here. Unlike the deprecated direct import below, the extension is pre-built via `eve extension build` and loaded through eve's extension mechanism rather than inlined from a workspace-linked source import.
 
-See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve-extension-agent`](../../examples/eve-extension-agent) for the full package README and a runnable agent.
+See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve`](../../examples/eve) for the full package README and a runnable agent.
 
 ### eve, direct import (deprecated)
 
@@ -471,7 +471,7 @@ Add `build: { externalDependencies: ['@vercel/connect'] }` to `agent.ts`. See [V
 
 > `eve` is an optional peer dependency, install it only when using the `/eve` subpath.
 
-See [`examples/eve-agent`](../../examples/eve-agent) for a minimal agent.
+New agents should use the [eve extension](#eve-extension) above; see [`examples/eve`](../../examples/eve).
 
 ## Available Tools
 

@@ -60,4 +60,4 @@ export default createGithubTools({
 ## Docs
 
 - `/deprecated/eve`
-- `examples/eve-agent/`: `pnpm dev:eve-agent` from monorepo root
+- Prefer `examples/eve/` (`pnpm dev:eve`) with the extension; this direct-import path has no dedicated starter

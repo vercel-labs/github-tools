@@ -73,4 +73,4 @@ No separate `connectGithubTools` import needed. `connector` is a mount-config fi
 ## Docs
 
 - `/frameworks/eve-extension`
-- `examples/eve-extension-agent/`: `pnpm dev:eve-extension-agent` from monorepo root
+- `examples/eve/`: `pnpm dev:eve` from monorepo root
