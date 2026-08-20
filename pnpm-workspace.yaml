@@ -32,3 +32,5 @@ minimumReleaseAgeExclude:
   - 'eve'
   - 'create-eve'
 
+overrides:
+  '@ai-sdk/provider-utils': 5.0.28
