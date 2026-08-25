@@ -1,4 +1,3 @@
-import type { GithubTokenInput } from '@github-tools/sdk'
 import type { GithubConnectorInput } from '@github-tools/sdk/connect'
 import {
   GITHUB_TOOL_NAMES,
@@ -7,6 +6,7 @@ import {
   type EveToolOverrides,
   type GithubToolName,
   type GithubToolPreset,
+  type GithubTokenInput,
 } from '@github-tools/sdk/eve-runtime'
 import { defineExtension } from 'eve/extension'
 import { z } from 'zod'
