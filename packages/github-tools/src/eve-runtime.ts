@@ -12,6 +12,8 @@ export {
   listResolvedEveToolNames,
   listEveToolDescriptors,
   executeGithubEveTool,
+  formatGithubEveToolOutput,
+  hasGithubEveToolModelOutput,
 } from './eve/build'
 export { mapEveApprovalValue, resolveEveApproval, resolveEveToolApproval, isEveApprovalDisabled } from './eve/approval'
 export type {

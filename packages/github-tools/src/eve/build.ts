@@ -3,7 +3,7 @@ import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset
 import { createGithubTokenResolver } from '../core/token'
 import { isEveApprovalDisabled, mapEveApprovalValue, resolveEveToolApproval } from './approval'
 import { getEveTools } from './load-eve'
-import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
+import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, formatGithubEveToolOutput, hasGithubEveToolModelOutput, type GithubToolName, type ToolBuildContext } from './registry'
 import { runGithubToolStep } from './steps'
 import type { EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './types'
 
@@ -163,6 +163,8 @@ export function listEveToolDescriptors(options: EveGithubToolsOptions = {}) {
       toModelOutput: entry.toModelOutput,
     }))
 }
+
+export { formatGithubEveToolOutput, hasGithubEveToolModelOutput }
 
 /**
  * Execute a GitHub tool by name with the given eve options (token/context/attribution).

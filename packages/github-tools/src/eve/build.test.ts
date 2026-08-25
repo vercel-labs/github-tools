@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { PRESET_TOOLS } from '../core/presets'
 import * as repositoryCore from '../core/repository'
-import { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, listResolvedEveToolNames } from './build'
+import { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, formatGithubEveToolOutput, hasGithubEveToolModelOutput, listResolvedEveToolNames } from './build'
 import { getEveTools } from './load-eve'
 
 describe('createGithubTools eve integration', () => {
@@ -125,5 +125,26 @@ describe('createGithubTools eve integration', () => {
     expect(tools.createIssue?.approval).toBeDefined()
     expect(tools.addIssueComment?.approval).toBeUndefined()
     expect(tools.listIssues?.approval).toBeUndefined()
+  })
+
+  it('looks up built-in toModelOutput formatters by tool name', () => {
+    expect(hasGithubEveToolModelOutput('getFileContent')).toBe(true)
+    expect(hasGithubEveToolModelOutput('listIssues')).toBe(false)
+    expect(formatGithubEveToolOutput('getFileContent', {
+      type: 'file',
+      path: 'README.md',
+      sha: 'abc',
+      size: 5,
+      content: 'hello',
+    })).toEqual({
+      type: 'json',
+      value: {
+        type: 'file',
+        path: 'README.md',
+        sha: 'abc',
+        size: 5,
+        content: 'hello',
+      },
+    })
   })
 })

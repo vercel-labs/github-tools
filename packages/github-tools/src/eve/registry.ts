@@ -64,6 +64,31 @@ function modelOutputAdapter(
   return (output: unknown) => fn({ toolCallId: '', input: {}, output }) as ToolModelOutput
 }
 
+const GITHUB_EVE_TOOL_MODEL_OUTPUT = {
+  getFileContent: modelOutputAdapter(getFileContentToModelOutput),
+  listPullRequestFiles: modelOutputAdapter(listPullRequestFilesToModelOutput),
+  getPullRequestContext: modelOutputAdapter(getPullRequestContextToModelOutput),
+  getCommit: modelOutputAdapter(getCommitToModelOutput),
+  compareCommits: modelOutputAdapter(compareCommitsToModelOutput),
+} satisfies Partial<Record<GithubToolName, (output: unknown) => ToolModelOutput>>
+
+/** Whether a GitHub tool has a built-in eve `toModelOutput` projection. */
+export function hasGithubEveToolModelOutput(name: GithubToolName): boolean {
+  return Object.hasOwn(GITHUB_EVE_TOOL_MODEL_OUTPUT, name)
+}
+
+/**
+ * Apply the built-in eve `toModelOutput` projection for a tool.
+ * Used by `@github-tools/eve-extension` so the callback only closes over a serializable tool name.
+ */
+export function formatGithubEveToolOutput(name: GithubToolName, output: unknown): ToolModelOutput {
+  const format = GITHUB_EVE_TOOL_MODEL_OUTPUT[name as keyof typeof GITHUB_EVE_TOOL_MODEL_OUTPUT]
+  if (!format) {
+    throw new Error(`No toModelOutput formatter for GitHub tool: ${name}`)
+  }
+  return format(output)
+}
+
 export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
   const entries: ToolRegistryEntry[] = [
     {
@@ -83,7 +108,7 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: repository.getFileContentDescription,
       inputSchema: repository.getFileContentInputSchema,
       execute: withToken(repository.getFileContentCore, ctx),
-      toModelOutput: modelOutputAdapter(getFileContentToModelOutput),
+      toModelOutput: GITHUB_EVE_TOOL_MODEL_OUTPUT.getFileContent,
     },
     {
       name: 'getRepositoryTree',
@@ -182,7 +207,7 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: pullRequests.listPullRequestFilesDescription,
       inputSchema: pullRequests.listPullRequestFilesInputSchema,
       execute: withToken(pullRequests.listPullRequestFilesCore, ctx),
-      toModelOutput: modelOutputAdapter(listPullRequestFilesToModelOutput),
+      toModelOutput: GITHUB_EVE_TOOL_MODEL_OUTPUT.listPullRequestFiles,
     },
     {
       name: 'listPullRequestReviews',
@@ -209,7 +234,7 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: bundles.getPullRequestContextDescription,
       inputSchema: bundles.getPullRequestContextInputSchema,
       execute: withToken(bundles.getPullRequestContextCore, ctx),
-      toModelOutput: modelOutputAdapter(getPullRequestContextToModelOutput),
+      toModelOutput: GITHUB_EVE_TOOL_MODEL_OUTPUT.getPullRequestContext,
     },
     {
       name: 'getIssueContext',
@@ -419,7 +444,7 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: commits.getCommitDescription,
       inputSchema: commits.getCommitInputSchema,
       execute: withToken(commits.getCommitCore, ctx),
-      toModelOutput: modelOutputAdapter(getCommitToModelOutput),
+      toModelOutput: GITHUB_EVE_TOOL_MODEL_OUTPUT.getCommit,
     },
     {
       name: 'getBlame',
@@ -432,7 +457,7 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: commits.compareCommitsDescription,
       inputSchema: commits.compareCommitsInputSchema,
       execute: withToken(commits.compareCommitsCore, ctx),
-      toModelOutput: modelOutputAdapter(compareCommitsToModelOutput),
+      toModelOutput: GITHUB_EVE_TOOL_MODEL_OUTPUT.compareCommits,
     },
     {
       name: 'listGists',
