@@ -53,6 +53,8 @@ export default githubExtension({
 })
 ```
 
+Built-in `toModelOutput` formatters are applied via an inline callback that only closes over the tool name. Author `overrides.toModelOutput` inline in the agent — a library function will not get a durable descriptor on eve 0.44+.
+
 ## Approval
 
 - Default: write tools → `always()`

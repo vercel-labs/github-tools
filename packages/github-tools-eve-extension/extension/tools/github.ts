@@ -1,6 +1,8 @@
 import { connectGithubToken } from '@github-tools/sdk/connect'
 import {
   executeGithubEveTool,
+  formatGithubEveToolOutput,
+  hasGithubEveToolModelOutput,
   isEveApprovalDisabled,
   listEveToolDescriptors,
   mapEveApprovalValue,
@@ -17,8 +19,9 @@ import extension from '../extension'
 
 /**
  * Rebuild options from extension config on every call.
- * Durable `execute` only closes over a serializable tool `name` (#51); reading
- * config here avoids a module-level store that races across concurrent sessions.
+ * Durable `execute` / `toModelOutput` only close over a serializable tool `name`
+ * (#51, #99); reading config here avoids a module-level store that races across
+ * concurrent sessions.
  */
 function buildSessionOptions(): EveGithubToolsOptions {
   const {
@@ -110,7 +113,9 @@ export default defineDynamic({
           }),
           ...(override?.toModelOutput !== undefined
             ? { toModelOutput: override.toModelOutput }
-            : entry.toModelOutput ? { toModelOutput: entry.toModelOutput } : {}),
+            : hasGithubEveToolModelOutput(name)
+              ? { toModelOutput: (output: unknown) => formatGithubEveToolOutput(name, output) }
+              : {}),
           ...(override?.outputSchema !== undefined && {
             outputSchema: override.outputSchema,
           }),
