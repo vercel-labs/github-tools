@@ -128,7 +128,10 @@ export const updatePullRequestDescription = 'Update a pull request — title, bo
 /** Not idempotent — each call applies a new revision. */
 export async function updatePullRequestCore({ token, owner, repo, pullNumber, title, body, state, base, draft }: { token: string, owner: string, repo: string, pullNumber: number, title?: string, body?: string, state?: 'open' | 'closed', base?: string, draft?: boolean }) {
   const octokit = createOctokit(token)
-  const { data } = await octokit.rest.pulls.update({ owner, repo, pull_number: pullNumber, title, body, state, base })
+  const hasRestUpdate = title !== undefined || body !== undefined || state !== undefined || base !== undefined
+  const { data } = hasRestUpdate
+    ? await octokit.rest.pulls.update({ owner, repo, pull_number: pullNumber, title, body, state, base })
+    : await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
 
   if (draft !== undefined && draft !== data.draft) {
     await octokit.graphql(draft ? CONVERT_TO_DRAFT_MUTATION : MARK_READY_FOR_REVIEW_MUTATION, { pullRequestId: data.node_id })
