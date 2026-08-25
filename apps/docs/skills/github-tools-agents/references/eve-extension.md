@@ -38,6 +38,8 @@ Tools are exposed to the model as `<namespace>__<toolName>`: `agent/extensions/g
 
 `token`, `connector`, `connect`, `preset`, `include`, `exclude`, `requireApproval`, `overrides`, `author`/`committer`/`coAuthors`, see `/frameworks/eve-extension#config-schema`.
 
+`token` is `string | (() => Promise<string>)` (`GithubTokenInput`). Pass an async provider for rotating GitHub App installation tokens. Falls back to `GITHUB_TOKEN` when omitted; `connector` takes priority.
+
 `include` **adds** to `preset` (union). Use it standalone for an exact set, or on top of a preset to add a missing tool. `exclude` **removes** tool names from the resolved set, use it to drop a couple of tools from a larger preset:
 
 ```ts

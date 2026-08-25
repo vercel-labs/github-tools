@@ -88,7 +88,7 @@ extension/
 
 | Field | Type | Notes |
 |---|---|---|
-| `token` | `string?` | Falls back to `GITHUB_TOKEN` when omitted and `connector` is not set |
+| `token` | `string \| (() => Promise<string>)` (optional) | PAT string, or an async provider for rotating tokens (e.g. a GitHub App installation token) — the same `GithubTokenInput` the SDK accepts; falls back to `GITHUB_TOKEN` when omitted and `connector` is not set |
 | `connector` | `string \| (() => string \| Promise<string>)` (optional) | Vercel Connect connector name, or a resolver to pick one dynamically (e.g. per environment/tenant); takes priority over `token` |
 | `connect` | `record?` | Passed through to `getToken` when `connector` is set |
 | `preset` | preset name or array | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer` |

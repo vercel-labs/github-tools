@@ -1,3 +1,4 @@
+import type { GithubTokenInput } from '@github-tools/sdk'
 import type { GithubConnectorInput } from '@github-tools/sdk/connect'
 import {
   GITHUB_TOOL_NAMES,
@@ -32,8 +33,13 @@ export interface GithubExtensionContext {
  * Declared as an interface (not only a Zod schema) so IDE hovers show JSDoc.
  */
 export interface GithubExtensionConfig {
-  /** GitHub PAT. Falls back to `GITHUB_TOKEN` when omitted and `connector` is not set. */
-  token?: string
+  /**
+   * GitHub token: a PAT string, or a `() => Promise<string>` provider for
+   * tokens that rotate (a GitHub App installation token, a vault lease).
+   * Same input the SDK accepts. Falls back to `GITHUB_TOKEN` when omitted
+   * and `connector` is not set.
+   */
+  token?: GithubTokenInput
   /**
    * Vercel Connect connector name (e.g. `github/my-connector`), or a
    * `() => string | Promise<string>` resolver for picking one dynamically
@@ -91,7 +97,9 @@ const commitIdentitySchema = z.object({
 })
 
 const configSchema = z.object({
-  token: z.string().optional(),
+  token: z.custom<GithubTokenInput>(
+    value => typeof value === 'string' || typeof value === 'function',
+  ).optional(),
   connector: z.custom<GithubConnectorInput>(
     value => typeof value === 'string' || typeof value === 'function',
   ).optional(),
