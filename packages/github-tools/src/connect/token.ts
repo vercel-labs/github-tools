@@ -20,7 +20,25 @@ export function connectGithubToken(
   const { connectOptions } = options
   const tokenParams = resolveGithubConnectTokenParams(options)
 
-  return async () => getToken(await resolveGithubConnector(connector), tokenParams, connectOptions)
+  return async () => getToken(
+    await resolveGithubConnector(connector),
+    tokenParams,
+    resolveConnectOptions(connectOptions),
+  )
+}
+
+/**
+ * Prefer an explicit `vercelToken`, then `VERCEL_OIDC_TOKEN` from the environment.
+ * Passing the env token into `getToken` skips `@vercel/oidc`'s project-root walk,
+ * which fails inside eve/workflow snapshots that have no `.vercel` directory.
+ */
+function resolveConnectOptions(connectOptions?: ConnectOptions): ConnectOptions | undefined {
+  const vercelToken = connectOptions?.vercelToken ?? process.env.VERCEL_OIDC_TOKEN
+  if (!vercelToken && !connectOptions) return undefined
+  return {
+    ...vercelToken ? { vercelToken } : {},
+    ...connectOptions,
+  }
 }
 
 export type { ConnectOptions }

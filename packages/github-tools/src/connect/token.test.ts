@@ -24,6 +24,7 @@ function resolveConnectToken(
 describe('connectGithubToken', () => {
   beforeEach(() => {
     getToken.mockClear()
+    vi.stubEnv('VERCEL_OIDC_TOKEN', '')
   })
 
   it('calls getToken with app subject and preset-derived scopes', async () => {
@@ -99,6 +100,35 @@ describe('connectGithubToken', () => {
         repositories: ['vercel-labs/github-tools'],
       }],
     }, undefined)
+  })
+
+  it('passes VERCEL_OIDC_TOKEN as vercelToken so getToken does not walk cwd', async () => {
+    vi.stubEnv('VERCEL_OIDC_TOKEN', 'oidc_from_env')
+    const resolve = resolveConnectToken('github/my-connector', { preset: 'repo-explorer' })
+
+    await resolve()
+    expect(getToken).toHaveBeenCalledWith(
+      'github/my-connector',
+      expect.objectContaining({ subject: { type: 'app' } }),
+      { vercelToken: 'oidc_from_env' },
+    )
+    vi.unstubAllEnvs()
+  })
+
+  it('does not override an explicit connectOptions.vercelToken', async () => {
+    vi.stubEnv('VERCEL_OIDC_TOKEN', 'oidc_from_env')
+    const resolve = resolveConnectToken('github/my-connector', {
+      preset: 'repo-explorer',
+      connectOptions: { vercelToken: 'explicit_oidc' },
+    })
+
+    await resolve()
+    expect(getToken).toHaveBeenCalledWith(
+      'github/my-connector',
+      expect.objectContaining({ subject: { type: 'app' } }),
+      { vercelToken: 'explicit_oidc' },
+    )
+    vi.unstubAllEnvs()
   })
 
   it('forwards connectOptions to getToken', async () => {
