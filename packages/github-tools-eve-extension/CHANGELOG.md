@@ -1,5 +1,18 @@
 # @github-tools/eve-extension
 
+## 0.4.0
+
+### Minor Changes
+
+- [#98](https://github.com/vercel-labs/github-tools/pull/98) [`96059c2`](https://github.com/vercel-labs/github-tools/commit/96059c28492bdd3609253daa112c4d38bed46f18) Thanks [@ycarmel](https://github.com/ycarmel)! - Accept an async token provider in the extension's `token` config (`string | (() => Promise<string>)`), matching the SDK's `GithubTokenInput`. Agents authenticating with a GitHub App can pass their installation-token minter directly instead of falling back to the `@github-tools/sdk/eve-runtime` subpath.
+
+### Patch Changes
+
+- [#100](https://github.com/vercel-labs/github-tools/pull/100) [`0a9eae4`](https://github.com/vercel-labs/github-tools/commit/0a9eae4df8c431faa63aadad18112149aabab6f9) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Apply built-in eve `toModelOutput` formatters through an inline callback that only closes over the tool name. On eve 0.44.x this keeps tools like `getFileContent` from failing durable-descriptor validation and dropping the whole GitHub toolset.
+
+- Updated dependencies [[`2edd9ea`](https://github.com/vercel-labs/github-tools/commit/2edd9ea9372c707808d2246965dfb57f8c8e08a1), [`0a9eae4`](https://github.com/vercel-labs/github-tools/commit/0a9eae4df8c431faa63aadad18112149aabab6f9), [`5bbcab1`](https://github.com/vercel-labs/github-tools/commit/5bbcab1e45ce86b8a2edd06a2d5a025ad8d255c5), [`584817c`](https://github.com/vercel-labs/github-tools/commit/584817c310adc11acb92a101e677d2343faf9c92), [`ade87da`](https://github.com/vercel-labs/github-tools/commit/ade87da57d9a9de4994ed2848244a9404f5c369e)]:
+  - @github-tools/sdk@1.12.0
+
 ## 0.3.2
 
 ### Patch Changes

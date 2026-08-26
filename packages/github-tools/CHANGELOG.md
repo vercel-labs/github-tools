@@ -1,5 +1,21 @@
 # @github-tools/sdk
 
+## 1.12.0
+
+### Minor Changes
+
+- [#106](https://github.com/vercel-labs/github-tools/pull/106) [`584817c`](https://github.com/vercel-labs/github-tools/commit/584817c310adc11acb92a101e677d2343faf9c92) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Object-shaped tool results now include `rateLimit` (`remaining`, `limit`, `reset`, `resource`) from the last GitHub response. The field is stripped before the model sees the output. Array-shaped list tools are unchanged. 403/429 errors include remaining/reset in the message.
+
+### Patch Changes
+
+- [#107](https://github.com/vercel-labs/github-tools/pull/107) [`2edd9ea`](https://github.com/vercel-labs/github-tools/commit/2edd9ea9372c707808d2246965dfb57f8c8e08a1) Thanks [@HugoRCD](https://github.com/HugoRCD)! - `connectGithubToken` now passes `VERCEL_OIDC_TOKEN` to Connect as `vercelToken` so local eve/workflow steps do not fail looking for a `.vercel` project root.
+
+- [#100](https://github.com/vercel-labs/github-tools/pull/100) [`0a9eae4`](https://github.com/vercel-labs/github-tools/commit/0a9eae4df8c431faa63aadad18112149aabab6f9) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Apply built-in eve `toModelOutput` formatters through an inline callback that only closes over the tool name. On eve 0.44.x this keeps tools like `getFileContent` from failing durable-descriptor validation and dropping the whole GitHub toolset.
+
+- [#108](https://github.com/vercel-labs/github-tools/pull/108) [`5bbcab1`](https://github.com/vercel-labs/github-tools/commit/5bbcab1e45ce86b8a2edd06a2d5a025ad8d255c5) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Eve GitHub tool execute now returns `{ error }` on failure instead of throwing, so the model always gets a `tool_result` and the turn does not die with `MODEL_CALL_FAILED`.
+
+- [#101](https://github.com/vercel-labs/github-tools/pull/101) [`ade87da`](https://github.com/vercel-labs/github-tools/commit/ade87da57d9a9de4994ed2848244a9404f5c369e) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Skip the REST update when `updatePullRequest` is called with only `draft`. Octokit was sending an empty PATCH body (`''`), which GitHub rejects with 400 before the GraphQL draft mutation could run.
+
 ## 1.11.1
 
 ### Patch Changes
