@@ -86,11 +86,27 @@ export function hasGithubEveToolModelOutput(name: GithubToolName): boolean {
  */
 export function formatGithubEveToolOutput(name: GithubToolName, output: unknown): ToolModelOutput {
   const stripped = stripRateLimit(output)
+  // `runGithubToolStep` returns `{ error }` when execute throws. The per-tool
+  // formatters assume the success shape (e.g. `listPullRequestFilesToModelOutput`
+  // calls `.map` on the payload), so dispatching an error payload would throw a
+  // second time inside model-output formatting and re-break the tool loop.
+  if (isErrorPayload(stripped)) {
+    return { type: 'json', value: stripped }
+  }
   const format = GITHUB_EVE_TOOL_MODEL_OUTPUT[name as keyof typeof GITHUB_EVE_TOOL_MODEL_OUTPUT]
   if (!format) {
     return { type: 'json', value: stripped }
   }
   return format(stripped)
+}
+
+function isErrorPayload(output: unknown): output is { error: string } {
+  return (
+    output != null
+    && typeof output === 'object'
+    && !Array.isArray(output)
+    && typeof (output as { error?: unknown }).error === 'string'
+  )
 }
 
 export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
