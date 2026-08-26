@@ -186,18 +186,6 @@ Supported override properties:
 
 Core properties (`execute`, `inputSchema`, `outputSchema`) cannot be overridden.
 
-## Rate-limit metadata
-
-Object-shaped tool results include a `rateLimit` field from the last GitHub response. Array-shaped results are unchanged. The field is stripped before the model sees the output; hooks, channels, and UIs still receive it.
-
-```ts
-import type { GithubRateLimit } from '@github-tools/sdk'
-
-result.rateLimit?.remaining
-```
-
-`resource` is `core`, `search`, or `graphql`. On HTTP 403/429 the thrown error message also includes remaining/reset.
-
 ## Commit Attribution
 
 Control how commits are attributed when using `createOrUpdateFile` or `mergePullRequest`:

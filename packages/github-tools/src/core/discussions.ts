@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { withOctokit } from '../client'
+import { createOctokit } from '../client'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
 import type { Octokit } from '../types'
 
@@ -163,7 +163,7 @@ export const listDiscussionsInputSchema = z.object({
 export const listDiscussionsDescription = 'List discussions in a GitHub repository, most recently updated first, optionally filtered by category (GitHub GraphQL API)'
 
 export async function listDiscussionsCore({ token, owner, repo, category, perPage, after }: { token: string, owner: string, repo: string, category?: string, perPage: number, after?: string }) {
-  return withOctokit(token, async (octokit) => {
+  const octokit = createOctokit(token)
 
   let categoryId: string | undefined
   if (category) {
@@ -198,7 +198,6 @@ export async function listDiscussionsCore({ token, owner, repo, category, perPag
       updatedAt: node.updatedAt,
     })),
   }
-  })
 }
 
 export const getDiscussionInputSchema = z.object({
@@ -211,7 +210,7 @@ export const getDiscussionInputSchema = z.object({
 export const getDiscussionDescription = 'Get a GitHub discussion by number. Body is truncated by default (detail: summary) — set detail full for the complete text (GitHub GraphQL API)'
 
 export async function getDiscussionCore({ token, owner, repo, discussionNumber, detail = 'summary' }: { token: string, owner: string, repo: string, discussionNumber: number, detail?: DetailLevel }) {
-  return withOctokit(token, async (octokit) => {
+  const octokit = createOctokit(token)
   const data = (await octokit.graphql(GET_DISCUSSION_QUERY, {
     owner,
     name: repo,
@@ -234,7 +233,6 @@ export async function getDiscussionCore({ token, owner, repo, discussionNumber, 
     createdAt: discussion.createdAt,
     updatedAt: discussion.updatedAt,
   }
-  })
 }
 
 export const addDiscussionCommentInputSchema = z.object({
@@ -248,7 +246,7 @@ export const addDiscussionCommentDescription = 'Add a comment to a GitHub discus
 
 /** Not idempotent — each call adds another comment. */
 export async function addDiscussionCommentCore({ token, owner, repo, discussionNumber, body }: { token: string, owner: string, repo: string, discussionNumber: number, body: string }) {
-  return withOctokit(token, async (octokit) => {
+  const octokit = createOctokit(token)
   const lookup = (await octokit.graphql(DISCUSSION_ID_QUERY, {
     owner,
     name: repo,
@@ -271,5 +269,4 @@ export async function addDiscussionCommentCore({ token, owner, repo, discussionN
     author: comment.author?.login ?? null,
     createdAt: comment.createdAt,
   }
-  })
 }

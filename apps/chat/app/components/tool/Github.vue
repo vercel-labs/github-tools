@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { GithubRateLimit } from '@github-tools/sdk'
 import { GITHUB_TOOL_META } from '#shared/utils/tools/github'
 import type { GithubToolName, GithubUIToolInvocation } from '#shared/utils/tools/github'
 
@@ -42,38 +41,6 @@ const context = computed(() => {
   if (input.path) return String(input.path)
   return null
 })
-
-const rateLimit = computed(() => readRateLimit(props.invocation.output))
-
-const rateLimitLabel = computed(() => {
-  const value = rateLimit.value
-  if (!value) return null
-  const counts = `${value.remaining}/${value.limit}`
-  return value.resource && value.resource !== 'core' ? `${value.resource} ${counts}` : counts
-})
-
-const rateLimitTitle = computed(() => {
-  const value = rateLimit.value
-  if (!value) return undefined
-  return `Resets ${new Date(value.reset * 1000).toISOString()}`
-})
-
-function readRateLimit(output: unknown): GithubRateLimit | null {
-  if (output == null || typeof output !== 'object' || Array.isArray(output)) return null
-  const value = (output as { rateLimit?: unknown }).rateLimit
-  if (value == null || typeof value !== 'object') return null
-  const remaining = (value as GithubRateLimit).remaining
-  const limit = (value as GithubRateLimit).limit
-  const reset = (value as GithubRateLimit).reset
-  if (typeof remaining !== 'number' || typeof limit !== 'number' || typeof reset !== 'number') return null
-  const resource = (value as GithubRateLimit).resource
-  return {
-    remaining,
-    limit,
-    reset,
-    ...typeof resource === 'string' ? { resource } : {}
-  }
-}
 </script>
 
 <template>
@@ -81,7 +48,6 @@ function readRateLimit(output: unknown): GithubRateLimit | null {
     <UIcon :name="meta.icon" class="size-3 shrink-0 text-muted" />
     <span class="text-default/70 font-medium">{{ label }}</span>
     <span v-if="context" class="text-muted font-mono">{{ context }}</span>
-    <span v-if="rateLimitLabel" class="text-muted font-mono" :title="rateLimitTitle">{{ rateLimitLabel }}</span>
     <UIcon v-if="isRunning" name="i-lucide-loader-circle" class="size-3 shrink-0 text-muted animate-spin" />
     <UIcon v-else-if="isDone" name="i-lucide-check" class="size-3 shrink-0 text-success/60" />
     <UIcon v-else-if="isDenied" name="i-lucide-ban" class="size-3 shrink-0 text-warning/60" />

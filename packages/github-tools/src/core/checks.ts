@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { withOctokit } from '../client'
+import { createOctokit } from '../client'
 import { fetchAllPages, maxPagesSchema } from './pagination'
 
 export const listCheckRunsInputSchema = z.object({
@@ -13,7 +13,7 @@ export const listCheckRunsInputSchema = z.object({
 export const listCheckRunsDescription = 'List check runs (Checks API — GitHub Actions and other CI providers) for a commit, branch, or tag'
 
 export async function listCheckRunsCore({ token, owner, repo, ref, perPage, maxPages }: { token: string, owner: string, repo: string, ref: string, perPage: number, maxPages?: number }) {
-  return withOctokit(token, async (octokit) => {
+  const octokit = createOctokit(token)
   let totalCount = 0
   const checkRuns = await fetchAllPages(async page => {
     const { data } = await octokit.rest.checks.listForRef({ owner, repo, ref, per_page: perPage, page })
@@ -32,7 +32,6 @@ export async function listCheckRunsCore({ token, owner, repo, ref, perPage, maxP
       completedAt: run.completed_at,
     })),
   }
-  })
 }
 
 export const getCombinedStatusInputSchema = z.object({
@@ -44,7 +43,7 @@ export const getCombinedStatusInputSchema = z.object({
 export const getCombinedStatusDescription = 'Get the combined commit status (Statuses API — legacy CI integrations) for a commit, branch, or tag'
 
 export async function getCombinedStatusCore({ token, owner, repo, ref }: { token: string, owner: string, repo: string, ref: string }) {
-  return withOctokit(token, async (octokit) => {
+  const octokit = createOctokit(token)
   const { data } = await octokit.rest.repos.getCombinedStatusForRef({ owner, repo, ref })
   return {
     state: data.state,
@@ -56,5 +55,4 @@ export async function getCombinedStatusCore({ token, owner, repo, ref }: { token
       url: status.target_url,
     })),
   }
-  })
 }

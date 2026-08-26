@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { withComposedRateLimit } from './rate-limit'
 import { getCombinedStatusCore, listCheckRunsCore } from './checks'
 import { compareCommitsCore } from './commits'
 import { detailSchema, type DetailLevel } from './detail'
@@ -78,12 +77,12 @@ export async function getPullRequestContextCore({
       : Promise.resolve(undefined),
   ])
 
-  return withComposedRateLimit({
+  return {
     pullRequest,
     ...files !== undefined ? { files } : {},
     ...reviews !== undefined ? { reviews } : {},
     ...checks !== undefined ? { checks } : {},
-  })
+  }
 }
 
 export const getIssueContextInputSchema = z.object({
@@ -140,12 +139,12 @@ export async function getIssueContextCore({
       : Promise.resolve(undefined),
   ])
 
-  return withComposedRateLimit({
+  return {
     issue,
     // Names only — full label objects (color/description) dominate triage payloads on large repos
     ...labels !== undefined ? { labelNames: labels.map(label => label.name) } : {},
     ...comments !== undefined ? { comments } : {},
-  })
+  }
 }
 
 export const getReleaseContextInputSchema = z.object({
@@ -205,11 +204,11 @@ export async function getReleaseContextCore({
     })
   }
 
-  return withComposedRateLimit({
+  return {
     release,
     ...previous !== undefined ? { previousRelease: previous } : {},
     ...comparison !== undefined ? { comparison } : {},
-  })
+  }
 }
 
 export const getCiFailureContextInputSchema = z.object({
@@ -312,12 +311,12 @@ export async function getCiFailureContextCore({
     latestFailure = { run: latestFailedRun, jobs: failedJobs }
   }
 
-  return withComposedRateLimit({
+  return {
     ref,
     combinedStatus,
     failedCheckRuns,
     checkRunTotalCount: checkRunsResult.totalCount,
     recentFailedRuns: failedRuns.runs,
     ...latestFailure !== undefined ? { latestFailure } : {},
-  })
+  }
 }

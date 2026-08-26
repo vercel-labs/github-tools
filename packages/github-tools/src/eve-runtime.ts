@@ -24,7 +24,6 @@ export type {
   EveToolOverrides,
 } from './eve/types'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
-export type { GithubRateLimit } from './core/rate-limit'
 export type { GithubToolName } from './core/tool-names'
 export type { GithubWriteToolName } from './core/write-tools'
 export type { AllGithubTools, GithubToolsForPreset, PickGithubTools } from './core/tool-types'
