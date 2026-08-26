@@ -28,7 +28,7 @@ vercel link    # select the github-tools-docs project (or your linked project)
 vercel env pull
 ```
 
-This writes `VERCEL_OIDC_TOKEN` into `.env`. Re-run `vercel env pull` when the token expires.
+This writes `VERCEL_OIDC_TOKEN` into `.env`. Re-run `vercel env pull` when the token expires. The SDK forwards that value to Connect as `vercelToken`, so write tools inside workflow steps do not need a `.vercel` directory on disk.
 
 Requires Node 24+ and `ai` v7 (peer of `eve` v0.19+).
 
