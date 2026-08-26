@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
 import { fetchAllPages, maxPagesSchema } from './pagination'
 
@@ -14,7 +14,7 @@ export const listReleasesInputSchema = z.object({
 export const listReleasesDescription = 'List releases for a GitHub repository, newest first (includes drafts and prereleases). Bodies truncated by default (detail: summary)'
 
 export async function listReleasesCore({ token, owner, repo, perPage, maxPages, detail = 'summary' }: { token: string, owner: string, repo: string, perPage: number, maxPages?: number, detail?: DetailLevel }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const releases = await fetchAllPages(async page => {
     const { data } = await octokit.rest.repos.listReleases({ owner, repo, per_page: perPage, page })
     return data
@@ -31,6 +31,7 @@ export async function listReleasesCore({ token, owner, repo, perPage, maxPages, 
     createdAt: release.created_at,
     publishedAt: release.published_at,
   }))
+  })
 }
 
 export const getLatestReleaseInputSchema = z.object({
@@ -42,7 +43,7 @@ export const getLatestReleaseInputSchema = z.object({
 export const getLatestReleaseDescription = 'Get the latest published release for a GitHub repository (excludes drafts and prereleases). Body truncated by default (detail: summary)'
 
 export async function getLatestReleaseCore({ token, owner, repo, detail = 'summary' }: { token: string, owner: string, repo: string, detail?: DetailLevel }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.getLatestRelease({ owner, repo })
   return {
     id: data.id,
@@ -60,6 +61,7 @@ export async function getLatestReleaseCore({ token, owner, repo, detail = 'summa
       downloadCount: asset.download_count,
     })),
   }
+  })
 }
 
 export const getReleaseInputSchema = z.object({
@@ -72,7 +74,7 @@ export const getReleaseInputSchema = z.object({
 export const getReleaseDescription = 'Get a specific release by ID, including its assets. Body truncated by default (detail: summary)'
 
 export async function getReleaseCore({ token, owner, repo, releaseId, detail = 'summary' }: { token: string, owner: string, repo: string, releaseId: number, detail?: DetailLevel }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.getRelease({ owner, repo, release_id: releaseId })
   return {
     id: data.id,
@@ -92,6 +94,7 @@ export async function getReleaseCore({ token, owner, repo, releaseId, detail = '
       downloadCount: asset.download_count,
     })),
   }
+  })
 }
 
 export const createReleaseInputSchema = z.object({
@@ -110,7 +113,7 @@ export const createReleaseDescription = 'Create a new release (and its tag if ne
 
 /** Not idempotent — creating a release with an existing tag name returns an error from GitHub. */
 export async function createReleaseCore({ token, owner, repo, tagName, target, name, body, draft, prerelease, generateReleaseNotes }: { token: string, owner: string, repo: string, tagName: string, target?: string, name?: string, body?: string, draft: boolean, prerelease: boolean, generateReleaseNotes: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.createRelease({
     owner,
     repo,
@@ -132,6 +135,7 @@ export async function createReleaseCore({ token, owner, repo, tagName, target, n
     prerelease: data.prerelease,
     createdAt: data.created_at,
   }
+  })
 }
 
 export const updateReleaseInputSchema = z.object({
@@ -150,7 +154,7 @@ export const updateReleaseDescription = 'Update an existing release — tag, tar
 
 /** Not idempotent — each call applies a new revision. */
 export async function updateReleaseCore({ token, owner, repo, releaseId, tagName, target, name, body, draft, prerelease }: { token: string, owner: string, repo: string, releaseId: number, tagName?: string, target?: string, name?: string, body?: string, draft?: boolean, prerelease?: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.updateRelease({
     owner,
     repo,
@@ -172,6 +176,7 @@ export async function updateReleaseCore({ token, owner, repo, releaseId, tagName
     prerelease: data.prerelease,
     publishedAt: data.published_at,
   }
+  })
 }
 
 export const deleteReleaseInputSchema = z.object({
@@ -184,7 +189,8 @@ export const deleteReleaseDescription = 'Delete a release permanently (does not 
 
 /** Not idempotent — deleting an already-deleted release returns 404 from GitHub. */
 export async function deleteReleaseCore({ token, owner, repo, releaseId }: { token: string, owner: string, repo: string, releaseId: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.repos.deleteRelease({ owner, repo, release_id: releaseId })
   return { deleted: true, releaseId }
+  })
 }

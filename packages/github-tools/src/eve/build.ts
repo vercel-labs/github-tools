@@ -76,7 +76,7 @@ export function buildEveToolDefinition(
     description: entry.description,
     inputSchema: entry.inputSchema,
     ...(approval && { approval }),
-    ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
+    toModelOutput: (output: unknown) => formatGithubEveToolOutput(name, output),
     execute: async (input) => runGithubToolStep(name, input as Record<string, unknown>, ctx),
   })
 
@@ -108,7 +108,7 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap
       description: entry.description,
       inputSchema: entry.inputSchema,
       ...(approval && { approval }),
-      ...(entry.toModelOutput && { toModelOutput: entry.toModelOutput }),
+      toModelOutput: (output: unknown) => formatGithubEveToolOutput(entry.name, output),
       execute: async (input) => runGithubToolStep(entry.name, input as Record<string, unknown>, ctx),
     })
 

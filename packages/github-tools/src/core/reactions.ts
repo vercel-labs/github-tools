@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 
 const REACTION_CONTENTS = ['+1', '-1', 'laugh', 'confused', 'heart', 'hooray', 'rocket', 'eyes'] as const
 
@@ -31,7 +31,7 @@ export const listIssueReactionsInputSchema = z.object({
 export const listIssueReactionsDescription = 'List reactions on an issue or pull request conversation, with per-emoji counts for the returned page'
 
 export async function listIssueReactionsCore({ token, owner, repo, issueNumber, content, perPage, page }: { token: string, owner: string, repo: string, issueNumber: number, content?: ReactionContent, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.reactions.listForIssue({
     owner,
     repo,
@@ -41,6 +41,7 @@ export async function listIssueReactionsCore({ token, owner, repo, issueNumber, 
     page,
   })
   return shapeReactions(data)
+  })
 }
 
 export const addIssueReactionInputSchema = z.object({
@@ -54,7 +55,7 @@ export const addIssueReactionDescription = 'React to an issue or pull request wi
 
 /** Idempotent — GitHub returns the existing reaction when the user already reacted with the same content. */
 export async function addIssueReactionCore({ token, owner, repo, issueNumber, content }: { token: string, owner: string, repo: string, issueNumber: number, content: ReactionContent }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.reactions.createForIssue({
     owner,
     repo,
@@ -67,6 +68,7 @@ export async function addIssueReactionCore({ token, owner, repo, issueNumber, co
     user: data.user?.login,
     issueNumber,
   }
+  })
 }
 
 export const listCommentReactionsInputSchema = z.object({
@@ -81,7 +83,7 @@ export const listCommentReactionsInputSchema = z.object({
 export const listCommentReactionsDescription = 'List reactions on an issue or pull request comment, with per-emoji counts for the returned page'
 
 export async function listCommentReactionsCore({ token, owner, repo, commentId, content, perPage, page }: { token: string, owner: string, repo: string, commentId: number, content?: ReactionContent, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.reactions.listForIssueComment({
     owner,
     repo,
@@ -91,6 +93,7 @@ export async function listCommentReactionsCore({ token, owner, repo, commentId, 
     page,
   })
   return shapeReactions(data)
+  })
 }
 
 export const addCommentReactionInputSchema = z.object({
@@ -104,7 +107,7 @@ export const addCommentReactionDescription = 'React to an issue or pull request 
 
 /** Idempotent — GitHub returns the existing reaction when the user already reacted with the same content. */
 export async function addCommentReactionCore({ token, owner, repo, commentId, content }: { token: string, owner: string, repo: string, commentId: number, content: ReactionContent }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.reactions.createForIssueComment({
     owner,
     repo,
@@ -117,4 +120,5 @@ export async function addCommentReactionCore({ token, owner, repo, commentId, co
     user: data.user?.login,
     commentId,
   }
+  })
 }

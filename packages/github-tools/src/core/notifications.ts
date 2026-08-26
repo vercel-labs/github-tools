@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 
 export const listNotificationsInputSchema = z.object({
   all: z.boolean().optional().default(false).describe('Include notifications already marked as read'),
@@ -11,7 +11,7 @@ export const listNotificationsInputSchema = z.object({
 export const listNotificationsDescription = 'List notification threads for the authenticated user. Unread only by default — set all true to include read threads. Requires a token with notifications access'
 
 export async function listNotificationsCore({ token, all, participating, perPage, page }: { token: string, all: boolean, participating: boolean, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.activity.listNotificationsForAuthenticatedUser({
     all,
     participating,
@@ -30,6 +30,7 @@ export async function listNotificationsCore({ token, all, participating, perPage
     unread: thread.unread,
     updatedAt: thread.updated_at,
   }))
+  })
 }
 
 export const markNotificationReadInputSchema = z.object({
@@ -40,7 +41,8 @@ export const markNotificationReadDescription = 'Mark a single notification threa
 
 /** Idempotent — marking an already-read thread is a no-op on GitHub. */
 export async function markNotificationReadCore({ token, threadId }: { token: string, threadId: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.activity.markThreadAsRead({ thread_id: Number(threadId) })
   return { marked: true, threadId }
+  })
 }

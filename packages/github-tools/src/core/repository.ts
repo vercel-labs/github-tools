@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 import type { CommitIdentity, Octokit } from '../types'
 import { gitBlobSha } from './git-blob-sha'
 
@@ -67,7 +67,7 @@ export const getRepositoryInputSchema = z.object({
 export const getRepositoryDescription = 'Get information about a GitHub repository including description, stars, forks, language, and default branch'
 
 export async function getRepositoryCore({ token, owner, repo }: { token: string, owner: string, repo: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.get({ owner, repo })
   return {
     name: data.name,
@@ -83,6 +83,7 @@ export async function getRepositoryCore({ token, owner, repo }: { token: string,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   }
+  })
 }
 
 export const listBranchesInputSchema = z.object({
@@ -94,13 +95,14 @@ export const listBranchesInputSchema = z.object({
 export const listBranchesDescription = 'List branches in a GitHub repository'
 
 export async function listBranchesCore({ token, owner, repo, perPage }: { token: string, owner: string, repo: string, perPage: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.listBranches({ owner, repo, per_page: perPage })
   return data.map(branch => ({
     name: branch.name,
     sha: branch.commit.sha,
     protected: branch.protected,
   }))
+  })
 }
 
 export const getFileContentInputSchema = z.object({
@@ -134,7 +136,7 @@ export async function getFileContentCore({
   endLine?: number
   maxLines?: number
 }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.getContent({ owner, repo, path, ref })
   if (Array.isArray(data)) {
     return { type: 'directory' as const, entries: data.map(e => ({ name: e.name, type: e.type, path: e.path })) }
@@ -175,6 +177,7 @@ export async function getFileContentCore({
     truncated: clampedFrom > 1 || clampedTo < totalLines,
     content: slice.join('\n'),
   }
+  })
 }
 
 export const getRepositoryTreeInputSchema = z.object({
@@ -187,7 +190,7 @@ export const getRepositoryTreeInputSchema = z.object({
 export const getRepositoryTreeDescription = 'List the file and directory structure of a repository at a given ref'
 
 export async function getRepositoryTreeCore({ token, owner, repo, ref, recursive }: { token: string, owner: string, repo: string, ref?: string, recursive: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const treeSha = ref || (await octokit.rest.repos.get({ owner, repo })).data.default_branch
   const { data } = await octokit.rest.git.getTree({ owner, repo, tree_sha: treeSha, recursive: recursive ? 'true' : undefined })
   return {
@@ -200,6 +203,7 @@ export async function getRepositoryTreeCore({ token, owner, repo, ref, recursive
       sha: entry.sha,
     })),
   }
+  })
 }
 
 export const createBranchInputSchema = z.object({
@@ -213,7 +217,7 @@ export const createBranchDescription = 'Create a new branch in a GitHub reposito
 
 /** Idempotent when the branch already exists at the target SHA. Not idempotent otherwise. */
 export async function createBranchCore({ token, owner, repo, branch, from }: { token: string, owner: string, repo: string, branch: string, from?: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   let sha = from
   if (!sha || !sha.match(/^[0-9a-f]{40}$/i)) {
     const { data: ref } = await octokit.rest.git.getRef({
@@ -248,6 +252,7 @@ export async function createBranchCore({ token, owner, repo, branch, from }: { t
     sha: data.object.sha,
     url: data.url,
   }
+  })
 }
 
 export const forkRepositoryInputSchema = z.object({
@@ -261,7 +266,7 @@ export const forkRepositoryDescription = 'Fork a GitHub repository to the authen
 
 /** Not idempotent — each call may create another fork attempt. */
 export async function forkRepositoryCore({ token, owner, repo, organization, name }: { token: string, owner: string, repo: string, organization?: string, name?: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.createFork({
     owner,
     repo,
@@ -278,6 +283,7 @@ export async function forkRepositoryCore({ token, owner, repo, organization, nam
     private: data.private,
     parent: data.parent ? { fullName: data.parent.full_name, url: data.parent.html_url } : null,
   }
+  })
 }
 
 export const createRepositoryInputSchema = z.object({
@@ -294,7 +300,7 @@ export const createRepositoryDescription = 'Create a new GitHub repository for t
 
 /** Not idempotent — each call creates a new repository. */
 export async function createRepositoryCore({ token, name, description, isPrivate, autoInit, gitignoreTemplate, licenseTemplate, org }: { token: string, name: string, description?: string, isPrivate: boolean, autoInit: boolean, gitignoreTemplate?: string, licenseTemplate?: string, org?: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const params = {
     name,
     description,
@@ -319,6 +325,7 @@ export async function createRepositoryCore({ token, name, description, isPrivate
     private: data.private,
     createdAt: data.created_at,
   }
+  })
 }
 
 export const createOrUpdateFileInputSchema = z.object({
@@ -359,7 +366,7 @@ export async function createOrUpdateFileCore({
   committer?: CommitIdentity
   coAuthors?: CommitIdentity[]
 }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
 
   if (sha) {
     const branchName = branch || (await octokit.rest.repos.get({ owner, repo })).data.default_branch
@@ -427,4 +434,5 @@ export async function createOrUpdateFileCore({
     commitSha: data.commit.sha,
     commitUrl: data.commit.html_url,
   }
+  })
 }

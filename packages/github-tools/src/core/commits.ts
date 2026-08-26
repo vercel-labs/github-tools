@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 import { fetchAllPages, maxPagesSchema } from './pagination'
 
 export const BLAME_QUERY = `
@@ -78,7 +78,7 @@ export const listCommitsDescription =
   'List commits for a GitHub repository. Filter by file path to see commits that touched a file. For line-by-line attribution at a given ref, use getBlame instead.'
 
 export async function listCommitsCore({ token, owner, repo, path, sha, author, since, until, perPage, maxPages }: { token: string, owner: string, repo: string, path?: string, sha?: string, author?: string, since?: string, until?: string, perPage: number, maxPages?: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const commits = await fetchAllPages(async page => {
     const { data } = await octokit.rest.repos.listCommits({
       owner,
@@ -101,6 +101,7 @@ export async function listCommitsCore({ token, owner, repo, path, sha, author, s
     date: commit.commit.author?.date,
     url: commit.html_url,
   }))
+  })
 }
 
 export const getCommitInputSchema = z.object({
@@ -113,7 +114,7 @@ export const getCommitInputSchema = z.object({
 export const getCommitDescription = 'Get detailed information about a specific commit, including the list of files changed with additions and deletions. Patches are omitted by default — set includePatch true to include diffs'
 
 export async function getCommitCore({ token, owner, repo, ref, includePatch }: { token: string, owner: string, repo: string, ref: string, includePatch: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.getCommit({ owner, repo, ref })
   return {
     sha: data.sha,
@@ -135,6 +136,7 @@ export async function getCommitCore({ token, owner, repo, ref, includePatch }: {
       ...includePatch && file.patch != null ? { patch: file.patch } : {},
     })),
   }
+  })
 }
 
 export const getBlameInputSchema = z.object({
@@ -169,7 +171,7 @@ export const getBlameDescription =
   'Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). Returns contiguous ranges mapping lines to the commits that last modified them — use this to see who introduced a line and when (GitHub GraphQL API).'
 
 export async function getBlameCore({ token, owner, repo, path, ref, line, lineStart, lineEnd }: { token: string, owner: string, repo: string, path: string, ref?: string, line?: number, lineStart?: number, lineEnd?: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   let expression = ref
   if (!expression) {
     const { data } = await octokit.rest.repos.get({ owner, repo })
@@ -226,6 +228,7 @@ export async function getBlameCore({ token, owner, repo, path, ref, line, lineSt
     rangeCount: ranges.length,
     ranges,
   }
+  })
 }
 
 export const compareCommitsInputSchema = z.object({
@@ -239,7 +242,7 @@ export const compareCommitsInputSchema = z.object({
 export const compareCommitsDescription = 'Compare two branches, tags, or commits — shows ahead/behind counts, the commits in between, and the files that differ. Patches are omitted by default — set includePatch true to include diffs'
 
 export async function compareCommitsCore({ token, owner, repo, base, head, includePatch }: { token: string, owner: string, repo: string, base: string, head: string, includePatch: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${base}...${head}` })
   return {
     status: data.status,
@@ -261,4 +264,5 @@ export async function compareCommitsCore({ token, owner, repo, base, head, inclu
       ...includePatch && file.patch != null ? { patch: file.patch } : {},
     })),
   }
+  })
 }

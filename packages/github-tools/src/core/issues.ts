@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
 import { fetchAllPages, maxPagesSchema } from './pagination'
 
@@ -15,7 +15,7 @@ export const listIssuesInputSchema = z.object({
 export const listIssuesDescription = 'List issues for a GitHub repository (excludes pull requests)'
 
 export async function listIssuesCore({ token, owner, repo, state, labels, perPage, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', labels?: string, perPage: number, maxPages?: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const issues = await fetchAllPages(async page => {
     const { data } = await octokit.rest.issues.listForRepo({
       owner,
@@ -39,6 +39,7 @@ export async function listIssuesCore({ token, owner, repo, state, labels, perPag
       createdAt: issue.created_at,
       updatedAt: issue.updated_at,
     }))
+  })
 }
 
 export const getIssueInputSchema = z.object({
@@ -51,7 +52,7 @@ export const getIssueInputSchema = z.object({
 export const getIssueDescription = 'Get detailed information about a specific issue. Body is truncated by default (detail: summary) — set detail full for the complete description'
 
 export async function getIssueCore({ token, owner, repo, issueNumber, detail = 'summary' }: { token: string, owner: string, repo: string, issueNumber: number, detail?: DetailLevel }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.get({ owner, repo, issue_number: issueNumber })
   return {
     number: data.number,
@@ -67,6 +68,7 @@ export async function getIssueCore({ token, owner, repo, issueNumber, detail = '
     updatedAt: data.updated_at,
     closedAt: data.closed_at,
   }
+  })
 }
 
 export const listIssueCommentsInputSchema = z.object({
@@ -81,7 +83,7 @@ export const listIssueCommentsInputSchema = z.object({
 export const listIssueCommentsDescription = 'List comments on a GitHub issue. Bodies are truncated by default (detail: summary)'
 
 export async function listIssueCommentsCore({ token, owner, repo, issueNumber, perPage, page, detail = 'summary' }: { token: string, owner: string, repo: string, issueNumber: number, perPage: number, page: number, detail?: DetailLevel }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.listComments({ owner, repo, issue_number: issueNumber, per_page: perPage, page })
   return data.map(comment => ({
     id: comment.id,
@@ -91,6 +93,7 @@ export async function listIssueCommentsCore({ token, owner, repo, issueNumber, p
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
   }))
+  })
 }
 
 export const createIssueInputSchema = z.object({
@@ -106,7 +109,7 @@ export const createIssueDescription = 'Create a new issue in a GitHub repository
 
 /** Not idempotent — each call creates a new issue. */
 export async function createIssueCore({ token, owner, repo, title, body, labels, assignees }: { token: string, owner: string, repo: string, title: string, body?: string, labels?: string[], assignees?: string[] }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.create({ owner, repo, title, body, labels, assignees })
   return {
     number: data.number,
@@ -115,6 +118,7 @@ export async function createIssueCore({ token, owner, repo, title, body, labels,
     state: data.state,
     labels: data.labels.map(l => (typeof l === 'string' ? l : l.name)),
   }
+  })
 }
 
 export const addIssueCommentInputSchema = z.object({
@@ -128,7 +132,7 @@ export const addIssueCommentDescription = 'Add a comment to a GitHub issue'
 
 /** Not idempotent — each call adds another comment. */
 export async function addIssueCommentCore({ token, owner, repo, issueNumber, body }: { token: string, owner: string, repo: string, issueNumber: number, body: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body })
   return {
     id: data.id,
@@ -137,6 +141,7 @@ export async function addIssueCommentCore({ token, owner, repo, issueNumber, bod
     author: data.user?.login,
     createdAt: data.created_at,
   }
+  })
 }
 
 export const closeIssueInputSchema = z.object({
@@ -150,7 +155,7 @@ export const closeIssueDescription = 'Close an open GitHub issue'
 
 /** Idempotent when the issue is already closed. */
 export async function closeIssueCore({ token, owner, repo, issueNumber, stateReason }: { token: string, owner: string, repo: string, issueNumber: number, stateReason: 'completed' | 'not_planned' }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data: existing } = await octokit.rest.issues.get({ owner, repo, issue_number: issueNumber })
   if (existing.state === 'closed') {
     return {
@@ -176,6 +181,7 @@ export async function closeIssueCore({ token, owner, repo, issueNumber, stateRea
     url: data.html_url,
     closedAt: data.closed_at,
   }
+  })
 }
 
 export const updateIssueInputSchema = z.object({
@@ -195,7 +201,7 @@ export const updateIssueDescription = 'Update a GitHub issue — title, body, la
 
 /** Not idempotent — each call applies a new revision. */
 export async function updateIssueCore({ token, owner, repo, issueNumber, title, body, state, stateReason, labels, milestone, assignees }: { token: string, owner: string, repo: string, issueNumber: number, title?: string, body?: string, state?: 'open' | 'closed', stateReason?: 'completed' | 'not_planned' | 'reopened', labels?: string[], milestone?: number | null, assignees?: string[] }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.update({
     owner,
     repo,
@@ -219,6 +225,7 @@ export async function updateIssueCore({ token, owner, repo, issueNumber, title, 
     closedAt: data.closed_at,
     updatedAt: data.updated_at,
   }
+  })
 }
 
 export const updateIssueCommentInputSchema = z.object({
@@ -232,7 +239,7 @@ export const updateIssueCommentDescription = 'Update the body of a comment on a 
 
 /** Not idempotent — each call applies a new revision. */
 export async function updateIssueCommentCore({ token, owner, repo, commentId, body }: { token: string, owner: string, repo: string, commentId: number, body: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.updateComment({ owner, repo, comment_id: commentId, body })
   return {
     id: data.id,
@@ -240,6 +247,7 @@ export async function updateIssueCommentCore({ token, owner, repo, commentId, bo
     body: data.body,
     updatedAt: data.updated_at,
   }
+  })
 }
 
 export const deleteIssueCommentInputSchema = z.object({
@@ -252,9 +260,10 @@ export const deleteIssueCommentDescription = 'Delete a comment from a GitHub iss
 
 /** Not idempotent — deleting an already-deleted comment returns 404 from GitHub. */
 export async function deleteIssueCommentCore({ token, owner, repo, commentId }: { token: string, owner: string, repo: string, commentId: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.issues.deleteComment({ owner, repo, comment_id: commentId })
   return { deleted: true, commentId }
+  })
 }
 
 export const listLabelsInputSchema = z.object({
@@ -267,13 +276,14 @@ export const listLabelsInputSchema = z.object({
 export const listLabelsDescription = 'List labels available in a GitHub repository'
 
 export async function listLabelsCore({ token, owner, repo, perPage, page }: { token: string, owner: string, repo: string, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.listLabelsForRepo({ owner, repo, per_page: perPage, page })
   return data.map(label => ({
     name: label.name,
     color: label.color,
     description: label.description,
   }))
+  })
 }
 
 export const addLabelsInputSchema = z.object({
@@ -287,13 +297,14 @@ export const addLabelsDescription = 'Add labels to an issue or pull request'
 
 /** Not idempotent — re-adding labels is a no-op on GitHub but still mutates. */
 export async function addLabelsCore({ token, owner, repo, issueNumber, labels }: { token: string, owner: string, repo: string, issueNumber: number, labels: string[] }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.addLabels({ owner, repo, issue_number: issueNumber, labels })
   return data.map(label => ({
     name: label.name,
     color: label.color,
     description: label.description,
   }))
+  })
 }
 
 export const removeLabelInputSchema = z.object({
@@ -307,9 +318,10 @@ export const removeLabelDescription = 'Remove a label from an issue or pull requ
 
 /** Not idempotent — removing a missing label returns 404 from GitHub. */
 export async function removeLabelCore({ token, owner, repo, issueNumber, label }: { token: string, owner: string, repo: string, issueNumber: number, label: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.issues.removeLabel({ owner, repo, issue_number: issueNumber, name: label })
   return { removed: true, label, issueNumber }
+  })
 }
 
 export const createLabelInputSchema = z.object({
@@ -324,13 +336,14 @@ export const createLabelDescription = 'Create a label in a GitHub repository'
 
 /** Not idempotent — creating a label that already exists returns 422 from GitHub. */
 export async function createLabelCore({ token, owner, repo, name, color, description }: { token: string, owner: string, repo: string, name: string, color: string, description?: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.createLabel({ owner, repo, name, color, description })
   return {
     name: data.name,
     color: data.color,
     description: data.description,
   }
+  })
 }
 
 export const updateLabelInputSchema = z.object({
@@ -346,7 +359,7 @@ export const updateLabelDescription = 'Update a label in a GitHub repository —
 
 /** Not idempotent — each call applies a new revision. */
 export async function updateLabelCore({ token, owner, repo, name, newName, color, description }: { token: string, owner: string, repo: string, name: string, newName?: string, color?: string, description?: string | null }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.updateLabel({
     owner,
     repo,
@@ -360,6 +373,7 @@ export async function updateLabelCore({ token, owner, repo, name, newName, color
     color: data.color,
     description: data.description,
   }
+  })
 }
 
 export const deleteLabelInputSchema = z.object({
@@ -372,9 +386,10 @@ export const deleteLabelDescription = 'Delete a label from a GitHub repository p
 
 /** Not idempotent — deleting a missing label returns 404 from GitHub. */
 export async function deleteLabelCore({ token, owner, repo, name }: { token: string, owner: string, repo: string, name: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.issues.deleteLabel({ owner, repo, name })
   return { deleted: true, name }
+  })
 }
 
 export const addAssigneesInputSchema = z.object({
@@ -388,12 +403,13 @@ export const addAssigneesDescription = 'Assign users to an issue or pull request
 
 /** Not idempotent — re-adding an existing assignee is a no-op on GitHub but still mutates. */
 export async function addAssigneesCore({ token, owner, repo, issueNumber, assignees }: { token: string, owner: string, repo: string, issueNumber: number, assignees: string[] }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.addAssignees({ owner, repo, issue_number: issueNumber, assignees })
   return {
     number: data.number,
     assignees: data.assignees?.map(a => a.login),
   }
+  })
 }
 
 export const removeAssigneesInputSchema = z.object({
@@ -407,10 +423,11 @@ export const removeAssigneesDescription = 'Remove assignees from an issue or pul
 
 /** Idempotent — removing an assignee that is not assigned is a no-op on GitHub. */
 export async function removeAssigneesCore({ token, owner, repo, issueNumber, assignees }: { token: string, owner: string, repo: string, issueNumber: number, assignees: string[] }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.removeAssignees({ owner, repo, issue_number: issueNumber, assignees })
   return {
     number: data.number,
     assignees: data.assignees?.map(a => a.login),
   }
+  })
 }

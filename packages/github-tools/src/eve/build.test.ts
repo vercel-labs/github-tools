@@ -147,4 +147,34 @@ describe('createGithubTools eve integration', () => {
       },
     })
   })
+
+  it('strips rateLimit before applying a built-in formatter', () => {
+    expect(formatGithubEveToolOutput('getFileContent', {
+      type: 'file',
+      path: 'README.md',
+      sha: 'abc',
+      size: 5,
+      content: 'hello',
+      rateLimit: { remaining: 38, limit: 5000, reset: 1774800000, resource: 'core' },
+    })).toEqual({
+      type: 'json',
+      value: {
+        type: 'file',
+        path: 'README.md',
+        sha: 'abc',
+        size: 5,
+        content: 'hello',
+      },
+    })
+  })
+
+  it('returns stripped json for tools without a built-in formatter', () => {
+    expect(formatGithubEveToolOutput('getRepository', {
+      name: 'hello-world',
+      rateLimit: { remaining: 38, limit: 5000, reset: 1774800000 },
+    })).toEqual({
+      type: 'json',
+      value: { name: 'hello-world' },
+    })
+  })
 })

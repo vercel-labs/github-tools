@@ -2,7 +2,6 @@ import { connectGithubToken } from '@github-tools/sdk/connect'
 import {
   executeGithubEveTool,
   formatGithubEveToolOutput,
-  hasGithubEveToolModelOutput,
   isEveApprovalDisabled,
   listEveToolDescriptors,
   mapEveApprovalValue,
@@ -113,9 +112,7 @@ export default defineDynamic({
           }),
           ...(override?.toModelOutput !== undefined
             ? { toModelOutput: override.toModelOutput }
-            : hasGithubEveToolModelOutput(name)
-              ? { toModelOutput: (output: unknown) => formatGithubEveToolOutput(name, output) }
-              : {}),
+            : { toModelOutput: (output: unknown) => formatGithubEveToolOutput(name, output) }),
           ...(override?.outputSchema !== undefined && {
             outputSchema: override.outputSchema,
           }),

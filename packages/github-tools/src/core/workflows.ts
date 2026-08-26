@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 import { fetchAllPages, maxPagesSchema } from './pagination'
 
 export const listWorkflowsInputSchema = z.object({
@@ -12,7 +12,7 @@ export const listWorkflowsInputSchema = z.object({
 export const listWorkflowsDescription = 'List GitHub Actions workflows in a repository'
 
 export async function listWorkflowsCore({ token, owner, repo, perPage, page }: { token: string, owner: string, repo: string, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.actions.listRepoWorkflows({ owner, repo, per_page: perPage, page })
   return {
     totalCount: data.total_count,
@@ -26,6 +26,7 @@ export async function listWorkflowsCore({ token, owner, repo, perPage, page }: {
       updatedAt: wf.updated_at,
     })),
   }
+  })
 }
 
 type WorkflowRunStatus = 'completed' | 'action_required' | 'cancelled' | 'failure' | 'neutral' | 'skipped' | 'stale' | 'success' | 'timed_out' | 'in_progress' | 'queued' | 'requested' | 'waiting' | 'pending'
@@ -45,7 +46,7 @@ export const listWorkflowRunsInputSchema = z.object({
 export const listWorkflowRunsDescription = 'List workflow runs for a repository, optionally filtered by workflow, branch, status, or event'
 
 export async function listWorkflowRunsCore({ token, owner, repo, workflowId, branch, event, status, perPage, page, maxPages }: { token: string, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: WorkflowRunStatus, perPage: number, page: number, maxPages?: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   let totalCount = 0
   const runs = await fetchAllPages(async currentPage => {
     const { data } = workflowId
@@ -72,6 +73,7 @@ export async function listWorkflowRunsCore({ token, owner, repo, workflowId, bra
       runAttempt: run.run_attempt,
     })),
   }
+  })
 }
 
 export const getWorkflowRunInputSchema = z.object({
@@ -83,7 +85,7 @@ export const getWorkflowRunInputSchema = z.object({
 export const getWorkflowRunDescription = 'Get details of a specific workflow run including status, timing, and trigger info'
 
 export async function getWorkflowRunCore({ token, owner, repo, runId }: { token: string, owner: string, repo: string, runId: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.actions.getWorkflowRun({ owner, repo, run_id: runId })
   return {
     id: data.id,
@@ -101,6 +103,7 @@ export async function getWorkflowRunCore({ token, owner, repo, runId }: { token:
     updatedAt: data.updated_at,
     runStartedAt: data.run_started_at,
   }
+  })
 }
 
 export const listWorkflowJobsInputSchema = z.object({
@@ -115,7 +118,7 @@ export const listWorkflowJobsInputSchema = z.object({
 export const listWorkflowJobsDescription = 'List jobs for a workflow run, including step-level status and timing'
 
 export async function listWorkflowJobsCore({ token, owner, repo, runId, filter, perPage, page }: { token: string, owner: string, repo: string, runId: number, filter: 'latest' | 'all', perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: runId, filter, per_page: perPage, page })
   return {
     totalCount: data.total_count,
@@ -138,6 +141,7 @@ export async function listWorkflowJobsCore({ token, owner, repo, runId, filter, 
       })),
     })),
   }
+  })
 }
 
 export const triggerWorkflowInputSchema = z.object({
@@ -152,7 +156,7 @@ export const triggerWorkflowDescription = 'Trigger a workflow via workflow_dispa
 
 /** Not idempotent — each call starts a new workflow run. */
 export async function triggerWorkflowCore({ token, owner, repo, workflowId, ref, inputs }: { token: string, owner: string, repo: string, workflowId: string | number, ref: string, inputs?: Record<string, string> }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.actions.createWorkflowDispatch({
     owner,
     repo,
@@ -161,6 +165,7 @@ export async function triggerWorkflowCore({ token, owner, repo, workflowId, ref,
     inputs,
   })
   return { triggered: true, workflowId, ref }
+  })
 }
 
 export const cancelWorkflowRunInputSchema = z.object({
@@ -173,9 +178,10 @@ export const cancelWorkflowRunDescription = 'Cancel an in-progress workflow run'
 
 /** Not idempotent — cancelling an already-finished run is a no-op on GitHub but still mutates. */
 export async function cancelWorkflowRunCore({ token, owner, repo, runId }: { token: string, owner: string, repo: string, runId: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.actions.cancelWorkflowRun({ owner, repo, run_id: runId })
   return { cancelled: true, runId }
+  })
 }
 
 export const rerunWorkflowRunInputSchema = z.object({
@@ -189,11 +195,12 @@ export const rerunWorkflowRunDescription = 'Re-run a workflow run, optionally on
 
 /** Not idempotent — each call starts another run attempt. */
 export async function rerunWorkflowRunCore({ token, owner, repo, runId, onlyFailedJobs }: { token: string, owner: string, repo: string, runId: number, onlyFailedJobs: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   if (onlyFailedJobs) {
     await octokit.rest.actions.reRunWorkflowFailedJobs({ owner, repo, run_id: runId })
   } else {
     await octokit.rest.actions.reRunWorkflow({ owner, repo, run_id: runId })
   }
   return { rerun: true, runId, onlyFailedJobs }
+  })
 }
