@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { PRESET_TOOLS } from '../core/presets'
 import * as repositoryCore from '../core/repository'
-import { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, formatGithubEveToolOutput, hasGithubEveToolModelOutput, listResolvedEveToolNames } from './build'
+import { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, executeGithubEveTool, formatGithubEveToolOutput, hasGithubEveToolModelOutput, listResolvedEveToolNames } from './build'
 import { getEveTools } from './load-eve'
 
 describe('createGithubTools eve integration', () => {
@@ -165,6 +165,16 @@ describe('createGithubTools eve integration', () => {
         size: 5,
         content: 'hello',
       },
+    })
+  })
+
+  it('returns an error payload instead of throwing when execute fails', async () => {
+    await expect(executeGithubEveTool('getRepository', { owner: 'octocat', repo: 'hello-world' }, {
+      token: async () => {
+        throw new Error('Unable to find project root directory. Have you linked your project with `vc link?`')
+      },
+    })).resolves.toEqual({
+      error: 'Unable to find project root directory. Have you linked your project with `vc link?`',
     })
   })
 
