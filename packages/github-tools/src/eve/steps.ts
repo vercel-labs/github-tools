@@ -19,7 +19,13 @@ export async function runGithubToolStep(
   input: Record<string, unknown>,
   ctx: ToolBuildContext,
 ) {
-  // Resolve the token before entering the step so only a serializable string crosses the boundary.
-  const token = await resolveGithubToken(ctx.token)
-  return executeGithubToolStep(name, input, { ...ctx, token })
+  try {
+    // Resolve the token before entering the step so only a serializable string crosses the boundary.
+    const token = await resolveGithubToken(ctx.token)
+    return await executeGithubToolStep(name, input, { ...ctx, token })
+  } catch (error) {
+    // Eve's tool-loop logs thrown execute errors but does not always append a
+    // tool_result. Returning a payload keeps the Anthropic tool_use/tool_result pairing intact.
+    return { error: error instanceof Error ? error.message : String(error) }
+  }
 }
