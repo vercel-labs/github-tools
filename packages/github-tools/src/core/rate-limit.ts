@@ -92,7 +92,7 @@ function stripRateLimitDeep<T>(value: T): T {
   if (!isPlainObject(value)) return value
   const next = stripRateLimit({ ...value })
   return Object.fromEntries(
-    Object.entries(next).map(([key, child]) => [key, stripRateLimit(child)]),
+    Object.entries(next).map(([key, child]) => [key, stripRateLimitDeep(child)]),
   ) as T
 }
 
