@@ -14,7 +14,9 @@ import { listReleases, getLatestRelease, getRelease, createRelease, updateReleas
 import { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
 import { resolveAiSdkApproval } from './core/approval'
 import { bindToolsContext } from './core/context'
+import { stripRateLimit } from './core/rate-limit'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
+import type { GithubTool } from './types'
 import { type GithubToolName } from './core/tool-names'
 import { type AllGithubTools, type GithubToolsBaseOptions } from './core/tool-types'
 import { createGithubTokenResolver } from './core/token'
@@ -203,13 +205,30 @@ export function createGithubTools({
     }
   }
 
-  const scoped = bindToolsContext(allTools, context)
+  const scoped = bindToolsContext(
+    Object.fromEntries(
+      Object.entries(allTools).map(([name, tool]) => [name, withStrippedRateLimit(tool)]),
+    ) as typeof allTools,
+    context,
+  )
 
   if (!allowed) return scoped
 
   return Object.fromEntries(
     Object.entries(scoped).filter(([name]) => allowed.has(name as GithubToolName))
   ) as Pick<typeof scoped, GithubToolName>
+}
+
+function withStrippedRateLimit(tool: GithubTool): GithubTool {
+  const inner = tool.toModelOutput
+  return {
+    ...tool,
+    toModelOutput: (options) => {
+      const next = { ...options, output: stripRateLimit(options.output) }
+      if (inner) return inner(next)
+      return { type: 'json' as const, value: next.output }
+    },
+  }
 }
 
 export type GithubTools = AllGithubTools & ToolSet
@@ -229,6 +248,7 @@ export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, trig
 export { listCheckRuns, getCombinedStatus } from './tools/checks'
 export { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 export { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
+export type { GithubRateLimit } from './core/rate-limit'
 export type { CommitIdentity, CommitToolOptions, GithubTool, Octokit, ToolOptions, ToolOverrides } from './types'
 export type { GithubTokenInput } from './core/token'
 export { resolveGithubToken } from './core/token'

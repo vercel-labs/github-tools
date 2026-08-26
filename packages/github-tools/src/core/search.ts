@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 
 const MAX_FRAGMENT_LENGTH = 300
 
@@ -16,7 +16,7 @@ export const searchCodeInputSchema = z.object({
 export const searchCodeDescription = 'Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. Results include matching text snippets when GitHub returns them.'
 
 export async function searchCodeCore({ token, query, perPage }: { token: string, query: string, perPage: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.search.code({
     q: query,
     per_page: perPage,
@@ -35,6 +35,7 @@ export async function searchCodeCore({ token, query, perPage }: { token: string,
       })),
     })),
   }
+  })
 }
 
 export const searchRepositoriesInputSchema = z.object({
@@ -47,7 +48,7 @@ export const searchRepositoriesInputSchema = z.object({
 export const searchRepositoriesDescription = 'Search for GitHub repositories by keyword, topic, language, or other qualifiers'
 
 export async function searchRepositoriesCore({ token, query, perPage, sort, order }: { token: string, query: string, perPage: number, sort?: 'stars' | 'forks' | 'help-wanted-issues' | 'updated', order: 'asc' | 'desc' }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.search.repos({ q: query, per_page: perPage, sort, order })
   return {
     totalCount: data.total_count,
@@ -62,6 +63,7 @@ export async function searchRepositoriesCore({ token, query, perPage, sort, orde
       topics: repo.topics,
     })),
   }
+  })
 }
 
 export const searchIssuesInputSchema = z.object({
@@ -74,7 +76,7 @@ export const searchIssuesInputSchema = z.object({
 export const searchIssuesDescription = 'Search for issues and pull requests across GitHub using search qualifiers like "repo:owner/name is:open"'
 
 export async function searchIssuesCore({ token, query, perPage, sort, order }: { token: string, query: string, perPage: number, sort?: 'comments' | 'reactions' | 'created' | 'updated' | 'interactions', order: 'asc' | 'desc' }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.search.issuesAndPullRequests({ q: query, per_page: perPage, sort, order })
   return {
     totalCount: data.total_count,
@@ -92,4 +94,5 @@ export async function searchIssuesCore({ token, query, perPage, sort, order }: {
       isPullRequest: Boolean(item.pull_request),
     })),
   }
+  })
 }

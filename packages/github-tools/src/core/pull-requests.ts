@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createOctokit } from '../client'
+import { withOctokit } from '../client'
 import type { CommitIdentity } from '../types'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
 import { fetchAllPages, maxPagesSchema } from './pagination'
@@ -16,7 +16,7 @@ export const listPullRequestsInputSchema = z.object({
 export const listPullRequestsDescription = 'List pull requests for a GitHub repository'
 
 export async function listPullRequestsCore({ token, owner, repo, state, perPage, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', perPage: number, maxPages?: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const pullRequests = await fetchAllPages(async page => {
     const { data } = await octokit.rest.pulls.list({ owner, repo, state, per_page: perPage, page })
     return data
@@ -33,6 +33,7 @@ export async function listPullRequestsCore({ token, owner, repo, state, perPage,
     createdAt: pr.created_at,
     updatedAt: pr.updated_at,
   }))
+  })
 }
 
 export const getPullRequestInputSchema = z.object({
@@ -45,7 +46,7 @@ export const getPullRequestInputSchema = z.object({
 export const getPullRequestDescription = 'Get detailed information about a specific pull request. Body is truncated by default (detail: summary) — set detail full for the complete description'
 
 export async function getPullRequestCore({ token, owner, repo, pullNumber, detail = 'summary' }: { token: string, owner: string, repo: string, pullNumber: number, detail?: DetailLevel }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
   return {
     number: data.number,
@@ -67,6 +68,7 @@ export async function getPullRequestCore({ token, owner, repo, pullNumber, detai
     updatedAt: data.updated_at,
     mergedAt: data.merged_at,
   }
+  })
 }
 
 export const createPullRequestInputSchema = z.object({
@@ -83,7 +85,7 @@ export const createPullRequestDescription = 'Create a new pull request in a GitH
 
 /** Not idempotent — each call creates a new pull request. */
 export async function createPullRequestCore({ token, owner, repo, title, body, head, base, draft }: { token: string, owner: string, repo: string, title: string, body?: string, head: string, base: string, draft: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.create({ owner, repo, title, body, head, base, draft })
   return {
     number: data.number,
@@ -94,6 +96,7 @@ export async function createPullRequestCore({ token, owner, repo, title, body, h
     branch: data.head.ref,
     base: data.base.ref,
   }
+  })
 }
 
 const MARK_READY_FOR_REVIEW_MUTATION = `
@@ -127,7 +130,7 @@ export const updatePullRequestDescription = 'Update a pull request — title, bo
 
 /** Not idempotent — each call applies a new revision. */
 export async function updatePullRequestCore({ token, owner, repo, pullNumber, title, body, state, base, draft }: { token: string, owner: string, repo: string, pullNumber: number, title?: string, body?: string, state?: 'open' | 'closed', base?: string, draft?: boolean }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const hasRestUpdate = title !== undefined || body !== undefined || state !== undefined || base !== undefined
   const { data } = hasRestUpdate
     ? await octokit.rest.pulls.update({ owner, repo, pull_number: pullNumber, title, body, state, base })
@@ -146,6 +149,7 @@ export async function updatePullRequestCore({ token, owner, repo, pullNumber, ti
     base: data.base.ref,
     updatedAt: data.updated_at,
   }
+  })
 }
 
 export const mergePullRequestInputSchema = z.object({
@@ -179,7 +183,7 @@ export async function mergePullRequestCore({
   mergeMethod: 'merge' | 'squash' | 'rebase'
   coAuthors?: CommitIdentity[]
 }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const finalMessage = composeCommitMessage(commitMessage ?? '', coAuthors) || undefined
   const { data } = await octokit.rest.pulls.merge({
     owner,
@@ -194,6 +198,7 @@ export async function mergePullRequestCore({
     message: data.message,
     sha: data.sha,
   }
+  })
 }
 
 export const addPullRequestCommentInputSchema = z.object({
@@ -207,7 +212,7 @@ export const addPullRequestCommentDescription = 'Add a comment to a pull request
 
 /** Not idempotent — each call adds another comment. */
 export async function addPullRequestCommentCore({ token, owner, repo, pullNumber, body }: { token: string, owner: string, repo: string, pullNumber: number, body: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.createComment({ owner, repo, issue_number: pullNumber, body })
   return {
     id: data.id,
@@ -216,6 +221,7 @@ export async function addPullRequestCommentCore({ token, owner, repo, pullNumber
     author: data.user?.login,
     createdAt: data.created_at,
   }
+  })
 }
 
 export const updatePullRequestCommentInputSchema = z.object({
@@ -229,7 +235,7 @@ export const updatePullRequestCommentDescription = 'Update the body of a comment
 
 /** Not idempotent — each call applies a new revision. */
 export async function updatePullRequestCommentCore({ token, owner, repo, commentId, body }: { token: string, owner: string, repo: string, commentId: number, body: string }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.updateComment({ owner, repo, comment_id: commentId, body })
   return {
     id: data.id,
@@ -237,6 +243,7 @@ export async function updatePullRequestCommentCore({ token, owner, repo, comment
     body: data.body,
     updatedAt: data.updated_at,
   }
+  })
 }
 
 export const deletePullRequestCommentInputSchema = z.object({
@@ -249,9 +256,10 @@ export const deletePullRequestCommentDescription = 'Delete a comment from a pull
 
 /** Not idempotent — deleting an already-deleted comment returns 404 from GitHub. */
 export async function deletePullRequestCommentCore({ token, owner, repo, commentId }: { token: string, owner: string, repo: string, commentId: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   await octokit.rest.issues.deleteComment({ owner, repo, comment_id: commentId })
   return { deleted: true, commentId }
+  })
 }
 
 export const listPullRequestFilesInputSchema = z.object({
@@ -267,7 +275,7 @@ export const listPullRequestFilesInputSchema = z.object({
 export const listPullRequestFilesDescription = 'List files changed in a pull request with status and stats. Patches are omitted by default — set includePatch true (optionally with filenames) to fetch diffs'
 
 export async function listPullRequestFilesCore({ token, owner, repo, pullNumber, includePatch, filenames, perPage, page }: { token: string, owner: string, repo: string, pullNumber: number, includePatch: boolean, filenames?: string[], perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.listFiles({ owner, repo, pull_number: pullNumber, per_page: perPage, page })
   const filenameSet = filenames?.length ? new Set(filenames) : null
   return data
@@ -280,6 +288,7 @@ export async function listPullRequestFilesCore({ token, owner, repo, pullNumber,
       changes: file.changes,
       ...includePatch && file.patch != null ? { patch: file.patch } : {},
     }))
+  })
 }
 
 export const listPullRequestReviewsInputSchema = z.object({
@@ -293,7 +302,7 @@ export const listPullRequestReviewsInputSchema = z.object({
 export const listPullRequestReviewsDescription = 'List reviews on a pull request (approvals, change requests, and comments)'
 
 export async function listPullRequestReviewsCore({ token, owner, repo, pullNumber, perPage, page }: { token: string, owner: string, repo: string, pullNumber: number, perPage: number, page: number }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.listReviews({ owner, repo, pull_number: pullNumber, per_page: perPage, page })
   return data.map(review => ({
     id: review.id,
@@ -303,6 +312,7 @@ export async function listPullRequestReviewsCore({ token, owner, repo, pullNumbe
     url: review.html_url,
     submittedAt: review.submitted_at,
   }))
+  })
 }
 
 export const createPullRequestReviewInputSchema = z.object({
@@ -323,7 +333,7 @@ export const createPullRequestReviewDescription = 'Submit a pull request review 
 
 /** Not idempotent — each call submits a new review. */
 export async function createPullRequestReviewCore({ token, owner, repo, pullNumber, body, event, comments }: { token: string, owner: string, repo: string, pullNumber: number, body?: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT', comments?: Array<{ path: string, body: string, line?: number, side?: 'LEFT' | 'RIGHT' }> }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.createReview({
     owner,
     repo,
@@ -340,6 +350,7 @@ export async function createPullRequestReviewCore({ token, owner, repo, pullNumb
     author: data.user?.login,
     submittedAt: data.submitted_at,
   }
+  })
 }
 
 export const requestReviewersInputSchema = z.object({
@@ -354,7 +365,7 @@ export const requestReviewersDescription = 'Request reviews from users or teams 
 
 /** Not idempotent — re-requesting an existing reviewer is a no-op on GitHub but still mutates. */
 export async function requestReviewersCore({ token, owner, repo, pullNumber, reviewers, teamReviewers }: { token: string, owner: string, repo: string, pullNumber: number, reviewers?: string[], teamReviewers?: string[] }) {
-  const octokit = createOctokit(token)
+  return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.requestReviewers({
     owner,
     repo,
@@ -368,4 +379,5 @@ export async function requestReviewersCore({ token, owner, repo, pullNumber, rev
     requestedReviewers: data.requested_reviewers?.map(r => r.login),
     requestedTeams: data.requested_teams?.map(t => t.slug),
   }
+  })
 }

@@ -22,6 +22,7 @@ import * as releases from '../core/releases'
 import * as repository from '../core/repository'
 import * as search from '../core/search'
 import * as workflows from '../core/workflows'
+import { stripRateLimit } from '../core/rate-limit'
 import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubWriteToolName } from '../core/write-tools'
 import type { GithubToolName } from '../core/tool-names'
@@ -79,14 +80,17 @@ export function hasGithubEveToolModelOutput(name: GithubToolName): boolean {
 
 /**
  * Apply the built-in eve `toModelOutput` projection for a tool.
+ * Strips `rateLimit` so it never reaches the model. Tools without a dedicated
+ * formatter get `{ type: 'json', value }` of the remaining payload.
  * Used by `@github-tools/eve-extension` so the callback only closes over a serializable tool name.
  */
 export function formatGithubEveToolOutput(name: GithubToolName, output: unknown): ToolModelOutput {
+  const stripped = stripRateLimit(output)
   const format = GITHUB_EVE_TOOL_MODEL_OUTPUT[name as keyof typeof GITHUB_EVE_TOOL_MODEL_OUTPUT]
   if (!format) {
-    throw new Error(`No toModelOutput formatter for GitHub tool: ${name}`)
+    return { type: 'json', value: stripped }
   }
-  return format(output)
+  return format(stripped)
 }
 
 export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
