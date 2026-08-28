@@ -15,6 +15,7 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
     "workflow": "pnpm --filter @github-tools/chat exec workflow web",
     "changeset": "changeset",
     "version-packages": "changeset version",

@@ -69,8 +69,12 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
 7. Run checks:
 
 ```sh
-pnpm build && pnpm lint && pnpm typecheck
+pnpm build && pnpm lint && pnpm typecheck && pnpm test
 ```
+
+### eve extension durable callbacks
+
+`packages/github-tools-eve-extension/extension/tools/github.ts` must set `execute`, `toModelOutput`, and `approval` as **direct** `defineTool` properties with inline functions. Spreading those keys, or passing `resolveEveApproval(...)` / `always()` as the property value, leaves them without a durable descriptor: on eve 0.44+ the resolver then drops every `github__*` tool. `test/durable-define-tool.test.ts` fails CI if that pattern returns.
 
 ## Pull requests
 
@@ -82,7 +86,7 @@ pnpm build && pnpm lint && pnpm typecheck
 pnpm changeset
 ```
 
-- Ensure `pnpm build`, `pnpm lint`, and `pnpm typecheck` all pass before submitting
+- Ensure `pnpm build`, `pnpm lint`, `pnpm typecheck`, and `pnpm test` all pass before submitting
 
 ## Commit conventions
 

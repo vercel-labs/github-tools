@@ -24,7 +24,7 @@ env:
 
 jobs:
   quality:
-    name: Lint & typecheck
+    name: Lint, typecheck & test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -53,6 +53,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm exec turbo run typecheck --affected
+
+      - name: Test
+        run: pnpm exec turbo run test --affected
 
   examples:
     name: Build examples

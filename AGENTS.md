@@ -8,6 +8,7 @@
 pnpm build              # Build all packages (turbo)
 pnpm lint               # Lint all packages
 pnpm typecheck          # Type-check all packages
+pnpm test               # SDK vitest + eve-extension durable-callback guard
 pnpm dev                # Run the chat app in dev mode
 pnpm docs:dev           # Run the docs site in dev mode
 
@@ -15,6 +16,7 @@ pnpm docs:dev           # Run the docs site in dev mode
 pnpm --filter @github-tools/sdk build
 pnpm --filter @github-tools/sdk lint
 pnpm --filter @github-tools/sdk typecheck
+pnpm --filter @github-tools/sdk test
 
 # Release
 pnpm changeset          # Create a changeset for user-facing changes
@@ -22,7 +24,7 @@ pnpm version-packages   # Apply changesets
 pnpm release            # Build SDK + publish
 ```
 
-There is no test suite. Verify changes with `pnpm build && pnpm lint && pnpm typecheck`.
+Verify changes with `pnpm build && pnpm lint && pnpm typecheck && pnpm test`. The SDK has vitest (`packages/github-tools/**/*.test.ts`). The eve extension has an AST guard (`packages/github-tools-eve-extension/test/durable-define-tool.test.ts`) that fails CI if `execute` / `toModelOutput` / `approval` are spread or not inline on `defineTool`.
 
 ## Monorepo Structure
 
@@ -32,7 +34,7 @@ pnpm workspaces + Turborepo. Three packages:
 - **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
 - **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.getting-started/4.agent-skills.md`).
 
-Turbo task dependencies: `lint`, `lint:fix`, and `typecheck` all depend on `^build` (upstream packages must build first).
+Turbo task dependencies: `lint`, `lint:fix`, `typecheck`, and `test` all depend on `^build` (upstream packages must build first).
 
 ## SDK Architecture (`packages/github-tools`)
 
@@ -92,6 +94,10 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 ### Presets
 
 Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
+
+## eve extension durable callbacks (`packages/github-tools-eve-extension`)
+
+On eve 0.44+, a missing durable descriptor on **any** dynamic-tool callback (`execute`, `toModelOutput`, `approval` / `approvalRequest`) discards the **entire** GitHub toolset. In `extension/tools/github.ts`, those three must be **direct** `defineTool` properties with inline functions (or identifiers). Conditional spreads and call expressions (`resolveEveApproval(...)`, `always()`) are invisible to eve's stamp. Callbacks may only close over a serializable tool `name` and re-read config via `buildSessionOptions()`. CI enforces this via `test/durable-define-tool.test.ts`.
 
 ## Chat App Architecture (`apps/chat`)
 
@@ -166,7 +172,7 @@ This applies to every `pnpm add`/`pnpm install` in the docs site, including peer
 
 A task is complete when **all** of the following pass:
 
-1. `pnpm build`, `pnpm lint`, `pnpm typecheck` exit 0
+1. `pnpm build`, `pnpm lint`, `pnpm typecheck`, and `pnpm test` exit 0
 2. New tools follow the full checklist in [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md#adding-a-new-tool)
 3. A changeset is included for any user-facing change (`pnpm changeset`)
 4. New public APIs have JSDoc
@@ -175,7 +181,7 @@ A task is complete when **all** of the following pass:
 ## Boundaries
 
 **Always do:**
-- Run `pnpm build`, `pnpm lint`, and `pnpm typecheck` before reporting done
+- Run `pnpm build`, `pnpm lint`, `pnpm typecheck`, and `pnpm test` before reporting done
 - Follow existing code patterns — read neighboring files (and the matching `core/`/`tools/` pair) before writing new ones
 - Add a changeset (`pnpm changeset`) for every user-facing change
 
@@ -186,7 +192,7 @@ A task is complete when **all** of the following pass:
 
 **Never:**
 - Commit secrets, `.env` files, `GITHUB_TOKEN`, or API keys
-- Skip lint or typecheck to "fix later"
+- Skip lint, typecheck, or test to "fix later"
 - Widen a type (`as any`) or drop a `.describe()` to silence an error — fix the underlying issue
 - Return a raw, unshaped API response from a tool
 - Modify `node_modules/` or generated files (`dist/`, `.nuxt/`, `.output/`)

@@ -55,7 +55,7 @@ export default githubExtension({
 })
 ```
 
-Built-in `toModelOutput` formatters are a direct `defineTool` property whose callback only closes over the tool name (a spread ternary is not stamped). That callback also strips `rateLimit` from the model-facing payload. Author `overrides.toModelOutput` inline in the agent — a library function will not get a durable descriptor on eve 0.44+, and the resolver then drops every `github__*` tool. Execute failures return `{ error }` so the model still receives a `tool_result`. Requires `eve` `>=0.44`.
+`execute`, `toModelOutput`, and `approval` are direct `defineTool` properties whose callbacks only close over the tool name (a spread or `resolveEveApproval(...)` call is not stamped). `toModelOutput` also strips `rateLimit` from the model-facing payload. Author `overrides.toModelOutput` inline in the agent — a library function will not get a durable descriptor on eve 0.44+, and the resolver then drops every `github__*` tool. Execute failures return `{ error }` so the model still receives a `tool_result`. Requires `eve` `>=0.44`.
 
 ## Approval
 

@@ -2,6 +2,7 @@ import { connectGithubToken } from '@github-tools/sdk/connect'
 import {
   executeGithubEveTool,
   formatGithubEveToolOutput,
+  GITHUB_WRITE_TOOLS,
   isEveApprovalDisabled,
   listEveToolDescriptors,
   mapEveApprovalValue,
@@ -13,14 +14,16 @@ import {
   type GithubToolName,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
+import type { ApprovalContext } from 'eve/tools/approval'
 import { defineDynamic, defineTool, type ToolDefinition } from 'eve/tools'
 import extension from '../extension'
 
 /**
  * Rebuild options from extension config on every call.
- * Durable `execute` / `toModelOutput` only close over a serializable tool `name`
- * (#51, #99). `toModelOutput` must be a direct `defineTool` property — a spread
- * ternary is invisible to eve's stamp, and 0.44+ then drops the whole toolset.
+ * Durable `execute` / `toModelOutput` / `approval` only close over a serializable
+ * tool `name` (#51, #99). Those three must be direct `defineTool` properties —
+ * a spread or call expression is invisible to eve's stamp, and 0.44+ then
+ * drops the whole toolset.
  */
 function buildSessionOptions(): EveGithubToolsOptions {
   const {
@@ -78,8 +81,34 @@ function approvalDisabled(
   return false
 }
 
+function writeToolName(name: GithubToolName): GithubWriteToolName | undefined {
+  if (!Object.hasOwn(GITHUB_WRITE_TOOLS, name)) return undefined
+  return GITHUB_WRITE_TOOLS[name as keyof typeof GITHUB_WRITE_TOOLS]
+}
+
 async function runGithubEveTool(name: GithubToolName, input: unknown) {
   return executeGithubEveTool(name, input as Record<string, unknown>, buildSessionOptions())
+}
+
+function runGithubEveToModelOutput(name: GithubToolName, output: unknown) {
+  const custom = buildSessionOptions().overrides?.[name]?.toModelOutput
+  return custom ? custom(output) : formatGithubEveToolOutput(name, output)
+}
+
+function runGithubEveApproval(name: GithubToolName, ctx: ApprovalContext) {
+  const sessionOptions = buildSessionOptions()
+  const override = sessionOptions.overrides?.[name]?.approval
+  const writeTool = writeToolName(name)
+
+  if (!writeTool || approvalDisabled(writeTool, sessionOptions.requireApproval, override)) {
+    return 'not-applicable'
+  }
+
+  const policy = override !== undefined
+    ? mapEveApprovalValue(override)
+    : resolveEveApproval(writeTool, sessionOptions.requireApproval)
+
+  return policy(ctx)
 }
 
 export default defineDynamic({
@@ -95,25 +124,12 @@ export default defineDynamic({
       for (const entry of descriptors) {
         const name = entry.name
         const override = toolOverrides?.[name]
-        const skipApproval = approvalDisabled(
-          entry.writeTool,
-          sessionOptions.requireApproval,
-          override?.approval,
-        )
 
         tools[name] = defineTool({
           description: override?.description ?? entry.description,
           inputSchema: entry.inputSchema,
-          ...(entry.writeTool && !skipApproval && {
-            approval: resolveEveApproval(entry.writeTool, sessionOptions.requireApproval),
-          }),
-          ...(override?.approval !== undefined && !skipApproval && {
-            approval: mapEveApprovalValue(override.approval),
-          }),
-          toModelOutput: (output: unknown) => {
-            const custom = buildSessionOptions().overrides?.[name]?.toModelOutput
-            return custom ? custom(output) : formatGithubEveToolOutput(name, output)
-          },
+          approval: (ctx) => runGithubEveApproval(name, ctx),
+          toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
           ...(override?.outputSchema !== undefined && {
             outputSchema: override.outputSchema,
           }),

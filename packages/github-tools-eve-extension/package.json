@@ -39,7 +39,8 @@
     "build": "eve extension build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types ./test/durable-define-tool.test.ts"
   },
   "keywords": [
     "ai",
