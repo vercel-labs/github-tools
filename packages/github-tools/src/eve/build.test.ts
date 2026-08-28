@@ -7,9 +7,8 @@ import { createToolRegistry } from './registry'
 import { getEveTools } from './load-eve'
 
 describe('createGithubTools eve integration', () => {
-  // TypeScript catches typos in registry names but not omissions: a tool added
-  // to GITHUB_TOOL_NAMES and the AI SDK layer but forgotten here would silently
-  // never appear in eve. This pins the two catalogs together.
+  // The registry is derived from GITHUB_TOOL_CATALOG, so parity holds by
+  // construction — this guards the derivation itself against regressions.
   it('registers every GITHUB_TOOL_NAMES entry exactly once in the eve registry', () => {
     const registryNames = createToolRegistry({ token: 'ghp_test' }).map(entry => entry.name)
     expect(registryNames.sort()).toEqual([...ALL_GITHUB_TOOL_NAMES].sort())
