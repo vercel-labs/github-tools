@@ -1,4 +1,5 @@
 import { resolvePresetTools, type GithubToolPreset } from '../core/presets'
+import { GITHUB_TOOL_CATALOG } from '../core/catalog'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from '../core/tool-names'
 
 /**
@@ -137,126 +138,18 @@ const SCOPE_ORDER = [
   'administration:write',
 ] as const
 
-const CONTENTS_READ = ['contents:read', 'metadata:read'] as const
-const CONTENTS_WRITE = ['contents:read', 'contents:write', 'metadata:read'] as const
-const PR_READ = ['contents:read', 'metadata:read', 'pull_requests:read'] as const
-const PR_WRITE = ['contents:read', 'metadata:read', 'pull_requests:read', 'pull_requests:write'] as const
-/** Read-only PR context (details, files, reviews) plus optional CI checks. */
-const PR_CONTEXT = ['contents:read', 'metadata:read', 'pull_requests:read', 'checks:read', 'statuses:read'] as const
-const ISSUES_READ = ['contents:read', 'metadata:read', 'issues:read'] as const
-const ISSUES_WRITE = ['contents:read', 'metadata:read', 'issues:read', 'issues:write'] as const
-const DISCUSSIONS_READ = ['contents:read', 'metadata:read', 'discussions:read'] as const
-const DISCUSSIONS_WRITE = ['contents:read', 'metadata:read', 'discussions:read', 'discussions:write'] as const
-const ACTIONS_READ = ['contents:read', 'metadata:read', 'actions:read'] as const
-const ACTIONS_WRITE = ['contents:read', 'metadata:read', 'actions:read', 'actions:write'] as const
-const CHECKS = ['contents:read', 'metadata:read', 'checks:read', 'statuses:read'] as const
-const CI_CONTEXT = ['contents:read', 'metadata:read', 'actions:read', 'checks:read', 'statuses:read'] as const
-const ADMIN = ['metadata:read', 'administration:read', 'administration:write'] as const
-const SEARCH_REPOS = ['metadata:read'] as const
-const SEARCH_ISSUES = ['metadata:read', 'issues:read', 'pull_requests:read'] as const
-const UNSCOPED = [] as const
-
 /**
- * Per-tool Connect scopes. Empty arrays are intentional for gist and
- * notification tools (installation tokens cannot satisfy those APIs).
+ * Per-tool Connect scopes, derived from `GITHUB_TOOL_CATALOG`. Empty arrays are
+ * intentional for gist and notification tools (installation tokens cannot
+ * satisfy those APIs).
  */
-export const TOOL_CONNECT_SCOPES = {
-  getRepository: CONTENTS_READ,
-  listBranches: CONTENTS_READ,
-  getFileContent: CONTENTS_READ,
-  getRepositoryTree: CONTENTS_READ,
-  createBranch: CONTENTS_WRITE,
-  deleteBranch: CONTENTS_WRITE,
-  forkRepository: CONTENTS_READ,
-  createRepository: ADMIN,
-  createOrUpdateFile: CONTENTS_WRITE,
-
-  listPullRequests: PR_READ,
-  getPullRequest: PR_READ,
-  createPullRequest: PR_WRITE,
-  mergePullRequest: PR_WRITE,
-  updatePullRequest: PR_WRITE,
-  addPullRequestComment: PR_WRITE,
-  updatePullRequestComment: PR_WRITE,
-  deletePullRequestComment: PR_WRITE,
-  listPullRequestFiles: PR_READ,
-  listPullRequestReviews: PR_READ,
-  listPullRequestReviewThreads: PR_READ,
-  createPullRequestReview: PR_WRITE,
-  replyToReviewComment: PR_WRITE,
-  resolveReviewThread: PR_WRITE,
-  requestReviewers: PR_WRITE,
-  getPullRequestContext: PR_CONTEXT,
-
-  listIssues: ISSUES_READ,
-  getIssue: ISSUES_READ,
-  getIssueContext: ISSUES_READ,
-  listIssueComments: ISSUES_READ,
-  createIssue: ISSUES_WRITE,
-  addIssueComment: ISSUES_WRITE,
-  updateIssueComment: ISSUES_WRITE,
-  deleteIssueComment: ISSUES_WRITE,
-  closeIssue: ISSUES_WRITE,
-  updateIssue: ISSUES_WRITE,
-  listLabels: ISSUES_READ,
-  addLabels: ISSUES_WRITE,
-  removeLabel: ISSUES_WRITE,
-  createLabel: ISSUES_WRITE,
-  updateLabel: ISSUES_WRITE,
-  deleteLabel: ISSUES_WRITE,
-  addAssignees: ISSUES_WRITE,
-  removeAssignees: ISSUES_WRITE,
-
-  searchCode: CONTENTS_READ,
-  searchRepositories: SEARCH_REPOS,
-  searchIssues: SEARCH_ISSUES,
-
-  listCommits: CONTENTS_READ,
-  getCommit: CONTENTS_READ,
-  getBlame: CONTENTS_READ,
-  compareCommits: CONTENTS_READ,
-
-  listGists: UNSCOPED,
-  getGist: UNSCOPED,
-  listGistComments: UNSCOPED,
-  createGist: UNSCOPED,
-  updateGist: UNSCOPED,
-  deleteGist: UNSCOPED,
-  createGistComment: UNSCOPED,
-
-  listWorkflows: ACTIONS_READ,
-  listWorkflowRuns: ACTIONS_READ,
-  getWorkflowRun: ACTIONS_READ,
-  listWorkflowJobs: ACTIONS_READ,
-  getWorkflowJobLogs: ACTIONS_READ,
-  triggerWorkflow: ACTIONS_WRITE,
-  cancelWorkflowRun: ACTIONS_WRITE,
-  rerunWorkflowRun: ACTIONS_WRITE,
-
-  listCheckRuns: CHECKS,
-  getCombinedStatus: CHECKS,
-  getCiFailureContext: CI_CONTEXT,
-
-  listDiscussions: DISCUSSIONS_READ,
-  getDiscussion: DISCUSSIONS_READ,
-  addDiscussionComment: DISCUSSIONS_WRITE,
-
-  listNotifications: UNSCOPED,
-  markNotificationRead: UNSCOPED,
-
-  listIssueReactions: ISSUES_READ,
-  addIssueReaction: ISSUES_WRITE,
-  listCommentReactions: ISSUES_READ,
-  addCommentReaction: ISSUES_WRITE,
-
-  listReleases: CONTENTS_READ,
-  getLatestRelease: CONTENTS_READ,
-  getRelease: CONTENTS_READ,
-  getReleaseContext: CONTENTS_READ,
-  createRelease: CONTENTS_WRITE,
-  updateRelease: CONTENTS_WRITE,
-  deleteRelease: CONTENTS_WRITE,
-} as const satisfies Record<GithubToolName, readonly string[]>
+export const TOOL_CONNECT_SCOPES = ALL_GITHUB_TOOL_NAMES.reduce(
+  (map, name) => {
+    map[name] = GITHUB_TOOL_CATALOG[name].connectScopes
+    return map
+  },
+  {} as Record<GithubToolName, readonly string[]>,
+)
 
 function orderScopes(scopes: Set<string>): string[] {
   return SCOPE_ORDER.filter(scope => scopes.has(scope))

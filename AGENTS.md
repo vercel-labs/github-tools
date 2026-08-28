@@ -80,7 +80,8 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 - `src/client.ts` — `createOctokit(token)` wrapper
 - `src/types.ts` — `ToolOptions`, `CommitToolOptions`, `ToolOverrides`, `GithubTool`
 - `src/tools/` — domain files (the `ai` SDK wrapper layer): `repository.ts`, `pull-requests.ts`, `issues.ts`, `reactions.ts`, `discussions.ts`, `notifications.ts`, `commits.ts`, `gists.ts`, `workflows.ts`, `search.ts`, `checks.ts`, `releases.ts`, `bundles.ts`
-- `src/core/` — matching domain files (pure logic: schema, description, `*Core` function) plus `tool-names.ts` (`GITHUB_TOOL_NAMES`/`GithubToolName`), `write-tools.ts` (`GITHUB_WRITE_TOOLS`/`GithubWriteToolName`), `presets.ts` (`PRESET_TOOLS`), `token.ts` (`resolveGithubToken`), `approval.ts` (`resolveAiSdkApproval`)
+- `src/core/catalog.ts` — **single source of truth for tools**: one `GITHUB_TOOL_CATALOG` entry per tool (description, schema, core, `write` flag, Connect scopes). `GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOLS`, `TOOL_CONNECT_SCOPES`, and the eve tool registry are derived from it. Registering a tool = catalog entry + `"use step"` factory + `allTools` in `index.ts` (the last is compile-enforced via `satisfies AllGithubTools`)
+- `src/core/` — matching domain files (pure logic: schema, description, `*Core` function) plus `tool-names.ts`/`write-tools.ts` (derived shims), `presets.ts` (`PRESET_TOOLS`), `token.ts` (`resolveGithubToken`), `approval.ts` (`resolveAiSdkApproval`)
 
 ### Dual-Mode Agents
 

@@ -50,12 +50,10 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
 1. **Core logic** — add `{name}InputSchema` (zod, `.describe()` on every field), `{name}Description`, and `{name}Core({ token, ...args })` to `packages/github-tools/src/core/{domain}.ts`. Shape the return — never return the raw Octokit response.
 2. **Tool factory** — add the `"use step"` wrapper and the exported factory to `packages/github-tools/src/tools/{domain}.ts`. Read tools take `(token)`; write tools also take `({ needsApproval = true }: ToolOptions = {})`.
 3. **Register** (new domain? add a re-export in `packages/github-tools/src/core/index.ts` too):
-   - `packages/github-tools/src/core/tool-names.ts` — add to `GITHUB_TOOL_NAMES`, with a one-line JSDoc (note "Requires approval by default" for write tools)
-   - `packages/github-tools/src/core/write-tools.ts` — write tools only: add to `GITHUB_WRITE_TOOLS`
+   - `packages/github-tools/src/core/catalog.ts` — add one `GITHUB_TOOL_CATALOG` entry (JSDoc, `description`, `inputSchema`, `get core()`, `write: true` for write tools, `connectScopes`). `GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOLS`, `TOOL_CONNECT_SCOPES`, and the eve registry are all derived from it — no separate registration
+   - `packages/github-tools/src/index.ts` — add to `allTools` in `createGithubTools()` (compile-enforced by `satisfies AllGithubTools`), re-export the factory at the bottom (guarded by `src/index.test.ts`)
    - `packages/github-tools/src/core/presets.ts` — add to every preset it belongs in (update each preset's JSDoc tool list too)
-   - `packages/github-tools/src/index.ts` — add to `allTools` in `createGithubTools()`, re-export the factory at the bottom
-   - `packages/github-tools/src/eve/registry.ts` — add an entry so the tool is reachable from `defineDynamic` (direct eve import) and the eve extension
-   - `packages/github-tools/src/connect/scopes.ts` — add any new Vercel Connect scope the tool needs to `PRESET_CONNECT_SCOPES` for every preset that includes it, and to `TOOL_CONNECT_SCOPES` for the tool itself (used when `include` / `exclude` derive scopes)
+   - `packages/github-tools/src/connect/scopes.ts` — only if a preset now needs a scope family it did not have: update `PRESET_CONNECT_SCOPES`
    - `packages/github-tools/src/agents.ts` — mention the tool in `PRESET_INSTRUCTIONS` for presets where it changes the agent's behavior
 4. **Chat app metadata** — add a `GITHUB_TOOL_META` entry in `apps/chat/shared/utils/tools/github.ts`
 5. **Documentation**:
