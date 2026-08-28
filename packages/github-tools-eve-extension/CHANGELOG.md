@@ -1,5 +1,11 @@
 # @github-tools/eve-extension
 
+## 0.4.1
+
+### Patch Changes
+
+- [#110](https://github.com/vercel-labs/github-tools/pull/110) [`b57987f`](https://github.com/vercel-labs/github-tools/commit/b57987f6bb73f08f942baa25fd806ceef7e1ac80) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Register `toModelOutput` as a direct `defineTool` property so eve 0.44+ can stamp a durable descriptor. Agents on eve 0.46.1 no longer lose the whole GitHub toolset when a formatter like `getFileContent` fails descriptor validation. Requires `eve` `>=0.44.0`.
+
 ## 0.4.0
 
 ### Minor Changes
