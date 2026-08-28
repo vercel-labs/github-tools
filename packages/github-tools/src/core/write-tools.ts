@@ -5,6 +5,8 @@
 export const GITHUB_WRITE_TOOLS = {
   /** Create a new branch in a GitHub repository from an existing branch or commit SHA. Requires approval by default. */
   createBranch: 'createBranch',
+  /** Delete a branch from a GitHub repository permanently. Requires approval by default. */
+  deleteBranch: 'deleteBranch',
   /** Fork a GitHub repository to the authenticated user account or a specified organization. Requires approval by default. */
   forkRepository: 'forkRepository',
   /** Create a new GitHub repository for the authenticated user or a specified organization. Requires approval by default. */
@@ -25,6 +27,10 @@ export const GITHUB_WRITE_TOOLS = {
   deletePullRequestComment: 'deletePullRequestComment',
   /** Submit a pull request review with optional inline comments. Requires approval by default. */
   createPullRequestReview: 'createPullRequestReview',
+  /** Reply to a pull request review comment in its review thread. Requires approval by default. */
+  replyToReviewComment: 'replyToReviewComment',
+  /** Mark a pull request review thread as resolved. Requires approval by default. */
+  resolveReviewThread: 'resolveReviewThread',
   /** Request reviews from users or teams on a pull request. Requires approval by default. */
   requestReviewers: 'requestReviewers',
   /** Create a new issue in a GitHub repository. Requires approval by default. */

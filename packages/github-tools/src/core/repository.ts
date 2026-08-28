@@ -255,6 +255,22 @@ export async function createBranchCore({ token, owner, repo, branch, from }: { t
   })
 }
 
+export const deleteBranchInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  branch: z.string().describe('Branch name to delete (without the refs/heads/ prefix)'),
+})
+
+export const deleteBranchDescription = 'Delete a branch from a GitHub repository permanently'
+
+/** Not idempotent — deleting a branch that no longer exists fails with a 422. */
+export async function deleteBranchCore({ token, owner, repo, branch }: { token: string, owner: string, repo: string, branch: string }) {
+  return withOctokit(token, async (octokit) => {
+  await octokit.rest.git.deleteRef({ owner, repo, ref: `heads/${branch}` })
+  return { deleted: true, branch }
+  })
+}
+
 export const forkRepositoryInputSchema = z.object({
   owner: z.string().describe('Repository owner to fork from'),
   repo: z.string().describe('Repository name to fork'),

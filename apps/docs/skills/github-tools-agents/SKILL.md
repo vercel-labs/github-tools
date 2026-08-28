@@ -110,22 +110,22 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 
 | Preset | Purpose |
 |--------|---------|
-| `code-review` | PRs, commits, files, review comments |
+| `code-review` | PRs, commits, files, review comments, review threads (list/reply/resolve) |
 | `issue-triage` | Issues via getIssueContext, comments, reactions, create/close, assignees |
 | `repo-explorer` | Read-only + search + discussions/gists/workflows reads |
-| `ci-ops` | Actions workflows, runs, trigger/cancel/rerun |
+| `ci-ops` | Actions workflows, runs, job logs, trigger/cancel/rerun |
 | `security-audit` | Vulnerability scanning, risk reporting |
 | `release-manager` | Changelog generation, release cutting |
 | `discussion-moderator` | Discussions list/get/comment plus light issue context |
 | `notification-inbox` | User notification triage (needs Notifications PAT) |
-| `pr-author` | Branches, file edits, open/update PRs |
-| `maintainer` | All 79 tools |
+| `pr-author` | Branches (create/delete), file edits, open/update PRs, respond to review threads |
+| `maintainer` | All 84 tools |
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`. Start with the smallest preset that fits; use `maintainer` when you need the full catalog. Multi-role: manager + sub-agents each with one preset.
 
 ## Working context
 
-Pass `context: { owner, repo, pullNumber?, issueNumber?, ref? }` to `createGithubTools` / `createGithubAgent` / `createDurableGithubAgent` to default those fields on tool inputs and inject them into the agent system prompt. Prefer composite tools (`getPullRequestContext`, `getIssueContext`, `getReleaseContext`, `getCiFailureContext`) for multi-part reads — call follow-up reads in the same step when possible. Diff patches are omitted by default — set `includePatch: true` (optionally with `filenames`) when you need specific diffs. Bodies are truncated by default (`detail: 'summary'`). `getIssueContext` returns `labelNames` (strings) rather than full label objects. Prefer `getFileContent` with `startLine`/`endLine` or `maxLines` for large files. Object-shaped execute results include `rateLimit` (`remaining` / `limit` / `reset` / `resource`); it is stripped from the model-facing output. Array-shaped list tools do not carry it. On 403/429 the error text includes remaining/reset.
+Pass `context: { owner, repo, pullNumber?, issueNumber?, ref? }` to `createGithubTools` / `createGithubAgent` / `createDurableGithubAgent` to default those fields on tool inputs and inject them into the agent system prompt. Prefer composite tools (`getPullRequestContext`, `getIssueContext`, `getReleaseContext`, `getCiFailureContext`) for multi-part reads — call follow-up reads in the same step when possible. Diff patches are omitted by default — set `includePatch: true` (optionally with `filenames`) when you need specific diffs. Bodies are truncated by default (`detail: 'summary'`). `getIssueContext` returns `labelNames` (strings) rather than full label objects. Prefer `getFileContent` with `startLine`/`endLine` or `maxLines` for large files. `getWorkflowJobLogs` returns the last 200 log lines with timestamps stripped — raise `maxLines` (up to 2000) only when needed. `listPullRequestReviewThreads` returns unresolved threads only by default with truncated comment bodies. Object-shaped execute results include `rateLimit` (`remaining` / `limit` / `reset` / `resource`); it is stripped from the model-facing output. Array-shaped list tools do not carry it. On 403/429 the error text includes remaining/reset.
 
 ## Write safety
 

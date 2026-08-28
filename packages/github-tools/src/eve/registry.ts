@@ -144,6 +144,13 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       execute: withToken(repository.createBranchCore, ctx),
     },
     {
+      name: 'deleteBranch',
+      writeTool: 'deleteBranch',
+      description: repository.deleteBranchDescription,
+      inputSchema: repository.deleteBranchInputSchema,
+      execute: withToken(repository.deleteBranchCore, ctx),
+    },
+    {
       name: 'forkRepository',
       writeTool: 'forkRepository',
       description: repository.forkRepositoryDescription,
@@ -241,6 +248,26 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: pullRequests.createPullRequestReviewDescription,
       inputSchema: pullRequests.createPullRequestReviewInputSchema,
       execute: withToken(pullRequests.createPullRequestReviewCore, ctx),
+    },
+    {
+      name: 'listPullRequestReviewThreads',
+      description: pullRequests.listPullRequestReviewThreadsDescription,
+      inputSchema: pullRequests.listPullRequestReviewThreadsInputSchema,
+      execute: withToken(pullRequests.listPullRequestReviewThreadsCore, ctx),
+    },
+    {
+      name: 'replyToReviewComment',
+      writeTool: 'replyToReviewComment',
+      description: pullRequests.replyToReviewCommentDescription,
+      inputSchema: pullRequests.replyToReviewCommentInputSchema,
+      execute: withToken(pullRequests.replyToReviewCommentCore, ctx),
+    },
+    {
+      name: 'resolveReviewThread',
+      writeTool: 'resolveReviewThread',
+      description: pullRequests.resolveReviewThreadDescription,
+      inputSchema: pullRequests.resolveReviewThreadInputSchema,
+      execute: withToken(pullRequests.resolveReviewThreadCore, ctx),
     },
     {
       name: 'requestReviewers',
@@ -548,6 +575,12 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
       description: workflows.listWorkflowJobsDescription,
       inputSchema: workflows.listWorkflowJobsInputSchema,
       execute: withToken(workflows.listWorkflowJobsCore, ctx),
+    },
+    {
+      name: 'getWorkflowJobLogs',
+      description: workflows.getWorkflowJobLogsDescription,
+      inputSchema: workflows.getWorkflowJobLogsInputSchema,
+      execute: withToken(workflows.getWorkflowJobLogsCore, ctx),
     },
     {
       name: 'triggerWorkflow',

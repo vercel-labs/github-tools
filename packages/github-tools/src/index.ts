@@ -1,6 +1,6 @@
 import type { ToolSet } from 'ai'
-import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
-import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
+import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
+import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers } from './tools/pull-requests'
 import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
 import { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 import { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
@@ -8,7 +8,7 @@ import { listNotifications, markNotificationRead } from './tools/notifications'
 import { searchCode, searchRepositories, searchIssues } from './tools/search'
 import { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
-import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
+import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 import { listCheckRuns, getCombinedStatus } from './tools/checks'
 import { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 import { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
@@ -131,6 +131,7 @@ export function createGithubTools({
     getBlame: getBlame(resolveToken),
     compareCommits: compareCommits(resolveToken),
     createBranch: createBranch(resolveToken, approval('createBranch')),
+    deleteBranch: deleteBranch(resolveToken, approval('deleteBranch')),
     forkRepository: forkRepository(resolveToken, approval('forkRepository')),
     createRepository: createRepository(resolveToken, approval('createRepository')),
     createOrUpdateFile: createOrUpdateFile(resolveToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
@@ -142,7 +143,10 @@ export function createGithubTools({
     deletePullRequestComment: deletePullRequestComment(resolveToken, approval('deletePullRequestComment')),
     listPullRequestFiles: listPullRequestFiles(resolveToken),
     listPullRequestReviews: listPullRequestReviews(resolveToken),
+    listPullRequestReviewThreads: listPullRequestReviewThreads(resolveToken),
     createPullRequestReview: createPullRequestReview(resolveToken, approval('createPullRequestReview')),
+    replyToReviewComment: replyToReviewComment(resolveToken, approval('replyToReviewComment')),
+    resolveReviewThread: resolveReviewThread(resolveToken, approval('resolveReviewThread')),
     requestReviewers: requestReviewers(resolveToken, approval('requestReviewers')),
     getPullRequestContext: getPullRequestContext(resolveToken),
     getIssueContext: getIssueContext(resolveToken),
@@ -181,6 +185,7 @@ export function createGithubTools({
     listWorkflowRuns: listWorkflowRuns(resolveToken),
     getWorkflowRun: getWorkflowRun(resolveToken),
     listWorkflowJobs: listWorkflowJobs(resolveToken),
+    getWorkflowJobLogs: getWorkflowJobLogs(resolveToken),
     triggerWorkflow: triggerWorkflow(resolveToken, approval('triggerWorkflow')),
     cancelWorkflowRun: cancelWorkflowRun(resolveToken, approval('cancelWorkflowRun')),
     rerunWorkflowRun: rerunWorkflowRun(resolveToken, approval('rerunWorkflowRun')),
@@ -235,8 +240,8 @@ export type GithubTools = AllGithubTools & ToolSet
 
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'
-export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
-export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, createPullRequestReview, requestReviewers } from './tools/pull-requests'
+export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile } from './tools/repository'
+export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers } from './tools/pull-requests'
 export { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
 export { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 export { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
@@ -244,7 +249,7 @@ export { listNotifications, markNotificationRead } from './tools/notifications'
 export { searchCode, searchRepositories, searchIssues } from './tools/search'
 export { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
-export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
+export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 export { listCheckRuns, getCombinedStatus } from './tools/checks'
 export { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 export { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'

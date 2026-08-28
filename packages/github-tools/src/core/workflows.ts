@@ -144,6 +144,39 @@ export async function listWorkflowJobsCore({ token, owner, repo, runId, filter, 
   })
 }
 
+export const getWorkflowJobLogsInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  jobId: z.number().describe('Workflow job ID (from listWorkflowJobs or getCiFailureContext)'),
+  maxLines: z.number().int().positive().max(2000).optional().default(200).describe('Return only the last N log lines (default 200, max 2000). Failures surface at the end of a log, so the tail is usually enough'),
+})
+
+export const getWorkflowJobLogsDescription = 'Get the log output of a workflow job to diagnose failures. Returns the last maxLines lines (default 200) with per-line timestamps stripped to save tokens'
+
+const LOG_TIMESTAMP_PREFIX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z /
+
+/**
+ * Tail-truncate a raw job log and strip the ISO timestamp GitHub prefixes on
+ * every line (~29 tokens-worth of noise per line the model never needs).
+ */
+export function shapeJobLog(raw: string, maxLines: number) {
+  const lines = raw.replace(/\r\n/g, '\n').replace(/\n+$/, '').split('\n')
+  const tail = lines.slice(-maxLines).map(line => line.replace(LOG_TIMESTAMP_PREFIX, ''))
+  return {
+    totalLines: lines.length,
+    returnedLines: tail.length,
+    omittedLines: lines.length - tail.length,
+    log: tail.join('\n'),
+  }
+}
+
+export async function getWorkflowJobLogsCore({ token, owner, repo, jobId, maxLines }: { token: string, owner: string, repo: string, jobId: number, maxLines: number }) {
+  return withOctokit(token, async (octokit) => {
+  const { data } = await octokit.rest.actions.downloadJobLogsForWorkflowRun({ owner, repo, job_id: jobId })
+  return { jobId, ...shapeJobLog(String(data), maxLines) }
+  })
+}
+
 export const triggerWorkflowInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
