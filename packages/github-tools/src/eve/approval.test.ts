@@ -1,6 +1,5 @@
-import type { ApprovalContext } from 'eve/tools'
 import { describe, expect, it } from 'vitest'
-import { always, never, once } from 'eve/tools/approval'
+import { always, never, once, type ApprovalContext } from 'eve/tools/approval'
 import {
   isEveApprovalDisabled,
   mapEveApprovalValue,
@@ -80,5 +79,22 @@ describe('resolveEveToolApproval', () => {
     expect(resolveEveToolApproval('createIssue', undefined)).toBeDefined()
     expect(resolveEveToolApproval('createIssue', { createIssue: 'once' })).toBeDefined()
     expect(resolveEveToolApproval('createIssue', undefined, () => 'not-applicable')).toBeDefined()
+  })
+
+  it('passes object-shaped ApprovalConfiguration through unchanged', () => {
+    const configuration = {
+      request: always(),
+      response: () => ({ status: 'allowed' as const }),
+    }
+
+    expect(resolveEveToolApproval('createIssue', { createIssue: configuration })).toBe(configuration)
+    expect(resolveEveToolApproval('createIssue', undefined, configuration)).toBe(configuration)
+  })
+})
+
+describe('mapEveApprovalValue', () => {
+  it('extracts the request policy from an object-shaped ApprovalConfiguration', () => {
+    const request = () => 'user-approval' as const
+    expect(mapEveApprovalValue({ request })).toBe(request)
   })
 })

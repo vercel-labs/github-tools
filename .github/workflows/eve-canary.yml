@@ -1,0 +1,46 @@
+name: eve canary
+
+# The durable-stamp contract this repo depends on is not part of eve's
+# documented API, and eve ships multiple releases a week. The AST guard in
+# packages/github-tools-eve-extension/test/ only encodes the rules we know
+# about; this job builds and tests against eve@latest on a schedule so
+# upstream drift (as at eve 0.44) fails here before it reaches consumers.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  canary:
+    name: Build & test against eve@latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm and Node
+        uses: ./.github/actions/setup
+
+      # minimumReleaseAge is zeroed on purpose: the canary must see the actual latest
+      - name: Bump eve to latest everywhere
+        run: |
+          pnpm -r up 'eve@latest' --config.minimumReleaseAge=0
+          pnpm ls -r --depth -1 eve || true
+
+      - name: Build
+        run: pnpm exec turbo run build --filter=@github-tools/sdk --filter=@github-tools/eve-extension
+
+      - name: Typecheck
+        run: pnpm exec turbo run typecheck --filter=@github-tools/sdk --filter=@github-tools/eve-extension
+
+      - name: Test
+        run: pnpm exec turbo run test --filter=@github-tools/sdk --filter=@github-tools/eve-extension

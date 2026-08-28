@@ -97,7 +97,7 @@ Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security
 
 ## eve extension durable callbacks (`packages/github-tools-eve-extension`)
 
-On eve 0.44+, a missing durable descriptor on **any** dynamic-tool callback (`execute`, `toModelOutput`, `approval` / `approvalRequest`) discards the **entire** GitHub toolset. In `extension/tools/github.ts`, those three must be **direct** `defineTool` properties with inline functions (or identifiers). Conditional spreads and call expressions (`resolveEveApproval(...)`, `always()`) are invisible to eve's stamp. Callbacks may only close over a serializable tool `name` and re-read config via `buildSessionOptions()`. CI enforces this via `test/durable-define-tool.test.ts`.
+On eve 0.44+, a missing durable descriptor on **any** dynamic-tool callback (`execute`, `toModelOutput`, `approval` / `approvalRequest`) discards the **entire** GitHub toolset. In `extension/tools/github.ts`, those three must be **direct** `defineTool` properties with inline functions (or identifiers). Conditional spreads and call expressions (`resolveEveApproval(...)`, `always()`) are invisible to eve's stamp. Callbacks may only close over a serializable tool `name` and re-read config via `buildSessionOptions()`. CI enforces this via `test/durable-define-tool.test.ts`. A scheduled canary (`.github/workflows/eve-canary.yml`) additionally builds and tests against `eve@latest` daily to catch upstream drift the static guard cannot see.
 
 ## Chat App Architecture (`apps/chat`)
 
