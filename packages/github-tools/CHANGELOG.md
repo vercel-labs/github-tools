@@ -1,5 +1,17 @@
 # @github-tools/sdk
 
+## 1.13.0
+
+### Minor Changes
+
+- [#115](https://github.com/vercel-labs/github-tools/pull/115) [`d5ea800`](https://github.com/vercel-labs/github-tools/commit/d5ea800436cd0f79a49378ccb5ec8873f5521a2e) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add five tools (84 total): `getWorkflowJobLogs` reads a workflow job's log output, returning the last `maxLines` lines (default 200, max 2000) with per-line timestamps stripped to keep token usage low. `listPullRequestReviewThreads` lists PR review threads via GraphQL with resolution state and the IDs needed to reply or resolve — unresolved threads only and truncated comment bodies by default (`status: 'all'`, `detail: 'full'` to override). `replyToReviewComment` and `resolveReviewThread` answer and close review threads, and `deleteBranch` deletes a branch — all three are write tools requiring approval by default. Presets updated: `ci-ops`, `security-audit`, and `repo-explorer` gain job logs; `code-review` and `pr-author` gain the review-thread tools; `pr-author` also gains `deleteBranch`.
+
+### Patch Changes
+
+- [#114](https://github.com/vercel-labs/github-tools/pull/114) [`09aeafb`](https://github.com/vercel-labs/github-tools/commit/09aeafb86c29db0cdfe4d616180f3720ad02a93b) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Object-shaped eve `ApprovalConfiguration` values (`{ request, response }`) passed via `requireApproval` or `overrides.approval` are now honored instead of being silently replaced by `always()`. Configurations pass through to `defineTool` unchanged so a `response` authorizer survives. Also declares the tested eve peer range (`>=0.44.0 <0.48.0` instead of `>=0.19.0`) and deprecates `MISSING_EVE_MESSAGE`, which has not been thrown since eve moved to static imports.
+
+- [#116](https://github.com/vercel-labs/github-tools/pull/116) [`c38cb9b`](https://github.com/vercel-labs/github-tools/commit/c38cb9bbf5a84caa6b4fc06944683bbd2e403271) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Internal refactor: introduce `GITHUB_TOOL_CATALOG` as the single source of truth for tool metadata. `GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOLS`, `TOOL_CONNECT_SCOPES`, and the eve tool registry are now derived from it instead of being maintained as parallel hand-written registries. No public API changes.
+
 ## 1.12.0
 
 ### Minor Changes

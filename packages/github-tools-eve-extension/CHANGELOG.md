@@ -1,5 +1,20 @@
 # @github-tools/eve-extension
 
+## 0.5.0
+
+### Minor Changes
+
+- [#115](https://github.com/vercel-labs/github-tools/pull/115) [`d5ea800`](https://github.com/vercel-labs/github-tools/commit/d5ea800436cd0f79a49378ccb5ec8873f5521a2e) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add five tools (84 total): `getWorkflowJobLogs` reads a workflow job's log output, returning the last `maxLines` lines (default 200, max 2000) with per-line timestamps stripped to keep token usage low. `listPullRequestReviewThreads` lists PR review threads via GraphQL with resolution state and the IDs needed to reply or resolve — unresolved threads only and truncated comment bodies by default (`status: 'all'`, `detail: 'full'` to override). `replyToReviewComment` and `resolveReviewThread` answer and close review threads, and `deleteBranch` deletes a branch — all three are write tools requiring approval by default. Presets updated: `ci-ops`, `security-audit`, and `repo-explorer` gain job logs; `code-review` and `pr-author` gain the review-thread tools; `pr-author` also gains `deleteBranch`.
+
+### Patch Changes
+
+- [#112](https://github.com/vercel-labs/github-tools/pull/112) [`790f68d`](https://github.com/vercel-labs/github-tools/commit/790f68dd1d92285beb5a730541711aa91422feed) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Register `approval` as a direct `defineTool` property so eve 0.44+ can stamp a durable `approvalRequest` descriptor. Write tools no longer cause the resolver to discard the whole GitHub toolset. Requires `eve` `>=0.44.0`.
+
+- [#114](https://github.com/vercel-labs/github-tools/pull/114) [`09aeafb`](https://github.com/vercel-labs/github-tools/commit/09aeafb86c29db0cdfe4d616180f3720ad02a93b) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Validate `requireApproval` and `overrides` keys against the GitHub tool catalog at mount time — a mistyped tool name now fails config validation instead of being silently ignored. The eve peer range is bounded to the tested versions (`>=0.44.0 <0.48.0`).
+
+- Updated dependencies [[`d5ea800`](https://github.com/vercel-labs/github-tools/commit/d5ea800436cd0f79a49378ccb5ec8873f5521a2e), [`09aeafb`](https://github.com/vercel-labs/github-tools/commit/09aeafb86c29db0cdfe4d616180f3720ad02a93b), [`c38cb9b`](https://github.com/vercel-labs/github-tools/commit/c38cb9bbf5a84caa6b4fc06944683bbd2e403271)]:
+  - @github-tools/sdk@1.13.0
+
 ## 0.4.1
 
 ### Patch Changes
