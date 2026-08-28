@@ -56,7 +56,7 @@
   },
   "peerDependencies": {
     "@vercel/connect": ">=0.3.2",
-    "eve": "*"
+    "eve": ">=0.44.0"
   },
   "peerDependenciesMeta": {
     "@vercel/connect": {
@@ -67,7 +67,7 @@
     "@types/node": "^26.1.2",
     "@vercel/connect": "^0.6.1",
     "eslint": "^10.8.0",
-    "eve": "^0.40.0",
+    "eve": "^0.46.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0"
   },
