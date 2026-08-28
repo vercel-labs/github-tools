@@ -103,7 +103,7 @@
     "@vercel/connect": "^0.6.1",
     "ai": "^7.0.58",
     "eslint": "^10.8.0",
-    "eve": "^0.40.0",
+    "eve": "~0.40.0",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0",

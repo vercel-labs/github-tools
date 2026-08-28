@@ -19,7 +19,7 @@ This is **the recommended way** to add GitHub tools to an eve agent. The legacy 
 pnpm add @github-tools/eve-extension
 ```
 
-`eve` is a required peer dependency; `@vercel/connect` is optional (install it only when using `connector`):
+`eve` `>=0.44` is a required peer dependency; `@vercel/connect` is optional (install it only when using `connector`):
 
 ```sh
 pnpm add eve
@@ -43,7 +43,7 @@ export default githubExtension({
 
 > `code-review` pairs cleanly with a Connect `connector`. `maintainer` and `repo-explorer` include gist tools, and GitHub only grants gist access to user access tokens, never the installation tokens Connect mints, so gist calls 403 over Connect. Write tools already require approval via `always()` by default, so a plain `{ someTool: true }` is a no-op, use a predicate (as above) when you actually want to narrow or loosen the default.
 
-Tools are registered with **inline** `execute` and `toModelOutput` handlers in the extension package so they survive multi-turn durable eve Workflow replay (see [#51](https://github.com/vercel-labs/github-tools/issues/51), [#99](https://github.com/vercel-labs/github-tools/issues/99)). `toModelOutput` strips `rateLimit` from the model-facing payload; the execute result still carries it for hooks and channels. Do not use the deprecated `@github-tools/sdk/connect/eve` one-liner for durable Slack/multi-turn agents.
+Tools are registered with **inline** `execute` and `toModelOutput` as direct `defineTool` properties so they survive multi-turn durable eve Workflow replay (see [#51](https://github.com/vercel-labs/github-tools/issues/51), [#99](https://github.com/vercel-labs/github-tools/issues/99)). A spread or imported `toModelOutput` has no durable descriptor: on eve 0.44+ the resolver discards every GitHub tool. `toModelOutput` strips `rateLimit` from the model-facing payload; the execute result still carries it for hooks and channels. Do not use the deprecated `@github-tools/sdk/connect/eve` one-liner for durable Slack/multi-turn agents.
 
 `connector` also accepts a `() => string | Promise<string>` resolver, so the same config can pick a connector dynamically (e.g. by environment):
 

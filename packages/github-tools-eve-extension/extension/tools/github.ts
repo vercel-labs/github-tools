@@ -19,8 +19,8 @@ import extension from '../extension'
 /**
  * Rebuild options from extension config on every call.
  * Durable `execute` / `toModelOutput` only close over a serializable tool `name`
- * (#51, #99); reading config here avoids a module-level store that races across
- * concurrent sessions.
+ * (#51, #99). `toModelOutput` must be a direct `defineTool` property — a spread
+ * ternary is invisible to eve's stamp, and 0.44+ then drops the whole toolset.
  */
 function buildSessionOptions(): EveGithubToolsOptions {
   const {
@@ -110,9 +110,10 @@ export default defineDynamic({
           ...(override?.approval !== undefined && !skipApproval && {
             approval: mapEveApprovalValue(override.approval),
           }),
-          ...(override?.toModelOutput !== undefined
-            ? { toModelOutput: override.toModelOutput }
-            : { toModelOutput: (output: unknown) => formatGithubEveToolOutput(name, output) }),
+          toModelOutput: (output: unknown) => {
+            const custom = buildSessionOptions().overrides?.[name]?.toModelOutput
+            return custom ? custom(output) : formatGithubEveToolOutput(name, output)
+          },
           ...(override?.outputSchema !== undefined && {
             outputSchema: override.outputSchema,
           }),

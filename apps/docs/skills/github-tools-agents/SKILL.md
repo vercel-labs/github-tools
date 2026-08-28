@@ -82,7 +82,7 @@ export async function run(messages: ModelMessage[], token: string) {
 
 ### eve extension (recommended for eve agents)
 
-Requires `eve` (transitively **`ai` v7**). Mount from `@github-tools/eve-extension` under `agent/extensions/`.
+Requires `eve` `>=0.44` (transitively **`ai` v7**). Mount from `@github-tools/eve-extension` under `agent/extensions/`.
 
 ```ts
 // agent/extensions/github.ts
