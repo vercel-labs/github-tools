@@ -33,6 +33,15 @@ import {
   createPullRequestReviewInputSchema,
   createPullRequestReviewDescription,
   createPullRequestReviewCore,
+  listPullRequestReviewThreadsInputSchema,
+  listPullRequestReviewThreadsDescription,
+  listPullRequestReviewThreadsCore,
+  replyToReviewCommentInputSchema,
+  replyToReviewCommentDescription,
+  replyToReviewCommentCore,
+  resolveReviewThreadInputSchema,
+  resolveReviewThreadDescription,
+  resolveReviewThreadCore,
   requestReviewersInputSchema,
   requestReviewersDescription,
   requestReviewersCore,
@@ -194,6 +203,47 @@ export const createPullRequestReview = (token: GithubTokenInput, { needsApproval
     needsApproval,
     inputSchema: createPullRequestReviewInputSchema,
     execute: async args => createPullRequestReviewStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function listPullRequestReviewThreadsStep(args: Parameters<typeof listPullRequestReviewThreadsCore>[0]) {
+  "use step"
+  return listPullRequestReviewThreadsCore(args)
+}
+
+/** List review threads on a pull request with comments, resolution state, and reply/resolve IDs. */
+export const listPullRequestReviewThreads = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: listPullRequestReviewThreadsDescription,
+    inputSchema: listPullRequestReviewThreadsInputSchema,
+    execute: async args => listPullRequestReviewThreadsStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function replyToReviewCommentStep(args: Parameters<typeof replyToReviewCommentCore>[0]) {
+  "use step"
+  return replyToReviewCommentCore(args)
+}
+
+/** Reply to a pull request review comment in its review thread. Requires approval by default. */
+export const replyToReviewComment = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: replyToReviewCommentDescription,
+    needsApproval,
+    inputSchema: replyToReviewCommentInputSchema,
+    execute: async args => replyToReviewCommentStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function resolveReviewThreadStep(args: Parameters<typeof resolveReviewThreadCore>[0]) {
+  "use step"
+  return resolveReviewThreadCore(args)
+}
+
+/** Mark a pull request review thread as resolved. Requires approval by default. */
+export const resolveReviewThread = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: resolveReviewThreadDescription,
+    needsApproval,
+    inputSchema: resolveReviewThreadInputSchema,
+    execute: async args => resolveReviewThreadStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function requestReviewersStep(args: Parameters<typeof requestReviewersCore>[0]) {

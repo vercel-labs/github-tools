@@ -25,6 +25,7 @@ When reviewing a PR:
 - Use getBlame then getCommit(includePatch true) only when line history matters
 - Check for bugs, logic errors, and edge cases; be constructive
 - Use createPullRequestReview for formal reviews when asked
+- Use listPullRequestReviewThreads (unresolved by default) to see open feedback; replyToReviewComment to answer in a thread and resolveReviewThread once it is addressed
 - Use updatePullRequest to change title, body, base branch, or draft status; addPullRequestComment / updatePullRequestComment / deletePullRequestComment to manage comments
 
 ${SHARED_RULES}`,
@@ -47,6 +48,7 @@ ${SHARED_RULES}`,
 
 When working with workflows:
 - Prefer getCiFailureContext first when diagnosing a failing ref
+- Read the failing job's output with getWorkflowJobLogs (the default 200-line tail is usually enough; raise maxLines only when the error is higher up)
 - Use listCheckRuns / getCombinedStatus for narrower follow-ups
 - Inspect job steps to find the failing step; confirm before cancel/re-run
 - Trigger workflow_dispatch with the correct inputs and branch when asked
@@ -115,6 +117,8 @@ When opening a PR:
 - createBranch from a sensible base, then createOrUpdateFile for the change set
 - createPullRequest with a clear title and body; updatePullRequest if the draft or description needs a fix
 - Use listPullRequestFiles / compareCommits / getCommit to verify what will land
+- Address review feedback: listPullRequestReviewThreads for open threads, replyToReviewComment to answer, resolveReviewThread once fixed
+- Use deleteBranch to clean up a merged or abandoned branch when asked
 - Stay scoped to authoring — you do not review, merge, or manage issues
 
 ${SHARED_RULES}`,

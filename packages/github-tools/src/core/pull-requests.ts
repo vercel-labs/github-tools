@@ -353,6 +353,194 @@ export async function createPullRequestReviewCore({ token, owner, repo, pullNumb
   })
 }
 
+export const listPullRequestReviewThreadsInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  pullNumber: z.number().describe('Pull request number'),
+  status: z.enum(['unresolved', 'all']).optional().default('unresolved').describe('unresolved returns only threads awaiting action (default, saves tokens); all includes resolved threads'),
+  detail: detailSchema,
+  perPage: z.number().int().positive().max(50).optional().default(30).describe('Number of threads to fetch per call (max 50)'),
+  after: z.string().optional().describe('Cursor from a previous call (endCursor) to fetch the next page of threads'),
+})
+
+export const listPullRequestReviewThreadsDescription = 'List review threads on a pull request with their comments, resolution state, and the IDs needed to reply (commentId) or resolve (threadId). Unresolved threads only by default (GitHub GraphQL API)'
+
+const REVIEW_THREADS_QUERY = /* GraphQL */ `
+  query ReviewThreads($owner: String!, $name: String!, $number: Int!, $first: Int!, $after: String) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $number) {
+        reviewThreads(first: $first, after: $after) {
+          totalCount
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            isResolved
+            isOutdated
+            path
+            line
+            startLine
+            resolvedBy {
+              login
+            }
+            comments(first: 30) {
+              totalCount
+              nodes {
+                databaseId
+                body
+                createdAt
+                author {
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+type ReviewThreadsQueryData = {
+  repository: {
+    pullRequest: {
+      reviewThreads: {
+        totalCount: number
+        pageInfo: { hasNextPage: boolean, endCursor: string | null }
+        nodes: Array<{
+          id: string
+          isResolved: boolean
+          isOutdated: boolean
+          path: string | null
+          line: number | null
+          startLine: number | null
+          resolvedBy: { login: string } | null
+          comments: {
+            totalCount: number
+            nodes: Array<{
+              databaseId: number | null
+              body: string
+              createdAt: string
+              author: { login: string } | null
+            }>
+          }
+        }>
+      } | null
+    } | null
+  } | null
+}
+
+export async function listPullRequestReviewThreadsCore({ token, owner, repo, pullNumber, status, detail, perPage, after }: { token: string, owner: string, repo: string, pullNumber: number, status: 'unresolved' | 'all', detail: DetailLevel, perPage: number, after?: string }) {
+  return withOctokit(token, async (octokit) => {
+  const data = (await octokit.graphql(REVIEW_THREADS_QUERY, {
+    owner,
+    name: repo,
+    number: pullNumber,
+    first: perPage,
+    after,
+  })) as ReviewThreadsQueryData
+
+  if (!data.repository) {
+    return { error: `Repository not found: ${owner}/${repo}` }
+  }
+  const reviewThreads = data.repository.pullRequest?.reviewThreads
+  if (!reviewThreads) {
+    return { error: `Pull request not found: ${owner}/${repo}#${pullNumber}` }
+  }
+
+  const threads = reviewThreads.nodes
+    .filter(thread => status === 'all' || !thread.isResolved)
+    .map(thread => ({
+      threadId: thread.id,
+      isResolved: thread.isResolved,
+      isOutdated: thread.isOutdated,
+      path: thread.path,
+      line: thread.line,
+      startLine: thread.startLine,
+      resolvedBy: thread.resolvedBy?.login ?? null,
+      commentCount: thread.comments.totalCount,
+      comments: thread.comments.nodes.map(comment => ({
+        commentId: comment.databaseId,
+        author: comment.author?.login ?? null,
+        body: applyDetailBody(comment.body, detail),
+        createdAt: comment.createdAt,
+      })),
+    }))
+
+  return {
+    // Total across all threads on the PR, before the `status` filter.
+    totalCount: reviewThreads.totalCount,
+    returnedCount: threads.length,
+    hasNextPage: reviewThreads.pageInfo.hasNextPage,
+    endCursor: reviewThreads.pageInfo.endCursor,
+    threads,
+  }
+  })
+}
+
+export const replyToReviewCommentInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  pullNumber: z.number().describe('Pull request number'),
+  commentId: z.number().describe('commentId of the thread\'s first comment, from listPullRequestReviewThreads'),
+  body: z.string().describe('Reply text (supports Markdown)'),
+})
+
+export const replyToReviewCommentDescription = 'Reply to a pull request review comment, adding a message to its review thread'
+
+/** Not idempotent — each call posts a new reply. */
+export async function replyToReviewCommentCore({ token, owner, repo, pullNumber, commentId, body }: { token: string, owner: string, repo: string, pullNumber: number, commentId: number, body: string }) {
+  return withOctokit(token, async (octokit) => {
+  const { data } = await octokit.rest.pulls.createReplyForReviewComment({
+    owner,
+    repo,
+    pull_number: pullNumber,
+    comment_id: commentId,
+    body,
+  })
+  return {
+    id: data.id,
+    url: data.html_url,
+    author: data.user?.login,
+    createdAt: data.created_at,
+  }
+  })
+}
+
+export const resolveReviewThreadInputSchema = z.object({
+  threadId: z.string().describe('Review thread ID (threadId from listPullRequestReviewThreads)'),
+})
+
+export const resolveReviewThreadDescription = 'Mark a pull request review thread as resolved'
+
+const RESOLVE_THREAD_MUTATION = /* GraphQL */ `
+  mutation ResolveReviewThread($threadId: ID!) {
+    resolveReviewThread(input: { threadId: $threadId }) {
+      thread {
+        id
+        isResolved
+      }
+    }
+  }
+`
+
+/** Idempotent — resolving an already-resolved thread is a no-op on GitHub. */
+export async function resolveReviewThreadCore({ token, threadId }: { token: string, threadId: string }) {
+  return withOctokit(token, async (octokit) => {
+  const data = (await octokit.graphql(RESOLVE_THREAD_MUTATION, { threadId })) as {
+    resolveReviewThread: { thread: { id: string, isResolved: boolean } | null } | null
+  }
+
+  const thread = data.resolveReviewThread?.thread
+  if (!thread) {
+    return { error: `Review thread not found: ${threadId}` }
+  }
+  return { threadId: thread.id, isResolved: thread.isResolved }
+  })
+}
+
 export const requestReviewersInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),

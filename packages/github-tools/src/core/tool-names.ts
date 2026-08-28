@@ -13,6 +13,8 @@ export const GITHUB_TOOL_NAMES = {
   getRepositoryTree: 'getRepositoryTree',
   /** Create a new branch in a GitHub repository from an existing branch or commit SHA. Requires approval by default. */
   createBranch: 'createBranch',
+  /** Delete a branch from a GitHub repository permanently. Requires approval by default. */
+  deleteBranch: 'deleteBranch',
   /** Fork a GitHub repository to the authenticated user account or a specified organization. Requires approval by default. */
   forkRepository: 'forkRepository',
   /** Create a new GitHub repository for the authenticated user or a specified organization. Requires approval by default. */
@@ -41,6 +43,12 @@ export const GITHUB_TOOL_NAMES = {
   listPullRequestReviews: 'listPullRequestReviews',
   /** Submit a pull request review — approve, request changes, or comment with optional inline comments on specific lines. Requires approval by default. */
   createPullRequestReview: 'createPullRequestReview',
+  /** List review threads on a pull request with comments, resolution state, and the IDs needed to reply or resolve. Unresolved only by default. */
+  listPullRequestReviewThreads: 'listPullRequestReviewThreads',
+  /** Reply to a pull request review comment in its review thread. Requires approval by default. */
+  replyToReviewComment: 'replyToReviewComment',
+  /** Mark a pull request review thread as resolved. Requires approval by default. */
+  resolveReviewThread: 'resolveReviewThread',
   /** Request reviews from users or teams on a pull request. Requires approval by default. */
   requestReviewers: 'requestReviewers',
   /** Fetch pull request details plus files, reviews, and optional CI checks in one call. */
@@ -117,6 +125,8 @@ export const GITHUB_TOOL_NAMES = {
   getWorkflowRun: 'getWorkflowRun',
   /** List jobs for a workflow run, including step-level status and timing. */
   listWorkflowJobs: 'listWorkflowJobs',
+  /** Get the log output of a workflow job to diagnose failures. Returns the tail (default 200 lines) with timestamps stripped. */
+  getWorkflowJobLogs: 'getWorkflowJobLogs',
   /** Trigger a workflow via workflow_dispatch event. Requires approval by default. */
   triggerWorkflow: 'triggerWorkflow',
   /** Cancel an in-progress workflow run. Requires approval by default. */

@@ -12,6 +12,9 @@ import {
   listWorkflowJobsInputSchema,
   listWorkflowJobsDescription,
   listWorkflowJobsCore,
+  getWorkflowJobLogsInputSchema,
+  getWorkflowJobLogsDescription,
+  getWorkflowJobLogsCore,
   triggerWorkflowInputSchema,
   triggerWorkflowDescription,
   triggerWorkflowCore,
@@ -75,6 +78,19 @@ export const listWorkflowJobs = (token: GithubTokenInput): GithubTool =>
     description: listWorkflowJobsDescription,
     inputSchema: listWorkflowJobsInputSchema,
     execute: async args => listWorkflowJobsStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function getWorkflowJobLogsStep(args: Parameters<typeof getWorkflowJobLogsCore>[0]) {
+  "use step"
+  return getWorkflowJobLogsCore(args)
+}
+
+/** Get the log output of a workflow job, tail-truncated with timestamps stripped. */
+export const getWorkflowJobLogs = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: getWorkflowJobLogsDescription,
+    inputSchema: getWorkflowJobLogsInputSchema,
+    execute: async args => getWorkflowJobLogsStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function triggerWorkflowStep(args: Parameters<typeof triggerWorkflowCore>[0]) {

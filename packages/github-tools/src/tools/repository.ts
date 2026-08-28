@@ -15,6 +15,9 @@ import {
   createBranchInputSchema,
   createBranchDescription,
   createBranchCore,
+  deleteBranchInputSchema,
+  deleteBranchDescription,
+  deleteBranchCore,
   forkRepositoryInputSchema,
   forkRepositoryDescription,
   forkRepositoryCore,
@@ -97,6 +100,20 @@ export const createBranch = (token: GithubTokenInput, { needsApproval = true }: 
     needsApproval,
     inputSchema: createBranchInputSchema,
     execute: async args => createBranchStep({ token: await resolveGithubToken(token), ...args }),
+  })
+
+async function deleteBranchStep(args: Parameters<typeof deleteBranchCore>[0]) {
+  "use step"
+  return deleteBranchCore(args)
+}
+
+/** Delete a branch from a GitHub repository permanently. Requires approval by default. */
+export const deleteBranch = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: deleteBranchDescription,
+    needsApproval,
+    inputSchema: deleteBranchInputSchema,
+    execute: async args => deleteBranchStep({ token: await resolveGithubToken(token), ...args }),
   })
 
 async function forkRepositoryStep(args: Parameters<typeof forkRepositoryCore>[0]) {
