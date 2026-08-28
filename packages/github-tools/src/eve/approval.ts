@@ -1,4 +1,4 @@
-import type { Approval, ApprovalPolicy } from 'eve/tools'
+import type { Approval, ApprovalPolicy } from 'eve/tools/approval'
 import type { GithubWriteToolName } from '../core/write-tools'
 import { getEveApprovalHelpers } from './load-eve'
 import type { EveApprovalConfig, EveApprovalValue } from './types'
@@ -14,14 +14,14 @@ export function isEveApprovalDisabled(value: EveApprovalValue | undefined): bool
 
 export function mapEveApprovalValue(value: EveApprovalValue): ApprovalPolicy {
   if (typeof value === 'function') return value
+  // Object-shaped eve `ApprovalConfiguration` — the request-time policy lives on `request`.
+  if (typeof value === 'object') return value.request
 
   const { always, never, once } = getEveApprovalHelpers()
 
   if (value === true || value === 'always') return always()
   if (value === false || value === 'never') return never()
-  if (value === 'once') return once()
-
-  return always()
+  return once()
 }
 
 export function resolveEveApproval(
@@ -48,13 +48,16 @@ export function resolveEveToolApproval(
   config: EveApprovalConfig | undefined,
   override?: EveApprovalValue,
 ): Approval | undefined {
-  if (override !== undefined) {
-    if (isEveApprovalDisabled(override)) return undefined
-    return mapEveApprovalValue(override)
-  }
-  if (config === false) return undefined
-  if (typeof config === 'object' && config !== null && isEveApprovalDisabled(config[toolName])) {
-    return undefined
-  }
-  return resolveEveApproval(toolName, config)
+  const value = override !== undefined
+    ? override
+    : typeof config === 'object' && config !== null
+      ? config[toolName]
+      : config
+
+  if (value === undefined) return getEveApprovalHelpers().always()
+  if (isEveApprovalDisabled(value)) return undefined
+  // Pass policies and `ApprovalConfiguration` objects through unchanged so a
+  // response-time authorizer (`response`) survives onto `defineTool`.
+  if (typeof value === 'function' || typeof value === 'object') return value
+  return mapEveApprovalValue(value)
 }

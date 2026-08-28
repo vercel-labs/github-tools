@@ -1,4 +1,5 @@
-import type { Approval, ToolModelOutput } from 'eve/tools'
+import type { ToolModelOutput } from 'eve/tools'
+import type { Approval } from 'eve/tools/approval'
 import type { z } from 'zod'
 import type { GithubToolsContext } from '../core/context'
 import type { GithubToolPreset } from '../core/presets'

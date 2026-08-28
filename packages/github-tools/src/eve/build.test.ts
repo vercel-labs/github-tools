@@ -1,10 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
 import { PRESET_TOOLS } from '../core/presets'
 import * as repositoryCore from '../core/repository'
+import { ALL_GITHUB_TOOL_NAMES } from '../core/tool-names'
 import { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, executeGithubEveTool, formatGithubEveToolOutput, hasGithubEveToolModelOutput, listResolvedEveToolNames } from './build'
+import { createToolRegistry } from './registry'
 import { getEveTools } from './load-eve'
 
 describe('createGithubTools eve integration', () => {
+  // TypeScript catches typos in registry names but not omissions: a tool added
+  // to GITHUB_TOOL_NAMES and the AI SDK layer but forgotten here would silently
+  // never appear in eve. This pins the two catalogs together.
+  it('registers every GITHUB_TOOL_NAMES entry exactly once in the eve registry', () => {
+    const registryNames = createToolRegistry({ token: 'ghp_test' }).map(entry => entry.name)
+    expect(registryNames.sort()).toEqual([...ALL_GITHUB_TOOL_NAMES].sort())
+    expect(new Set(registryNames).size).toBe(registryNames.length)
+  })
+
   it('resolves the same tool names as the AI SDK presets', () => {
     for (const preset of Object.keys(PRESET_TOOLS) as Array<keyof typeof PRESET_TOOLS>) {
       expect(listResolvedEveToolNames({ preset }).sort()).toEqual([...PRESET_TOOLS[preset]].sort())

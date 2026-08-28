@@ -47,7 +47,11 @@ function applyOverrides<T extends ToolDefinition>(
     delete (rest as { approval?: unknown }).approval
     return rest
   }
-  return { ...next, approval: mapEveApprovalValue(override.approval) }
+  // Preserve policies and `ApprovalConfiguration` objects as-is; only literals need mapping.
+  const approval = typeof override.approval === 'function' || typeof override.approval === 'object'
+    ? override.approval
+    : mapEveApprovalValue(override.approval)
+  return { ...next, approval }
 }
 
 export function buildEveToolDefinition(
@@ -72,15 +76,17 @@ export function buildEveToolDefinition(
     ? resolveEveToolApproval(entry.writeTool, options.requireApproval)
     : undefined
 
-  const tool = defineTool({
+  // Annotated so defineTool resolves to its ToolDefinition overload — inference
+  // from the bare literal picks the background-tool overload on eve 0.45+.
+  const definition: ToolDefinition = {
     description: entry.description,
     inputSchema: entry.inputSchema,
     ...(approval && { approval }),
     toModelOutput: (output: unknown) => formatGithubEveToolOutput(name, output),
     execute: async (input) => runGithubToolStep(name, input as Record<string, unknown>, ctx),
-  })
+  }
 
-  return applyOverrides(tool, name, options.overrides)
+  return applyOverrides(defineTool(definition), name, options.overrides)
 }
 
 export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap {
@@ -104,15 +110,15 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap
       ? resolveEveToolApproval(entry.writeTool, options.requireApproval)
       : undefined
 
-    const tool = defineTool({
+    const definition: ToolDefinition = {
       description: entry.description,
       inputSchema: entry.inputSchema,
       ...(approval && { approval }),
       toModelOutput: (output: unknown) => formatGithubEveToolOutput(entry.name, output),
       execute: async (input) => runGithubToolStep(entry.name, input as Record<string, unknown>, ctx),
-    })
+    }
 
-    tools[entry.name] = applyOverrides(tool, entry.name, options.overrides)
+    tools[entry.name] = applyOverrides(defineTool(definition), entry.name, options.overrides)
   }
 
   return tools

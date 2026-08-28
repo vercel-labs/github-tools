@@ -9,6 +9,12 @@ import * as eveApproval from 'eve/tools/approval'
 export type EveToolsModule = typeof import('eve/tools')
 export type EveApprovalModule = typeof import('eve/tools/approval')
 
+/**
+ * @deprecated Never thrown since eve moved to static ESM imports — a missing
+ * `eve` package now fails at module resolution with the bundler/runtime's own
+ * error. Kept only for backward compatibility of the public export; do not
+ * match on it. Will be removed in the next major.
+ */
 export const MISSING_EVE_MESSAGE =
   'The "eve" package is required to use @github-tools/sdk/eve. Install it with: pnpm add eve'
 

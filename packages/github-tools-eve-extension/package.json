@@ -57,7 +57,7 @@
   },
   "peerDependencies": {
     "@vercel/connect": ">=0.3.2",
-    "eve": ">=0.44.0"
+    "eve": ">=0.44.0 <0.48.0"
   },
   "peerDependenciesMeta": {
     "@vercel/connect": {

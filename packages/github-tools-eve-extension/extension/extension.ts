@@ -2,11 +2,13 @@ import type { GithubTokenInput } from '@github-tools/sdk'
 import type { GithubConnectorInput } from '@github-tools/sdk/connect'
 import {
   GITHUB_TOOL_NAMES,
+  GITHUB_WRITE_TOOLS,
   type CommitIdentity,
   type EveApprovalConfig,
   type EveToolOverrides,
   type GithubToolName,
   type GithubToolPreset,
+  type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import { defineExtension } from 'eve/extension'
 import { z } from 'zod'
@@ -90,6 +92,7 @@ const presetNameSchema = z.enum([
   'maintainer',
 ])
 const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [GithubToolName, ...GithubToolName[]])
+const writeToolNameSchema = z.enum(Object.values(GITHUB_WRITE_TOOLS) as [GithubWriteToolName, ...GithubWriteToolName[]])
 
 const commitIdentitySchema = z.object({
   name: z.string(),
@@ -114,8 +117,10 @@ const configSchema = z.object({
     issueNumber: z.number().optional(),
     ref: z.string().optional(),
   }).optional(),
-  requireApproval: z.union([z.boolean(), z.record(z.string(), z.unknown())]).optional(),
-  overrides: z.record(z.string(), z.unknown()).optional(),
+  // Key validation only — a mistyped tool name would otherwise be silently
+  // ignored and the tool would keep its default behavior with no signal.
+  requireApproval: z.union([z.boolean(), z.partialRecord(writeToolNameSchema, z.unknown())]).optional(),
+  overrides: z.partialRecord(toolNameSchema, z.unknown()).optional(),
   author: commitIdentitySchema.optional(),
   committer: commitIdentitySchema.optional(),
   coAuthors: z.array(commitIdentitySchema).optional(),
