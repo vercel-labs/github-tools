@@ -29,8 +29,15 @@ jobs:
 
       - name: Set up pnpm and Node
         uses: ./.github/actions/setup
+        with:
+          install: 'false'
 
-      # minimumReleaseAge is zeroed on purpose: the canary must see the actual latest
+      # minimumReleaseAge is zeroed for the whole job on purpose: the canary must
+      # see the actual latest eve and its freshest transitive deps, and the committed
+      # lockfile itself may contain sub-48h entries from a recent eve bump.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
+
       - name: Bump eve to latest everywhere
         run: |
           pnpm -r up 'eve@latest' --config.minimumReleaseAge=0
