@@ -32,15 +32,21 @@ jobs:
         with:
           install: 'false'
 
-      # minimumReleaseAge is zeroed for the whole job on purpose: the canary must
-      # see the actual latest eve and its freshest transitive deps, and the committed
-      # lockfile itself may contain sub-48h entries from a recent eve bump.
+      # minimumReleaseAge is zeroed at the project-config level, not per command:
+      # the canary must see the actual latest eve and its freshest transitive deps,
+      # and pnpm re-verifies the lockfile on every invocation (including the implicit
+      # install that `pnpm exec` triggers), so a per-command flag is not enough.
+      - name: Zero minimumReleaseAge for the canary
+        run: |
+          perl -pi -e 's/^minimumReleaseAge: \d+$/minimumReleaseAge: 0/' pnpm-workspace.yaml
+          grep -q '^minimumReleaseAge: 0$' pnpm-workspace.yaml
+
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
+        run: pnpm install --frozen-lockfile
 
       - name: Bump eve to latest everywhere
         run: |
-          pnpm -r up 'eve@latest' --config.minimumReleaseAge=0
+          pnpm -r up 'eve@latest'
           pnpm ls -r --depth -1 eve || true
 
       - name: Build
