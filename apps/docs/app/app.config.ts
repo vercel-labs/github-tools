@@ -5,10 +5,32 @@ export default defineAppConfig({
   socials: {
     x: 'https://x.com/hugorcd',
   },
+  search: {
+    fts: true,
+  },
   seo: {
     titleTemplate: '%s - GitHub tools',
     title: 'GitHub tools',
     description: 'A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.',
+    schema: {
+      type: 'SoftwareApplication',
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Web',
+      price: 0,
+      priceCurrency: 'USD',
+      sameAs: [
+        'https://github.com/vercel-labs/github-tools',
+        'https://www.npmjs.com/package/@github-tools/sdk',
+      ],
+      organization: {
+        name: 'Vercel',
+        url: 'https://vercel.com',
+        sameAs: [
+          'https://github.com/vercel',
+          'https://x.com/vercel',
+        ],
+      },
+    },
   },
   github: {
     rootDir: 'apps/docs',
