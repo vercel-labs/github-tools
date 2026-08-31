@@ -14,7 +14,7 @@ function buildConnectTokenParams(
   scopes: string[],
   params?: GithubConnectParams,
 ): ConnectTokenParams {
-  const { repositories, ...rest } = params ?? {}
+  const { repositories, subject, ...rest } = params ?? {}
 
   const authorizationDetails = rest.authorizationDetails
     ?? (repositories?.length
@@ -22,7 +22,7 @@ function buildConnectTokenParams(
       : undefined)
 
   return {
-    subject: { type: 'app' },
+    subject: subject ?? { type: 'app' },
     ...rest,
     scopes,
     ...(authorizationDetails && { authorizationDetails }),

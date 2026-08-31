@@ -7,6 +7,7 @@ import {
   listEveToolDescriptors,
   mapEveApprovalValue,
   resolveEveApproval,
+  resolveGithubToken,
   type EveApprovalConfig,
   type EveApprovalValue,
   type EveGithubToolsOptions,
@@ -15,7 +16,7 @@ import {
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import type { ApprovalContext } from 'eve/tools/approval'
-import { defineDynamic, defineTool, type ToolDefinition } from 'eve/tools'
+import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
 import extension from '../extension'
 
 /**
@@ -25,7 +26,7 @@ import extension from '../extension'
  * a spread or call expression is invisible to eve's stamp, and 0.44+ then
  * drops the whole toolset.
  */
-function buildSessionOptions(): EveGithubToolsOptions {
+function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   const {
     token,
     connector,
@@ -44,13 +45,21 @@ function buildSessionOptions(): EveGithubToolsOptions {
   const includeNames = include as GithubToolName[] | undefined
   const excludeNames = exclude as GithubToolName[] | undefined
 
+  // `connect.subject` may be a per-caller resolver; it needs the execution
+  // context, so the token is minted lazily, per tool call.
   const resolvedToken = connector
-    ? connectGithubToken(connector, {
-        preset,
-        include: includeNames,
-        exclude: excludeNames,
-        params: connect,
-      })
+    ? async () => {
+        const { subject, ...params } = connect ?? {}
+        const resolvedSubject = typeof subject === 'function'
+          ? await subject(requireToolContext(ctx))
+          : subject
+        return resolveGithubToken(connectGithubToken(connector, {
+          preset,
+          include: includeNames,
+          exclude: excludeNames,
+          params: { ...params, ...(resolvedSubject && { subject: resolvedSubject }) },
+        }))
+      }
     : token
 
   return {
@@ -86,8 +95,15 @@ function writeToolName(name: GithubToolName): GithubWriteToolName | undefined {
   return GITHUB_WRITE_TOOLS[name as keyof typeof GITHUB_WRITE_TOOLS]
 }
 
-async function runGithubEveTool(name: GithubToolName, input: unknown) {
-  return executeGithubEveTool(name, input as Record<string, unknown>, buildSessionOptions())
+function requireToolContext(ctx: ToolContext | undefined): ToolContext {
+  if (!ctx) {
+    throw new Error('connect.subject resolver needs the tool execution context — it is only available while a tool call executes')
+  }
+  return ctx
+}
+
+async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolContext) {
+  return executeGithubEveTool(name, input as Record<string, unknown>, buildSessionOptions(ctx))
 }
 
 function runGithubEveToModelOutput(name: GithubToolName, output: unknown) {
@@ -133,7 +149,7 @@ export default defineDynamic({
           ...(override?.outputSchema !== undefined && {
             outputSchema: override.outputSchema,
           }),
-          execute: async (input) => runGithubEveTool(name, input),
+          execute: async (input, ctx) => runGithubEveTool(name, input, ctx),
         })
       }
 

@@ -76,6 +76,22 @@ describe('connectGithubToken', () => {
     }, undefined)
   })
 
+  it('passes an explicit user subject through instead of the app default', async () => {
+    const resolve = resolveConnectToken('github/my-connector', {
+      preset: 'issue-triage',
+      params: { subject: { type: 'user', id: 'user_123', issuer: 'https://auth.example.com' } },
+    })
+
+    await resolve()
+    expect(getToken).toHaveBeenCalledWith(
+      'github/my-connector',
+      expect.objectContaining({
+        subject: { type: 'user', id: 'user_123', issuer: 'https://auth.example.com' },
+      }),
+      undefined,
+    )
+  })
+
   it('maps repositories to github_app_installation authorization details', async () => {
     const resolve = resolveConnectToken('github/my-connector', {
       preset: 'issue-triage',
