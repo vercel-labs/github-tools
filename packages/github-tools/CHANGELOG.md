@@ -1,5 +1,11 @@
 # @github-tools/sdk
 
+## 1.15.0
+
+### Minor Changes
+
+- [#125](https://github.com/vercel-labs/github-tools/pull/125) [`c84ae07`](https://github.com/vercel-labs/github-tools/commit/c84ae075c8ccb3791e73e7897b7b7c2bc0898a96) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Support per-user Vercel Connect subjects. `GithubConnectParams` now accepts a `subject` (default stays `{ type: 'app' }`, the project's GitHub App installation), so multi-user apps can mint each caller's own connection token with `subject: { type: 'user', id }`. In the eve extension, `connect.subject` also accepts a per-caller resolver called with the tool execution context on every call — e.g. `(ctx) => ({ type: 'user', id: ctx.session.auth.current!.principalId })` — so each signed-in user reaches GitHub through their own connection instead of the shared app installation.
+
 ## 1.14.0
 
 ### Minor Changes
