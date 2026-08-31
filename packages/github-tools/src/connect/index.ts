@@ -16,4 +16,3 @@ export type {
   ConnectGithubToolsOptions,
   GithubConnectParams,
 } from './types'
-export type { ConnectTokenSubject } from '@vercel/connect'

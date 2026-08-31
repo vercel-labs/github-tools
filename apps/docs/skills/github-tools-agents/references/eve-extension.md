@@ -74,18 +74,6 @@ export default githubExtension({
 
 No separate `connectGithubTools` import needed. `connector` is a mount-config field.
 
-`connect.subject` defaults to `{ type: 'app' }` (the project's GitHub App installation — one identity shared by every caller). For multi-user apps where each user connects their own GitHub account, pass a per-caller resolver so each caller gets their own connection token:
-
-```ts
-export default githubExtension({
-  connector: 'github/my-connector',
-  preset: 'issue-triage',
-  connect: {
-    subject: (ctx) => ({ type: 'user', id: ctx.session.auth.current!.principalId }),
-  },
-})
-```
-
 ## Docs
 
 - `/frameworks/eve-extension`

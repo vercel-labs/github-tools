@@ -1,6 +1,5 @@
 import type { GithubTokenInput } from '@github-tools/sdk'
-import type { ConnectTokenSubject, GithubConnectorInput, GithubConnectParams } from '@github-tools/sdk/connect'
-import type { ToolContext } from 'eve/tools'
+import type { GithubConnectorInput } from '@github-tools/sdk/connect'
 import {
   GITHUB_TOOL_NAMES,
   GITHUB_WRITE_TOOLS,
@@ -32,24 +31,6 @@ export interface GithubExtensionContext {
 }
 
 /**
- * Connect token subject for the extension: a static value, or a resolver
- * called with the eve tool execution context on every tool call — e.g.
- * `(ctx) => ({ type: 'user', id: ctx.session.auth.current!.principalId })`
- * to mint each caller's own GitHub connection token in multi-user apps.
- */
-export type GithubConnectSubjectInput =
-  | ConnectTokenSubject
-  | ((ctx: ToolContext) => ConnectTokenSubject | Promise<ConnectTokenSubject>)
-
-/**
- * Connect token params for the extension. Same as the SDK's
- * `GithubConnectParams`, except `subject` may also be a per-caller resolver.
- */
-export type GithubExtensionConnectParams = Omit<GithubConnectParams, 'subject'> & {
-  subject?: GithubConnectSubjectInput
-}
-
-/**
  * Config passed to `githubExtension({ ... })` at the agent mount site.
  * Declared as an interface (not only a Zod schema) so IDE hovers show JSDoc.
  */
@@ -67,13 +48,8 @@ export interface GithubExtensionConfig {
    * (e.g. per environment or tenant). Takes priority over `token`.
    */
   connector?: GithubConnectorInput
-  /**
-   * Vercel Connect token params passed through to `getToken` when `connector`
-   * is set. `subject` defaults to `{ type: 'app' }` (the project's GitHub App
-   * installation, shared by every caller); pass a value or a per-caller
-   * resolver to mint per-user tokens instead.
-   */
-  connect?: GithubExtensionConnectParams
+  /** Vercel Connect token params passed through to `getToken` when `connector` is set. */
+  connect?: Record<string, unknown>
   /** Restrict tools to a preset (or array of presets). Prefer a focused preset; omit or use `maintainer` for the full catalog. */
   preset?: GithubToolPreset | GithubToolPreset[]
   /**

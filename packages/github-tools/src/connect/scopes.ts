@@ -13,10 +13,10 @@ import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from '../core/tool-names'
  *
  * Gist tools in `repo-explorer` and `maintainer` are intentionally left
  * unscoped: the Gists API only accepts GitHub App *user* access tokens, never
- * installation tokens, and Connect mints `subject: { type: 'app' }`
- * installation tokens by default. Gist calls made with an app-subject token
- * 403 regardless of requested scopes — use a `{ type: 'user' }` subject or a
- * fine-grained PAT with the "Gists" account permission for those tools instead.
+ * installation tokens, and Connect always mints `subject: { type: 'app' }`
+ * installation tokens. Gist calls made with a Connect-derived token 403
+ * regardless of requested scopes — use a fine-grained PAT with the "Gists"
+ * account permission for those tools instead.
  *
  * Notification tools in `maintainer` and `notification-inbox` are unscoped for
  * the same reason: `notifications` is an account-level GitHub App permission

@@ -6,18 +6,9 @@ import type { EveGithubToolsOptions } from '../eve/types'
 
 /**
  * Token parameters for Vercel Connect GitHub connectors.
- * `subject` defaults to `{ type: 'app' }` — the project's GitHub App
- * installation, same as `connectGitHubAdapter`.
+ * `subject` is pinned to `{ type: 'app' }` by the SDK — same as `connectGitHubAdapter`.
  */
 export type GithubConnectParams = Omit<ConnectTokenParams, 'subject'> & {
-  /**
-   * Connect token subject. Defaults to `{ type: 'app' }` (the project's GitHub
-   * App installation — one identity shared by every caller). Pass
-   * `{ type: 'user', id }` to mint a token for that user's own GitHub
-   * connection instead, e.g. in multi-user apps where each user connects
-   * their account from an integrations panel.
-   */
-  subject?: ConnectTokenParams['subject']
   /** Restrict the token to specific repositories via GitHub authorization details. */
   repositories?: string[]
 }
