@@ -1,5 +1,12 @@
 # @github-tools/eve-extension
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [[`8bcb3fb`](https://github.com/vercel-labs/github-tools/commit/8bcb3fb7c459000106bcc018bb6685c84c7189e5)]:
+  - @github-tools/sdk@1.14.0
+
 ## 0.5.0
 
 ### Minor Changes
