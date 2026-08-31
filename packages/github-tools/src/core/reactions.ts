@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
+import { pageSchema, pagingFields } from './pagination'
 
 const REACTION_CONTENTS = ['+1', '-1', 'laugh', 'confused', 'heart', 'hooray', 'rocket', 'eyes'] as const
 
@@ -9,13 +10,14 @@ const reactionContentSchema = z.enum(REACTION_CONTENTS)
 
 type ReactionListItem = { content: string, user?: { login: string } | null }
 
-function shapeReactions(reactions: ReactionListItem[]) {
+function shapeReactions(reactions: ReactionListItem[], perPage: number, page: number) {
   const counts: Record<string, number> = {}
   for (const reaction of reactions) counts[reaction.content] = (counts[reaction.content] ?? 0) + 1
   return {
     total: reactions.length,
     counts,
     reactions: reactions.map(reaction => ({ content: reaction.content, user: reaction.user?.login })),
+    ...pagingFields(page, perPage, reactions.length, reactions.length >= perPage),
   }
 }
 
@@ -25,10 +27,10 @@ export const listIssueReactionsInputSchema = z.object({
   issueNumber: z.number().describe('Issue or pull request number — pull request conversations share the issue numbering'),
   content: reactionContentSchema.optional().describe('Only return reactions of this type'),
   perPage: z.number().optional().default(30).describe('Number of reactions to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listIssueReactionsDescription = 'List reactions on an issue or pull request conversation, with per-emoji counts for the returned page'
+export const listIssueReactionsDescription = 'List reactions on an issue or pull request conversation, with per-emoji counts for the returned page. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listIssueReactionsCore({ token, owner, repo, issueNumber, content, perPage, page }: { token: string, owner: string, repo: string, issueNumber: number, content?: ReactionContent, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
@@ -40,7 +42,7 @@ export async function listIssueReactionsCore({ token, owner, repo, issueNumber, 
     per_page: perPage,
     page,
   })
-  return shapeReactions(data)
+  return shapeReactions(data, perPage, page)
   })
 }
 
@@ -77,10 +79,10 @@ export const listCommentReactionsInputSchema = z.object({
   commentId: z.number().describe('Issue or pull request comment ID (from getIssueContext or addIssueComment)'),
   content: reactionContentSchema.optional().describe('Only return reactions of this type'),
   perPage: z.number().optional().default(30).describe('Number of reactions to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listCommentReactionsDescription = 'List reactions on an issue or pull request comment, with per-emoji counts for the returned page'
+export const listCommentReactionsDescription = 'List reactions on an issue or pull request comment, with per-emoji counts for the returned page. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listCommentReactionsCore({ token, owner, repo, commentId, content, perPage, page }: { token: string, owner: string, repo: string, commentId: number, content?: ReactionContent, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
@@ -92,7 +94,7 @@ export async function listCommentReactionsCore({ token, owner, repo, commentId, 
     per_page: perPage,
     page,
   })
-  return shapeReactions(data)
+  return shapeReactions(data, perPage, page)
   })
 }
 

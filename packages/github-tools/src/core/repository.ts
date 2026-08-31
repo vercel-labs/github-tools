@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { withOctokit } from '../client'
 import type { CommitIdentity, Octokit } from '../types'
 import { gitBlobSha } from './git-blob-sha'
+import { pageSchema, pagedList } from './pagination'
 
 const CREATE_COMMIT_ON_BRANCH_MUTATION = `
   mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
@@ -90,18 +91,19 @@ export const listBranchesInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   perPage: z.number().optional().default(30).describe('Number of branches to return (max 100)'),
+  page: pageSchema,
 })
 
-export const listBranchesDescription = 'List branches in a GitHub repository'
+export const listBranchesDescription = 'List branches in a GitHub repository. When hasMore, pass nextPage — do not repeat the same call.'
 
-export async function listBranchesCore({ token, owner, repo, perPage }: { token: string, owner: string, repo: string, perPage: number }) {
+export async function listBranchesCore({ token, owner, repo, perPage, page = 1 }: { token: string, owner: string, repo: string, perPage: number, page?: number }) {
   return withOctokit(token, async (octokit) => {
-  const { data } = await octokit.rest.repos.listBranches({ owner, repo, per_page: perPage })
-  return data.map(branch => ({
+  const { data } = await octokit.rest.repos.listBranches({ owner, repo, per_page: perPage, page })
+  return pagedList(data.map(branch => ({
     name: branch.name,
     sha: branch.commit.sha,
     protected: branch.protected,
-  }))
+  })), perPage, page, data.length >= perPage)
   })
 }
 
@@ -184,24 +186,33 @@ export const getRepositoryTreeInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   ref: z.string().optional().describe('Branch, tag, or commit SHA (defaults to the default branch)'),
-  recursive: z.boolean().optional().default(false).describe('Recursively list the entire tree instead of just the top level'),
+  path: z.string().optional().describe('Only entries at or under this directory prefix. Prefer this over recursive true on large repos'),
+  recursive: z.boolean().optional().default(false).describe('Recursively list the entire tree instead of just the top level. Prefer path + recursive false when exploring'),
 })
 
-export const getRepositoryTreeDescription = 'List the file and directory structure of a repository at a given ref'
+export const getRepositoryTreeDescription = 'List the file and directory structure of a repository at a given ref. Prefer a path prefix over recursive true. If truncated, narrow path instead of recalling the full tree.'
 
-export async function getRepositoryTreeCore({ token, owner, repo, ref, recursive }: { token: string, owner: string, repo: string, ref?: string, recursive: boolean }) {
+export async function getRepositoryTreeCore({ token, owner, repo, ref, path, recursive }: { token: string, owner: string, repo: string, ref?: string, path?: string, recursive: boolean }) {
   return withOctokit(token, async (octokit) => {
   const treeSha = ref || (await octokit.rest.repos.get({ owner, repo })).data.default_branch
   const { data } = await octokit.rest.git.getTree({ owner, repo, tree_sha: treeSha, recursive: recursive ? 'true' : undefined })
-  return {
-    sha: data.sha,
-    truncated: data.truncated,
-    entries: data.tree.map(entry => ({
+  const prefix = path?.replace(/\/+$/, '')
+  const entries = data.tree
+    .filter(entry => {
+      if (!prefix || !entry.path) return !prefix
+      return entry.path === prefix || entry.path.startsWith(`${prefix}/`)
+    })
+    .map(entry => ({
       path: entry.path,
       type: entry.type,
       size: entry.size,
       sha: entry.sha,
-    })),
+    }))
+  return {
+    sha: data.sha,
+    truncated: data.truncated,
+    path: prefix,
+    entries,
   }
   })
 }

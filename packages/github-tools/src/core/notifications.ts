@@ -1,14 +1,15 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
+import { pageSchema, pagedList } from './pagination'
 
 export const listNotificationsInputSchema = z.object({
   all: z.boolean().optional().default(false).describe('Include notifications already marked as read'),
   participating: z.boolean().optional().default(false).describe('Only notifications where the authenticated user is directly participating or mentioned'),
   perPage: z.number().optional().default(20).describe('Number of notifications to return (max 50)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listNotificationsDescription = 'List notification threads for the authenticated user. Unread only by default — set all true to include read threads. Requires a token with notifications access'
+export const listNotificationsDescription = 'List notification threads for the authenticated user. Unread only by default — set all true to include read threads. Requires a token with notifications access. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listNotificationsCore({ token, all, participating, perPage, page }: { token: string, all: boolean, participating: boolean, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
@@ -18,7 +19,7 @@ export async function listNotificationsCore({ token, all, participating, perPage
     per_page: perPage,
     page,
   })
-  return data.map(thread => ({
+  return pagedList(data.map(thread => ({
     threadId: thread.id,
     repository: thread.repository.full_name,
     subject: {
@@ -29,7 +30,7 @@ export async function listNotificationsCore({ token, all, participating, perPage
     reason: thread.reason,
     unread: thread.unread,
     updatedAt: thread.updated_at,
-  }))
+  })), perPage, page, data.length >= perPage)
   })
 }
 

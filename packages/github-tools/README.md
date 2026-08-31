@@ -188,7 +188,7 @@ Core properties (`execute`, `inputSchema`, `outputSchema`) cannot be overridden.
 
 ## Rate-limit metadata
 
-Object-shaped tool results include a `rateLimit` field from the last GitHub response. Array-shaped results are unchanged. The field is stripped before the model sees the output; hooks, channels, and UIs still receive it.
+Object-shaped tool results include a `rateLimit` field from the last GitHub response. REST list tools now return objects, so they carry it too. The field is stripped before the model sees the output; hooks, channels, and UIs still receive it.
 
 ```ts
 import type { GithubRateLimit } from '@github-tools/sdk'
@@ -471,16 +471,16 @@ New agents should use the [eve extension](#eve-extension) above; see [`examples/
 
 ## Available Tools
 
-List tools (`listCommits`, `listPullRequests`, `listIssues`, `listWorkflowRuns`, `listCheckRuns`, `listReleases`) accept an optional `maxPages` alongside `perPage`. Set it to sequentially fetch and combine up to that many pages in one call, stopping early once a page comes back short.
+List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those fields next to `checkRuns` / `runs` / …). When `hasMore`, call with `nextPage` or set `maxPages` to combine sequential pages in one call — do not repeat the same page. Filter `listCommits` with `path` / `author` / `since` / `until`. `getRepositoryTree` accepts a `path` prefix.
 
 ### Repository
 
 | Tool | Description |
 |---|---|
 | `getRepository` | Get repository metadata (stars, language, default branch, …) |
-| `listBranches` | List branches |
+| `listBranches` | List branches (`hasMore` / `nextPage` when there are more) |
 | `getFileContent` | Read a file or directory listing (prefer `startLine`/`endLine` or `maxLines` for large files) |
-| `getRepositoryTree` | List the file and directory structure at a given ref |
+| `getRepositoryTree` | List the file and directory structure at a given ref (prefer a `path` prefix over `recursive: true`) |
 | `createBranch` | Create a new branch from an existing branch or commit SHA |
 | `deleteBranch` | Permanently delete a branch |
 | `forkRepository` | Fork a repository to a user or organization |
@@ -606,7 +606,7 @@ Pull request conversations share the issue numbering, so the issue-level tools w
 
 | Tool | Description |
 |---|---|
-| `listCommits` | List commits, optionally filtered by file path, author, or date range |
+| `listCommits` | List commits, optionally filtered by file path, author, or date range. When `hasMore`, pass `nextPage` |
 | `getCommit` | Get a commit's full details including changed files and diffs |
 | `getBlame` | Line-level git blame for a file (GitHub GraphQL) |
 | `compareCommits` | Compare two branches, tags, or commits: ahead/behind counts, commits in between, and files that differ |

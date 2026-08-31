@@ -1,25 +1,26 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
-import { fetchAllPages, maxPagesSchema } from './pagination'
+import { fetchAllPages, maxPagesSchema, pageSchema, pagedList } from './pagination'
 
 export const listReleasesInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
+  page: pageSchema,
   maxPages: maxPagesSchema,
   detail: detailSchema,
 })
 
-export const listReleasesDescription = 'List releases for a GitHub repository, newest first (includes drafts and prereleases). Bodies truncated by default (detail: summary)'
+export const listReleasesDescription = 'List releases for a GitHub repository, newest first (includes drafts and prereleases). Bodies truncated by default (detail: summary). When hasMore, pass nextPage or raise maxPages — do not repeat the same call.'
 
-export async function listReleasesCore({ token, owner, repo, perPage, maxPages, detail = 'summary' }: { token: string, owner: string, repo: string, perPage: number, maxPages?: number, detail?: DetailLevel }) {
+export async function listReleasesCore({ token, owner, repo, perPage, page = 1, maxPages, detail = 'summary' }: { token: string, owner: string, repo: string, perPage: number, page?: number, maxPages?: number, detail?: DetailLevel }) {
   return withOctokit(token, async (octokit) => {
-  const releases = await fetchAllPages(async page => {
-    const { data } = await octokit.rest.repos.listReleases({ owner, repo, per_page: perPage, page })
+  const { items, hasMore } = await fetchAllPages(async currentPage => {
+    const { data } = await octokit.rest.repos.listReleases({ owner, repo, per_page: perPage, page: currentPage })
     return data
-  }, perPage, maxPages)
-  return releases.map(release => ({
+  }, perPage, maxPages, page)
+  return pagedList(items.map(release => ({
     id: release.id,
     tagName: release.tag_name,
     name: release.name,
@@ -30,7 +31,7 @@ export async function listReleasesCore({ token, owner, repo, perPage, maxPages, 
     author: release.author?.login,
     createdAt: release.created_at,
     publishedAt: release.published_at,
-  }))
+  })), perPage, page, hasMore)
   })
 }
 

@@ -47,7 +47,7 @@ pnpm --filter @github-tools/sdk typecheck  # Type-check the SDK
 
 Every tool splits into a **core** function (pure logic) and a **tool factory** (the `ai` SDK wrapper). See `getGistCore`/`getGist` (`packages/github-tools/src/core/gists.ts` / `src/tools/gists.ts`) for a read tool, `createIssue` (`src/tools/issues.ts`) for a write tool.
 
-1. **Core logic** — add `{name}InputSchema` (zod, `.describe()` on every field), `{name}Description`, and `{name}Core({ token, ...args })` to `packages/github-tools/src/core/{domain}.ts`. Shape the return — never return the raw Octokit response.
+1. **Core logic** — add `{name}InputSchema` (zod, `.describe()` on every field), `{name}Description`, and `{name}Core({ token, ...args })` to `packages/github-tools/src/core/{domain}.ts`. Shape the return — never return the raw Octokit response. REST list tools return `pagedList(...)` (`{ items, hasMore, page, perPage, nextPage? }`); object-shaped lists add the same paging fields next to existing keys (`checkRuns`, `runs`, …).
 2. **Tool factory** — add the `"use step"` wrapper and the exported factory to `packages/github-tools/src/tools/{domain}.ts`. Read tools take `(token)`; write tools also take `({ needsApproval = true }: ToolOptions = {})`.
 3. **Register** (new domain? add a re-export in `packages/github-tools/src/core/index.ts` too):
    - `packages/github-tools/src/core/catalog.ts` — add one `GITHUB_TOOL_CATALOG` entry (JSDoc, `description`, `inputSchema`, `get core()`, `write: true` for write tools, `connectScopes`). `GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOLS`, `TOOL_CONNECT_SCOPES`, and the eve registry are all derived from it — no separate registration

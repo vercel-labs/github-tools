@@ -29,7 +29,7 @@ import {
   createOrUpdateFileCore,
   composeCommitMessage,
 } from '../core/repository'
-import { getFileContentToModelOutput } from '../core/model-output'
+import { getFileContentToModelOutput, getRepositoryTreeToModelOutput } from '../core/model-output'
 import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { CommitToolOptions, ToolOptions, GithubTool } from '../types'
 
@@ -85,6 +85,7 @@ export const getRepositoryTree = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getRepositoryTreeDescription,
     inputSchema: getRepositoryTreeInputSchema,
+    toModelOutput: getRepositoryTreeToModelOutput,
     execute: async args => getRepositoryTreeStep({ token: await resolveGithubToken(token), ...args }),
   })
 

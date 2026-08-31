@@ -1,15 +1,15 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
-import { fetchAllPages, maxPagesSchema } from './pagination'
+import { fetchAllPages, hasMoreByTotal, maxPagesSchema, pageSchema, pagingFields } from './pagination'
 
 export const listWorkflowsInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listWorkflowsDescription = 'List GitHub Actions workflows in a repository'
+export const listWorkflowsDescription = 'List GitHub Actions workflows in a repository. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listWorkflowsCore({ token, owner, repo, perPage, page }: { token: string, owner: string, repo: string, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
@@ -25,6 +25,7 @@ export async function listWorkflowsCore({ token, owner, repo, perPage, page }: {
       createdAt: wf.created_at,
       updatedAt: wf.updated_at,
     })),
+    ...pagingFields(page, perPage, data.workflows.length, hasMoreByTotal(page, perPage, data.workflows.length, data.total_count)),
   }
   })
 }
@@ -39,16 +40,16 @@ export const listWorkflowRunsInputSchema = z.object({
   event: z.string().optional().describe('Event type to filter by (e.g. "push", "pull_request")'),
   status: z.enum(['completed', 'action_required', 'cancelled', 'failure', 'neutral', 'skipped', 'stale', 'success', 'timed_out', 'in_progress', 'queued', 'requested', 'waiting', 'pending']).optional().describe('Status to filter by'),
   perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
   maxPages: maxPagesSchema,
 })
 
-export const listWorkflowRunsDescription = 'List workflow runs for a repository, optionally filtered by workflow, branch, status, or event'
+export const listWorkflowRunsDescription = 'List workflow runs for a repository, optionally filtered by workflow, branch, status, or event. When hasMore, pass nextPage or raise maxPages — do not repeat the same call.'
 
 export async function listWorkflowRunsCore({ token, owner, repo, workflowId, branch, event, status, perPage, page, maxPages }: { token: string, owner: string, repo: string, workflowId?: string | number, branch?: string, event?: string, status?: WorkflowRunStatus, perPage: number, page: number, maxPages?: number }) {
   return withOctokit(token, async (octokit) => {
   let totalCount = 0
-  const runs = await fetchAllPages(async currentPage => {
+  const { items } = await fetchAllPages(async currentPage => {
     const { data } = workflowId
       ? await octokit.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: workflowId, per_page: perPage, page: currentPage, ...branch && { branch }, ...event && { event }, ...status && { status } })
       : await octokit.rest.actions.listWorkflowRunsForRepo({ owner, repo, per_page: perPage, page: currentPage, ...branch && { branch }, ...event && { event }, ...status && { status } })
@@ -58,7 +59,7 @@ export async function listWorkflowRunsCore({ token, owner, repo, workflowId, bra
 
   return {
     totalCount,
-    runs: runs.map(run => ({
+    runs: items.map(run => ({
       id: run.id,
       name: run.name,
       status: run.status,
@@ -72,6 +73,7 @@ export async function listWorkflowRunsCore({ token, owner, repo, workflowId, bra
       runNumber: run.run_number,
       runAttempt: run.run_attempt,
     })),
+    ...pagingFields(page, perPage, items.length, hasMoreByTotal(page, perPage, items.length, totalCount)),
   }
   })
 }
@@ -112,10 +114,10 @@ export const listWorkflowJobsInputSchema = z.object({
   runId: z.number().describe('Workflow run ID'),
   filter: z.enum(['latest', 'all']).optional().default('latest').describe('Filter by the latest attempt or all attempts'),
   perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listWorkflowJobsDescription = 'List jobs for a workflow run, including step-level status and timing'
+export const listWorkflowJobsDescription = 'List jobs for a workflow run, including step-level status and timing. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listWorkflowJobsCore({ token, owner, repo, runId, filter, perPage, page }: { token: string, owner: string, repo: string, runId: number, filter: 'latest' | 'all', perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
@@ -140,6 +142,7 @@ export async function listWorkflowJobsCore({ token, owner, repo, runId, filter, 
         completedAt: step.completed_at,
       })),
     })),
+    ...pagingFields(page, perPage, data.jobs.length, hasMoreByTotal(page, perPage, data.jobs.length, data.total_count)),
   }
   })
 }

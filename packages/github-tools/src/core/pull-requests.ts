@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { withOctokit } from '../client'
 import type { CommitIdentity } from '../types'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
-import { fetchAllPages, maxPagesSchema } from './pagination'
+import { fetchAllPages, maxPagesSchema, pageSchema, pagedList } from './pagination'
 import { composeCommitMessage } from './repository'
 
 export const listPullRequestsInputSchema = z.object({
@@ -10,18 +10,19 @@ export const listPullRequestsInputSchema = z.object({
   repo: z.string().describe('Repository name'),
   state: z.enum(['open', 'closed', 'all']).optional().default('open').describe('Filter by state'),
   perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
+  page: pageSchema,
   maxPages: maxPagesSchema,
 })
 
-export const listPullRequestsDescription = 'List pull requests for a GitHub repository'
+export const listPullRequestsDescription = 'List pull requests for a GitHub repository. When hasMore, pass nextPage or raise maxPages — do not repeat the same call.'
 
-export async function listPullRequestsCore({ token, owner, repo, state, perPage, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', perPage: number, maxPages?: number }) {
+export async function listPullRequestsCore({ token, owner, repo, state, perPage, page = 1, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', perPage: number, page?: number, maxPages?: number }) {
   return withOctokit(token, async (octokit) => {
-  const pullRequests = await fetchAllPages(async page => {
-    const { data } = await octokit.rest.pulls.list({ owner, repo, state, per_page: perPage, page })
+  const { items, hasMore } = await fetchAllPages(async currentPage => {
+    const { data } = await octokit.rest.pulls.list({ owner, repo, state, per_page: perPage, page: currentPage })
     return data
-  }, perPage, maxPages)
-  return pullRequests.map(pr => ({
+  }, perPage, maxPages, page)
+  return pagedList(items.map(pr => ({
     number: pr.number,
     title: pr.title,
     state: pr.state,
@@ -32,7 +33,7 @@ export async function listPullRequestsCore({ token, owner, repo, state, perPage,
     draft: pr.draft,
     createdAt: pr.created_at,
     updatedAt: pr.updated_at,
-  }))
+  })), perPage, page, hasMore)
   })
 }
 
@@ -269,16 +270,16 @@ export const listPullRequestFilesInputSchema = z.object({
   includePatch: z.boolean().optional().default(false).describe('Include diff patches (token-heavy). Prefer false for an overview, then set true with filenames to fetch specific diffs'),
   filenames: z.array(z.string()).optional().describe('If set, only return these file paths (useful with includePatch: true for targeted diffs)'),
   perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listPullRequestFilesDescription = 'List files changed in a pull request with status and stats. Patches are omitted by default — set includePatch true (optionally with filenames) to fetch diffs'
+export const listPullRequestFilesDescription = 'List files changed in a pull request with status and stats. Patches are omitted by default — set includePatch true (optionally with filenames) to fetch diffs. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listPullRequestFilesCore({ token, owner, repo, pullNumber, includePatch, filenames, perPage, page }: { token: string, owner: string, repo: string, pullNumber: number, includePatch: boolean, filenames?: string[], perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.listFiles({ owner, repo, pull_number: pullNumber, per_page: perPage, page })
   const filenameSet = filenames?.length ? new Set(filenames) : null
-  return data
+  return pagedList(data
     .filter(file => !filenameSet || filenameSet.has(file.filename))
     .map(file => ({
       filename: file.filename,
@@ -287,7 +288,7 @@ export async function listPullRequestFilesCore({ token, owner, repo, pullNumber,
       deletions: file.deletions,
       changes: file.changes,
       ...includePatch && file.patch != null ? { patch: file.patch } : {},
-    }))
+    })), perPage, page, data.length >= perPage)
   })
 }
 
@@ -296,22 +297,22 @@ export const listPullRequestReviewsInputSchema = z.object({
   repo: z.string().describe('Repository name'),
   pullNumber: z.number().describe('Pull request number'),
   perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listPullRequestReviewsDescription = 'List reviews on a pull request (approvals, change requests, and comments)'
+export const listPullRequestReviewsDescription = 'List reviews on a pull request (approvals, change requests, and comments). When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listPullRequestReviewsCore({ token, owner, repo, pullNumber, perPage, page }: { token: string, owner: string, repo: string, pullNumber: number, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.listReviews({ owner, repo, pull_number: pullNumber, per_page: perPage, page })
-  return data.map(review => ({
+  return pagedList(data.map(review => ({
     id: review.id,
     state: review.state,
     body: review.body,
     author: review.user?.login,
     url: review.html_url,
     submittedAt: review.submitted_at,
-  }))
+  })), perPage, page, data.length >= perPage)
   })
 }
 

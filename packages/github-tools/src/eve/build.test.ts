@@ -139,6 +139,7 @@ describe('createGithubTools eve integration', () => {
 
   it('looks up built-in toModelOutput formatters by tool name', () => {
     expect(hasGithubEveToolModelOutput('getFileContent')).toBe(true)
+    expect(hasGithubEveToolModelOutput('getRepositoryTree')).toBe(true)
     expect(hasGithubEveToolModelOutput('listIssues')).toBe(false)
     expect(formatGithubEveToolOutput('getFileContent', {
       type: 'file',

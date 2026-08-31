@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
-import { fetchAllPages, maxPagesSchema } from './pagination'
+import { fetchAllPages, maxPagesSchema, pageSchema, pagedList } from './pagination'
 
 export const listIssuesInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
@@ -9,25 +9,26 @@ export const listIssuesInputSchema = z.object({
   state: z.enum(['open', 'closed', 'all']).optional().default('open').describe('Filter by state'),
   labels: z.string().optional().describe('Comma-separated list of label names to filter by'),
   perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
+  page: pageSchema,
   maxPages: maxPagesSchema,
 })
 
-export const listIssuesDescription = 'List issues for a GitHub repository (excludes pull requests)'
+export const listIssuesDescription = 'List issues for a GitHub repository (excludes pull requests). When hasMore, pass nextPage or raise maxPages — do not repeat the same call.'
 
-export async function listIssuesCore({ token, owner, repo, state, labels, perPage, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', labels?: string, perPage: number, maxPages?: number }) {
+export async function listIssuesCore({ token, owner, repo, state, labels, perPage, page = 1, maxPages }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', labels?: string, perPage: number, page?: number, maxPages?: number }) {
   return withOctokit(token, async (octokit) => {
-  const issues = await fetchAllPages(async page => {
+  const { items, hasMore } = await fetchAllPages(async currentPage => {
     const { data } = await octokit.rest.issues.listForRepo({
       owner,
       repo,
       state,
       labels,
       per_page: perPage,
-      page,
+      page: currentPage,
     })
     return data
-  }, perPage, maxPages)
-  return issues
+  }, perPage, maxPages, page)
+  return pagedList(items
     .filter(issue => !issue.pull_request)
     .map(issue => ({
       number: issue.number,
@@ -38,7 +39,7 @@ export async function listIssuesCore({ token, owner, repo, state, labels, perPag
       labels: issue.labels.map(l => (typeof l === 'string' ? l : l.name)),
       createdAt: issue.created_at,
       updatedAt: issue.updated_at,
-    }))
+    })), perPage, page, hasMore)
   })
 }
 
@@ -76,23 +77,23 @@ export const listIssueCommentsInputSchema = z.object({
   repo: z.string().describe('Repository name'),
   issueNumber: z.number().describe('Issue number'),
   perPage: z.number().optional().default(30).describe('Number of comments to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
   detail: detailSchema,
 })
 
-export const listIssueCommentsDescription = 'List comments on a GitHub issue. Bodies are truncated by default (detail: summary)'
+export const listIssueCommentsDescription = 'List comments on a GitHub issue. Bodies are truncated by default (detail: summary). When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listIssueCommentsCore({ token, owner, repo, issueNumber, perPage, page, detail = 'summary' }: { token: string, owner: string, repo: string, issueNumber: number, perPage: number, page: number, detail?: DetailLevel }) {
   return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.listComments({ owner, repo, issue_number: issueNumber, per_page: perPage, page })
-  return data.map(comment => ({
+  return pagedList(data.map(comment => ({
     id: comment.id,
     url: comment.html_url,
     body: applyDetailBody(comment.body, detail),
     author: comment.user?.login,
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
-  }))
+  })), perPage, page, data.length >= perPage)
   })
 }
 
@@ -270,19 +271,19 @@ export const listLabelsInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
   perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listLabelsDescription = 'List labels available in a GitHub repository'
+export const listLabelsDescription = 'List labels available in a GitHub repository. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listLabelsCore({ token, owner, repo, perPage, page }: { token: string, owner: string, repo: string, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.issues.listLabelsForRepo({ owner, repo, per_page: perPage, page })
-  return data.map(label => ({
+  return pagedList(data.map(label => ({
     name: label.name,
     color: label.color,
     description: label.description,
-  }))
+  })), perPage, page, data.length >= perPage)
   })
 }
 
