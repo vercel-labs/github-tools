@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
-import { fetchAllPages, maxPagesSchema } from './pagination'
+import { fetchAllPages, maxPagesSchema, pageSchema, pagedList } from './pagination'
 
 export const BLAME_QUERY = `
   query ($owner: String!, $name: String!, $expression: String!, $path: String!) {
@@ -71,15 +71,16 @@ export const listCommitsInputSchema = z.object({
   since: z.string().optional().describe('Only commits after this date (ISO 8601 format)'),
   until: z.string().optional().describe('Only commits before this date (ISO 8601 format)'),
   perPage: z.number().optional().default(30).describe('Number of results to return per page (max 100)'),
+  page: pageSchema,
   maxPages: maxPagesSchema,
 })
 
 export const listCommitsDescription =
-  'List commits for a GitHub repository. Filter by file path to see commits that touched a file. For line-by-line attribution at a given ref, use getBlame instead.'
+  'List commits for a GitHub repository. Filter with path, author, since, or until instead of paging the full history. When hasMore, pass nextPage or raise maxPages — do not repeat the same call. For line-by-line attribution, use getBlame.'
 
-export async function listCommitsCore({ token, owner, repo, path, sha, author, since, until, perPage, maxPages }: { token: string, owner: string, repo: string, path?: string, sha?: string, author?: string, since?: string, until?: string, perPage: number, maxPages?: number }) {
+export async function listCommitsCore({ token, owner, repo, path, sha, author, since, until, perPage, page = 1, maxPages }: { token: string, owner: string, repo: string, path?: string, sha?: string, author?: string, since?: string, until?: string, perPage: number, page?: number, maxPages?: number }) {
   return withOctokit(token, async (octokit) => {
-  const commits = await fetchAllPages(async page => {
+  const { items, hasMore } = await fetchAllPages(async currentPage => {
     const { data } = await octokit.rest.repos.listCommits({
       owner,
       repo,
@@ -89,18 +90,18 @@ export async function listCommitsCore({ token, owner, repo, path, sha, author, s
       since,
       until,
       per_page: perPage,
-      page,
+      page: currentPage,
     })
     return data
-  }, perPage, maxPages)
-  return commits.map(commit => ({
+  }, perPage, maxPages, page)
+  return pagedList(items.map(commit => ({
     sha: commit.sha,
     message: commit.commit.message,
     author: commit.commit.author?.name,
     authorLogin: commit.author?.login,
     date: commit.commit.author?.date,
     url: commit.html_url,
-  }))
+  })), perPage, page, hasMore)
   })
 }
 

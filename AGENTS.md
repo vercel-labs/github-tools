@@ -68,6 +68,8 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
   })
 ```
 
+**REST list tools** return `{ items, hasMore, page, perPage, nextPage? }` via `pagedList()` (`src/core/pagination.ts`). Object-shaped lists (`listCheckRuns`, `listWorkflowRuns`, …) add the same paging fields next to their existing keys. `hasMore` must live on the execute result — eve `toModelOutput` cannot see input. Restore `page` on every REST list schema.
+
 **Adding a new tool?** Follow the checklist in [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md#adding-a-new-tool) — registration files, chat metadata, docs, changeset.
 
 ### Key source files

@@ -1,20 +1,21 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
+import { pageSchema, pagedList } from './pagination'
 
 export const listGistsInputSchema = z.object({
   username: z.string().optional().describe('GitHub username — omit to list your own gists'),
   perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listGistsDescription = 'List gists for the authenticated user or a specific user'
+export const listGistsDescription = 'List gists for the authenticated user or a specific user. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listGistsCore({ token, username, perPage, page }: { token: string, username?: string, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
   const { data } = username
     ? await octokit.rest.gists.listForUser({ username, per_page: perPage, page })
     : await octokit.rest.gists.list({ per_page: perPage, page })
-  return data.map(gist => ({
+  return pagedList(data.map(gist => ({
     id: gist.id,
     description: gist.description,
     public: gist.public,
@@ -24,7 +25,7 @@ export async function listGistsCore({ token, username, perPage, page }: { token:
     comments: gist.comments,
     createdAt: gist.created_at,
     updatedAt: gist.updated_at,
-  }))
+  })), perPage, page, data.length >= perPage)
   })
 }
 
@@ -59,22 +60,22 @@ export async function getGistCore({ token, gistId }: { token: string, gistId: st
 export const listGistCommentsInputSchema = z.object({
   gistId: z.string().describe('Gist ID'),
   perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
-  page: z.number().optional().default(1).describe('Page number for pagination'),
+  page: pageSchema,
 })
 
-export const listGistCommentsDescription = 'List comments on a gist'
+export const listGistCommentsDescription = 'List comments on a gist. When hasMore, pass nextPage — do not repeat the same call.'
 
 export async function listGistCommentsCore({ token, gistId, perPage, page }: { token: string, gistId: string, perPage: number, page: number }) {
   return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.gists.listComments({ gist_id: gistId, per_page: perPage, page })
-  return data.map(comment => ({
+  return pagedList(data.map(comment => ({
     id: comment.id,
     body: comment.body,
     author: comment.user?.login,
     url: comment.url,
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
-  }))
+  })), perPage, page, data.length >= perPage)
   })
 }
 

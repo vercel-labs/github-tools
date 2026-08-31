@@ -28,7 +28,7 @@ export const getPullRequestContextInputSchema = z.object({
   detail: detailSchema,
 })
 
-export const getPullRequestContextDescription = 'Fetch pull request details plus files, reviews, and optional CI checks in one call — prefer this over separate getPullRequest / listPullRequestFiles / listPullRequestReviews calls'
+export const getPullRequestContextDescription = 'Fetch pull request details plus files, reviews, and optional CI checks in one call — prefer this over separate getPullRequest / listPullRequestFiles / listPullRequestReviews calls. filesHasMore / reviewsHasMore mean more pages exist on those lists.'
 
 export async function getPullRequestContextCore({
   token,
@@ -80,8 +80,8 @@ export async function getPullRequestContextCore({
 
   return withComposedRateLimit({
     pullRequest,
-    ...files !== undefined ? { files } : {},
-    ...reviews !== undefined ? { reviews } : {},
+    ...files !== undefined ? { files: files.items, filesHasMore: files.hasMore } : {},
+    ...reviews !== undefined ? { reviews: reviews.items, reviewsHasMore: reviews.hasMore } : {},
     ...checks !== undefined ? { checks } : {},
   })
 }
@@ -101,7 +101,7 @@ export const getIssueContextInputSchema = z.object({
     .describe('full returns the complete body (default for this one-shot tool); summary truncates to ~500 chars'),
 })
 
-export const getIssueContextDescription = 'Fetch an issue plus available label names and recent comments in one call — prefer this over separate getIssue / listLabels / comment calls when triaging. Call once; do not re-fetch the same issue.'
+export const getIssueContextDescription = 'Fetch an issue plus available label names and recent comments in one call — prefer this over separate getIssue / listLabels / comment calls when triaging. Call once; do not re-fetch the same issue. commentsHasMore means more comments exist — use listIssueComments with nextPage.'
 
 export async function getIssueContextCore({
   token,
@@ -143,8 +143,8 @@ export async function getIssueContextCore({
   return withComposedRateLimit({
     issue,
     // Names only — full label objects (color/description) dominate triage payloads on large repos
-    ...labels !== undefined ? { labelNames: labels.map(label => label.name) } : {},
-    ...comments !== undefined ? { comments } : {},
+    ...labels !== undefined ? { labelNames: labels.items.map(label => label.name) } : {},
+    ...comments !== undefined ? { comments: comments.items, commentsHasMore: comments.hasMore } : {},
   })
 }
 
@@ -180,7 +180,7 @@ export async function getReleaseContextCore({
     ? await getReleaseCore({ token, owner, repo, releaseId, detail })
     : await getLatestReleaseCore({ token, owner, repo, detail })
 
-  let previous: Awaited<ReturnType<typeof listReleasesCore>>[number] | undefined
+  let previous: Awaited<ReturnType<typeof listReleasesCore>>['items'][number] | undefined
   if (includePrevious || includeCompare) {
     const releases = await listReleasesCore({
       token,
@@ -190,7 +190,7 @@ export async function getReleaseContextCore({
       maxPages: 1,
       detail,
     })
-    previous = releases.find(r => r.id !== release.id && !r.draft)
+    previous = releases.items.find(r => r.id !== release.id && !r.draft)
   }
 
   let comparison: Awaited<ReturnType<typeof compareCommitsCore>> | undefined

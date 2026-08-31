@@ -8,6 +8,7 @@ import {
   getCommitToModelOutput,
   getFileContentToModelOutput,
   getPullRequestContextToModelOutput,
+  getRepositoryTreeToModelOutput,
   listPullRequestFilesToModelOutput,
 } from '../core/model-output'
 import { stripRateLimit } from '../core/rate-limit'
@@ -55,6 +56,7 @@ function modelOutputAdapter(
 
 const GITHUB_EVE_TOOL_MODEL_OUTPUT = {
   getFileContent: modelOutputAdapter(getFileContentToModelOutput),
+  getRepositoryTree: modelOutputAdapter(getRepositoryTreeToModelOutput),
   listPullRequestFiles: modelOutputAdapter(listPullRequestFilesToModelOutput),
   getPullRequestContext: modelOutputAdapter(getPullRequestContextToModelOutput),
   getCommit: modelOutputAdapter(getCommitToModelOutput),

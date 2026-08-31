@@ -8,7 +8,8 @@ import { formatContextInstructions, type GithubToolsContext } from './core/conte
 
 const SHARED_RULES = `When a tool execution is denied by the user, do not retry it. Briefly acknowledge the decision and move on.
 Call independent read tools in the same step when you already know the arguments — never serialize reads that could run in parallel.
-Bodies default to detail summary; patches default to includePatch false; prefer getFileContent with startLine/endLine or maxLines for large files.`
+Bodies default to detail summary; patches default to includePatch false; prefer getFileContent with startLine/endLine or maxLines for large files.
+Paged lists return { items, hasMore, page, nextPage }. When hasMore, call with nextPage or raise maxPages — never the same page. Prefer path/author/since/until on listCommits instead of walking history. Prefer a path prefix on getRepositoryTree over recursive true.`
 
 const DEFAULT_INSTRUCTIONS = `You are a helpful GitHub assistant. You can read and explore repositories, issues, pull requests, discussions, commits, code, gists, and workflows. You can also create issues, pull requests, comments, gists, reactions, trigger workflows, and update files when asked.
 

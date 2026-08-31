@@ -1,5 +1,7 @@
 const MAX_PATCH_LENGTH = 4000
 const MAX_CONTENT_LENGTH = 20000
+const MAX_MODEL_TREE_ENTRIES = 200
+const MAX_MODEL_DIFF_FILES = 80
 
 function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
@@ -13,20 +15,38 @@ function truncatePatchFields<T extends { patch?: string }>(files: T[]): T[] {
   }))
 }
 
+function capDiffFiles<T extends { patch?: string }>(files: T[] | undefined) {
+  if (!files) return { files, filesOmitted: 0 }
+  const truncated = truncatePatchFields(files)
+  if (truncated.length <= MAX_MODEL_DIFF_FILES) return { files: truncated, filesOmitted: 0 }
+  return {
+    files: truncated.slice(0, MAX_MODEL_DIFF_FILES),
+    filesOmitted: truncated.length - MAX_MODEL_DIFF_FILES,
+  }
+}
+
 type ToModelOutputOptions = {
   toolCallId: string
   input: unknown
   output: unknown
 }
 
-type ListPullRequestFilesOutput = Array<{
+type ListPullRequestFile = {
   filename: string
   status: string
   additions: number
   deletions: number
   changes: number
   patch?: string
-}>
+}
+
+type ListPullRequestFilesOutput = {
+  items: ListPullRequestFile[]
+  hasMore: boolean
+  page: number
+  perPage: number
+  nextPage?: number
+}
 
 type GetCommitOutput = {
   sha: string
@@ -61,20 +81,25 @@ type GetFileContentOutput =
     }
 
 export function listPullRequestFilesToModelOutput({ output }: ToModelOutputOptions) {
-  const files = output as ListPullRequestFilesOutput
+  const result = output as ListPullRequestFilesOutput
   return {
     type: 'json' as const,
-    value: truncatePatchFields(files),
+    value: {
+      ...result,
+      items: truncatePatchFields(result.items),
+    },
   }
 }
 
 export function getCommitToModelOutput({ output }: ToModelOutputOptions) {
   const commit = output as GetCommitOutput
+  const { files, filesOmitted } = capDiffFiles(commit.files)
   return {
     type: 'json' as const,
     value: {
       ...commit,
-      files: commit.files ? truncatePatchFields(commit.files) : commit.files,
+      files,
+      ...filesOmitted > 0 ? { filesOmitted } : {},
     },
   }
 }
@@ -97,17 +122,30 @@ type CompareCommitsOutput = {
 
 export function compareCommitsToModelOutput({ output }: ToModelOutputOptions) {
   const comparison = output as CompareCommitsOutput
+  const { files, filesOmitted } = capDiffFiles(comparison.files)
   return {
     type: 'json' as const,
     value: {
       ...comparison,
-      files: comparison.files ? truncatePatchFields(comparison.files) : comparison.files,
+      files,
+      ...filesOmitted > 0 ? { filesOmitted } : {},
     },
   }
 }
 
 export function getFileContentToModelOutput({ output }: ToModelOutputOptions) {
   const result = output as GetFileContentOutput
+  if (result.type === 'directory' && 'entries' in result && result.entries.length > MAX_MODEL_TREE_ENTRIES) {
+    return {
+      type: 'json' as const,
+      value: {
+        ...result,
+        truncated: true,
+        entries: result.entries.slice(0, MAX_MODEL_TREE_ENTRIES),
+        entriesOmitted: result.entries.length - MAX_MODEL_TREE_ENTRIES,
+      },
+    }
+  }
   if ('content' in result && result.content.length > MAX_CONTENT_LENGTH) {
     return {
       type: 'json' as const,
@@ -118,6 +156,29 @@ export function getFileContentToModelOutput({ output }: ToModelOutputOptions) {
     }
   }
   return { type: 'json' as const, value: result }
+}
+
+type GetRepositoryTreeOutput = {
+  sha: string
+  truncated: boolean
+  path?: string
+  entries: Array<{ path?: string, type?: string, size?: number, sha?: string }>
+}
+
+export function getRepositoryTreeToModelOutput({ output }: ToModelOutputOptions) {
+  const result = output as GetRepositoryTreeOutput
+  if (result.entries.length <= MAX_MODEL_TREE_ENTRIES) {
+    return { type: 'json' as const, value: result }
+  }
+  return {
+    type: 'json' as const,
+    value: {
+      ...result,
+      truncated: true,
+      entries: result.entries.slice(0, MAX_MODEL_TREE_ENTRIES),
+      entriesOmitted: result.entries.length - MAX_MODEL_TREE_ENTRIES,
+    },
+  }
 }
 
 type GetPullRequestContextOutput = {
@@ -141,7 +202,8 @@ type GetPullRequestContextOutput = {
     updatedAt: string
     mergedAt: string | null
   }
-  files?: ListPullRequestFilesOutput
+  files?: ListPullRequestFile[]
+  filesHasMore?: boolean
   reviews?: Array<{
     id: number
     state: string
@@ -178,11 +240,13 @@ type GetPullRequestContextOutput = {
 
 export function getPullRequestContextToModelOutput({ output }: ToModelOutputOptions) {
   const result = output as GetPullRequestContextOutput
+  const { files, filesOmitted } = capDiffFiles(result.files)
   return {
     type: 'json' as const,
     value: {
       ...result,
-      files: result.files ? truncatePatchFields(result.files) : result.files,
+      files,
+      ...filesOmitted > 0 ? { filesOmitted } : {},
     },
   }
 }
