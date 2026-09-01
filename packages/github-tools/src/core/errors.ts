@@ -133,13 +133,14 @@ export function toGithubToolsError(error: unknown, rateLimit: GithubRateLimit | 
   return error
 }
 
-/** `{ code, message, why, fix }` projection of an EvlogError for model-facing payloads. */
+/** `{ code, message, why, fix, link }` projection of an EvlogError for model-facing payloads. `internal` stays off the wire. */
 export function toModelErrorPayload(error: EvlogError): Record<string, string> {
   return {
     ...(error.code ? { code: error.code } : {}),
     message: error.message,
     ...(error.why ? { why: error.why } : {}),
     ...(error.fix ? { fix: error.fix } : {}),
+    ...(error.link ? { link: error.link } : {}),
   }
 }
 

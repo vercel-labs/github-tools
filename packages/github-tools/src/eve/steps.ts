@@ -27,7 +27,7 @@ export async function runGithubToolStep(
   } catch (error) {
     // Eve's tool-loop logs thrown execute errors but does not always append a
     // tool_result. Returning a payload keeps the Anthropic tool_use/tool_result pairing intact.
-    // Catalog errors keep their { code, why, fix } structure so the model can recover.
+    // Catalog errors keep their { code, why, fix, link } structure so the model can recover.
     if (EvlogError.isEvlogError(error)) {
       return { error: toModelErrorPayload(error) }
     }

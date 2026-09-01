@@ -204,7 +204,7 @@ Classifiable failures become structured [evlog](https://evlog.dev) catalog error
 
 Codes: `TOKEN_REQUIRED`, `OIDC_TOKEN_EXPIRED`, `CONNECT_NOT_AUTHORIZED`, `CONNECT_USER_NOT_CONNECTED`, `CONNECT_INSTALLATION_REQUIRED`, `SUBJECT_CONTEXT_REQUIRED`, `UNAUTHORIZED` (401), `FORBIDDEN` (403), `RATE_LIMITED` (403/429), `NOT_FOUND` (404), `VALIDATION_FAILED` (422). Unmapped statuses pass through unchanged; the original Octokit error stays reachable as `cause`.
 
-In the eve extension, a failing tool returns `{ error: { code, message, why, fix } }` to the model. With `generateText`/`streamText`, the framework forwards `error.message` (self-sufficient by design); use evlog's `parseError(error)` when you need the full structure. The catalog is exported as `githubToolsErrors`. See the [errors guide](https://github-tools.com/guide/errors).
+In the eve extension, a failing tool returns `{ error: { code, message, why, fix, link } }` to the model. With `generateText`/`streamText`, the framework forwards `error.message` (self-sufficient by design); use evlog's `parseError(error)` when you need the full structure. The catalog is exported as `githubToolsErrors`. See the [errors guide](https://github-tools.com/guide/errors).
 
 ## Commit Attribution
 

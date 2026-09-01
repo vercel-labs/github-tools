@@ -3,7 +3,7 @@ import type { GithubToolName } from './registry'
 import { runGithubToolStep } from './steps'
 
 describe('runGithubToolStep error payloads', () => {
-  it('returns the structured { code, message, why, fix } payload for catalog errors', async () => {
+  it('returns the structured { code, message, why, fix, link } payload for catalog errors', async () => {
     const result = await runGithubToolStep('getRepository', { owner: 'o', repo: 'r' }, {
       token: async () => '',
     })
@@ -14,6 +14,7 @@ describe('runGithubToolStep error payloads', () => {
         message: expect.stringContaining('GitHub token is required'),
         why: expect.any(String),
         fix: expect.any(String),
+        link: expect.stringContaining('tokens-and-auth'),
       },
     })
   })

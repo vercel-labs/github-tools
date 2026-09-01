@@ -66,7 +66,7 @@ describe('toGithubToolsError', () => {
 })
 
 describe('toModelErrorPayload', () => {
-  it('projects code, message, why, and fix but never internal or link', () => {
+  it('projects code, message, why, fix, and link but never internal', () => {
     const error = githubToolsErrors.NOT_FOUND({
       detail: 'Not Found',
       internal: { status: 404 },
@@ -77,8 +77,8 @@ describe('toModelErrorPayload', () => {
     expect(payload.message).toContain('Not Found')
     expect(payload.why).toBeDefined()
     expect(payload.fix).toBeDefined()
+    expect(payload.link).toContain('404-not-found-for-an-existing-resource')
     expect(payload).not.toHaveProperty('internal')
-    expect(payload).not.toHaveProperty('link')
     expect(payload).not.toHaveProperty('status')
   })
 })
