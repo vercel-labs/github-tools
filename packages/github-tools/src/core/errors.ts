@@ -14,6 +14,7 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     message: 'GitHub token is required. Pass it as `token` or set the GITHUB_TOKEN environment variable.',
     why: 'No token string, async token provider, or GITHUB_TOKEN environment variable was available when the tool resolved its GitHub credentials.',
     fix: 'Pass `token` (a PAT string or async provider) when creating the tools, set GITHUB_TOKEN, or configure a Vercel Connect `connector`.',
+    link: 'https://github-tools.com/guide/tokens-and-auth',
   },
   OIDC_TOKEN_EXPIRED: {
     status: 401,
@@ -21,6 +22,7 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
       `VERCEL_OIDC_TOKEN expired at ${expiredAt}; Vercel Connect would reject it, so no GitHub request was made.`,
     why: 'The SDK pins the VERCEL_OIDC_TOKEN environment token when it is set (skipping @vercel/oidc\'s project-root walk, which fails inside eve/workflow snapshots), so an expired env token is never refreshed automatically.',
     fix: 'Locally: run `vercel env pull` to refresh .env.local. On Vercel: deployments inject a fresh token — check nothing overrides VERCEL_OIDC_TOKEN with a stale value.',
+    link: 'https://github-tools.com/guide/vercel-connect#eve-agent',
   },
   CONNECT_NOT_AUTHORIZED: {
     status: 403,
@@ -28,6 +30,7 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
       `Vercel Connect refused to mint a GitHub token: ${detail}`,
     why: 'Connect rejected the identity of the calling process (the Vercel OIDC token), not the GitHub permissions — the request never reached GitHub.',
     fix: 'Refresh the OIDC token (`vercel env pull` locally) and check the connector is linked to the Vercel project this code runs in.',
+    link: 'https://github-tools.com/guide/vercel-connect#setup-checklist',
   },
   CONNECT_USER_NOT_CONNECTED: {
     status: 401,
@@ -35,6 +38,7 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
       `No active GitHub connection for user "${subjectId}".`,
     why: 'The Connect token was requested with a user subject, but that user has not connected their GitHub account to this connector (or revoked the authorization).',
     fix: 'Have the user connect their GitHub account (e.g. from the integrations panel), then retry.',
+    link: 'https://github-tools.com/guide/vercel-connect#per-user-tokens',
   },
   CONNECT_INSTALLATION_REQUIRED: {
     status: 401,
@@ -42,42 +46,49 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
       `The Connect connector has no usable GitHub App installation: ${detail}`,
     why: 'The connector exists but its GitHub App is not installed on the target org or user account.',
     fix: 'Install the connector\'s GitHub App on the org or account the agent needs, from the Vercel Connect dashboard.',
+    link: 'https://github-tools.com/guide/vercel-connect#create-a-github-connector',
   },
   SUBJECT_CONTEXT_REQUIRED: {
     status: 500,
     message: 'connect.subject resolver needs the tool execution context — it is only available while a tool call executes.',
     why: 'The per-caller subject resolver was invoked without an eve ToolContext, which only exists during tool execution.',
     fix: 'Keep `connect.subject` resolution on the tool execute path; use a static subject when no execution context is available.',
+    link: 'https://github-tools.com/frameworks/eve-extension#per-user-tokens',
   },
   UNAUTHORIZED: {
     status: 401,
     message: ({ detail }: { detail: string }) => `GitHub rejected the credentials (401): ${detail}`,
     why: 'The GitHub token is invalid, expired, or revoked.',
     fix: 'Rotate the credential: regenerate the PAT or re-mint the installation token, then update the token source.',
+    link: 'https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api',
   },
   FORBIDDEN: {
     status: 403,
     message: ({ detail }: { detail: string }) => `GitHub refused the request (403): ${detail}`,
     why: 'The token authenticated but lacks permission: a missing scope on this resource, SAML SSO enforcement, or an API that only accepts user access tokens (gists, notifications) called with an installation token.',
     fix: 'Grant the missing permission on the PAT or GitHub App installation; authorize the token for SAML if the org enforces it; use a user access token for gist and notification tools.',
+    link: 'https://github-tools.com/guide/tokens-and-auth#map-permissions-to-presets',
   },
   RATE_LIMITED: {
     status: 429,
     message: ({ detail }: { detail: string }) => `GitHub rate limit exhausted: ${detail}`,
     why: 'The token used up its GitHub API rate limit for this resource.',
     fix: 'Stop calling this tool and retry after the reset timestamp in the message; batch reads or narrow the query to spend fewer requests.',
+    link: 'https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api',
   },
   NOT_FOUND: {
     status: 404,
     message: ({ detail }: { detail: string }) => `GitHub resource not found (404): ${detail}`,
     why: 'Either the resource does not exist, or the token cannot see it — GitHub deliberately returns 404 instead of 403 for private resources the token has no access to.',
     fix: 'Check the owner/repo/number input first. If it is correct, the token lacks access: grant the repository to the PAT or App installation, or use a Connect subject that has access.',
+    link: 'https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource',
   },
   VALIDATION_FAILED: {
     status: 422,
     message: ({ detail }: { detail: string }) => `GitHub rejected the request as invalid (422): ${detail}`,
     why: 'The input was well-formed but GitHub refused it — a duplicate resource, an immutable state transition, or an unresolvable ref.',
     fix: 'The embedded GitHub message names the offending field or state; adjust the input and retry.',
+    link: 'https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#validation-failed',
   },
 })
 
