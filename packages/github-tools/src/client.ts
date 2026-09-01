@@ -1,6 +1,6 @@
 import { Octokit } from 'octokit'
+import { toGithubToolsError } from './core/errors'
 import {
-  enrichGithubRateLimitError,
   finishGithubResult,
   parseGithubRateLimit,
   recordGithubRateLimit,
@@ -32,7 +32,7 @@ export function createOctokit(token: string): Octokit {
   octokit.hook.error('request', (error) => {
     const rateLimit = parseGithubRateLimit(errorResponseHeaders(error))
     if (rateLimit) recordGithubRateLimit(octokit, errorResponseHeaders(error))
-    throw enrichGithubRateLimitError(error, rateLimit)
+    throw toGithubToolsError(error, rateLimit)
   })
 
   return octokit

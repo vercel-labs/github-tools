@@ -1,7 +1,7 @@
+import { githubToolsErrors } from './errors'
+
 export type GithubTokenInput = string | (() => Promise<string>)
 export type GithubTokenResolver = () => Promise<string>
-
-const TOKEN_REQUIRED_ERROR = 'GitHub token is required. Pass it as `token` or set the GITHUB_TOKEN environment variable.'
 
 /**
  * Normalizes a token string, async token provider, or `process.env.GITHUB_TOKEN`
@@ -15,7 +15,7 @@ export function createGithubTokenResolver(token?: GithubTokenInput): GithubToken
     return async () => {
       const resolvedToken = await token()
       if (!resolvedToken) {
-        throw new Error(TOKEN_REQUIRED_ERROR)
+        throw githubToolsErrors.TOKEN_REQUIRED()
       }
       return resolvedToken
     }
@@ -23,7 +23,7 @@ export function createGithubTokenResolver(token?: GithubTokenInput): GithubToken
 
   const resolvedToken = token || process.env.GITHUB_TOKEN
   if (!resolvedToken) {
-    throw new Error(TOKEN_REQUIRED_ERROR)
+    throw githubToolsErrors.TOKEN_REQUIRED()
   }
   return async () => resolvedToken
 }

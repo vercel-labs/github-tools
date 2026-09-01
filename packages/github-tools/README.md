@@ -198,6 +198,14 @@ result.rateLimit?.remaining
 
 `resource` is `core`, `search`, or `graphql`. On HTTP 403/429 the thrown error message also includes remaining/reset.
 
+## Errors
+
+Classifiable failures become structured [evlog](https://evlog.dev) catalog errors with a stable `code`, a `why` (technical cause), and a `fix` (actionable remedy) — written so a model recovers instead of hallucinating. The two causes models get wrong most often are spelled out: GitHub answers 404 for private resources the token cannot see (`NOT_FOUND`), and an expired `VERCEL_OIDC_TOKEN` is caught before any request with the exact expiry time (`OIDC_TOKEN_EXPIRED`) instead of surfacing as an opaque Connect 403.
+
+Codes: `TOKEN_REQUIRED`, `OIDC_TOKEN_EXPIRED`, `CONNECT_NOT_AUTHORIZED`, `CONNECT_USER_NOT_CONNECTED`, `CONNECT_INSTALLATION_REQUIRED`, `SUBJECT_CONTEXT_REQUIRED`, `UNAUTHORIZED` (401), `FORBIDDEN` (403), `RATE_LIMITED` (403/429), `NOT_FOUND` (404), `VALIDATION_FAILED` (422). Unmapped statuses pass through unchanged; the original Octokit error stays reachable as `cause`.
+
+In the eve extension, a failing tool returns `{ error: { code, message, why, fix } }` to the model. With `generateText`/`streamText`, the framework forwards `error.message` (self-sufficient by design); use evlog's `parseError(error)` when you need the full structure. The catalog is exported as `githubToolsErrors`. See the [errors guide](https://github-tools.com/guide/errors).
+
 ## Commit Attribution
 
 Control how commits are attributed when using `createOrUpdateFile` or `mergePullRequest`:

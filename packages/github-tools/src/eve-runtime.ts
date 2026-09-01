@@ -17,6 +17,7 @@ export {
 } from './eve/build'
 export { mapEveApprovalValue, resolveEveApproval, resolveEveToolApproval, isEveApprovalDisabled } from './eve/approval'
 export { resolveGithubToken } from './core/token'
+export { githubToolsErrors } from './core/errors'
 export type {
   EveApprovalConfig,
   EveApprovalValue,

@@ -1,14 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { getToken } = vi.hoisted(() => ({
-  getToken: vi.fn(async () => 'ghs_connect_token'),
-}))
+const { getToken, ConnectError, UserAuthorizationRequiredError, ConnectorInstallationRequiredError } = vi.hoisted(() => {
+  class ConnectError extends Error {
+    readonly status?: number
+    constructor(message: string, options?: { status?: number }) {
+      super(message)
+      this.status = options?.status
+    }
+  }
+  class UserAuthorizationRequiredError extends ConnectError {}
+  class ConnectorInstallationRequiredError extends ConnectError {}
+  return {
+    getToken: vi.fn(async () => 'ghs_connect_token'),
+    ConnectError,
+    UserAuthorizationRequiredError,
+    ConnectorInstallationRequiredError,
+  }
+})
 
 vi.mock('@vercel/connect', () => ({
   getToken,
+  ConnectError,
+  UserAuthorizationRequiredError,
+  ConnectorInstallationRequiredError,
 }))
 
 import { connectGithubToken } from './token'
+
+function fakeJwt(expiresAt: Date): string {
+  const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url')
+  const exp = Math.floor(expiresAt.getTime() / 1000)
+  return `${encode({ alg: 'none' })}.${encode({ exp })}.signature`
+}
 
 function resolveConnectToken(
   connector: Parameters<typeof connectGithubToken>[0],
@@ -187,6 +210,68 @@ describe('connectGithubToken', () => {
       expect.objectContaining({ subject: { type: 'app' } }),
       undefined,
     )
+  })
+
+  it('throws OIDC_TOKEN_EXPIRED for an expired VERCEL_OIDC_TOKEN without calling Connect', async () => {
+    const expiredAt = new Date('2026-01-01T00:00:00.000Z')
+    vi.stubEnv('VERCEL_OIDC_TOKEN', fakeJwt(expiredAt))
+    const resolve = resolveConnectToken('github/my-connector', { preset: 'repo-explorer' })
+
+    await expect(resolve()).rejects.toMatchObject({
+      code: 'github_tools.OIDC_TOKEN_EXPIRED',
+      message: expect.stringContaining('2026-01-01T00:00:00.000Z'),
+      fix: expect.stringContaining('vercel env pull'),
+    })
+    expect(getToken).not.toHaveBeenCalled()
+    vi.unstubAllEnvs()
+  })
+
+  it('passes a still-valid VERCEL_OIDC_TOKEN through unchanged', async () => {
+    const token = fakeJwt(new Date(Date.now() + 3_600_000))
+    vi.stubEnv('VERCEL_OIDC_TOKEN', token)
+    const resolve = resolveConnectToken('github/my-connector', { preset: 'repo-explorer' })
+
+    await resolve()
+    expect(getToken).toHaveBeenCalledWith(
+      'github/my-connector',
+      expect.anything(),
+      { vercelToken: token },
+    )
+    vi.unstubAllEnvs()
+  })
+
+  it('maps UserAuthorizationRequiredError to CONNECT_USER_NOT_CONNECTED with the subject id', async () => {
+    getToken.mockRejectedValueOnce(new UserAuthorizationRequiredError('authorization required'))
+    const resolve = resolveConnectToken('github/my-connector', {
+      preset: 'issue-triage',
+      params: { subject: { type: 'user', id: 'user_123' } },
+    })
+
+    await expect(resolve()).rejects.toMatchObject({
+      code: 'github_tools.CONNECT_USER_NOT_CONNECTED',
+      message: expect.stringContaining('user_123'),
+      fix: expect.stringContaining('connect their GitHub account'),
+    })
+  })
+
+  it('maps ConnectorInstallationRequiredError to CONNECT_INSTALLATION_REQUIRED', async () => {
+    getToken.mockRejectedValueOnce(new ConnectorInstallationRequiredError('installation required'))
+    const resolve = resolveConnectToken('github/my-connector', { preset: 'issue-triage' })
+
+    await expect(resolve()).rejects.toMatchObject({
+      code: 'github_tools.CONNECT_INSTALLATION_REQUIRED',
+      message: expect.stringContaining('installation required'),
+    })
+  })
+
+  it('maps a Connect 403 to CONNECT_NOT_AUTHORIZED and names the process identity', async () => {
+    getToken.mockRejectedValueOnce(new ConnectError('Not authorized', { status: 403 }))
+    const resolve = resolveConnectToken('github/my-connector', { preset: 'issue-triage' })
+
+    await expect(resolve()).rejects.toMatchObject({
+      code: 'github_tools.CONNECT_NOT_AUTHORIZED',
+      why: expect.stringContaining('never reached GitHub'),
+    })
   })
 
   it('re-resolves a function connector on every call', async () => {

@@ -32,6 +32,8 @@ minimumReleaseAgeExclude:
   - 'ai'
   - 'eve'
   - 'create-eve'
+  # HugoRCD
+  - 'evlog'
 
 overrides:
   '@ai-sdk/vue>ai': 7.0.70
