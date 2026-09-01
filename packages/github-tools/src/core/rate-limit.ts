@@ -101,26 +101,8 @@ export function withComposedRateLimit<T extends Record<string, unknown>>(result:
   return attachRateLimit(stripRateLimitDeep(result), pickRateLimitDeep(result))
 }
 
-function errorStatus(error: unknown): number | undefined {
-  if (error == null || typeof error !== 'object' || !('status' in error)) return undefined
-  const status = (error as { status?: unknown }).status
-  return typeof status === 'number' ? status : undefined
-}
-
 export function formatRateLimitSuffix(rateLimit: GithubRateLimit): string {
   const resource = rateLimit.resource ? ` ${rateLimit.resource}` : ''
   const retry = rateLimit.retryAfter != null ? `, retry after ${rateLimit.retryAfter}s` : ''
   return `GitHub rate limit${resource}: ${rateLimit.remaining}/${rateLimit.limit} remaining, resets at ${rateLimit.reset}${retry}`
-}
-
-export function enrichGithubRateLimitError(error: unknown, rateLimit: GithubRateLimit | undefined): unknown {
-  const status = errorStatus(error)
-  if (!rateLimit || (status !== 403 && status !== 429) || !(error instanceof Error)) {
-    return error
-  }
-  const suffix = formatRateLimitSuffix(rateLimit)
-  if (!error.message.includes(suffix)) {
-    error.message = `${error.message} (${suffix})`
-  }
-  return error
 }

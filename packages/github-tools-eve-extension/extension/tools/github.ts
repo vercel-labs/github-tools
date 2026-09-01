@@ -2,6 +2,7 @@ import { connectGithubToken } from '@github-tools/sdk/connect'
 import {
   executeGithubEveTool,
   formatGithubEveToolOutput,
+  githubToolsErrors,
   GITHUB_WRITE_TOOLS,
   isEveApprovalDisabled,
   listEveToolDescriptors,
@@ -97,7 +98,7 @@ function writeToolName(name: GithubToolName): GithubWriteToolName | undefined {
 
 function requireToolContext(ctx: ToolContext | undefined): ToolContext {
   if (!ctx) {
-    throw new Error('connect.subject resolver needs the tool execution context — it is only available while a tool call executes')
+    throw githubToolsErrors.SUBJECT_CONTEXT_REQUIRED()
   }
   return ctx
 }

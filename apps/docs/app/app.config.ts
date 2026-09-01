@@ -267,6 +267,8 @@ export default defineAppConfig({
           { label: 'Commit Attribution', to: '/guide/commit-attribution' },
           { label: 'Tokens & Auth', to: '/guide/tokens-and-auth' },
           { label: 'Vercel Connect', to: '/guide/vercel-connect' },
+          { label: 'Working Context', to: '/guide/working-context' },
+          { label: 'Errors', to: '/guide/errors' },
         ],
       },
       {

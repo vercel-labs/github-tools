@@ -1,3 +1,4 @@
+import { EvlogError, toModelErrorPayload } from '../core/errors'
 import { resolveGithubToken } from '../core/token'
 import { createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
 
@@ -26,6 +27,10 @@ export async function runGithubToolStep(
   } catch (error) {
     // Eve's tool-loop logs thrown execute errors but does not always append a
     // tool_result. Returning a payload keeps the Anthropic tool_use/tool_result pairing intact.
+    // Catalog errors keep their { code, why, fix, link } structure so the model can recover.
+    if (EvlogError.isEvlogError(error)) {
+      return { error: toModelErrorPayload(error) }
+    }
     return { error: error instanceof Error ? error.message : String(error) }
   }
 }
