@@ -1,5 +1,17 @@
 # @github-tools/eve-extension
 
+## 0.7.1
+
+### Patch Changes
+
+- [#142](https://github.com/vercel-labs/github-tools/pull/142) [`542c417`](https://github.com/vercel-labs/github-tools/commit/542c4178fdfba3a103966400701ada0429188bbc) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Rebuild the extension against eve 0.53. eve 0.50 changed the dynamic-tool capability contract and requires extensions built against the earlier contract to be rebuilt, so agents on eve 0.50 or newer need this release.
+  
+  `eve` is now declared as a `*` peer dependency instead of `>=0.44.0 <0.48.0`. The consuming agent supplies the runtime copy of eve, and eve validates the extension's generated capability metadata at build time rather than an npm range, so a new eve release no longer produces a peer conflict. The exact `eve` devDependency is the authoring and build version.
+  
+  `engines.node` widens from `24.x` to `>=24`. Mount configuration and tool behavior are unchanged.
+- Updated dependencies [[`542c417`](https://github.com/vercel-labs/github-tools/commit/542c4178fdfba3a103966400701ada0429188bbc)]:
+  - @github-tools/sdk@1.16.1
+
 ## 0.7.0
 
 ### Minor Changes

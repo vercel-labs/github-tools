@@ -1,5 +1,13 @@
 # @github-tools/sdk
 
+## 1.16.1
+
+### Patch Changes
+
+- [#142](https://github.com/vercel-labs/github-tools/pull/142) [`542c417`](https://github.com/vercel-labs/github-tools/commit/542c4178fdfba3a103966400701ada0429188bbc) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Widen the optional `eve` peer dependency from `>=0.44.0 <0.48.0` to `>=0.44.0`, so `@github-tools/sdk/eve-runtime` and the deprecated `@github-tools/sdk/eve` / `@github-tools/sdk/connect/eve` entry points install against current eve releases without a peer conflict. Verified against eve 0.53.
+  
+  These entry points keep their existing behavior and stay deprecated in favor of `@github-tools/eve-extension`.
+
 ## 1.16.0
 
 ### Minor Changes
