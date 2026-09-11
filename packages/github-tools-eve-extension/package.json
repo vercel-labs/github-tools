@@ -14,7 +14,7 @@
   },
   "type": "module",
   "engines": {
-    "node": "24.x"
+    "node": ">=24"
   },
   "eve": {
     "extension": {
@@ -53,11 +53,11 @@
   "license": "MIT",
   "dependencies": {
     "@github-tools/sdk": "workspace:*",
-    "zod": "^4.3.6"
+    "zod": "^4.5.4"
   },
   "peerDependencies": {
     "@vercel/connect": ">=0.3.2",
-    "eve": ">=0.44.0 <0.48.0"
+    "eve": "*"
   },
   "peerDependenciesMeta": {
     "@vercel/connect": {
@@ -65,14 +65,14 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
-    "@vercel/connect": "^0.6.1",
-    "eslint": "^10.8.0",
-    "eve": "^0.46.1",
+    "@types/node": "^26.5.0",
+    "@vercel/connect": "^2.0.4",
+    "eslint": "^10.10.0",
+    "eve": "0.53.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.65.0"
+    "typescript-eslint": "^8.70.0"
   },
-  "packageManager": "pnpm@10.30.2",
+  "packageManager": "pnpm@11.1.3",
   "publishConfig": {
     "access": "public"
   }

@@ -72,7 +72,7 @@ pnpm build && pnpm lint && pnpm typecheck && pnpm test
 
 ### eve extension durable callbacks
 
-`packages/github-tools-eve-extension/extension/tools/github.ts` must set `execute`, `toModelOutput`, and `approval` as **direct** `defineTool` properties with inline functions. Spreading those keys, or passing `resolveEveApproval(...)` / `always()` as the property value, leaves them without a durable descriptor: on eve 0.44+ the resolver then drops every `github__*` tool. `test/durable-define-tool.test.ts` fails CI if that pattern returns.
+`packages/github-tools-eve-extension/extension/tools/github.ts` must set `execute`, `toModelOutput`, and `approval` as **direct** `defineTool` properties with inline functions. Spreading those keys, or passing `resolveEveApproval(...)` / `always()` as the property value, leaves them without a durable descriptor, and eve rejects a dynamic tool whose callback is missing one. The same rule covers `approvalKey` and the `label` callbacks if they are ever authored here. `test/durable-define-tool.test.ts` fails CI if that pattern returns.
 
 ## Pull requests
 

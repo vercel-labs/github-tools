@@ -16,18 +16,18 @@
     "@resvg/resvg-js": "^2.6.2",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "better-sqlite3": "^12.11.1",
+    "better-sqlite3": "^13.0.3",
     "docus": "^5.13.0",
-    "nuxt": "^4.5.1",
-    "satori": "^0.29.0",
-    "zod": "^4.4.3",
+    "nuxt": "^4.5.2",
+    "satori": "^0.33.4",
+    "zod": "^4.5.4",
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.16.0",
-    "eslint": "^10.8.0",
+    "@nuxt/eslint": "^1.17.0",
+    "eslint": "^10.10.0",
     "nuxtseo-layer-devtools": "5.3.2",
     "typescript": "^6.0.3"
   },
-  "packageManager": "pnpm@10.30.2"
+  "packageManager": "pnpm@11.1.3"
 }

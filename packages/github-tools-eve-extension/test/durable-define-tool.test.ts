@@ -21,7 +21,11 @@ import {
   type ObjectLiteralExpression,
 } from 'typescript'
 
-const CALLBACKS = ['execute', 'toModelOutput', 'approval'] as const
+// Every callback phase eve stamps a durable descriptor for
+// (`collectDurableDynamicToolCallbacks`). `execute` is the only required one.
+const CALLBACKS = ['execute', 'toModelOutput', 'approval', 'approvalKey', 'label'] as const
+const REQUIRED_CALLBACKS = ['execute'] as const
+const LABEL_CALLBACKS = ['start', 'delta', 'complete'] as const
 const sourcePath = join(dirname(fileURLToPath(import.meta.url)), '../extension/tools/github.ts')
 
 function walk(node: Node, visit: (node: Node) => void) {
@@ -88,8 +92,32 @@ function inspectDefineToolObject(arg: ObjectLiteralExpression, sourceText: (node
   return { spreadKeys, direct }
 }
 
+function assertLabelCallbacksInline(label: Expression | Node) {
+  if (!isObjectLiteralExpression(label)) {
+    assert.ok(
+      isDirectFunction(label),
+      'defineTool().label must be an object literal or an inline function',
+    )
+    return
+  }
+
+  for (const prop of label.properties) {
+    assert.ok(
+      !isSpreadAssignment(prop),
+      'defineTool().label must not spread its callbacks — eve cannot stamp a durable descriptor',
+    )
+    const key = isPropertyAssignment(prop) || isMethodDeclaration(prop) ? propertyName(prop.name) : undefined
+    if (!key || !(LABEL_CALLBACKS as readonly string[]).includes(key)) continue
+    const init = isPropertyAssignment(prop) ? prop.initializer : prop
+    assert.ok(
+      isDirectFunction(init),
+      `defineTool().label.${key} must be an inline function or identifier, not ${init.kind}`,
+    )
+  }
+}
+
 describe('defineTool durable callbacks', () => {
-  it('registers execute, toModelOutput, and approval as direct inline functions', () => {
+  it('authors every durable callback as a direct inline function', () => {
     const text = readFileSync(sourcePath, 'utf8')
     const source = createSourceFile(sourcePath, text, ScriptTarget.Latest, true)
     const calls = collectDefineToolCalls(source)
@@ -108,9 +136,17 @@ describe('defineTool durable callbacks', () => {
         `defineTool() must not spread ${spreadKeys.join(', ')} — eve cannot stamp a durable descriptor`,
       )
 
+      for (const key of REQUIRED_CALLBACKS) {
+        assert.ok(direct.get(key), `defineTool() must set ${key} as a direct property`)
+      }
+
       for (const key of CALLBACKS) {
         const init = direct.get(key)
-        assert.ok(init, `defineTool() must set ${key} as a direct property`)
+        if (!init) continue
+        if (key === 'label') {
+          assertLabelCallbacksInline(init)
+          continue
+        }
         assert.ok(
           isDirectFunction(init),
           `defineTool().${key} must be an inline function or identifier, not ${init.kind}`,

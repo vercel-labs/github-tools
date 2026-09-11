@@ -100,7 +100,7 @@ Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security
 
 ## eve extension durable callbacks (`packages/github-tools-eve-extension`)
 
-On eve 0.44+, a missing durable descriptor on **any** dynamic-tool callback (`execute`, `toModelOutput`, `approval` / `approvalRequest`) discards the **entire** GitHub toolset. In `extension/tools/github.ts`, those three must be **direct** `defineTool` properties with inline functions (or identifiers). Conditional spreads and call expressions (`resolveEveApproval(...)`, `always()`) are invisible to eve's stamp. Callbacks may only close over a serializable tool `name` and re-read config via `buildSessionOptions()`. CI enforces this via `test/durable-define-tool.test.ts`. A scheduled canary (`.github/workflows/eve-canary.yml`) additionally builds and tests against `eve@latest` daily to catch upstream drift the static guard cannot see.
+eve rejects a dynamic tool whose callback has no durable descriptor. It stamps one per callback phase (`execute`, `toModelOutput`, `approval` / `approvalRequest`, `approvalKey`, and the `label` callbacks), and `execute` is the only required phase. In `extension/tools/github.ts`, every authored callback must be a **direct** `defineTool` property with an inline function (or identifier). Conditional spreads and call expressions (`resolveEveApproval(...)`, `always()`) are invisible to eve's stamp. Callbacks may only close over a serializable tool `name` and re-read config via `buildSessionOptions()`. CI enforces this via `test/durable-define-tool.test.ts`. A scheduled canary (`.github/workflows/eve-canary.yml`) additionally builds and tests against `eve@latest` daily to catch upstream drift the static guard cannot see.
 
 ## Chat App Architecture (`apps/chat`)
 
@@ -114,7 +114,7 @@ On eve 0.44+, a missing durable descriptor on **any** dynamic-tool callback (`ex
 
 - **TypeScript**: Strict mode, ESNext target, `verbatimModuleSyntax: true`
 - **ESLint**: `typescript-eslint` flat config for SDK; `@nuxt/eslint` with stylistic rules for apps (no trailing commas, 1tbs brace style)
-- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath; `@github-tools/eve-extension` requires `eve` `>=0.44`
+- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath; `@github-tools/eve-extension` declares `eve` as `*` (the consumer supplies the runtime copy; eve validates the built capability metadata) and pins an exact `eve` devDependency as its authoring/build version
 
 ### Code style — no slop
 

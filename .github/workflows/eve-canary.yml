@@ -1,10 +1,10 @@
 name: eve canary
 
-# The durable-stamp contract this repo depends on is not part of eve's
-# documented API, and eve ships multiple releases a week. The AST guard in
-# packages/github-tools-eve-extension/test/ only encodes the rules we know
-# about; this job builds and tests against eve@latest on a schedule so
-# upstream drift (as at eve 0.44) fails here before it reaches consumers.
+# eve ships multiple releases a week, and the durable-callback contract has
+# changed shape before (0.44 stamping, 0.50 capability format). The AST guard in
+# packages/github-tools-eve-extension/test/ only checks the authored source;
+# this job builds and tests against eve@latest on a schedule so upstream drift
+# fails here before it reaches consumers.
 
 on:
   schedule:

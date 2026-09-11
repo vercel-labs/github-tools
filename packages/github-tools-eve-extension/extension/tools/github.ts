@@ -23,9 +23,9 @@ import extension from '../extension'
 /**
  * Rebuild options from extension config on every call.
  * Durable `execute` / `toModelOutput` / `approval` only close over a serializable
- * tool `name` (#51, #99). Those three must be direct `defineTool` properties —
- * a spread or call expression is invisible to eve's stamp, and 0.44+ then
- * drops the whole toolset.
+ * tool `name` (#51, #99). Those must be direct `defineTool` properties — a spread
+ * or call expression is invisible to eve's stamp, and eve rejects a dynamic tool
+ * whose callback has no durable descriptor.
  */
 function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   const {
