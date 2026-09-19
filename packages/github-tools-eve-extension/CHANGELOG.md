@@ -1,5 +1,11 @@
 # @github-tools/eve-extension
 
+## 0.7.2
+
+### Patch Changes
+
+- [#146](https://github.com/vercel-labs/github-tools/pull/146) [`56662a5`](https://github.com/vercel-labs/github-tools/commit/56662a518bd338adaec3098b8d5d040f2b63ad73) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Rebuild the extension against eve 0.62 and preserve dynamic input and output validation across durable replay. Tool schemas now use `defineDurableSchema` with a serializable tool-name closure, preventing eve 0.59 and newer from rejecting GitHub tools whose Zod schemas were captured through resolver-local descriptors.
+
 ## 0.7.1
 
 ### Patch Changes
