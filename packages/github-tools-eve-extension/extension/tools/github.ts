@@ -17,15 +17,14 @@ import {
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import type { ApprovalContext } from 'eve/tools/approval'
-import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
+import { defineDurableSchema, defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
 import extension from '../extension'
 
 /**
  * Rebuild options from extension config on every call.
- * Durable `execute` / `toModelOutput` / `approval` only close over a serializable
- * tool `name` (#51, #99). Those must be direct `defineTool` properties — a spread
- * or call expression is invisible to eve's stamp, and eve rejects a dynamic tool
- * whose callback has no durable descriptor.
+ * Durable callbacks and schemas only close over a serializable tool `name`
+ * (#51, #99). Callbacks must be direct `defineTool` properties, while live
+ * schemas use `defineDurableSchema`; eve rejects either without a descriptor.
  */
 function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   const {
@@ -128,6 +127,27 @@ function runGithubEveApproval(name: GithubToolName, ctx: ApprovalContext) {
   return policy(ctx)
 }
 
+function buildGithubEveInputSchema({ name }: { name: GithubToolName }) {
+  const descriptor = listEveToolDescriptors({
+    ...buildSessionOptions(),
+    preset: undefined,
+    include: [name],
+    exclude: undefined,
+  })[0]
+  if (!descriptor) {
+    throw new Error(`GitHub tool descriptor "${name}" is not available`)
+  }
+  return descriptor.inputSchema
+}
+
+function buildGithubEveOutputSchema({ name }: { name: GithubToolName }) {
+  const outputSchema = buildSessionOptions().overrides?.[name]?.outputSchema
+  if (!outputSchema) {
+    throw new Error(`GitHub tool output schema override "${name}" is not available`)
+  }
+  return outputSchema
+}
+
 export default defineDynamic({
   events: {
     // Re-resolve each model step (not once per session) so tool registration
@@ -144,11 +164,17 @@ export default defineDynamic({
 
         tools[name] = defineTool({
           description: override?.description ?? entry.description,
-          inputSchema: entry.inputSchema,
+          inputSchema: defineDurableSchema({
+            closure: { name },
+            schema: buildGithubEveInputSchema,
+          }),
           approval: (ctx) => runGithubEveApproval(name, ctx),
           toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
           ...(override?.outputSchema !== undefined && {
-            outputSchema: override.outputSchema,
+            outputSchema: defineDurableSchema({
+              closure: { name },
+              schema: buildGithubEveOutputSchema,
+            }),
           }),
           execute: async (input, ctx) => runGithubEveTool(name, input, ctx),
         })

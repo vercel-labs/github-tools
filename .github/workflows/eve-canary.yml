@@ -44,13 +44,35 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Bump eve to latest everywhere
+      - name: Bump eve and AI SDK to a coherent latest pair
         run: |
-          pnpm -r up 'eve@latest'
-          pnpm ls -r --depth -1 eve || true
+          AI_VERSION="$(npm view ai version)"
+          export AI_VERSION
+          node <<'NODE'
+          const fs = require('node:fs')
+          const path = 'pnpm-workspace.yaml'
+          const source = fs.readFileSync(path, 'utf8')
+          const updated = source.replace(
+            /('@ai-sdk\/workflow>ai': )\S+/,
+            (_, prefix) => `${prefix}${process.env.AI_VERSION}`,
+          )
+          if (updated === source) throw new Error('AI SDK workflow override was not updated')
+          fs.writeFileSync(path, updated)
+          NODE
+          pnpm -r up \
+            'eve@latest' \
+            "ai@$AI_VERSION" \
+            '@ai-sdk/gateway@latest' \
+            '@ai-sdk/vue@latest' \
+            '@ai-sdk/provider@latest' \
+            '@ai-sdk/provider-utils@latest'
+          pnpm ls -r --depth -1 eve ai || true
 
       - name: Build
-        run: pnpm exec turbo run build --filter=@github-tools/sdk --filter=@github-tools/eve-extension
+        run: pnpm exec turbo run build --filter=@github-tools/eve
+
+      - name: Verify durable schema transform
+        run: node scripts/verify-eve-schema-transform.mjs examples/eve/.output/server/index.mjs
 
       - name: Typecheck
         run: pnpm exec turbo run typecheck --filter=@github-tools/sdk --filter=@github-tools/eve-extension

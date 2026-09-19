@@ -101,7 +101,10 @@ function isErrorPayload(output: unknown): output is { error: string } {
   )
 }
 
-export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
+export function createToolRegistry(
+  ctx: ToolBuildContext,
+  names: readonly GithubToolName[] = ALL_GITHUB_TOOL_NAMES,
+): ToolRegistryEntry[] {
   // Commit-identity options are session-level, not model inputs, so they ride
   // alongside the token instead of living in the tool's input schema.
   const commitExtras: Partial<Record<GithubToolName, Record<string, unknown>>> = {
@@ -109,7 +112,7 @@ export function createToolRegistry(ctx: ToolBuildContext): ToolRegistryEntry[] {
     mergePullRequest: { coAuthors: ctx.coAuthors },
   }
 
-  const entries = ALL_GITHUB_TOOL_NAMES.map((name): ToolRegistryEntry => {
+  const entries = names.map((name): ToolRegistryEntry => {
     const descriptor = GITHUB_TOOL_CATALOG[name]
     // Argument types vary per tool; `withToken` re-narrows at the dispatch boundary.
     const core = descriptor.core as (args: Record<string, unknown> & { token: string }) => Promise<unknown>

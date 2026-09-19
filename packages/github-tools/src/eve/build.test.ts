@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { PRESET_TOOLS } from '../core/presets'
 import * as repositoryCore from '../core/repository'
 import { ALL_GITHUB_TOOL_NAMES } from '../core/tool-names'
-import { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, executeGithubEveTool, formatGithubEveToolOutput, hasGithubEveToolModelOutput, listResolvedEveToolNames } from './build'
+import { buildEveToolDefinition, buildEveToolMap, createEveGithubToolsDynamic, executeGithubEveTool, formatGithubEveToolOutput, hasGithubEveToolModelOutput, listEveToolDescriptors, listResolvedEveToolNames } from './build'
 import { createToolRegistry } from './registry'
 import { getEveTools } from './load-eve'
 
@@ -107,6 +107,13 @@ describe('createGithubTools eve integration', () => {
   it('resolves the same `include` allow-list via listResolvedEveToolNames', () => {
     expect(listResolvedEveToolNames({ include: ['getRepository', 'mergePullRequest'] }).sort())
       .toEqual(['getRepository', 'mergePullRequest'])
+  })
+
+  it('builds descriptors only for resolved tool names', () => {
+    expect(listEveToolDescriptors({
+      token: 'ghp_test',
+      include: ['getRepository'],
+    }).map(entry => entry.name)).toEqual(['getRepository'])
   })
 
   it('unions preset + include and applies exclude via listResolvedEveToolNames', () => {

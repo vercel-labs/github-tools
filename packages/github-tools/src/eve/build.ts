@@ -158,9 +158,8 @@ export function listEveToolDescriptors(options: EveGithubToolsOptions = {}) {
     coAuthors: options.coAuthors,
   }
 
-  const isAllowed = resolveAllowedToolNames(options)
-  return createToolRegistry(ctx)
-    .filter(entry => isAllowed(entry.name))
+  const names = listResolvedEveToolNames(options)
+  return createToolRegistry(ctx, names)
     .map(entry => ({
       name: entry.name,
       description: entry.description,

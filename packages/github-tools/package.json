@@ -97,14 +97,14 @@
     }
   },
   "devDependencies": {
-    "@ai-sdk/provider": "^4.0.13",
-    "@ai-sdk/provider-utils": "^5.0.39",
+    "@ai-sdk/provider": "^4.0.17",
+    "@ai-sdk/provider-utils": "^5.0.45",
     "@ai-sdk/workflow": "^1.0.70",
     "@types/node": "^26.5.0",
     "@vercel/connect": "^2.0.4",
-    "ai": "^7.0.97",
+    "ai": "^7.0.107",
     "eslint": "^10.10.0",
-    "eve": "^0.53.1",
+    "eve": "^0.62.0",
     "tsdown": "^0.23.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",

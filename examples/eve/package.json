@@ -12,8 +12,8 @@
   "dependencies": {
     "@github-tools/eve-extension": "workspace:*",
     "@vercel/connect": "^2.0.4",
-    "ai": "^7.0.97",
-    "eve": "^0.53.1",
+    "ai": "^7.0.107",
+    "eve": "^0.62.0",
     "zod": "^4.5.4"
   }
 }

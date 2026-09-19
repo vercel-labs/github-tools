@@ -13,6 +13,7 @@ import {
   isMethodDeclaration,
   isObjectLiteralExpression,
   isPropertyAssignment,
+  isShorthandPropertyAssignment,
   isSpreadAssignment,
   ScriptTarget,
   type CallExpression,
@@ -26,6 +27,7 @@ import {
 const CALLBACKS = ['execute', 'toModelOutput', 'approval', 'approvalKey', 'label'] as const
 const REQUIRED_CALLBACKS = ['execute'] as const
 const LABEL_CALLBACKS = ['start', 'delta', 'complete'] as const
+const SCHEMAS = ['inputSchema', 'outputSchema'] as const
 const sourcePath = join(dirname(fileURLToPath(import.meta.url)), '../extension/tools/github.ts')
 
 function walk(node: Node, visit: (node: Node) => void) {
@@ -49,6 +51,39 @@ function collectDefineToolCalls(root: Node): CallExpression[] {
     }
   })
   return calls
+}
+
+function collectSchemaInitializers(root: Node): Map<string, Expression[]> {
+  const schemas = new Map<string, Expression[]>()
+  walk(root, (node) => {
+    if (!isPropertyAssignment(node)) return
+    const key = propertyName(node.name)
+    if (!key || !(SCHEMAS as readonly string[]).includes(key)) return
+    const values = schemas.get(key) ?? []
+    values.push(node.initializer)
+    schemas.set(key, values)
+  })
+  return schemas
+}
+
+function assertDurableSchema(init: Expression, key: string) {
+  assert.ok(
+    isCallExpression(init)
+    && isIdentifier(init.expression)
+    && init.expression.text === 'defineDurableSchema',
+    `defineTool().${key} must use defineDurableSchema(), not ${init.kind}`,
+  )
+
+  const options = init.arguments[0]
+  assert.ok(options && isObjectLiteralExpression(options), `defineTool().${key} must configure defineDurableSchema() inline`)
+  const closure = options.properties.find(prop => isPropertyAssignment(prop) && propertyName(prop.name) === 'closure')
+  assert.ok(closure && isPropertyAssignment(closure) && isObjectLiteralExpression(closure.initializer), `defineTool().${key} must set an inline closure`)
+  assert.equal(closure.initializer.properties.length, 1, `defineTool().${key} closure must contain only name`)
+  const name = closure.initializer.properties[0]
+  assert.ok(isShorthandPropertyAssignment(name) && name.name.text === 'name', `defineTool().${key} closure must contain only name`)
+
+  const schema = options.properties.find(prop => isPropertyAssignment(prop) && propertyName(prop.name) === 'schema')
+  assert.ok(schema && isPropertyAssignment(schema) && isIdentifier(schema.initializer), `defineTool().${key} schema must be a module-level function`)
 }
 
 function callbackKeysInSpread(spread: Expression, sourceText: (node: Node) => string): string[] {
@@ -116,7 +151,7 @@ function assertLabelCallbacksInline(label: Expression | Node) {
   }
 }
 
-describe('defineTool durable callbacks', () => {
+describe('defineTool durable callbacks and schemas', () => {
   it('authors every durable callback as a direct inline function', () => {
     const text = readFileSync(sourcePath, 'utf8')
     const source = createSourceFile(sourcePath, text, ScriptTarget.Latest, true)
@@ -151,6 +186,25 @@ describe('defineTool durable callbacks', () => {
           isDirectFunction(init),
           `defineTool().${key} must be an inline function or identifier, not ${init.kind}`,
         )
+      }
+    }
+  })
+
+  it('wraps every live schema in defineDurableSchema', () => {
+    const text = readFileSync(sourcePath, 'utf8')
+    const source = createSourceFile(sourcePath, text, ScriptTarget.Latest, true)
+    const calls = collectDefineToolCalls(source)
+    assert.ok(calls.length > 0, 'expected at least one defineTool() call in github.ts')
+
+    for (const call of calls) {
+      const arg = call.arguments[0]
+      assert.ok(arg && isObjectLiteralExpression(arg), 'defineTool() must take an object literal')
+      const schemas = collectSchemaInitializers(arg)
+      assert.ok(schemas.get('inputSchema')?.length, 'defineTool() must set inputSchema')
+      for (const [key, initializers] of schemas) {
+        for (const init of initializers) {
+          assertDurableSchema(init, key)
+        }
       }
     }
   })

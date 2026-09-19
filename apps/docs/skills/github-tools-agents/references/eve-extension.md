@@ -14,7 +14,7 @@ Use `@github-tools/eve-extension` when the user builds an [eve](https://eve.dev)
 pnpm add @github-tools/eve-extension eve
 ```
 
-- **`ai` v7** required (transitive `eve` peer); the extension declares `eve` as `*` and eve checks its generated capability metadata, not an npm range. Built against eve 0.53
+- **`ai` v7** required (transitive `eve` peer); the extension declares `eve` as `*` and eve checks its generated capability metadata, not an npm range. Built against eve 0.62
 - `GITHUB_TOKEN`, explicit `token`, or a Vercel Connect `connector`
 
 ## Mount under `agent/extensions/`
@@ -55,7 +55,7 @@ export default githubExtension({
 })
 ```
 
-`execute`, `toModelOutput`, and `approval` are direct `defineTool` properties whose callbacks only close over the tool name (a spread or `resolveEveApproval(...)` call is not stamped). `toModelOutput` also strips `rateLimit` from the model-facing payload. Author `overrides.toModelOutput` inline in the agent — a library function will not get a durable descriptor, and eve rejects a dynamic tool whose callback is missing one. Execute failures return `{ error }` so the model still receives a `tool_result` — a structured `{ code, message, why, fix, link }` object for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), a plain string otherwise.
+`execute`, `toModelOutput`, and `approval` are direct `defineTool` properties whose callbacks only close over the tool name (a spread or `resolveEveApproval(...)` call is not stamped). Input schemas and optional output-schema overrides use `defineDurableSchema` with the same name-only closure, preserving validation across replay. `toModelOutput` also strips `rateLimit` from the model-facing payload. Author `overrides.toModelOutput` inline in the agent — a library function will not get a durable descriptor, and eve rejects a dynamic tool whose callback is missing one. Execute failures return `{ error }` so the model still receives a `tool_result` — a structured `{ code, message, why, fix, link }` object for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), a plain string otherwise.
 
 ## Approval
 
