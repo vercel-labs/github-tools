@@ -1,5 +1,11 @@
 # @github-tools/eve-extension
 
+## 0.7.3
+
+### Patch Changes
+
+- [#150](https://github.com/vercel-labs/github-tools/pull/150) [`eed4909`](https://github.com/vercel-labs/github-tools/commit/eed4909b3ed69adcc9d22d214b5ebf22211d0d34) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Rebuild the extension against eve 0.63. eve 0.63.0 dropped tool contracts 44 to 52 (including contract 52, which the 0.7.2 build requires), so `eve build` rejected the published extension on the newest eve; this release lands on the contracts 0.63.0 accepts.
+
 ## 0.7.2
 
 ### Patch Changes
