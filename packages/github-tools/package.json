@@ -104,7 +104,7 @@
     "@vercel/connect": "^2.0.4",
     "ai": "^7.0.107",
     "eslint": "^10.10.0",
-    "eve": "^0.62.0",
+    "eve": "^0.63.0",
     "tsdown": "^0.23.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",

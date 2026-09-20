@@ -82,7 +82,7 @@ export async function run(messages: ModelMessage[], token: string) {
 
 ### eve extension (recommended for eve agents)
 
-Requires `eve` as a peer, declared `*` and checked through the extension's generated capability metadata (transitively **`ai` v7**); built against eve 0.62. Mount from `@github-tools/eve-extension` under `agent/extensions/`.
+Requires `eve` as a peer, declared `*` and checked through the extension's generated capability metadata (transitively **`ai` v7**); built against eve 0.63. Mount from `@github-tools/eve-extension` under `agent/extensions/`.
 
 ```ts
 // agent/extensions/github.ts

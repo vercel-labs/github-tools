@@ -13,7 +13,7 @@
     "@github-tools/eve-extension": "workspace:*",
     "@vercel/connect": "^2.0.4",
     "ai": "^7.0.107",
-    "eve": "^0.62.0",
+    "eve": "^0.63.0",
     "zod": "^4.5.4"
   }
 }

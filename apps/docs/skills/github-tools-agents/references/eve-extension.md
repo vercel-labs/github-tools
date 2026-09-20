@@ -14,7 +14,7 @@ Use `@github-tools/eve-extension` when the user builds an [eve](https://eve.dev)
 pnpm add @github-tools/eve-extension eve
 ```
 
-- **`ai` v7** required (transitive `eve` peer); the extension declares `eve` as `*` and eve checks its generated capability metadata, not an npm range. Built against eve 0.62
+- **`ai` v7** required (transitive `eve` peer); the extension declares `eve` as `*` and eve checks its generated capability metadata, not an npm range. Built against eve 0.63
 - `GITHUB_TOKEN`, explicit `token`, or a Vercel Connect `connector`
 
 ## Mount under `agent/extensions/`

@@ -193,13 +193,13 @@ importers:
         version: link:../../packages/github-tools-eve-extension
       '@vercel/connect':
         specifier: ^2.0.4
-        version: 2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))
+        version: 2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))
       ai:
         specifier: ^7.0.107
         version: 7.0.107(zod@4.5.4)
       eve:
-        specifier: ^0.62.0
-        version: 0.62.0(ai@7.0.107(zod@4.5.4))
+        specifier: ^0.63.0
+        version: 0.63.0(ai@7.0.107(zod@4.5.4))
       zod:
         specifier: ^4.5.4
         version: 4.5.4
@@ -226,7 +226,7 @@ importers:
         version: 4.40.0(ai@7.0.107(zod@4.5.4))(workflow@4.8.9(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(typescript@6.0.3)(ws@8.21.3))(zod@4.5.4)
       evlog:
         specifier: latest
-        version: 2.29.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitro@3.0.260903-beta)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
+        version: 2.29.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitro@3.0.260903-beta)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
       workflow:
         specifier: latest
         version: 4.8.9(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(typescript@6.0.3)(ws@8.21.3)
@@ -251,7 +251,7 @@ importers:
         version: 4.1.2(ai@7.0.107(zod@4.5.4))(workflow@4.8.6(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(typescript@6.0.3)(ws@8.21.3))
       evlog:
         specifier: ^2.29.0
-        version: 2.29.0(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
+        version: 2.29.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
       octokit:
         specifier: ^5.0.5
         version: 5.0.5
@@ -276,7 +276,7 @@ importers:
         version: 26.5.0
       '@vercel/connect':
         specifier: ^2.0.4
-        version: 2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))
+        version: 2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))
       ai:
         specifier: ^7.0.107
         version: 7.0.107(zod@4.5.4)
@@ -284,8 +284,8 @@ importers:
         specifier: ^10.10.0
         version: 10.10.0(jiti@2.7.0)
       eve:
-        specifier: ^0.62.0
-        version: 0.62.0(ai@7.0.107(zod@4.5.4))
+        specifier: ^0.63.0
+        version: 0.63.0(ai@7.0.107(zod@4.5.4))
       tsdown:
         specifier: ^0.23.0
         version: 0.23.0(@volar/typescript@2.4.28)(tsx@4.23.13)(typescript@6.0.3)(unrun@0.2.39)(vue-tsc@3.3.11(typescript@6.0.3))
@@ -313,13 +313,13 @@ importers:
         version: 26.5.0
       '@vercel/connect':
         specifier: ^2.0.4
-        version: 2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))
+        version: 2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))
       eslint:
         specifier: ^10.10.0
         version: 10.10.0(jiti@2.7.0)
       eve:
-        specifier: 0.62.0
-        version: 0.62.0(ai@7.0.107(zod@4.5.4))
+        specifier: 0.63.0
+        version: 0.63.0(ai@7.0.107(zod@4.5.4))
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -7214,8 +7214,8 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
-  eve@0.62.0:
-    resolution: {integrity: sha512-tQ9bb4CT/EhxVSpnSUu/HjWCDu9Enk719H6i8ZOk6N7xv43zdB7TBn5+h+95EVfK+S0bU2fd9Cxq2bXWVS0EQQ==}
+  eve@0.63.0:
+    resolution: {integrity: sha512-iDv0S4MXvZimaXNTJnyB2THumRQLWQSAgpMcZsGtMNquYQpSKB1+i8sxX4KJOHHCLd04lwD+06xnh+ja7rlZIw==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
@@ -16908,13 +16908,13 @@ snapshots:
     dependencies:
       execa: 5.1.1
 
-  '@vercel/connect@2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))':
+  '@vercel/connect@2.0.4(@ai-sdk/mcp@2.0.48(zod@4.5.4))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))':
     dependencies:
       '@vercel/oidc': 3.8.7
     optionalDependencies:
       '@ai-sdk/mcp': 2.0.48(zod@4.5.4)
       ai: 7.0.107(zod@4.5.4)
-      eve: 0.62.0(ai@7.0.107(zod@4.5.4))
+      eve: 0.63.0(ai@7.0.107(zod@4.5.4))
 
   '@vercel/functions@3.9.7(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3)':
     dependencies:
@@ -19682,7 +19682,7 @@ snapshots:
 
   etag@1.8.1: {}
 
-  eve@0.62.0(ai@7.0.107(zod@4.5.4)):
+  eve@0.63.0(ai@7.0.107(zod@4.5.4)):
     dependencies:
       ai: 7.0.107(zod@4.5.4)
       nitro: 3.0.260903-beta
@@ -19704,12 +19704,12 @@ snapshots:
     dependencies:
       eventsource-parser: 3.1.1
 
-  evlog@2.29.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitro@3.0.260903-beta)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)):
+  evlog@2.29.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitro@3.0.260903-beta)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)):
     optionalDependencies:
       '@nestjs/common': 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nuxt/kit': 4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
       ai: 7.0.107(zod@4.5.4)
-      eve: 0.62.0(ai@7.0.107(zod@4.5.4))
+      eve: 0.63.0(ai@7.0.107(zod@4.5.4))
       express: 5.2.1
       h3: 1.15.11
       hono: 4.13.7
@@ -19718,11 +19718,12 @@ snapshots:
       ofetch: 1.5.1
       vite: 8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)
 
-  evlog@2.29.0(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.62.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)):
+  evlog@2.29.0(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/kit@4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))))(ai@7.0.107(zod@4.5.4))(eve@0.63.0(ai@7.0.107(zod@4.5.4)))(express@5.2.1)(h3@1.15.11)(hono@4.13.7)(nitropack@2.13.4(@libsql/client@0.18.0)(@vercel/blob@2.8.0)(@vercel/functions@3.9.8(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3))(better-sqlite3@13.0.3)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260702.1)(@libsql/client@0.18.0)(better-sqlite3@13.0.3)(pg@8.23.0))(oxc-parser@0.143.0)(rolldown@1.2.7)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)):
     optionalDependencies:
+      '@nestjs/common': 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nuxt/kit': 4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
       ai: 7.0.107(zod@4.5.4)
-      eve: 0.62.0(ai@7.0.107(zod@4.5.4))
+      eve: 0.63.0(ai@7.0.107(zod@4.5.4))
       express: 5.2.1
       h3: 1.15.11
       hono: 4.13.7
