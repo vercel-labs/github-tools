@@ -1,5 +1,6 @@
 import type { ApprovalConfig } from './approval'
 import type { GithubToolsContext } from './context'
+import type { GithubEvaluationOptions } from './evaluation'
 import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './presets'
 import type { GithubTokenInput } from './token'
 import type { GithubToolName } from './tool-names'
@@ -14,6 +15,8 @@ export type GithubToolsBaseOptions = {
   token?: GithubTokenInput
   /** Control whether write operations require user approval. @see {@link ApprovalConfig} */
   requireApproval?: ApprovalConfig
+  /** Tuning for `requireApproval: 'auto'` (model, thresholds). Jev with sensible thresholds by default. */
+  evaluation?: GithubEvaluationOptions
   /**
    * Default owner / repo / PR / issue / ref values.
    * Softens matching tool input fields and fills them when the model omits them.

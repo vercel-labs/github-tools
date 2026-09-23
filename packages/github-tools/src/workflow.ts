@@ -20,7 +20,7 @@ import { resolveInstructions } from './agents'
 import type { AllGithubTools } from './core/tool-types'
 import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './core/presets'
 import type { GithubToolName } from './core/tool-names'
-import type { ApprovalConfig } from './index'
+import type { StaticApprovalConfig } from './index'
 import type { CommitIdentity } from './types'
 import type { GithubTokenInput } from './core/token'
 import type { GithubToolsContext } from './core/context'
@@ -134,9 +134,11 @@ export type CreateDurableGithubAgentOptions =
     /**
      * Control whether write operations require user approval before execution.
      *
-     * @see {@link ApprovalConfig} for global and per-tool options.
+     * `'auto'` is not supported: the evaluation call cannot run inside a workflow function.
+     *
+     * @see {@link StaticApprovalConfig} for global and per-tool options.
      */
-    requireApproval?: ApprovalConfig
+    requireApproval?: StaticApprovalConfig
     /**
      * Fully replace the default system prompt.
      * When set, `preset` system prompts and `additionalInstructions` are ignored.

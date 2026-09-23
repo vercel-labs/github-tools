@@ -57,6 +57,13 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Keep Connect resolver calls on the tool execute path; use static `connect` params when no execution context is available.',
     link: 'https://github-tools.com/frameworks/eve-extension#per-user-tokens',
   },
+  EVALUATION_UNAVAILABLE: {
+    status: 500,
+    message: '`requireApproval: \'auto\'` and `preset: \'auto\'` need `experimental_evaluate` from `ai` 7.0.105 or later.',
+    why: 'The installed `ai` package does not export `experimental_evaluate`, which runs the evaluation model behind the `\'auto\'` options.',
+    fix: 'Upgrade `ai` to 7.0.105 or later, or replace `\'auto\'` with `true` / `false` or an explicit preset.',
+    link: 'https://github-tools.com/guide/approval-control#auto-approval',
+  },
   UNAUTHORIZED: {
     status: 401,
     message: ({ detail }: { detail: string }) => `GitHub rejected the credentials (401): ${detail}`,

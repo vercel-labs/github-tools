@@ -115,6 +115,8 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
+For an agent that handles open-ended requests, `createGithubAgent({ model, preset: 'auto' })` picks presets per call from the latest user message. It narrows the tools the model sees to at most two presets and uses the matching system prompt. When no preset clearly matches, it uses the most likely one, and read-only `repo-explorer` when nothing stands out, so the full catalog is never exposed. This needs `ai` 7.0.105 or later.
+
 ### Cherry-Picking Tools
 
 You can also import individual tool factories for full control:
@@ -143,6 +145,9 @@ createGithubTools({ token })
 // No approval needed
 createGithubTools({ token, requireApproval: false })
 
+// Skip approval for low-risk writes the user asked for (labels, comments, reactions, …)
+createGithubTools({ token, requireApproval: 'auto' })
+
 // Granular: only destructive actions need approval
 createGithubTools({
   token,
@@ -161,6 +166,8 @@ createGithubTools({
 Write tools: `createBranch`, `deleteBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction`, `addDiscussionComment`, `markNotificationRead`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`, `updateRelease`, `deleteRelease`.
 
 All other tools are read-only and never require approval.
+
+With `'auto'`, a fast evaluation model checks each call to a low-risk write tool (`AUTO_APPROVAL_TOOLS`). It scores how costly the call would be if wrong, and whether the latest user message asked for it. The call runs without a prompt only when both checks pass. Other write tools keep requiring approval. Any tool can opt in per tool (`{ updateIssue: 'auto' }`). `'auto'` needs `ai` 7.0.105 or later and is not available on the durable agent. Tune it with `evaluation: { maxRisk, minIntent, model }`. The default model is TypeSafe's Jev.
 
 ### Tool overrides
 

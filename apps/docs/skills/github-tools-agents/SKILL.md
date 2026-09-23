@@ -123,6 +123,8 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`. Start with the smallest preset that fits; use `maintainer` when you need the full catalog. Multi-role: manager + sub-agents each with one preset.
 
+For an agent that takes open-ended requests, `createGithubAgent({ preset: 'auto' })` picks presets per call from the latest user message, narrows the active tools, and uses the matching system prompt. It combines at most two presets; when none clearly matches it uses the most likely one (read-only `repo-explorer` when nothing stands out). It never exposes the full catalog. Needs `ai` >= 7.0.105; not on the durable agent.
+
 ## Working context
 
 Pass `context: { owner, repo, pullNumber?, issueNumber?, ref? }` to `createGithubTools` / `createGithubAgent` / `createDurableGithubAgent` to default those fields on tool inputs and inject them into the agent system prompt. Prefer composite tools (`getPullRequestContext`, `getIssueContext`, `getReleaseContext`, `getCiFailureContext`) for multi-part reads — call follow-up reads in the same step when possible. Diff patches are omitted by default — set `includePatch: true` (optionally with `filenames`) when you need specific diffs. Bodies are truncated by default (`detail: 'summary'`). `getIssueContext` returns `labelNames` (strings) rather than full label objects. Prefer `getFileContent` with `startLine`/`endLine` or `maxLines` for large files. `getWorkflowJobLogs` returns the last 200 log lines with timestamps stripped — raise `maxLines` (up to 2000) only when needed. `listPullRequestReviewThreads` returns unresolved threads only by default with truncated comment bodies. REST list tools return `{ items, hasMore, page, nextPage }` (or add those fields next to `checkRuns` / `runs`); when `hasMore`, call with `nextPage` or raise `maxPages` — never the same page. Filter `listCommits` with `path` / `author` / `since` / `until`. Prefer a `path` prefix on `getRepositoryTree` over `recursive: true`. Object-shaped execute results include `rateLimit` (`remaining` / `limit` / `reset` / `resource`); it is stripped from the model-facing output. On 403/429 the error text includes remaining/reset.
@@ -132,6 +134,7 @@ Classifiable failures are structured evlog catalog errors (`githubToolsErrors`, 
 ## Write safety
 
 - Default: writes go through **approval** (AI SDK tool approval flow) unless `requireApproval: false` or per-tool overrides.
+- For interactive agents, prefer `requireApproval: 'auto'`: low-risk writes (labels, assignees, reactions, comments, review replies, reviewer requests, notification reads, workflow re-runs) run without a prompt when an evaluation model rates them low-risk and asked for by the user; everything else still asks. Per tool: `{ updateIssue: 'auto', mergePullRequest: true }`. Tune with `evaluation: { maxRisk, minIntent, model }` only when needed. Needs `ai` >= 7.0.105; not on the durable agent.
 - Map token scopes to tools (Actions, Contents, Issues, Pull requests, Discussions, Gists, …). Reactions fall under Issues. Gist and notification tools need account-level PAT permissions and do not work with a Vercel Connect installation token.
 - Prefer `addIssueReaction` / `addCommentReaction` over a comment when only acknowledging a thread.
 

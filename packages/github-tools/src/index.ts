@@ -23,7 +23,9 @@ import { createGithubTokenResolver } from './core/token'
 import type { GithubWriteToolName } from './core/write-tools'
 
 export type { GithubWriteToolName } from './core/write-tools'
-export type { ApprovalConfig } from './core/approval'
+export type { ApprovalConfig, StaticApprovalConfig, ToolApprovalMode } from './core/approval'
+export type { GithubEvaluationOptions } from './core/evaluation'
+export { AUTO_APPROVAL_TOOLS, DEFAULT_EVALUATION_MODEL } from './core/evaluation'
 export type { GithubToolsContext } from './core/context'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
 export type { GithubToolName } from './core/tool-names'
@@ -88,6 +90,9 @@ export function createGithubTools(options?: GithubToolsOptions): AllGithubTools 
  * // Full catalog (same as omitting preset)
  * createGithubTools({ token, preset: 'maintainer' })
  *
+ * // Ask only for risky or unrequested low-risk writes (evaluated by Jev)
+ * createGithubTools({ token, requireApproval: 'auto' })
+ *
  * // Granular approval
  * createGithubTools({
  *   token,
@@ -103,6 +108,7 @@ export function createGithubTools(options?: GithubToolsOptions): AllGithubTools 
 export function createGithubTools({
   token,
   requireApproval = true,
+  evaluation,
   preset,
   context,
   overrides,
@@ -111,7 +117,7 @@ export function createGithubTools({
   coAuthors,
 }: GithubToolsOptions = {}): AllGithubTools | Pick<AllGithubTools, GithubToolName> {
   const resolveToken = createGithubTokenResolver(token)
-  const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveAiSdkApproval(name, requireApproval) })
+  const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveAiSdkApproval(name, requireApproval, evaluation) })
   const allowed = preset ? resolvePresetTools(preset) : null
 
   const allTools = {

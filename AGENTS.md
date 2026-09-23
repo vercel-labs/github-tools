@@ -77,6 +77,7 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 - `src/index.ts` — public API: `createGithubTools()`, `allTools` composition, re-exports
 - `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`) with preset-specific system prompts
 - `src/workflow.ts` — `createDurableGithubAgent()` (`WorkflowAgent` from `@ai-sdk/workflow`), exported from `@github-tools/sdk/workflow` subpath
+- `src/core/evaluation.ts` — `requireApproval: 'auto'` and `preset: 'auto'` on AI SDK `experimental_evaluate` (default model `typesafe-ai/jev-latest`). `ai` is imported lazily there so the root entry still loads on `ai` 6
 - `src/eve-runtime.ts` — shared eve primitives for `@github-tools/eve-extension` (`listEveToolDescriptors`, `executeGithubEveTool`, approval helpers); public export `@github-tools/sdk/eve-runtime`
 - `src/eve.ts` — deprecated consumer `createGithubTools` / per-tool factories for `agent/tools/` (`@github-tools/sdk/eve`)
 - `src/client.ts` — `createOctokit(token)` wrapper

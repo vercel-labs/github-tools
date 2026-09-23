@@ -2,7 +2,8 @@ import { ToolLoopAgent } from 'ai'
 import type { ToolLoopAgentSettings, ToolSet } from 'ai'
 import { createGithubTools } from './index'
 import type { AllGithubTools, GithubToolsBaseOptions } from './core/tool-types'
-import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './core/presets'
+import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
+import { selectPresets } from './core/evaluation'
 import type { GithubToolName } from './core/tool-names'
 import { formatContextInstructions, type GithubToolsContext } from './core/context'
 
@@ -167,9 +168,14 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
    * Selects a subset of tools and, when a single preset is passed,
    * sets a matching system prompt. Combine presets with an array to merge tool sets.
    *
+   * `'auto'` picks presets per call from the latest user message with an evaluation model
+   * (Jev by default, see `evaluation`), then narrows `activeTools` and uses the matching
+   * system prompt. Combines at most two presets (`evaluation.maxPresets`); when none clears
+   * the threshold, uses the most likely one. Never exposes the full catalog. Needs `ai` 7.0.105 or later.
+   *
    * @see {@link GithubToolPreset} for available presets and included tools.
    */
-  preset?: GithubToolPreset | GithubToolPreset[]
+  preset?: GithubToolPreset | GithubToolPreset[] | 'auto'
   /**
    * Fully replace the default system prompt.
    * When set, `preset` system prompts and `additionalInstructions` are ignored.
@@ -183,7 +189,7 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
   additionalInstructions?: string
 }
 
-export function createGithubAgent(options: CreateGithubAgentOptions & { preset?: undefined }): ToolLoopAgent<never, AllGithubTools>
+export function createGithubAgent(options: CreateGithubAgentOptions & { preset?: undefined | 'auto' }): ToolLoopAgent<never, AllGithubTools>
 export function createGithubAgent<P extends GithubToolPreset>(
   options: CreateGithubAgentOptions & { preset: P },
 ): ToolLoopAgent<never, Pick<AllGithubTools, PresetToolName<P>>>
@@ -214,6 +220,7 @@ export function createGithubAgent({
   token,
   preset,
   requireApproval,
+  evaluation,
   context,
   instructions,
   additionalInstructions,
@@ -222,11 +229,29 @@ export function createGithubAgent({
   coAuthors,
   ...agentOptions
 }: CreateGithubAgentOptions): ToolLoopAgent<never, AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
-  const tools = createGithubTools({ token, requireApproval, preset, context, author, committer, coAuthors })
-
-  return new ToolLoopAgent({
+  const staticPreset = preset === 'auto' ? undefined : preset
+  const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, context, author, committer, coAuthors })
+  const settings = {
     ...agentOptions,
     tools,
-    instructions: resolveInstructions({ preset, instructions, additionalInstructions, context }),
-  } as ToolLoopAgentSettings<never, typeof tools>) as ToolLoopAgent<never, typeof tools>
+    instructions: resolveInstructions({ preset: staticPreset, instructions, additionalInstructions, context }),
+  } as ToolLoopAgentSettings<never, typeof tools>
+
+  if (preset === 'auto') {
+    const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
+    settings.prepareCall = async (call) => {
+      const messages = typeof call.prompt === 'string'
+        ? [{ role: 'user' as const, content: call.prompt }]
+        : call.prompt ?? call.messages ?? []
+      const selected = await selectPresets(messages, evaluation)
+      const next = {
+        ...call,
+        activeTools: [...resolvePresetTools(selected)!],
+        instructions: resolveInstructions({ preset: selected.length === 1 ? selected[0] : selected, instructions, additionalInstructions, context }),
+      }
+      return prepareCall ? prepareCall(next) : next
+    }
+  }
+
+  return new ToolLoopAgent(settings) as ToolLoopAgent<never, typeof tools>
 }

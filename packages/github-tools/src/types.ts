@@ -6,7 +6,7 @@ export type { Octokit } from 'octokit'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above
 export type GithubTool = Tool<any, any>
 
-export type ToolOptions = { needsApproval?: boolean }
+export type ToolOptions = { needsApproval?: GithubTool['needsApproval'] }
 
 /**
  * Identity for a commit author or committer on GitHub.
