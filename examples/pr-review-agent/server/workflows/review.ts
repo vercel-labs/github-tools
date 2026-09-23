@@ -12,11 +12,11 @@ async function runAgentTurn(prompt: string, instructions: string, ctx: GitHubCon
   const log = createLogger()
   const ai = createAILogger(log, {
     toolInputs: { maxLength: 500 },
-    cost: { 'claude-sonnet-4.6': { input: 3, output: 15 } },
+    cost: { 'claude-opus-5.5': { input: 4, output: 20 } },
   })
 
   const agent = createGithubAgent({
-    model: ai.wrap('anthropic/claude-sonnet-4.6') as any,
+    model: ai.wrap('anthropic/claude-opus-5.5') as any,
     token: connectGithubToken(CONNECTOR, { preset: 'code-review' }),
     preset: 'code-review',
     requireApproval: false,

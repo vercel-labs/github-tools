@@ -247,7 +247,7 @@ const index = createToolIndex(tools, {
 })
 
 const result = await generateText({
-  model: openai('gpt-4o'),
+  model: 'anthropic/claude-opus-5.5',
   tools,
   prepareStep: index.prepareStep(),
   prompt: 'List open PRs on vercel/ai and summarize them.',

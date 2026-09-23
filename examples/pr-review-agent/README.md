@@ -117,7 +117,7 @@ The agent uses the `code-review` preset which includes tools for reading PRs, fi
 
 ```ts
 const agent = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: 'anthropic/claude-opus-5.5',
   preset: 'maintainer', // ← change preset
   requireApproval: false,
 })
@@ -128,9 +128,9 @@ const agent = createGithubAgent({
 Replace the model string with any [AI Gateway](https://vercel.com/docs/ai-gateway) model:
 
 ```ts
-model: 'openai/gpt-4.1'
-model: 'google/gemini-2.5-pro'
-model: 'anthropic/claude-sonnet-4.6'
+model: 'openai/gpt-6-sol'
+model: 'google/gemini-3.8-flash'
+model: 'anthropic/claude-opus-5.5'
 ```
 
 ### Adding platforms
