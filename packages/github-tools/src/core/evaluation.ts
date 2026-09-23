@@ -5,7 +5,7 @@ import { PRESET_TOOLS, type GithubToolPreset } from './presets'
 import type { GithubWriteToolName } from './write-tools'
 
 /** Evaluation model used by `'auto'` approval and `preset: 'auto'` unless `evaluation.model` is set. */
-export const DEFAULT_EVALUATION_MODEL = 'typesafe-ai/jev-latest'
+export const DEFAULT_EVALUATION_MODEL = 'typesafe-ai/jev'
 
 /**
  * Write tools `requireApproval: 'auto'` evaluates: labels, assignees, reactions, comments,
@@ -26,7 +26,7 @@ export const AUTO_APPROVAL_TOOLS = [
 export type GithubEvaluationOptions = {
   /**
    * Evaluation model for AI SDK `experimental_evaluate`: an AI Gateway ID or a model instance.
-   * @default 'typesafe-ai/jev-latest'
+   * @default 'typesafe-ai/jev'
    */
   model?: Experimental_EvaluationModel
   /**
