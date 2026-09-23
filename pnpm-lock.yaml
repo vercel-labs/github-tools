@@ -204,6 +204,24 @@ importers:
         specifier: ^4.5.4
         version: 4.5.4
 
+  examples/eve-bench:
+    dependencies:
+      '@github-tools/eve-extension':
+        specifier: workspace:*
+        version: link:../../packages/github-tools-eve-extension
+      '@github-tools/sdk':
+        specifier: workspace:*
+        version: link:../../packages/github-tools
+      ai:
+        specifier: ^7.0.107
+        version: 7.0.107(zod@4.5.4)
+      eve:
+        specifier: ^0.64.1
+        version: 0.64.1(ai@7.0.107(zod@4.5.4))(chat@4.41.0(ai@7.0.107(zod@4.5.4))(workflow@4.8.6(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(typescript@6.0.3)(ws@8.21.3))(zod@4.5.4))
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
+
   examples/pr-review-agent:
     dependencies:
       '@chat-adapter/github':
