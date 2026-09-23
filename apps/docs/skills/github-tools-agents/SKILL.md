@@ -134,7 +134,7 @@ Classifiable failures are structured evlog catalog errors (`githubToolsErrors`, 
 ## Write safety
 
 - Default: writes go through **approval** (AI SDK tool approval flow) unless `requireApproval: false` or per-tool overrides.
-- For interactive agents, prefer `requireApproval: 'auto'`: low-risk writes (labels, assignees, reactions, comments, review replies, reviewer requests, notification reads, workflow re-runs) run without a prompt when an evaluation model rates them low-risk and asked for by the user; everything else still asks. Per tool: `{ updateIssue: 'auto', mergePullRequest: true }`. Tune with `evaluation: { maxRisk, minIntent, model }` only when needed. Needs `ai` >= 7.0.105; not on the durable agent.
+- For interactive agents, prefer `requireApproval: 'auto'`: low-risk writes (labels, assignees, reactions, comments, review replies, reviewer requests, notification reads, workflow re-runs) run without a prompt when an evaluation model rates them low-risk and asked for by the user; everything else still asks. Per tool: `{ updateIssue: 'auto', mergePullRequest: true }`. Tune with `evaluation: { maxRisk, minIntent, model }` only when needed. Needs `ai` >= 7.0.105; not on the durable agent. If the evaluation model fails (not enabled on AI Gateway, no credits, outage), `'auto'` approval asks and `preset: 'auto'` uses `repo-explorer`, each logging a `github_tools.EVALUATION_FAILED` warning.
 - Map token scopes to tools (Actions, Contents, Issues, Pull requests, Discussions, Gists, …). Reactions fall under Issues. Gist and notification tools need account-level PAT permissions and do not work with a Vercel Connect installation token.
 - Prefer `addIssueReaction` / `addCommentReaction` over a comment when only acknowledging a thread.
 

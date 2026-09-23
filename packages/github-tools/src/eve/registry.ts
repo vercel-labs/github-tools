@@ -92,13 +92,10 @@ export function formatGithubEveToolOutput(name: GithubToolName, output: unknown)
   return format(stripped)
 }
 
-function isErrorPayload(output: unknown): output is { error: string } {
-  return (
-    output != null
-    && typeof output === 'object'
-    && !Array.isArray(output)
-    && typeof (output as { error?: unknown }).error === 'string'
-  )
+function isErrorPayload(output: unknown): output is { error: string | Record<string, string> } {
+  if (output == null || typeof output !== 'object' || Array.isArray(output)) return false
+  const { error } = output as { error?: unknown }
+  return typeof error === 'string' || (error != null && typeof error === 'object')
 }
 
 export function createToolRegistry(

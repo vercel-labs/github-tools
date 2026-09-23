@@ -16,6 +16,8 @@ export {
   hasGithubEveToolModelOutput,
 } from './eve/build'
 export { mapEveApprovalValue, resolveEveApproval, resolveEveToolApproval, isEveApprovalDisabled } from './eve/approval'
+export { AUTO_APPROVAL_TOOLS, latestUserText, needsAutoApproval, selectPresets } from './core/evaluation'
+export type { GithubEvaluationOptions } from './core/evaluation'
 export { resolveGithubToken } from './core/token'
 export type { GithubTokenCall } from './core/token'
 export { githubToolsErrors } from './core/errors'

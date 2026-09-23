@@ -196,6 +196,14 @@ describe('createGithubTools eve integration', () => {
     })
   })
 
+  it('passes structured GitHub API errors through without calling the formatter', () => {
+    const error = { code: 'github_tools.NOT_FOUND', message: 'GitHub resource not found (404): Not Found' }
+    expect(formatGithubEveToolOutput('listPullRequestFiles', { error })).toEqual({
+      type: 'json',
+      value: { error },
+    })
+  })
+
   it('returns stripped json for tools without a built-in formatter', () => {
     expect(formatGithubEveToolOutput('getRepository', {
       name: 'hello-world',

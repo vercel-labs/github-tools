@@ -1,7 +1,7 @@
 import type { ModelMessage } from 'ai'
 import { Experimental_EvaluationMockModelV4, MockLanguageModelV4 } from 'ai/test'
 import type { Experimental_EvaluationModelV4CallOptions, LanguageModelV4CallOptions } from '@ai-sdk/provider'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createGithubAgent, createGithubTools, AUTO_APPROVAL_TOOLS, PRESET_TOOLS } from './index'
 import { resolveApprovalMode } from './core/approval'
 import { resolveInstructions } from './agents'
@@ -65,15 +65,34 @@ describe("requireApproval: 'auto'", () => {
       const tools = createGithubTools({ token: 'test', requireApproval: 'auto', evaluation: { model, ...thresholds } })
       return (tools.addIssueComment.needsApproval as NeedsApproval)({}, { toolCallId: '1', messages })
     }
-    await expect(needsApproval(1, 0.99)).resolves.toBe(true)
+    await expect(needsApproval(1, 0.6)).resolves.toBe(false)
+    await expect(needsApproval(1.5, 0.99)).resolves.toBe(true)
     await expect(needsApproval(0, 0.5)).resolves.toBe(true)
-    await expect(needsApproval(1, 0.5, { maxRisk: 1, minIntent: 0.5 })).resolves.toBe(false)
+    await expect(needsApproval(1.5, 0.5, { maxRisk: 1.5, minIntent: 0.5 })).resolves.toBe(false)
+  })
+
+  it('asks and logs EVALUATION_FAILED when the evaluation model fails', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { model } = evaluationModel(() => {
+      throw new Error('Model not enabled for this project')
+    })
+    const tools = createGithubTools({ token: 'test', requireApproval: 'auto', evaluation: { model } })
+
+    await expect((tools.addLabels.needsApproval as NeedsApproval)({}, { toolCallId: '1', messages })).resolves.toBe(true)
+    expect(warn).toHaveBeenCalledWith('[github-tools]', expect.objectContaining({
+      code: 'github_tools.EVALUATION_FAILED',
+      message: expect.stringContaining('asking approval for addLabels: Model not enabled for this project'),
+    }))
+    warn.mockRestore()
   })
 })
 
 describe("createGithubAgent({ preset: 'auto' })", () => {
-  async function run(probabilities: Record<string, number>, prompt = 'Why is CI red on main?', options = {}) {
-    const evaluation = evaluationModel(() => probabilities)
+  async function run(probabilities: Record<string, number> | Error, prompt = 'Why is CI red on main?', options = {}) {
+    const evaluation = evaluationModel(() => {
+      if (probabilities instanceof Error) throw probabilities
+      return probabilities
+    })
     const calls: LanguageModelV4CallOptions[] = []
     const agent = createGithubAgent({
       model: new MockLanguageModelV4({
@@ -118,12 +137,19 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
   })
 
   it('merges several selected presets', async () => {
-    const { tools } = await run({ 'ci-ops': 0.9, 'code-review': 0.6 })
+    const { tools } = await run({ 'ci-ops': 0.9, 'code-review': 0.8 })
     expect(new Set(tools)).toEqual(new Set([...PRESET_TOOLS['ci-ops'], ...PRESET_TOOLS['code-review']]))
   })
 
+  it('selects repo-explorer only when no other preset qualifies', async () => {
+    const withTask = await run({ 'repo-explorer': 0.95, 'issue-triage': 0.8 })
+    expect(new Set(withTask.tools)).toEqual(new Set(PRESET_TOOLS['issue-triage']))
+    const alone = await run({ 'repo-explorer': 0.95, 'issue-triage': 0.4 })
+    expect(new Set(alone.tools)).toEqual(new Set(PRESET_TOOLS['repo-explorer']))
+  })
+
   it('keeps only the most likely presets up to maxPresets', async () => {
-    const probabilities = { 'code-review': 0.6, 'ci-ops': 0.9, 'issue-triage': 0.7 }
+    const probabilities = { 'code-review': 0.75, 'ci-ops': 0.9, 'issue-triage': 0.8 }
     const { tools } = await run(probabilities)
     expect(new Set(tools)).toEqual(new Set([...PRESET_TOOLS['ci-ops'], ...PRESET_TOOLS['issue-triage']]))
     const single = await run(probabilities, undefined, { maxPresets: 1 })
@@ -139,5 +165,17 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
   it('falls back to read-only repo-explorer when nothing stands out', async () => {
     const { tools } = await run({}, 'hello')
     expect(new Set(tools)).toEqual(new Set(PRESET_TOOLS['repo-explorer']))
+  })
+
+  it('uses repo-explorer and logs EVALUATION_FAILED when the evaluation model fails', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { tools, system } = await run(new Error('Insufficient credits'))
+    expect(new Set(tools)).toEqual(new Set(PRESET_TOOLS['repo-explorer']))
+    expect(system).toBe(resolveInstructions({ preset: 'repo-explorer' }))
+    expect(warn).toHaveBeenCalledWith('[github-tools]', expect.objectContaining({
+      code: 'github_tools.EVALUATION_FAILED',
+      message: expect.stringContaining('using the repo-explorer preset: Insufficient credits'),
+    }))
+    warn.mockRestore()
   })
 })

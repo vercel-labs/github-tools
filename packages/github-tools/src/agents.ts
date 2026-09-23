@@ -170,8 +170,9 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
    *
    * `'auto'` picks presets per call from the latest user message with an evaluation model
    * (Jev by default, see `evaluation`), then narrows `activeTools` and uses the matching
-   * system prompt. Combines at most two presets (`evaluation.maxPresets`); when none clears
-   * the threshold, uses the most likely one. Never exposes the full catalog. Needs `ai` 7.0.105 or later.
+   * system prompt. Combines at most two presets (`evaluation.maxPresets`), and only uses
+   * read-only `repo-explorer` when no other preset qualifies; when none clears the threshold,
+   * uses the most likely one. Never exposes the full catalog. Needs `ai` 7.0.105 or later.
    *
    * @see {@link GithubToolPreset} for available presets and included tools.
    */

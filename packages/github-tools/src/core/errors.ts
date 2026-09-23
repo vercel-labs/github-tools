@@ -64,6 +64,14 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Upgrade `ai` to 7.0.105 or later, or replace `\'auto\'` with `true` / `false` or an explicit preset.',
     link: 'https://github-tools.com/guide/approval-control#auto-approval',
   },
+  EVALUATION_FAILED: {
+    status: 502,
+    message: ({ model, fallback, detail }: { model: string, fallback: string, detail: string }) =>
+      `Evaluation model "${model}" failed, ${fallback}: ${detail}`,
+    why: 'The `experimental_evaluate` call behind `requireApproval: \'auto\'` or `preset: \'auto\'` threw — typically the model is not enabled for the AI Gateway project, the team has no credits, or the gateway is rate limiting or unavailable.',
+    fix: 'Check the evaluation model is available to the project on AI Gateway and has credits, or set `evaluation.model` to one that is. The agent keeps running on the fallback until then.',
+    link: 'https://github-tools.com/guide/approval-control#auto-approval',
+  },
   UNAUTHORIZED: {
     status: 401,
     message: ({ detail }: { detail: string }) => `GitHub rejected the credentials (401): ${detail}`,
