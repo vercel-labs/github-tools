@@ -8,11 +8,11 @@ import {
   listEveToolDescriptors,
   mapEveApprovalValue,
   resolveEveApproval,
-  resolveGithubToken,
   type EveApprovalConfig,
   type EveApprovalValue,
   type EveGithubToolsOptions,
   type EveToolOverrides,
+  type GithubTokenCall,
   type GithubToolName,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
@@ -45,21 +45,23 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   const includeNames = include as GithubToolName[] | undefined
   const excludeNames = exclude as GithubToolName[] | undefined
 
-  // `connect.subject` may be a per-caller resolver; it needs the execution
-  // context, so the token is minted lazily, per tool call.
+  // `connect` and `connect.subject` may be resolvers over the execution
+  // context and tool call, so params resolve per tool call.
   const resolvedToken = connector
-    ? async () => {
-        const { subject, ...params } = connect ?? {}
-        const resolvedSubject = typeof subject === 'function'
-          ? await subject(requireToolContext(ctx))
-          : subject
-        return resolveGithubToken(connectGithubToken(connector, {
-          preset,
-          include: includeNames,
-          exclude: excludeNames,
-          params: { ...params, ...(resolvedSubject && { subject: resolvedSubject }) },
-        }))
-      }
+    ? connectGithubToken(connector, {
+        preset,
+        include: includeNames,
+        exclude: excludeNames,
+        params: async (call) => {
+          const { subject, ...params } = typeof connect === 'function'
+            ? await connect(requireToolContext(ctx), requireToolCall(call))
+            : connect ?? {}
+          const resolvedSubject = typeof subject === 'function'
+            ? await subject(requireToolContext(ctx))
+            : subject
+          return { ...params, ...(resolvedSubject && { subject: resolvedSubject }) }
+        },
+      })
     : token
 
   return {
@@ -100,6 +102,13 @@ function requireToolContext(ctx: ToolContext | undefined): ToolContext {
     throw githubToolsErrors.SUBJECT_CONTEXT_REQUIRED()
   }
   return ctx
+}
+
+function requireToolCall(call: GithubTokenCall | undefined): GithubTokenCall {
+  if (!call) {
+    throw githubToolsErrors.SUBJECT_CONTEXT_REQUIRED()
+  }
+  return call
 }
 
 async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolContext) {

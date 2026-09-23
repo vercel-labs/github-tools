@@ -7,7 +7,7 @@ import {
   markNotificationReadDescription,
   markNotificationReadCore,
 } from '../core/notifications'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
 
 async function listNotificationsStep(args: Parameters<typeof listNotificationsCore>[0]) {
@@ -20,7 +20,7 @@ export const listNotifications = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listNotificationsDescription,
     inputSchema: listNotificationsInputSchema,
-    execute: async args => listNotificationsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listNotificationsStep({ token: await resolveGithubToken(token, githubTokenCall('listNotifications', args)), ...args }),
   })
 
 async function markNotificationReadStep(args: Parameters<typeof markNotificationReadCore>[0]) {
@@ -34,5 +34,5 @@ export const markNotificationRead = (token: GithubTokenInput, { needsApproval = 
     description: markNotificationReadDescription,
     needsApproval,
     inputSchema: markNotificationReadInputSchema,
-    execute: async args => markNotificationReadStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => markNotificationReadStep({ token: await resolveGithubToken(token, githubTokenCall('markNotificationRead', args)), ...args }),
   })

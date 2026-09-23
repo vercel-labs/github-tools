@@ -1,4 +1,4 @@
-import type { GithubTokenInput } from '@github-tools/sdk'
+import type { GithubTokenCall, GithubTokenInput } from '@github-tools/sdk'
 import type { ConnectTokenSubject, GithubConnectorInput, GithubConnectParams } from '@github-tools/sdk/connect'
 import type { ToolContext } from 'eve/tools'
 import {
@@ -50,6 +50,18 @@ export type GithubExtensionConnectParams = Omit<GithubConnectParams, 'subject'> 
 }
 
 /**
+ * Resolves Connect token params for each tool call. Receives the eve tool
+ * execution context and the call — `owner` / `repo` are the tool's resolved
+ * inputs after `context` defaults, undefined for tools without a repository
+ * target. Use `perRepository()` from `@github-tools/sdk/connect` for the
+ * common case of selecting the GitHub App installation per target repository.
+ */
+export type GithubExtensionConnectResolver = (
+  ctx: ToolContext,
+  call: GithubTokenCall,
+) => GithubExtensionConnectParams | Promise<GithubExtensionConnectParams>
+
+/**
  * Config passed to `githubExtension({ ... })` at the agent mount site.
  * Declared as an interface (not only a Zod schema) so IDE hovers show JSDoc.
  */
@@ -72,8 +84,13 @@ export interface GithubExtensionConfig {
    * is set. `subject` defaults to `{ type: 'app' }` (the project's GitHub App
    * installation, shared by every caller); pass a value or a per-caller
    * resolver to mint per-user tokens instead.
+   *
+   * Pass a resolver to pick params per tool call, e.g. `perRepository()` from
+   * `@github-tools/sdk/connect` when the GitHub App is installed on several
+   * accounts. Scopes still derive from `preset` / `include` / `exclude` unless
+   * the resolved params set `scopes`.
    */
-  connect?: GithubExtensionConnectParams
+  connect?: GithubExtensionConnectParams | GithubExtensionConnectResolver
   /** Restrict tools to a preset (or array of presets). Prefer a focused preset; omit or use `maintainer` for the full catalog. */
   preset?: GithubToolPreset | GithubToolPreset[]
   /**
@@ -130,7 +147,10 @@ const configSchema = z.object({
   connector: z.custom<GithubConnectorInput>(
     value => typeof value === 'string' || typeof value === 'function',
   ).optional(),
-  connect: z.record(z.string(), z.unknown()).optional(),
+  connect: z.union([
+    z.record(z.string(), z.unknown()),
+    z.custom<GithubExtensionConnectResolver>(value => typeof value === 'function'),
+  ]).optional(),
   preset: z.union([presetNameSchema, z.array(presetNameSchema)]).optional(),
   include: z.array(toolNameSchema).optional(),
   exclude: z.array(toolNameSchema).optional(),

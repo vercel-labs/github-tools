@@ -10,7 +10,7 @@ import {
   addDiscussionCommentDescription,
   addDiscussionCommentCore,
 } from '../core/discussions'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
 
 async function listDiscussionsStep(args: Parameters<typeof listDiscussionsCore>[0]) {
@@ -23,7 +23,7 @@ export const listDiscussions = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listDiscussionsDescription,
     inputSchema: listDiscussionsInputSchema,
-    execute: async args => listDiscussionsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listDiscussionsStep({ token: await resolveGithubToken(token, githubTokenCall('listDiscussions', args)), ...args }),
   })
 
 async function getDiscussionStep(args: Parameters<typeof getDiscussionCore>[0]) {
@@ -36,7 +36,7 @@ export const getDiscussion = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getDiscussionDescription,
     inputSchema: getDiscussionInputSchema,
-    execute: async args => getDiscussionStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getDiscussionStep({ token: await resolveGithubToken(token, githubTokenCall('getDiscussion', args)), ...args }),
   })
 
 async function addDiscussionCommentStep(args: Parameters<typeof addDiscussionCommentCore>[0]) {
@@ -50,5 +50,5 @@ export const addDiscussionComment = (token: GithubTokenInput, { needsApproval = 
     description: addDiscussionCommentDescription,
     needsApproval,
     inputSchema: addDiscussionCommentInputSchema,
-    execute: async args => addDiscussionCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => addDiscussionCommentStep({ token: await resolveGithubToken(token, githubTokenCall('addDiscussionComment', args)), ...args }),
   })

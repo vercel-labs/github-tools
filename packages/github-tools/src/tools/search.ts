@@ -1,5 +1,5 @@
 import { tool } from 'ai'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubTool } from '../types'
 import {
   searchCodeInputSchema,
@@ -23,7 +23,7 @@ export const searchCode = (token: GithubTokenInput): GithubTool =>
   tool({
     description: searchCodeDescription,
     inputSchema: searchCodeInputSchema,
-    execute: async args => searchCodeStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => searchCodeStep({ token: await resolveGithubToken(token, githubTokenCall('searchCode', args)), ...args }),
   })
 
 async function searchRepositoriesStep(args: Parameters<typeof searchRepositoriesCore>[0]) {
@@ -36,7 +36,7 @@ export const searchRepositories = (token: GithubTokenInput): GithubTool =>
   tool({
     description: searchRepositoriesDescription,
     inputSchema: searchRepositoriesInputSchema,
-    execute: async args => searchRepositoriesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => searchRepositoriesStep({ token: await resolveGithubToken(token, githubTokenCall('searchRepositories', args)), ...args }),
   })
 
 async function searchIssuesStep(args: Parameters<typeof searchIssuesCore>[0]) {
@@ -49,5 +49,5 @@ export const searchIssues = (token: GithubTokenInput): GithubTool =>
   tool({
     description: searchIssuesDescription,
     inputSchema: searchIssuesInputSchema,
-    execute: async args => searchIssuesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => searchIssuesStep({ token: await resolveGithubToken(token, githubTokenCall('searchIssues', args)), ...args }),
   })

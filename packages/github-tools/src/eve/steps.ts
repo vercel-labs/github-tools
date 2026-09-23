@@ -1,5 +1,6 @@
+import { mergeContextArgs } from '../core/context'
 import { EvlogError, toModelErrorPayload } from '../core/errors'
-import { resolveGithubToken } from '../core/token'
+import { githubTokenCall, resolveGithubToken } from '../core/token'
 import { createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
 
 async function executeGithubToolStep(
@@ -22,7 +23,8 @@ export async function runGithubToolStep(
 ) {
   try {
     // Resolve the token before entering the step so only a serializable string crosses the boundary.
-    const token = await resolveGithubToken(ctx.token)
+    const call = githubTokenCall(name, mergeContextArgs(input, ctx.context ?? {}))
+    const token = await resolveGithubToken(ctx.token, call)
     return await executeGithubToolStep(name, input, { ...ctx, token })
   } catch (error) {
     // Eve's tool-loop logs thrown execute errors but does not always append a

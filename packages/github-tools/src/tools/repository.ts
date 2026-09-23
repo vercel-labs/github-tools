@@ -30,7 +30,7 @@ import {
   composeCommitMessage,
 } from '../core/repository'
 import { getFileContentToModelOutput, getRepositoryTreeToModelOutput } from '../core/model-output'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { CommitToolOptions, ToolOptions, GithubTool } from '../types'
 
 export { composeCommitMessage }
@@ -45,7 +45,7 @@ export const getRepository = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getRepositoryDescription,
     inputSchema: getRepositoryInputSchema,
-    execute: async args => getRepositoryStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getRepositoryStep({ token: await resolveGithubToken(token, githubTokenCall('getRepository', args)), ...args }),
   })
 
 async function listBranchesStep(args: Parameters<typeof listBranchesCore>[0]) {
@@ -58,7 +58,7 @@ export const listBranches = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listBranchesDescription,
     inputSchema: listBranchesInputSchema,
-    execute: async args => listBranchesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listBranchesStep({ token: await resolveGithubToken(token, githubTokenCall('listBranches', args)), ...args }),
   })
 
 async function getFileContentStep(args: Parameters<typeof getFileContentCore>[0]) {
@@ -72,7 +72,7 @@ export const getFileContent = (token: GithubTokenInput): GithubTool =>
     description: getFileContentDescription,
     inputSchema: getFileContentInputSchema,
     toModelOutput: getFileContentToModelOutput,
-    execute: async args => getFileContentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getFileContentStep({ token: await resolveGithubToken(token, githubTokenCall('getFileContent', args)), ...args }),
   })
 
 async function getRepositoryTreeStep(args: Parameters<typeof getRepositoryTreeCore>[0]) {
@@ -86,7 +86,7 @@ export const getRepositoryTree = (token: GithubTokenInput): GithubTool =>
     description: getRepositoryTreeDescription,
     inputSchema: getRepositoryTreeInputSchema,
     toModelOutput: getRepositoryTreeToModelOutput,
-    execute: async args => getRepositoryTreeStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getRepositoryTreeStep({ token: await resolveGithubToken(token, githubTokenCall('getRepositoryTree', args)), ...args }),
   })
 
 async function createBranchStep(args: Parameters<typeof createBranchCore>[0]) {
@@ -100,7 +100,7 @@ export const createBranch = (token: GithubTokenInput, { needsApproval = true }: 
     description: createBranchDescription,
     needsApproval,
     inputSchema: createBranchInputSchema,
-    execute: async args => createBranchStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => createBranchStep({ token: await resolveGithubToken(token, githubTokenCall('createBranch', args)), ...args }),
   })
 
 async function deleteBranchStep(args: Parameters<typeof deleteBranchCore>[0]) {
@@ -114,7 +114,7 @@ export const deleteBranch = (token: GithubTokenInput, { needsApproval = true }: 
     description: deleteBranchDescription,
     needsApproval,
     inputSchema: deleteBranchInputSchema,
-    execute: async args => deleteBranchStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => deleteBranchStep({ token: await resolveGithubToken(token, githubTokenCall('deleteBranch', args)), ...args }),
   })
 
 async function forkRepositoryStep(args: Parameters<typeof forkRepositoryCore>[0]) {
@@ -128,7 +128,7 @@ export const forkRepository = (token: GithubTokenInput, { needsApproval = true }
     description: forkRepositoryDescription,
     needsApproval,
     inputSchema: forkRepositoryInputSchema,
-    execute: async args => forkRepositoryStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => forkRepositoryStep({ token: await resolveGithubToken(token, githubTokenCall('forkRepository', args)), ...args }),
   })
 
 async function createRepositoryStep(args: Parameters<typeof createRepositoryCore>[0]) {
@@ -142,7 +142,7 @@ export const createRepository = (token: GithubTokenInput, { needsApproval = true
     description: createRepositoryDescription,
     needsApproval,
     inputSchema: createRepositoryInputSchema,
-    execute: async args => createRepositoryStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => createRepositoryStep({ token: await resolveGithubToken(token, githubTokenCall('createRepository', args)), ...args }),
   })
 
 async function createOrUpdateFileStep(args: Parameters<typeof createOrUpdateFileCore>[0]) {
@@ -159,5 +159,5 @@ export const createOrUpdateFile = (
     description: createOrUpdateFileDescription,
     needsApproval,
     inputSchema: createOrUpdateFileInputSchema,
-    execute: async args => createOrUpdateFileStep({ token: await resolveGithubToken(token), author, committer, coAuthors, ...args }),
+    execute: async args => createOrUpdateFileStep({ token: await resolveGithubToken(token, githubTokenCall('createOrUpdateFile', args)), author, committer, coAuthors, ...args }),
   })

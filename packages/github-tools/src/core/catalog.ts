@@ -1,4 +1,4 @@
-import type { z } from 'zod'
+import { z } from 'zod'
 import * as bundles from './bundles'
 import * as checks from './checks'
 import * as commits from './commits'
@@ -709,4 +709,14 @@ export const GITHUB_WRITE_TOOL_NAMES = ALL_GITHUB_TOOL_NAMES.filter(
 
 export function isGithubWriteToolName(name: GithubToolName): name is GithubWriteToolName {
   return 'write' in GITHUB_TOOL_CATALOG[name]
+}
+
+const REPOSITORY_TARGET_TOOL_NAMES = new Set(ALL_GITHUB_TOOL_NAMES.filter((name) => {
+  const schema: z.ZodType = GITHUB_TOOL_CATALOG[name].inputSchema
+  return schema instanceof z.ZodObject && 'owner' in schema.shape && 'repo' in schema.shape
+}))
+
+/** Whether a tool's input names a target repository (`owner` + `repo`). */
+export function hasRepositoryTarget(name: GithubToolName): boolean {
+  return REPOSITORY_TARGET_TOOL_NAMES.has(name)
 }

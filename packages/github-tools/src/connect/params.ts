@@ -3,7 +3,7 @@ import { connectGithubScopesForSelection } from './scopes'
 import type { ConnectGithubTokenOptions, GithubConnectParams } from './types'
 
 export function resolveGithubConnectTokenParams(
-  options: ConnectGithubTokenOptions = {},
+  options: Omit<ConnectGithubTokenOptions, 'params'> & { params?: GithubConnectParams } = {},
 ): ConnectTokenParams {
   const { preset, include, exclude, params } = options
   const scopes = params?.scopes ?? connectGithubScopesForSelection({ preset, include, exclude })

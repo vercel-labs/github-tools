@@ -256,7 +256,7 @@ export { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailure
 export type { GithubRateLimit } from './core/rate-limit'
 export { githubToolsErrors } from './core/errors'
 export type { CommitIdentity, CommitToolOptions, GithubTool, Octokit, ToolOptions, ToolOverrides } from './types'
-export type { GithubTokenInput } from './core/token'
+export type { GithubTokenCall, GithubTokenInput } from './core/token'
 export { resolveGithubToken } from './core/token'
 export { createGithubAgent } from './agents'
 export type { CreateGithubAgentOptions } from './agents'

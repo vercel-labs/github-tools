@@ -1,5 +1,5 @@
 import { tool } from 'ai'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubTool } from '../types'
 import {
   listCommitsInputSchema,
@@ -27,7 +27,7 @@ export const listCommits = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listCommitsDescription,
     inputSchema: listCommitsInputSchema,
-    execute: async args => listCommitsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listCommitsStep({ token: await resolveGithubToken(token, githubTokenCall('listCommits', args)), ...args }),
   })
 
 async function getCommitStep(args: Parameters<typeof getCommitCore>[0]) {
@@ -41,7 +41,7 @@ export const getCommit = (token: GithubTokenInput): GithubTool =>
     description: getCommitDescription,
     inputSchema: getCommitInputSchema,
     toModelOutput: getCommitToModelOutput,
-    execute: async args => getCommitStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getCommitStep({ token: await resolveGithubToken(token, githubTokenCall('getCommit', args)), ...args }),
   })
 
 async function getBlameStep(args: Parameters<typeof getBlameCore>[0]) {
@@ -54,7 +54,7 @@ export const getBlame = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getBlameDescription,
     inputSchema: getBlameInputSchema,
-    execute: async args => getBlameStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getBlameStep({ token: await resolveGithubToken(token, githubTokenCall('getBlame', args)), ...args }),
   })
 
 async function compareCommitsStep(args: Parameters<typeof compareCommitsCore>[0]) {
@@ -68,5 +68,5 @@ export const compareCommits = (token: GithubTokenInput): GithubTool =>
     description: compareCommitsDescription,
     inputSchema: compareCommitsInputSchema,
     toModelOutput: compareCommitsToModelOutput,
-    execute: async args => compareCommitsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => compareCommitsStep({ token: await resolveGithubToken(token, githubTokenCall('compareCommits', args)), ...args }),
   })

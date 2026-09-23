@@ -334,6 +334,14 @@ connectGithubTools('github/my-connector', {
 })
 ```
 
+When the GitHub App is installed on several accounts, `connect: perRepository()` mints each token for the installation that owns the tool call's target `owner/repo`. `connect` also accepts any `(call) => params` resolver:
+
+```ts
+import { connectGithubTools, perRepository } from '@github-tools/sdk/connect'
+
+connectGithubTools('github/my-connector', { preset: 'pr-author', connect: perRepository() })
+```
+
 > `@vercel/connect` is an optional peer dependency, install it only when using the `/connect` subpath.
 
 `connector` accepts a `() => string | Promise<string>` resolver instead of a static name, re-resolved on every call. Useful to pick a connector per environment or tenant:

@@ -1,5 +1,6 @@
 import type { ConnectOptions, ConnectTokenParams } from '@vercel/connect'
 import type { GithubToolPreset } from '../core/presets'
+import type { GithubTokenCall } from '../core/token'
 import type { GithubToolName } from '../core/tool-names'
 import type { GithubToolsBaseOptions } from '../core/tool-types'
 import type { EveGithubToolsOptions } from '../eve/types'
@@ -22,13 +23,27 @@ export type GithubConnectParams = Omit<ConnectTokenParams, 'subject'> & {
   repositories?: string[]
 }
 
+/**
+ * Resolves Connect token params for each tool call, e.g. to select the GitHub
+ * App installation that owns the call's target repository (see
+ * {@link perRepository}). `call` is undefined when the token is resolved
+ * outside a tool call. Unless the returned params set `scopes`, scopes are
+ * still derived from `preset` / `include` / `exclude`.
+ */
+export type GithubConnectParamsResolver = (
+  call?: GithubTokenCall,
+) => GithubConnectParams | Promise<GithubConnectParams>
+
+/** Static Connect token params, or a per-call {@link GithubConnectParamsResolver}. */
+export type GithubConnectParamsInput = GithubConnectParams | GithubConnectParamsResolver
+
 export type ConnectGithubToolsOptions = GithubToolsBaseOptions & {
   preset?: GithubToolPreset | GithubToolPreset[]
-  connect?: GithubConnectParams
+  connect?: GithubConnectParamsInput
 }
 
 export type ConnectGithubEveToolsOptions = Omit<EveGithubToolsOptions, 'token'> & {
-  connect?: GithubConnectParams
+  connect?: GithubConnectParamsInput
 }
 
 export type ConnectGithubTokenOptions = {
@@ -37,6 +52,6 @@ export type ConnectGithubTokenOptions = {
   include?: readonly GithubToolName[]
   /** Same deny-list semantics as eve `exclude` — scopes derive from the resolved tools when set. */
   exclude?: readonly GithubToolName[]
-  params?: GithubConnectParams
+  params?: GithubConnectParamsInput
   connectOptions?: ConnectOptions
 }

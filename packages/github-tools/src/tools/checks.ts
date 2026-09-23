@@ -7,7 +7,7 @@ import {
   getCombinedStatusDescription,
   getCombinedStatusCore,
 } from '../core/checks'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubTool } from '../types'
 
 async function listCheckRunsStep(args: Parameters<typeof listCheckRunsCore>[0]) {
@@ -20,7 +20,7 @@ export const listCheckRuns = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listCheckRunsDescription,
     inputSchema: listCheckRunsInputSchema,
-    execute: async args => listCheckRunsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listCheckRunsStep({ token: await resolveGithubToken(token, githubTokenCall('listCheckRuns', args)), ...args }),
   })
 
 async function getCombinedStatusStep(args: Parameters<typeof getCombinedStatusCore>[0]) {
@@ -33,5 +33,5 @@ export const getCombinedStatus = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getCombinedStatusDescription,
     inputSchema: getCombinedStatusInputSchema,
-    execute: async args => getCombinedStatusStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getCombinedStatusStep({ token: await resolveGithubToken(token, githubTokenCall('getCombinedStatus', args)), ...args }),
   })

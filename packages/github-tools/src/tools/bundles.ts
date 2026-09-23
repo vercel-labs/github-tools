@@ -14,7 +14,7 @@ import {
   getCiFailureContextCore,
 } from '../core/bundles'
 import { getPullRequestContextToModelOutput } from '../core/model-output'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubTool } from '../types'
 
 async function getPullRequestContextStep(args: Parameters<typeof getPullRequestContextCore>[0]) {
@@ -28,7 +28,7 @@ export const getPullRequestContext = (token: GithubTokenInput): GithubTool =>
     description: getPullRequestContextDescription,
     inputSchema: getPullRequestContextInputSchema,
     toModelOutput: getPullRequestContextToModelOutput,
-    execute: async args => getPullRequestContextStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getPullRequestContextStep({ token: await resolveGithubToken(token, githubTokenCall('getPullRequestContext', args)), ...args }),
   })
 
 async function getIssueContextStep(args: Parameters<typeof getIssueContextCore>[0]) {
@@ -41,7 +41,7 @@ export const getIssueContext = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getIssueContextDescription,
     inputSchema: getIssueContextInputSchema,
-    execute: async args => getIssueContextStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getIssueContextStep({ token: await resolveGithubToken(token, githubTokenCall('getIssueContext', args)), ...args }),
   })
 
 async function getReleaseContextStep(args: Parameters<typeof getReleaseContextCore>[0]) {
@@ -54,7 +54,7 @@ export const getReleaseContext = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getReleaseContextDescription,
     inputSchema: getReleaseContextInputSchema,
-    execute: async args => getReleaseContextStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getReleaseContextStep({ token: await resolveGithubToken(token, githubTokenCall('getReleaseContext', args)), ...args }),
   })
 
 async function getCiFailureContextStep(args: Parameters<typeof getCiFailureContextCore>[0]) {
@@ -67,5 +67,5 @@ export const getCiFailureContext = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getCiFailureContextDescription,
     inputSchema: getCiFailureContextInputSchema,
-    execute: async args => getCiFailureContextStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getCiFailureContextStep({ token: await resolveGithubToken(token, githubTokenCall('getCiFailureContext', args)), ...args }),
   })

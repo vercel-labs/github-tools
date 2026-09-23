@@ -52,7 +52,7 @@ import {
   removeAssigneesDescription,
   removeAssigneesCore,
 } from '../core/issues'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
 
 async function listIssuesStep(args: Parameters<typeof listIssuesCore>[0]) {
@@ -65,7 +65,7 @@ export const listIssues = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listIssuesDescription,
     inputSchema: listIssuesInputSchema,
-    execute: async args => listIssuesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listIssuesStep({ token: await resolveGithubToken(token, githubTokenCall('listIssues', args)), ...args }),
   })
 
 async function getIssueStep(args: Parameters<typeof getIssueCore>[0]) {
@@ -78,7 +78,7 @@ export const getIssue = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getIssueDescription,
     inputSchema: getIssueInputSchema,
-    execute: async args => getIssueStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getIssueStep({ token: await resolveGithubToken(token, githubTokenCall('getIssue', args)), ...args }),
   })
 
 async function listIssueCommentsStep(args: Parameters<typeof listIssueCommentsCore>[0]) {
@@ -91,7 +91,7 @@ export const listIssueComments = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listIssueCommentsDescription,
     inputSchema: listIssueCommentsInputSchema,
-    execute: async args => listIssueCommentsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listIssueCommentsStep({ token: await resolveGithubToken(token, githubTokenCall('listIssueComments', args)), ...args }),
   })
 
 async function createIssueStep(args: Parameters<typeof createIssueCore>[0]) {
@@ -105,7 +105,7 @@ export const createIssue = (token: GithubTokenInput, { needsApproval = true }: T
     description: createIssueDescription,
     needsApproval,
     inputSchema: createIssueInputSchema,
-    execute: async args => createIssueStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => createIssueStep({ token: await resolveGithubToken(token, githubTokenCall('createIssue', args)), ...args }),
   })
 
 async function addIssueCommentStep(args: Parameters<typeof addIssueCommentCore>[0]) {
@@ -119,7 +119,7 @@ export const addIssueComment = (token: GithubTokenInput, { needsApproval = true 
     description: addIssueCommentDescription,
     needsApproval,
     inputSchema: addIssueCommentInputSchema,
-    execute: async args => addIssueCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => addIssueCommentStep({ token: await resolveGithubToken(token, githubTokenCall('addIssueComment', args)), ...args }),
   })
 
 async function closeIssueStep(args: Parameters<typeof closeIssueCore>[0]) {
@@ -133,7 +133,7 @@ export const closeIssue = (token: GithubTokenInput, { needsApproval = true }: To
     description: closeIssueDescription,
     needsApproval,
     inputSchema: closeIssueInputSchema,
-    execute: async args => closeIssueStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => closeIssueStep({ token: await resolveGithubToken(token, githubTokenCall('closeIssue', args)), ...args }),
   })
 
 async function updateIssueStep(args: Parameters<typeof updateIssueCore>[0]) {
@@ -147,7 +147,7 @@ export const updateIssue = (token: GithubTokenInput, { needsApproval = true }: T
     description: updateIssueDescription,
     needsApproval,
     inputSchema: updateIssueInputSchema,
-    execute: async args => updateIssueStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => updateIssueStep({ token: await resolveGithubToken(token, githubTokenCall('updateIssue', args)), ...args }),
   })
 
 async function updateIssueCommentStep(args: Parameters<typeof updateIssueCommentCore>[0]) {
@@ -161,7 +161,7 @@ export const updateIssueComment = (token: GithubTokenInput, { needsApproval = tr
     description: updateIssueCommentDescription,
     needsApproval,
     inputSchema: updateIssueCommentInputSchema,
-    execute: async args => updateIssueCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => updateIssueCommentStep({ token: await resolveGithubToken(token, githubTokenCall('updateIssueComment', args)), ...args }),
   })
 
 async function deleteIssueCommentStep(args: Parameters<typeof deleteIssueCommentCore>[0]) {
@@ -175,7 +175,7 @@ export const deleteIssueComment = (token: GithubTokenInput, { needsApproval = tr
     description: deleteIssueCommentDescription,
     needsApproval,
     inputSchema: deleteIssueCommentInputSchema,
-    execute: async args => deleteIssueCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => deleteIssueCommentStep({ token: await resolveGithubToken(token, githubTokenCall('deleteIssueComment', args)), ...args }),
   })
 
 async function listLabelsStep(args: Parameters<typeof listLabelsCore>[0]) {
@@ -188,7 +188,7 @@ export const listLabels = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listLabelsDescription,
     inputSchema: listLabelsInputSchema,
-    execute: async args => listLabelsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listLabelsStep({ token: await resolveGithubToken(token, githubTokenCall('listLabels', args)), ...args }),
   })
 
 async function addLabelsStep(args: Parameters<typeof addLabelsCore>[0]) {
@@ -202,7 +202,7 @@ export const addLabels = (token: GithubTokenInput, { needsApproval = true }: Too
     description: addLabelsDescription,
     needsApproval,
     inputSchema: addLabelsInputSchema,
-    execute: async args => addLabelsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => addLabelsStep({ token: await resolveGithubToken(token, githubTokenCall('addLabels', args)), ...args }),
   })
 
 async function removeLabelStep(args: Parameters<typeof removeLabelCore>[0]) {
@@ -216,7 +216,7 @@ export const removeLabel = (token: GithubTokenInput, { needsApproval = true }: T
     description: removeLabelDescription,
     needsApproval,
     inputSchema: removeLabelInputSchema,
-    execute: async args => removeLabelStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => removeLabelStep({ token: await resolveGithubToken(token, githubTokenCall('removeLabel', args)), ...args }),
   })
 
 async function createLabelStep(args: Parameters<typeof createLabelCore>[0]) {
@@ -230,7 +230,7 @@ export const createLabel = (token: GithubTokenInput, { needsApproval = true }: T
     description: createLabelDescription,
     needsApproval,
     inputSchema: createLabelInputSchema,
-    execute: async args => createLabelStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => createLabelStep({ token: await resolveGithubToken(token, githubTokenCall('createLabel', args)), ...args }),
   })
 
 async function updateLabelStep(args: Parameters<typeof updateLabelCore>[0]) {
@@ -244,7 +244,7 @@ export const updateLabel = (token: GithubTokenInput, { needsApproval = true }: T
     description: updateLabelDescription,
     needsApproval,
     inputSchema: updateLabelInputSchema,
-    execute: async args => updateLabelStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => updateLabelStep({ token: await resolveGithubToken(token, githubTokenCall('updateLabel', args)), ...args }),
   })
 
 async function deleteLabelStep(args: Parameters<typeof deleteLabelCore>[0]) {
@@ -258,7 +258,7 @@ export const deleteLabel = (token: GithubTokenInput, { needsApproval = true }: T
     description: deleteLabelDescription,
     needsApproval,
     inputSchema: deleteLabelInputSchema,
-    execute: async args => deleteLabelStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => deleteLabelStep({ token: await resolveGithubToken(token, githubTokenCall('deleteLabel', args)), ...args }),
   })
 
 async function addAssigneesStep(args: Parameters<typeof addAssigneesCore>[0]) {
@@ -272,7 +272,7 @@ export const addAssignees = (token: GithubTokenInput, { needsApproval = true }: 
     description: addAssigneesDescription,
     needsApproval,
     inputSchema: addAssigneesInputSchema,
-    execute: async args => addAssigneesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => addAssigneesStep({ token: await resolveGithubToken(token, githubTokenCall('addAssignees', args)), ...args }),
   })
 
 async function removeAssigneesStep(args: Parameters<typeof removeAssigneesCore>[0]) {
@@ -286,5 +286,5 @@ export const removeAssignees = (token: GithubTokenInput, { needsApproval = true 
     description: removeAssigneesDescription,
     needsApproval,
     inputSchema: removeAssigneesInputSchema,
-    execute: async args => removeAssigneesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => removeAssigneesStep({ token: await resolveGithubToken(token, githubTokenCall('removeAssignees', args)), ...args }),
   })

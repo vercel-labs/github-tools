@@ -42,17 +42,19 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
   },
   CONNECT_INSTALLATION_REQUIRED: {
     status: 401,
-    message: ({ detail }: { detail: string }) =>
-      `The Connect connector has no usable GitHub App installation: ${detail}`,
-    why: 'The connector exists but its GitHub App is not installed on the target org or user account.',
-    fix: 'Install the connector\'s GitHub App on the org or account the agent needs, from the Vercel Connect dashboard.',
+    message: ({ detail, owner }: { detail: string, owner?: string }) =>
+      owner
+        ? `The connector's GitHub App is not installed on ${owner}: ${detail}`
+        : `The Connect connector has no usable GitHub App installation: ${detail}`,
+    why: 'The connector exists but its GitHub App is not installed on the target org or user account, so Connect cannot mint a token for it.',
+    fix: 'Install the connector\'s GitHub App on the org or account named in the message (from the Vercel Connect dashboard), or target a repository on an account where it is installed.',
     link: 'https://github-tools.com/guide/vercel-connect#create-a-github-connector',
   },
   SUBJECT_CONTEXT_REQUIRED: {
     status: 500,
-    message: 'connect.subject resolver needs the tool execution context — it is only available while a tool call executes.',
-    why: 'The per-caller subject resolver was invoked without an eve ToolContext, which only exists during tool execution.',
-    fix: 'Keep `connect.subject` resolution on the tool execute path; use a static subject when no execution context is available.',
+    message: 'A `connect` or `connect.subject` resolver needs the tool execution context — it is only available while a tool call executes.',
+    why: 'A per-call Connect resolver was invoked without an eve ToolContext and tool call, which only exist during tool execution.',
+    fix: 'Keep Connect resolver calls on the tool execute path; use static `connect` params when no execution context is available.',
     link: 'https://github-tools.com/frameworks/eve-extension#per-user-tokens',
   },
   UNAUTHORIZED: {

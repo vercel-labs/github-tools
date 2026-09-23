@@ -47,7 +47,7 @@ import {
   requestReviewersCore,
 } from '../core/pull-requests'
 import { listPullRequestFilesToModelOutput } from '../core/model-output'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { CommitIdentity, ToolOptions, GithubTool } from '../types'
 
 export type MergeToolOptions = ToolOptions & {
@@ -64,7 +64,7 @@ export const listPullRequests = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listPullRequestsDescription,
     inputSchema: listPullRequestsInputSchema,
-    execute: async args => listPullRequestsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listPullRequestsStep({ token: await resolveGithubToken(token, githubTokenCall('listPullRequests', args)), ...args }),
   })
 
 async function getPullRequestStep(args: Parameters<typeof getPullRequestCore>[0]) {
@@ -77,7 +77,7 @@ export const getPullRequest = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getPullRequestDescription,
     inputSchema: getPullRequestInputSchema,
-    execute: async args => getPullRequestStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getPullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('getPullRequest', args)), ...args }),
   })
 
 async function createPullRequestStep(args: Parameters<typeof createPullRequestCore>[0]) {
@@ -91,7 +91,7 @@ export const createPullRequest = (token: GithubTokenInput, { needsApproval = tru
     description: createPullRequestDescription,
     needsApproval,
     inputSchema: createPullRequestInputSchema,
-    execute: async args => createPullRequestStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => createPullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('createPullRequest', args)), ...args }),
   })
 
 async function mergePullRequestStep(args: Parameters<typeof mergePullRequestCore>[0]) {
@@ -105,7 +105,7 @@ export const mergePullRequest = (token: GithubTokenInput, { needsApproval = true
     description: mergePullRequestDescription,
     needsApproval,
     inputSchema: mergePullRequestInputSchema,
-    execute: async args => mergePullRequestStep({ token: await resolveGithubToken(token), coAuthors, ...args }),
+    execute: async args => mergePullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('mergePullRequest', args)), coAuthors, ...args }),
   })
 
 async function updatePullRequestStep(args: Parameters<typeof updatePullRequestCore>[0]) {
@@ -119,7 +119,7 @@ export const updatePullRequest = (token: GithubTokenInput, { needsApproval = tru
     description: updatePullRequestDescription,
     needsApproval,
     inputSchema: updatePullRequestInputSchema,
-    execute: async args => updatePullRequestStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => updatePullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('updatePullRequest', args)), ...args }),
   })
 
 async function addPullRequestCommentStep(args: Parameters<typeof addPullRequestCommentCore>[0]) {
@@ -133,7 +133,7 @@ export const addPullRequestComment = (token: GithubTokenInput, { needsApproval =
     description: addPullRequestCommentDescription,
     needsApproval,
     inputSchema: addPullRequestCommentInputSchema,
-    execute: async args => addPullRequestCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => addPullRequestCommentStep({ token: await resolveGithubToken(token, githubTokenCall('addPullRequestComment', args)), ...args }),
   })
 
 async function updatePullRequestCommentStep(args: Parameters<typeof updatePullRequestCommentCore>[0]) {
@@ -147,7 +147,7 @@ export const updatePullRequestComment = (token: GithubTokenInput, { needsApprova
     description: updatePullRequestCommentDescription,
     needsApproval,
     inputSchema: updatePullRequestCommentInputSchema,
-    execute: async args => updatePullRequestCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => updatePullRequestCommentStep({ token: await resolveGithubToken(token, githubTokenCall('updatePullRequestComment', args)), ...args }),
   })
 
 async function deletePullRequestCommentStep(args: Parameters<typeof deletePullRequestCommentCore>[0]) {
@@ -161,7 +161,7 @@ export const deletePullRequestComment = (token: GithubTokenInput, { needsApprova
     description: deletePullRequestCommentDescription,
     needsApproval,
     inputSchema: deletePullRequestCommentInputSchema,
-    execute: async args => deletePullRequestCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => deletePullRequestCommentStep({ token: await resolveGithubToken(token, githubTokenCall('deletePullRequestComment', args)), ...args }),
   })
 
 async function listPullRequestFilesStep(args: Parameters<typeof listPullRequestFilesCore>[0]) {
@@ -175,7 +175,7 @@ export const listPullRequestFiles = (token: GithubTokenInput): GithubTool =>
     description: listPullRequestFilesDescription,
     inputSchema: listPullRequestFilesInputSchema,
     toModelOutput: listPullRequestFilesToModelOutput,
-    execute: async args => listPullRequestFilesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listPullRequestFilesStep({ token: await resolveGithubToken(token, githubTokenCall('listPullRequestFiles', args)), ...args }),
   })
 
 async function listPullRequestReviewsStep(args: Parameters<typeof listPullRequestReviewsCore>[0]) {
@@ -188,7 +188,7 @@ export const listPullRequestReviews = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listPullRequestReviewsDescription,
     inputSchema: listPullRequestReviewsInputSchema,
-    execute: async args => listPullRequestReviewsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listPullRequestReviewsStep({ token: await resolveGithubToken(token, githubTokenCall('listPullRequestReviews', args)), ...args }),
   })
 
 async function createPullRequestReviewStep(args: Parameters<typeof createPullRequestReviewCore>[0]) {
@@ -202,7 +202,7 @@ export const createPullRequestReview = (token: GithubTokenInput, { needsApproval
     description: createPullRequestReviewDescription,
     needsApproval,
     inputSchema: createPullRequestReviewInputSchema,
-    execute: async args => createPullRequestReviewStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => createPullRequestReviewStep({ token: await resolveGithubToken(token, githubTokenCall('createPullRequestReview', args)), ...args }),
   })
 
 async function listPullRequestReviewThreadsStep(args: Parameters<typeof listPullRequestReviewThreadsCore>[0]) {
@@ -215,7 +215,7 @@ export const listPullRequestReviewThreads = (token: GithubTokenInput): GithubToo
   tool({
     description: listPullRequestReviewThreadsDescription,
     inputSchema: listPullRequestReviewThreadsInputSchema,
-    execute: async args => listPullRequestReviewThreadsStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listPullRequestReviewThreadsStep({ token: await resolveGithubToken(token, githubTokenCall('listPullRequestReviewThreads', args)), ...args }),
   })
 
 async function replyToReviewCommentStep(args: Parameters<typeof replyToReviewCommentCore>[0]) {
@@ -229,7 +229,7 @@ export const replyToReviewComment = (token: GithubTokenInput, { needsApproval = 
     description: replyToReviewCommentDescription,
     needsApproval,
     inputSchema: replyToReviewCommentInputSchema,
-    execute: async args => replyToReviewCommentStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => replyToReviewCommentStep({ token: await resolveGithubToken(token, githubTokenCall('replyToReviewComment', args)), ...args }),
   })
 
 async function resolveReviewThreadStep(args: Parameters<typeof resolveReviewThreadCore>[0]) {
@@ -243,7 +243,7 @@ export const resolveReviewThread = (token: GithubTokenInput, { needsApproval = t
     description: resolveReviewThreadDescription,
     needsApproval,
     inputSchema: resolveReviewThreadInputSchema,
-    execute: async args => resolveReviewThreadStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => resolveReviewThreadStep({ token: await resolveGithubToken(token, githubTokenCall('resolveReviewThread', args)), ...args }),
   })
 
 async function requestReviewersStep(args: Parameters<typeof requestReviewersCore>[0]) {
@@ -257,5 +257,5 @@ export const requestReviewers = (token: GithubTokenInput, { needsApproval = true
     description: requestReviewersDescription,
     needsApproval,
     inputSchema: requestReviewersInputSchema,
-    execute: async args => requestReviewersStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => requestReviewersStep({ token: await resolveGithubToken(token, githubTokenCall('requestReviewers', args)), ...args }),
   })

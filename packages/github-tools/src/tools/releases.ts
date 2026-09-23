@@ -19,7 +19,7 @@ import {
   deleteReleaseDescription,
   deleteReleaseCore,
 } from '../core/releases'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
 
 async function listReleasesStep(args: Parameters<typeof listReleasesCore>[0]) {
@@ -32,7 +32,7 @@ export const listReleases = (token: GithubTokenInput): GithubTool =>
   tool({
     description: listReleasesDescription,
     inputSchema: listReleasesInputSchema,
-    execute: async args => listReleasesStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => listReleasesStep({ token: await resolveGithubToken(token, githubTokenCall('listReleases', args)), ...args }),
   })
 
 async function getLatestReleaseStep(args: Parameters<typeof getLatestReleaseCore>[0]) {
@@ -45,7 +45,7 @@ export const getLatestRelease = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getLatestReleaseDescription,
     inputSchema: getLatestReleaseInputSchema,
-    execute: async args => getLatestReleaseStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getLatestReleaseStep({ token: await resolveGithubToken(token, githubTokenCall('getLatestRelease', args)), ...args }),
   })
 
 async function getReleaseStep(args: Parameters<typeof getReleaseCore>[0]) {
@@ -58,7 +58,7 @@ export const getRelease = (token: GithubTokenInput): GithubTool =>
   tool({
     description: getReleaseDescription,
     inputSchema: getReleaseInputSchema,
-    execute: async args => getReleaseStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => getReleaseStep({ token: await resolveGithubToken(token, githubTokenCall('getRelease', args)), ...args }),
   })
 
 async function createReleaseStep(args: Parameters<typeof createReleaseCore>[0]) {
@@ -72,7 +72,7 @@ export const createRelease = (token: GithubTokenInput, { needsApproval = true }:
     description: createReleaseDescription,
     needsApproval,
     inputSchema: createReleaseInputSchema,
-    execute: async args => createReleaseStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => createReleaseStep({ token: await resolveGithubToken(token, githubTokenCall('createRelease', args)), ...args }),
   })
 
 async function updateReleaseStep(args: Parameters<typeof updateReleaseCore>[0]) {
@@ -86,7 +86,7 @@ export const updateRelease = (token: GithubTokenInput, { needsApproval = true }:
     description: updateReleaseDescription,
     needsApproval,
     inputSchema: updateReleaseInputSchema,
-    execute: async args => updateReleaseStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => updateReleaseStep({ token: await resolveGithubToken(token, githubTokenCall('updateRelease', args)), ...args }),
   })
 
 async function deleteReleaseStep(args: Parameters<typeof deleteReleaseCore>[0]) {
@@ -100,5 +100,5 @@ export const deleteRelease = (token: GithubTokenInput, { needsApproval = true }:
     description: deleteReleaseDescription,
     needsApproval,
     inputSchema: deleteReleaseInputSchema,
-    execute: async args => deleteReleaseStep({ token: await resolveGithubToken(token), ...args }),
+    execute: async args => deleteReleaseStep({ token: await resolveGithubToken(token, githubTokenCall('deleteRelease', args)), ...args }),
   })
