@@ -5,8 +5,9 @@ import {
   GITHUB_TOOL_NAMES,
   GITHUB_WRITE_TOOLS,
   type CommitIdentity,
-  type EveApprovalConfig,
+  type EveApprovalValue,
   type EveToolOverrides,
+  type GithubEvaluationOptions,
   type GithubToolName,
   type GithubToolPreset,
   type GithubWriteToolName,
@@ -62,6 +63,21 @@ export type GithubExtensionConnectResolver = (
 ) => GithubExtensionConnectParams | Promise<GithubExtensionConnectParams>
 
 /**
+ * Approval for one write tool: an eve approval value, or `'auto'` to let an
+ * evaluation model skip approval for low-risk calls the user asked for.
+ */
+export type GithubExtensionApprovalValue = EveApprovalValue | 'auto'
+
+/**
+ * Global approval mode or per-tool approval values. `'auto'` evaluates the
+ * low-risk write tools (`AUTO_APPROVAL_TOOLS`) and keeps approval on the rest.
+ */
+export type GithubExtensionApprovalConfig =
+  | boolean
+  | 'auto'
+  | Partial<Record<GithubWriteToolName, GithubExtensionApprovalValue>>
+
+/**
  * Config passed to `githubExtension({ ... })` at the agent mount site.
  * Declared as an interface (not only a Zod schema) so IDE hovers show JSDoc.
  */
@@ -91,8 +107,11 @@ export interface GithubExtensionConfig {
    * the resolved params set `scopes`.
    */
   connect?: GithubExtensionConnectParams | GithubExtensionConnectResolver
-  /** Restrict tools to a preset (or array of presets). Prefer a focused preset; omit or use `maintainer` for the full catalog. */
-  preset?: GithubToolPreset | GithubToolPreset[]
+  /**
+   * Restrict tools to a preset (or array of presets). Prefer a focused preset; omit or use `maintainer` for the full catalog.
+   * `'auto'` picks up to two presets per user message with an evaluation model, and never exposes the full catalog.
+   */
+  preset?: GithubToolPreset | GithubToolPreset[] | 'auto'
   /**
    * Hand-pick tool names to add on top of `preset` (or standalone, without `preset`).
    * When combined with `preset`, the effective set is the union of both.
@@ -106,10 +125,12 @@ export interface GithubExtensionConfig {
    */
   context?: GithubExtensionContext
   /**
-   * Global boolean or per-tool approval config.
-   * Per-tool values may be `'once'`, `'always'`, `'never'`, or predicate functions.
+   * Global boolean, `'auto'`, or per-tool approval config.
+   * Per-tool values may be `'once'`, `'always'`, `'never'`, `'auto'`, or predicate functions.
    */
-  requireApproval?: EveApprovalConfig
+  requireApproval?: GithubExtensionApprovalConfig
+  /** Tuning for `preset: 'auto'` and `'auto'` approval. The evaluation model defaults to TypeSafe Jev. */
+  evaluation?: GithubEvaluationOptions
   /** Per-tool overrides (`description`, `approval`, `toModelOutput`, `outputSchema`). */
   overrides?: EveToolOverrides
   /** Default author for commit-creating tools. */
@@ -151,7 +172,7 @@ const configSchema = z.object({
     z.record(z.string(), z.unknown()),
     z.custom<GithubExtensionConnectResolver>(value => typeof value === 'function'),
   ]).optional(),
-  preset: z.union([presetNameSchema, z.array(presetNameSchema)]).optional(),
+  preset: z.union([presetNameSchema, z.array(presetNameSchema), z.literal('auto')]).optional(),
   include: z.array(toolNameSchema).optional(),
   exclude: z.array(toolNameSchema).optional(),
   context: z.object({
@@ -163,7 +184,16 @@ const configSchema = z.object({
   }).optional(),
   // Key validation only — a mistyped tool name would otherwise be silently
   // ignored and the tool would keep its default behavior with no signal.
-  requireApproval: z.union([z.boolean(), z.partialRecord(writeToolNameSchema, z.unknown())]).optional(),
+  requireApproval: z.union([z.boolean(), z.literal('auto'), z.partialRecord(writeToolNameSchema, z.unknown())]).optional(),
+  evaluation: z.object({
+    model: z.custom<GithubEvaluationOptions['model']>(
+      value => typeof value === 'string' || (typeof value === 'object' && value !== null),
+    ).optional(),
+    maxRisk: z.number().optional(),
+    minIntent: z.number().optional(),
+    minPresetProbability: z.number().optional(),
+    maxPresets: z.number().optional(),
+  }).optional(),
   overrides: z.partialRecord(toolNameSchema, z.unknown()).optional(),
   author: commitIdentitySchema.optional(),
   committer: commitIdentitySchema.optional(),

@@ -1,24 +1,28 @@
 import { connectGithubToken } from '@github-tools/sdk/connect'
 import {
+  AUTO_APPROVAL_TOOLS,
   executeGithubEveTool,
   formatGithubEveToolOutput,
   githubToolsErrors,
+  GITHUB_TOOL_NAMES,
   GITHUB_WRITE_TOOLS,
   isEveApprovalDisabled,
+  latestUserText,
   listEveToolDescriptors,
   mapEveApprovalValue,
-  resolveEveApproval,
-  type EveApprovalConfig,
-  type EveApprovalValue,
+  needsAutoApproval,
+  selectPresets,
   type EveGithubToolsOptions,
   type EveToolOverrides,
+  type GithubEvaluationOptions,
   type GithubTokenCall,
   type GithubToolName,
+  type GithubToolPreset,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import type { ApprovalContext } from 'eve/tools/approval'
 import { defineDurableSchema, defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
-import extension from '../extension'
+import extension, { type GithubExtensionApprovalConfig, type GithubExtensionApprovalValue } from '../extension'
 
 /**
  * Rebuild options from extension config on every call.
@@ -34,7 +38,6 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
     preset,
     include,
     exclude,
-    requireApproval,
     overrides,
     context,
     author,
@@ -49,7 +52,7 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   // context and tool call, so params resolve per tool call.
   const resolvedToken = connector
     ? connectGithubToken(connector, {
-        preset,
+        preset: preset === 'auto' ? undefined : preset,
         include: includeNames,
         exclude: excludeNames,
         params: async (call) => {
@@ -66,10 +69,9 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
 
   return {
     token: resolvedToken,
-    preset,
+    preset: preset === 'auto' ? undefined : preset,
     include: includeNames,
     exclude: excludeNames,
-    requireApproval: requireApproval as EveApprovalConfig | undefined,
     overrides: overrides as EveToolOverrides | undefined,
     context,
     author,
@@ -78,18 +80,52 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   }
 }
 
-function approvalDisabled(
-  writeTool: GithubWriteToolName | undefined,
-  requireApproval: EveApprovalConfig | undefined,
-  override: EveApprovalValue | undefined,
-): boolean {
-  if (override !== undefined) return isEveApprovalDisabled(override)
-  if (!writeTool) return true
-  if (requireApproval === false) return true
-  if (typeof requireApproval === 'object' && requireApproval !== null) {
-    return isEveApprovalDisabled(requireApproval[writeTool])
+type ModelMessage = Parameters<typeof latestUserText>[0][number]
+
+const autoApprovalTools = new Set<GithubWriteToolName>(AUTO_APPROVAL_TOOLS)
+
+function approvalValue(
+  writeTool: GithubWriteToolName,
+  requireApproval: GithubExtensionApprovalConfig | undefined,
+  override: GithubExtensionApprovalValue | undefined,
+): GithubExtensionApprovalValue {
+  if (override !== undefined) return override
+  if (requireApproval === 'auto') return autoApprovalTools.has(writeTool) ? 'auto' : true
+  if (typeof requireApproval === 'object') return requireApproval[writeTool] ?? true
+  return requireApproval ?? true
+}
+
+// eve resumes an approval batch with a user message starting with this label; it is not a user request.
+const PENDING_APPROVALS_LABEL = '[Pending approvals]'
+
+function withoutPendingApprovals(messages: readonly ModelMessage[]): ModelMessage[] {
+  return messages.filter(m => m.role !== 'user' || !latestUserText([m]).startsWith(PENDING_APPROVALS_LABEL))
+}
+
+// `step.started` runs on every model step; route once per user message.
+const routedPresets = new Map<string, Promise<GithubToolPreset[]>>()
+
+function routePresets(sessionId: string, messages: readonly ModelMessage[], evaluation: GithubEvaluationOptions | undefined) {
+  const key = `${sessionId}:${messages.filter(m => m.role === 'user').length}`
+  let presets = routedPresets.get(key)
+  if (!presets) {
+    presets = selectPresets(messages, evaluation)
+    presets.catch(() => routedPresets.delete(key))
+    routedPresets.set(key, presets)
+    if (routedPresets.size > 1000) routedPresets.delete(routedPresets.keys().next().value!)
   }
-  return false
+  return presets
+}
+
+// A parked call replayed in a new process must find its tool even if routing picks other presets.
+function calledGithubTools(messages: readonly ModelMessage[]): GithubToolName[] {
+  return messages.flatMap(message => message.role === 'assistant' && Array.isArray(message.content)
+    ? message.content.flatMap((part) => {
+        if (part.type !== 'tool-call') return []
+        const name = part.toolName.split('__').at(-1)!
+        return Object.hasOwn(GITHUB_TOOL_NAMES, name) ? [name as GithubToolName] : []
+      })
+    : [])
 }
 
 function writeToolName(name: GithubToolName): GithubWriteToolName | undefined {
@@ -120,20 +156,18 @@ function runGithubEveToModelOutput(name: GithubToolName, output: unknown) {
   return custom ? custom(output) : formatGithubEveToolOutput(name, output)
 }
 
-function runGithubEveApproval(name: GithubToolName, ctx: ApprovalContext) {
-  const sessionOptions = buildSessionOptions()
-  const override = sessionOptions.overrides?.[name]?.approval
+async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext) {
   const writeTool = writeToolName(name)
+  if (!writeTool) return 'not-applicable'
 
-  if (!writeTool || approvalDisabled(writeTool, sessionOptions.requireApproval, override)) {
-    return 'not-applicable'
+  const { requireApproval, overrides, evaluation } = extension.config
+  const value = approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
+  if (value === 'auto') {
+    const messages: ModelMessage[] = [{ role: 'user', content: request }]
+    return await needsAutoApproval(writeTool, ctx.toolInput, messages, evaluation) ? 'user-approval' : 'not-applicable'
   }
-
-  const policy = override !== undefined
-    ? mapEveApprovalValue(override)
-    : resolveEveApproval(writeTool, sessionOptions.requireApproval)
-
-  return policy(ctx)
+  if (isEveApprovalDisabled(value)) return 'not-applicable'
+  return mapEveApprovalValue(value)(ctx)
 }
 
 function buildGithubEveInputSchema({ name }: { name: GithubToolName }) {
@@ -161,9 +195,18 @@ export default defineDynamic({
   events: {
     // Re-resolve each model step (not once per session) so tool registration
     // stays fresh across durable steps; execute still rebuilds options above.
-    'step.started': async () => {
+    'step.started': async (_event, ctx) => {
       const sessionOptions = buildSessionOptions()
-      const descriptors = listEveToolDescriptors(sessionOptions)
+      const { preset, evaluation } = extension.config
+      const messages = withoutPendingApprovals(ctx.messages)
+      const request = latestUserText(messages)
+      const descriptors = listEveToolDescriptors(preset === 'auto'
+        ? {
+            ...sessionOptions,
+            preset: await routePresets(ctx.session.id, messages, evaluation),
+            include: [...sessionOptions.include ?? [], ...calledGithubTools(ctx.messages)],
+          }
+        : sessionOptions)
       const tools: Record<string, ToolDefinition> = {}
       const toolOverrides = sessionOptions.overrides
 
@@ -177,7 +220,7 @@ export default defineDynamic({
             closure: { name },
             schema: buildGithubEveInputSchema,
           }),
-          approval: (ctx) => runGithubEveApproval(name, ctx),
+          approval: (approvalCtx) => runGithubEveApproval(name, request, approvalCtx),
           toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
           ...(override?.outputSchema !== undefined && {
             outputSchema: defineDurableSchema({

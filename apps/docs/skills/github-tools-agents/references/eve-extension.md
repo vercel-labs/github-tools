@@ -55,12 +55,14 @@ export default githubExtension({
 })
 ```
 
-`execute`, `toModelOutput`, and `approval` are direct `defineTool` properties whose callbacks only close over the tool name (a spread or `resolveEveApproval(...)` call is not stamped). Input schemas and optional output-schema overrides use `defineDurableSchema` with the same name-only closure, preserving validation across replay. `toModelOutput` also strips `rateLimit` from the model-facing payload. Author `overrides.toModelOutput` inline in the agent — a library function will not get a durable descriptor, and eve rejects a dynamic tool whose callback is missing one. Execute failures return `{ error }` so the model still receives a `tool_result` — a structured `{ code, message, why, fix, link }` object for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), a plain string otherwise.
+`execute`, `toModelOutput`, and `approval` are direct `defineTool` properties whose callbacks only close over serializable values: the tool name, plus the latest user request for `approval` (a spread or `resolveEveApproval(...)` call is not stamped). Input schemas and optional output-schema overrides use `defineDurableSchema` with the same name-only closure, preserving validation across replay. `toModelOutput` also strips `rateLimit` from the model-facing payload. Author `overrides.toModelOutput` inline in the agent — a library function will not get a durable descriptor, and eve rejects a dynamic tool whose callback is missing one. Execute failures return `{ error }` so the model still receives a `tool_result` — a structured `{ code, message, why, fix, link }` object for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), a plain string otherwise.
 
 ## Approval
 
 - Default: write tools → `always()`
 - `'once'`, predicates, `always()` / `never()` passthrough
+- `requireApproval: 'auto'` (global or per tool): low-risk writes the user asked for run without a prompt; other writes keep `always()`. Needs `ai` >= 7.0.105
+- `preset: 'auto'`: the evaluation model routes each user message to at most two presets; tools already called in the session stay registered. Tune both with `evaluation`
 - Approval **pauses the session durably** until a human responds
 
 ## Vercel Connect
