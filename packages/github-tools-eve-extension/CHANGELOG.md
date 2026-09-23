@@ -1,5 +1,11 @@
 # @github-tools/eve-extension
 
+## 0.7.4
+
+### Patch Changes
+
+- [`b652a7e`](https://github.com/vercel-labs/github-tools/commit/b652a7ef18a7e072b43e5788f5889c5b048184d9) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Rebuild the extension against eve 0.64. eve 0.64.0 dropped tool contract 53 and dynamic tool contract 51 with its sandbox session changes, so `eve build` rejected the 0.7.3 build on the newest eve. This release requires tool contract 54 and dynamic tool contract 52, which means agents must be on eve 0.64 or later.
+
 ## 0.7.3
 
 ### Patch Changes
