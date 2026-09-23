@@ -55,7 +55,7 @@ await generateText({
 import { createGithubAgent } from '@github-tools/sdk'
 
 const agent = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: 'anthropic/claude-opus-5.5',
   preset: 'code-review',
   context: { owner: 'vercel', repo: 'ai', pullNumber: 42 },
 })

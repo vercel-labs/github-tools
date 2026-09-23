@@ -266,7 +266,7 @@ Use `WorkflowAgent` via the `@github-tools/sdk/workflow` subpath to make every L
 import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
 
 const agent = createDurableGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: 'anthropic/claude-opus-5.5',
   token: process.env.GITHUB_TOKEN!,
   preset: 'maintainer',
 })
@@ -692,7 +692,7 @@ import { createGithubAgent } from '@github-tools/sdk'
 
 // Prefer a preset: scoped tools + tailored prompt
 const reviewer = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: 'anthropic/claude-opus-5.5',
   token: process.env.GITHUB_TOKEN!,
   preset: 'code-review',
   context: { owner: 'vercel', repo: 'ai', pullNumber: 42 },
@@ -700,7 +700,7 @@ const reviewer = createGithubAgent({
 
 // Add context to the built-in prompt
 const triager = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: 'anthropic/claude-opus-5.5',
   token: process.env.GITHUB_TOKEN!,
   preset: 'issue-triage',
   additionalInstructions: 'Focus on the nuxt/ui repository. Always respond in French.',
@@ -708,14 +708,14 @@ const triager = createGithubAgent({
 
 // Full catalog (omit preset or use maintainer)
 const agent = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: 'anthropic/claude-opus-5.5',
   token: process.env.GITHUB_TOKEN!,
   preset: 'maintainer',
 })
 
 // Full override: replace the built-in prompt entirely
 const custom = createGithubAgent({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: 'anthropic/claude-opus-5.5',
   token: process.env.GITHUB_TOKEN!,
   instructions: 'You are a security auditor. Only flag security-related issues.',
 })
@@ -727,7 +727,7 @@ const stream = reviewer.stream({ prompt: 'Review this PR' })
 
 | Option | Description |
 |---|---|
-| `model` | Language model: string (`'anthropic/claude-sonnet-4.6'`) or provider instance |
+| `model` | Language model: string (`'anthropic/claude-opus-5.5'`) or provider instance |
 | `token` | GitHub token string or async provider |
 | `preset` | Optional preset or array of presets to scope tools |
 | `context` | Default owner / repo / pullNumber / issueNumber / ref for tools and the system prompt |
@@ -760,7 +760,7 @@ import type { ModelMessage, UIMessageChunk } from 'ai'
 async function chatWorkflow(messages: ModelMessage[], token: string) {
   "use workflow"
   const agent = createDurableGithubAgent({
-    model: 'anthropic/claude-sonnet-4.6',
+    model: 'anthropic/claude-opus-5.5',
     token,
     preset: 'code-review',
   })
@@ -778,7 +778,7 @@ import { createGithubAgent } from '@github-tools/sdk'
 async function agentTurn(prompt: string) {
   "use step"
   const agent = createGithubAgent({
-    model: 'anthropic/claude-sonnet-4.6',
+    model: 'anthropic/claude-opus-5.5',
     preset: 'code-review',
     requireApproval: false,
   })

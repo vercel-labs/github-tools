@@ -201,7 +201,7 @@ export function createGithubAgent<P extends readonly GithubToolPreset[]>(
  * import { createGithubAgent } from '@github-tools/sdk'
  *
  * const agent = createGithubAgent({
- *   model: 'anthropic/claude-sonnet-4.6',
+ *   model: 'anthropic/claude-opus-5.5',
  *   token: process.env.GITHUB_TOKEN!,
  *   preset: 'code-review',
  *   context: { owner: 'vercel', repo: 'ai', pullNumber: 42 },

@@ -189,7 +189,7 @@ export type CreateDurableGithubAgentOptions =
  * async function chatWorkflow(messages: ModelMessage[], token: string) {
  *   "use workflow"
  *   const agent = createDurableGithubAgent({
- *     model: 'anthropic/claude-sonnet-4.6',
+ *     model: 'anthropic/claude-opus-5.5',
  *     token,
  *     preset: 'code-review',
  *   })
