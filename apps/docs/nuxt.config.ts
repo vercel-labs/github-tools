@@ -51,6 +51,7 @@ export default defineNuxtConfig({
     '/guide/durable-workflows': { redirect: { to: '/frameworks/vercel-workflow', statusCode: 301 } },
     '/guide/token-permissions': { redirect: { to: '/guide/tokens-and-auth', statusCode: 301 } },
     '/guide/examples': { redirect: { to: '/examples/overview', statusCode: 301 } },
+    '/guide/jev-tyesafe-ai': { redirect: { to: '/guide/jev-typesafe-ai', statusCode: 301 } },
     '/frameworks/eve': { redirect: { to: '/deprecated/eve', statusCode: 301 } },
   },
   content: {
