@@ -1,5 +1,44 @@
 # @github-tools/sdk
 
+## 1.17.0
+
+### Minor Changes
+
+- [#158](https://github.com/vercel-labs/github-tools/pull/158) [`5df1f13`](https://github.com/vercel-labs/github-tools/commit/5df1f135fcf9ba59549c36f91835bb3ba582c058) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Mint Vercel Connect tokens per tool call.
+  
+  - `connect` on `githubExtension` accepts a `(ctx, call) => params` resolver, where `call` is `{ toolName, input, owner?, repo? }`. `owner` / `repo` are the tool's inputs after `context` defaults, and are undefined for tools without a repository target (search, gists, notifications). The static shape and the `connect.subject` resolver keep working unchanged.
+  - `connectGithubTools` / `connectGithubToken` accept a `(call) => params` resolver as `connect` / `params`. Scopes still derive from `preset` / `include` / `exclude` unless the resolved params set `scopes`. Connect caches tokens per connector and params, so calls on the same repository reuse one token.
+  - Token providers (`GithubTokenInput`) now receive an optional `GithubTokenCall` argument on every tool call, from both `createGithubTools` and the eve runtime. Existing `() => Promise<string>` providers are unaffected.
+  - `CONNECT_INSTALLATION_REQUIRED` names the target account ("The connector's GitHub App is not installed on <owner>") when the token targets an org or repository owner.
+
+- [#161](https://github.com/vercel-labs/github-tools/pull/161) [`db141c9`](https://github.com/vercel-labs/github-tools/commit/db141c939ad4bcf20c0e20320cc1caf1a0ee7a93) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Target the GitHub App installation that owns each tool call's repository by default. A GitHub App installed on several accounts now works with `githubExtension({ connector })`, `connectGithubTools` and `connectGithubToken` as they are, with nothing to configure.
+  
+  - App-subject tokens for a call with `owner` / `repo` (after `context` defaults) get `authorizationDetails: [{ type: 'github_app_installation', org: owner, repositories: [repo] }]`. Static `connect` params merge in. Calls without a repository target and calls outside a tool use the connector's default installation, as before.
+  - An explicit `installationId`, `authorizationDetails` or `repositories` in the resolved params pins the installation and is never overridden. User subjects (`{ type: 'user' }`) are not targeted: a user token already spans installations.
+  - Scopes still derive from `preset` / `include` / `exclude`. Connect caches tokens per connector and params, so calls on one repository reuse the token; single-installation connectors resolve to the same installation they used before.
+
+- [#157](https://github.com/vercel-labs/github-tools/pull/157) [`90fd219`](https://github.com/vercel-labs/github-tools/commit/90fd219dad4956e300b5802958f120c737120904) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `'auto'` modes to the eve extension. They need `ai` 7.0.105 or later.
+  
+  - `preset: 'auto'` routes each user message to at most two presets with the evaluation model and registers only their tools for that turn. Tools the agent already called stay registered, so a parked approval can still resume after routing changes.
+  - `requireApproval: 'auto'` lets low-risk write tools (`AUTO_APPROVAL_TOOLS`) run without a prompt when the evaluation model rates the call low-risk and the user's latest request asked for it. Other write tools keep requiring approval. Per-tool values in `requireApproval` and `overrides[tool].approval` also accept `'auto'`.
+  - The `evaluation` option (`{ model, maxRisk, minIntent, minPresetProbability, maxPresets }`) tunes both modes, as in the SDK.
+  
+  `@github-tools/sdk/eve-runtime` now exports `AUTO_APPROVAL_TOOLS`, `latestUserText`, `needsAutoApproval`, `selectPresets` and the `GithubEvaluationOptions` type.
+
+- [#157](https://github.com/vercel-labs/github-tools/pull/157) [`90fd219`](https://github.com/vercel-labs/github-tools/commit/90fd219dad4956e300b5802958f120c737120904) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `'auto'` modes for approval and presets. Both need `ai` 7.0.105 or later. Everything else still works on `ai` 6.
+  
+  - `requireApproval: 'auto'` on `createGithubTools` / `createGithubAgent`: low-risk write tools (`AUTO_APPROVAL_TOOLS`: labels, assignees, reactions, comments, review-thread replies, reviewer requests, notification reads, workflow re-runs) run without a prompt when an evaluation model rates the call low-risk and the latest user message asked for it. Otherwise approval is requested as usual. Other write tools keep requiring approval. Per-tool values also accept `'auto'`, for example `requireApproval: { updateIssue: 'auto', mergePullRequest: true }`.
+  - `createGithubAgent({ preset: 'auto' })` selects presets per call from the latest user message, narrows the active tools, and uses the matching preset's system prompt. It combines at most two presets. Read-only `repo-explorer` is only used when no other preset matches. When none clears the threshold it uses the most likely one. It never exposes the full catalog.
+  - The new optional `evaluation` option (`{ model, maxRisk, minIntent, minPresetProbability, maxPresets }`, defaults `1`, `0.6`, `0.7`, `2`) tunes both modes. The model defaults to TypeSafe's Jev (`'typesafe-ai/jev'` through AI Gateway).
+  - When the evaluation call fails (model not enabled on AI Gateway, no credits, outage), `'auto'` approval asks for approval and `preset: 'auto'` uses `repo-explorer`. Both log a `github_tools.EVALUATION_FAILED` warning with the gateway error as `cause`.
+  - `ToolOptions.needsApproval` on individual tool factories now also accepts an AI SDK approval function.
+  
+  `createDurableGithubAgent` does not accept `'auto'`.
+
+### Patch Changes
+
+- [#157](https://github.com/vercel-labs/github-tools/pull/157) [`90fd219`](https://github.com/vercel-labs/github-tools/commit/90fd219dad4956e300b5802958f120c737120904) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Fix eve tool output formatting for GitHub API errors. A 404, 403 or rate-limit error from a tool with a built-in eve formatter (`listPullRequestFiles`, `getFileContent`, `getRepositoryTree`, `getPullRequestContext`, `getCommit`, `compareCommits`) no longer breaks the next model step with `Cannot read properties of undefined`. The structured error now reaches the model as is.
+
 ## 1.16.1
 
 ### Patch Changes

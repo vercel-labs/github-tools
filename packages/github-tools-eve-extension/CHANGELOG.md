@@ -1,5 +1,35 @@
 # @github-tools/eve-extension
 
+## 0.8.0
+
+### Minor Changes
+
+- [#158](https://github.com/vercel-labs/github-tools/pull/158) [`5df1f13`](https://github.com/vercel-labs/github-tools/commit/5df1f135fcf9ba59549c36f91835bb3ba582c058) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Mint Vercel Connect tokens per tool call.
+  
+  - `connect` on `githubExtension` accepts a `(ctx, call) => params` resolver, where `call` is `{ toolName, input, owner?, repo? }`. `owner` / `repo` are the tool's inputs after `context` defaults, and are undefined for tools without a repository target (search, gists, notifications). The static shape and the `connect.subject` resolver keep working unchanged.
+  - `connectGithubTools` / `connectGithubToken` accept a `(call) => params` resolver as `connect` / `params`. Scopes still derive from `preset` / `include` / `exclude` unless the resolved params set `scopes`. Connect caches tokens per connector and params, so calls on the same repository reuse one token.
+  - Token providers (`GithubTokenInput`) now receive an optional `GithubTokenCall` argument on every tool call, from both `createGithubTools` and the eve runtime. Existing `() => Promise<string>` providers are unaffected.
+  - `CONNECT_INSTALLATION_REQUIRED` names the target account ("The connector's GitHub App is not installed on <owner>") when the token targets an org or repository owner.
+
+- [#161](https://github.com/vercel-labs/github-tools/pull/161) [`db141c9`](https://github.com/vercel-labs/github-tools/commit/db141c939ad4bcf20c0e20320cc1caf1a0ee7a93) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Target the GitHub App installation that owns each tool call's repository by default. A GitHub App installed on several accounts now works with `githubExtension({ connector })`, `connectGithubTools` and `connectGithubToken` as they are, with nothing to configure.
+  
+  - App-subject tokens for a call with `owner` / `repo` (after `context` defaults) get `authorizationDetails: [{ type: 'github_app_installation', org: owner, repositories: [repo] }]`. Static `connect` params merge in. Calls without a repository target and calls outside a tool use the connector's default installation, as before.
+  - An explicit `installationId`, `authorizationDetails` or `repositories` in the resolved params pins the installation and is never overridden. User subjects (`{ type: 'user' }`) are not targeted: a user token already spans installations.
+  - Scopes still derive from `preset` / `include` / `exclude`. Connect caches tokens per connector and params, so calls on one repository reuse the token; single-installation connectors resolve to the same installation they used before.
+
+- [#157](https://github.com/vercel-labs/github-tools/pull/157) [`90fd219`](https://github.com/vercel-labs/github-tools/commit/90fd219dad4956e300b5802958f120c737120904) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `'auto'` modes to the eve extension. They need `ai` 7.0.105 or later.
+  
+  - `preset: 'auto'` routes each user message to at most two presets with the evaluation model and registers only their tools for that turn. Tools the agent already called stay registered, so a parked approval can still resume after routing changes.
+  - `requireApproval: 'auto'` lets low-risk write tools (`AUTO_APPROVAL_TOOLS`) run without a prompt when the evaluation model rates the call low-risk and the user's latest request asked for it. Other write tools keep requiring approval. Per-tool values in `requireApproval` and `overrides[tool].approval` also accept `'auto'`.
+  - The `evaluation` option (`{ model, maxRisk, minIntent, minPresetProbability, maxPresets }`) tunes both modes, as in the SDK.
+  
+  `@github-tools/sdk/eve-runtime` now exports `AUTO_APPROVAL_TOOLS`, `latestUserText`, `needsAutoApproval`, `selectPresets` and the `GithubEvaluationOptions` type.
+
+### Patch Changes
+
+- Updated dependencies [[`5df1f13`](https://github.com/vercel-labs/github-tools/commit/5df1f135fcf9ba59549c36f91835bb3ba582c058), [`db141c9`](https://github.com/vercel-labs/github-tools/commit/db141c939ad4bcf20c0e20320cc1caf1a0ee7a93), [`90fd219`](https://github.com/vercel-labs/github-tools/commit/90fd219dad4956e300b5802958f120c737120904), [`90fd219`](https://github.com/vercel-labs/github-tools/commit/90fd219dad4956e300b5802958f120c737120904), [`90fd219`](https://github.com/vercel-labs/github-tools/commit/90fd219dad4956e300b5802958f120c737120904)]:
+  - @github-tools/sdk@1.17.0
+
 ## 0.7.4
 
 ### Patch Changes
