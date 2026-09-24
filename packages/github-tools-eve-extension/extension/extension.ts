@@ -54,8 +54,8 @@ export type GithubExtensionConnectParams = Omit<GithubConnectParams, 'subject'> 
  * Resolves Connect token params for each tool call. Receives the eve tool
  * execution context and the call — `owner` / `repo` are the tool's resolved
  * inputs after `context` defaults, undefined for tools without a repository
- * target. Use `perRepository()` from `@github-tools/sdk/connect` for the
- * common case of selecting the GitHub App installation per target repository.
+ * target. Selecting the installation per target repository is the default and
+ * needs no resolver.
  */
 export type GithubExtensionConnectResolver = (
   ctx: ToolContext,
@@ -101,10 +101,11 @@ export interface GithubExtensionConfig {
    * installation, shared by every caller); pass a value or a per-caller
    * resolver to mint per-user tokens instead.
    *
-   * Pass a resolver to pick params per tool call, e.g. `perRepository()` from
-   * `@github-tools/sdk/connect` when the GitHub App is installed on several
-   * accounts. Scopes still derive from `preset` / `include` / `exclude` unless
-   * the resolved params set `scopes`.
+   * App tokens target the GitHub App installation owning each call's
+   * repository, so an App installed on several accounts needs nothing here;
+   * `installationId`, `authorizationDetails` or `repositories` pins one. Pass
+   * a resolver for other per-call rules. Scopes still derive from `preset` /
+   * `include` / `exclude` unless the resolved params set `scopes`.
    */
   connect?: GithubExtensionConnectParams | GithubExtensionConnectResolver
   /**

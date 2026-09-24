@@ -10,7 +10,7 @@ import { githubToolsErrors } from '../core/errors'
 import type { GithubTokenCall, GithubTokenInput } from '../core/token'
 import { resolveGithubConnector, type GithubConnectorInput } from './connector'
 import { resolveGithubConnectTokenParams } from './params'
-import type { ConnectGithubTokenOptions } from './types'
+import type { ConnectGithubTokenOptions, GithubConnectParams } from './types'
 
 /**
  * Returns a lazy GitHub token provider backed by a Vercel Connect connector.
@@ -21,10 +21,13 @@ import type { ConnectGithubTokenOptions } from './types'
  * different connector per environment (production vs. preview) or tenant.
  * It's re-resolved on every call, alongside the token itself.
  *
- * `params` may be a resolver called with the tool call on every token
- * request — e.g. {@link perRepository} to select the GitHub App installation
- * that owns the call's target repository. Connect caches tokens per
- * `(connector, params)`, so repeated calls on the same repository reuse one token.
+ * App-subject tokens are minted for the GitHub App installation that owns the
+ * call's target repository, so one App installed on several accounts works
+ * with no configuration; an explicit `installationId`, `authorizationDetails`
+ * or `repositories` in `params` pins the installation instead. `params` may
+ * also be a resolver called with the tool call on every token request.
+ * Connect caches tokens per `(connector, params)`, so repeated calls on the
+ * same repository reuse one token.
  */
 export function connectGithubToken(
   connector: GithubConnectorInput,
@@ -49,19 +52,33 @@ export function connectGithubToken(
 }
 
 /**
- * Static params resolve once; a params resolver runs on every call. Both go
- * through the same scope derivation, so per-call params keep the
- * preset/include/exclude scope narrowing unless they set `scopes` explicitly.
+ * Static and resolved params go through the same repository targeting and
+ * scope derivation, so per-call params keep the preset/include/exclude scope
+ * narrowing unless they set `scopes` explicitly.
  */
 function createTokenParamsResolver(
   options: ConnectGithubTokenOptions,
 ): (call?: GithubTokenCall) => Promise<ConnectTokenParams> {
   const { params } = options
-  if (typeof params === 'function') {
-    return async call => resolveGithubConnectTokenParams({ ...options, params: await params(call) })
+  return async (call) => {
+    const resolved = typeof params === 'function' ? await params(call) : params
+    return resolveGithubConnectTokenParams({ ...options, params: withRepositoryTarget(resolved, call) })
   }
-  const tokenParams = resolveGithubConnectTokenParams({ ...options, params })
-  return async () => tokenParams
+}
+
+/**
+ * Target the installation that owns the call's repository. Only app subjects
+ * are installation-scoped, and an explicit installation choice in `params`
+ * always wins.
+ */
+export function withRepositoryTarget(params: GithubConnectParams | undefined, call: GithubTokenCall | undefined): GithubConnectParams | undefined {
+  if (!call?.owner || !call.repo) return params
+  if (params?.subject !== undefined && params.subject.type !== 'app') return params
+  if (params?.installationId !== undefined || params?.authorizationDetails !== undefined || params?.repositories !== undefined) return params
+  return {
+    ...params,
+    authorizationDetails: [{ type: 'github_app_installation', org: call.owner, repositories: [call.repo] }],
+  }
 }
 
 /** Account Connect selects the installation for: the detail's `org`, else the owner of a qualified repository. */

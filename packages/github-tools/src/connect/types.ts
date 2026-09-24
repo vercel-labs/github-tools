@@ -8,7 +8,9 @@ import type { EveGithubToolsOptions } from '../eve/types'
 /**
  * Token parameters for Vercel Connect GitHub connectors.
  * `subject` defaults to `{ type: 'app' }` — the project's GitHub App
- * installation, same as `connectGitHubAdapter`.
+ * installation, same as `connectGitHubAdapter`. App-subject tokens target
+ * the installation that owns the tool call's repository unless
+ * `installationId`, `authorizationDetails` or `repositories` pins one.
  */
 export type GithubConnectParams = Omit<ConnectTokenParams, 'subject'> & {
   /**
@@ -24,9 +26,8 @@ export type GithubConnectParams = Omit<ConnectTokenParams, 'subject'> & {
 }
 
 /**
- * Resolves Connect token params for each tool call, e.g. to select the GitHub
- * App installation that owns the call's target repository (see
- * {@link perRepository}). `call` is undefined when the token is resolved
+ * Resolves Connect token params for each tool call, e.g. to pick an
+ * `installationId` per tenant. `call` is undefined when the token is resolved
  * outside a tool call. Unless the returned params set `scopes`, scopes are
  * still derived from `preset` / `include` / `exclude`.
  */

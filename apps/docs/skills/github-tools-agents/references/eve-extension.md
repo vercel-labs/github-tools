@@ -88,7 +88,7 @@ export default githubExtension({
 })
 ```
 
-When one GitHub App is installed on several accounts, static `connect` params pin every token to one installation, so calls to repos on other accounts 403. Pass `connect: perRepository()` (import from `@github-tools/sdk/connect`; the agent must depend on `@github-tools/sdk`). Each token then targets the installation owning the call's `owner/repo`, after `context` defaults. Tools without a repository target (search, gists, notifications) use the static params passed to `perRepository({ ... })`. `connect` also accepts a custom `(ctx, call) => params` resolver, where `call` is `{ toolName, input, owner?, repo? }`. A missing installation surfaces as `CONNECT_INSTALLATION_REQUIRED` naming the account.
+One GitHub App installed on several accounts needs no configuration: each app token targets the installation owning the call's `owner/repo`, after `context` defaults. Tools without a repository target (search, gists, notifications) use the connector's default installation. Set `installationId`, `authorizationDetails` or `repositories` in `connect` to pin one installation; user subjects are left untouched. `connect` also accepts a custom `(ctx, call) => params` resolver, where `call` is `{ toolName, input, owner?, repo? }`. A missing installation surfaces as `CONNECT_INSTALLATION_REQUIRED` naming the account.
 
 ## Docs
 

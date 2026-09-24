@@ -54,18 +54,7 @@ export default githubExtension({
 })
 ```
 
-When the connector's GitHub App is installed on several accounts, pass `perRepository()` (from `@github-tools/sdk/connect`, so add `@github-tools/sdk` to the agent) as `connect`. Each token is then minted for the installation that owns the call's target `owner/repo`, after `context` defaults. Tools without a repository target use the static params you pass to `perRepository({ ... })`. If the App is not installed on the target account, the tool returns `CONNECT_INSTALLATION_REQUIRED` naming that account:
-
-```ts
-import { perRepository } from '@github-tools/sdk/connect'
-
-export default githubExtension({
-  connector: 'github/my-connector',
-  preset: 'pr-author',
-  context: { owner: 'evloghq', repo: 'evlog' },
-  connect: perRepository(),
-})
-```
+A GitHub App installed on several accounts needs no configuration: each token is minted for the installation that owns the call's target `owner/repo`, after `context` defaults. Tools without a repository target use the connector's default installation. Set `installationId`, `authorizationDetails` or `repositories` in `connect` to pin one installation. If the App is not installed on the target account, the tool returns `CONNECT_INSTALLATION_REQUIRED` naming that account.
 
 Tools are exposed to the model as `<namespace>__<toolName>`, where `<namespace>` comes from the mount file's name: `agent/extensions/github.ts` yields `github__listPullRequests`, `github__createIssue`, and so on.
 
@@ -103,7 +92,7 @@ extension/
 |---|---|---|
 | `token` | `string \| (() => Promise<string>)` (optional) | PAT string, or an async provider for rotating tokens (e.g. a GitHub App installation token) — the same `GithubTokenInput` the SDK accepts; falls back to `GITHUB_TOKEN` when omitted and `connector` is not set |
 | `connector` | `string \| (() => string \| Promise<string>)` (optional) | Vercel Connect connector name, or a resolver to pick one dynamically (e.g. per environment/tenant); takes priority over `token` |
-| `connect` | `record \| ((ctx, call) => record)` (optional) | Passed through to `getToken` when `connector` is set. `connect.subject` defaults to `{ type: 'app' }` (the project's GitHub App installation); pass `{ type: 'user', id }` or a per-caller resolver `(ctx) => subject` to mint each caller's own connection token in multi-user apps. Pass a resolver (e.g. `perRepository()`) to pick params per tool call |
+| `connect` | `record \| ((ctx, call) => record)` (optional) | Passed through to `getToken` when `connector` is set. `connect.subject` defaults to `{ type: 'app' }` (the project's GitHub App installation); pass `{ type: 'user', id }` or a per-caller resolver `(ctx) => subject` to mint each caller's own connection token in multi-user apps. App tokens target the installation owning each call's repository unless `installationId`, `authorizationDetails` or `repositories` pins one; pass a `(ctx, call) => record` resolver for other per-call rules |
 | `preset` | preset name, array, or `'auto'` | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`; `'auto'` picks at most two presets per user message |
 | `include` | `string[]?` | Tool names to add on top of `preset` (union), or the full set standalone |
 | `exclude` | `string[]?` | Tool names to remove from the resolved `preset` + `include` set |

@@ -26,7 +26,6 @@ vi.mock('@vercel/connect', () => ({
 }))
 
 import type { GithubTokenCall } from '../core/token'
-import { perRepository } from './per-repository'
 import { connectGithubScopesForPreset } from './scopes'
 import { connectGithubToken } from './token'
 
@@ -292,11 +291,8 @@ describe('connectGithubToken', () => {
     }, undefined)
   })
 
-  it('selects the installation per target repository with perRepository', async () => {
-    const resolve = resolveConnectToken('github/my-connector', {
-      preset: 'pr-author',
-      params: perRepository({ validityBufferMs: 60_000 }),
-    })
+  it('targets the installation owning the call repository by default', async () => {
+    const resolve = resolveConnectToken('github/my-connector', { preset: 'pr-author', params: { validityBufferMs: 60_000 } })
 
     await resolve({ toolName: 'createPullRequest', input: {}, owner: 'hugorcd', repo: 'hr-folio' })
     expect(getToken).toHaveBeenLastCalledWith('github/my-connector', {
@@ -306,7 +302,19 @@ describe('connectGithubToken', () => {
       authorizationDetails: [{ type: 'github_app_installation', org: 'hugorcd', repositories: ['hr-folio'] }],
     }, undefined)
 
+    await resolve({ toolName: 'createPullRequest', input: {}, owner: 'evloghq', repo: 'evlog' })
+    expect(getToken).toHaveBeenLastCalledWith('github/my-connector', expect.objectContaining({
+      authorizationDetails: [{ type: 'github_app_installation', org: 'evloghq', repositories: ['evlog'] }],
+    }), undefined)
+
     await resolve({ toolName: 'searchCode', input: { query: 'evlog' } })
+    expect(getToken).toHaveBeenLastCalledWith('github/my-connector', {
+      subject: { type: 'app' },
+      validityBufferMs: 60_000,
+      scopes: connectGithubScopesForPreset('pr-author'),
+    }, undefined)
+
+    await resolve()
     expect(getToken).toHaveBeenLastCalledWith('github/my-connector', {
       subject: { type: 'app' },
       validityBufferMs: 60_000,
@@ -314,9 +322,59 @@ describe('connectGithubToken', () => {
     }, undefined)
   })
 
+  it('leaves user subjects untargeted', async () => {
+    const resolve = resolveConnectToken('github/my-connector', {
+      preset: 'pr-author',
+      params: { subject: { type: 'user', id: 'user_123' } },
+    })
+
+    await resolve({ toolName: 'createPullRequest', input: {}, owner: 'hugorcd', repo: 'hr-folio' })
+    expect(getToken).toHaveBeenLastCalledWith('github/my-connector', {
+      subject: { type: 'user', id: 'user_123' },
+      scopes: connectGithubScopesForPreset('pr-author'),
+    }, undefined)
+  })
+
+  it('keeps an explicit installation choice over the call repository', async () => {
+    const call: GithubTokenCall = { toolName: 'createPullRequest', input: {}, owner: 'hugorcd', repo: 'hr-folio' }
+
+    await resolveConnectToken('github/my-connector', { preset: 'pr-author', params: { installationId: 'inst_abc' } })(call)
+    expect(getToken).toHaveBeenLastCalledWith('github/my-connector', {
+      subject: { type: 'app' },
+      installationId: 'inst_abc',
+      scopes: connectGithubScopesForPreset('pr-author'),
+    }, undefined)
+
+    await resolveConnectToken('github/my-connector', {
+      preset: 'pr-author',
+      params: { authorizationDetails: [{ type: 'github_app_installation', org: 'evloghq' }] },
+    })(call)
+    expect(getToken).toHaveBeenLastCalledWith('github/my-connector', expect.objectContaining({
+      authorizationDetails: [{ type: 'github_app_installation', org: 'evloghq' }],
+    }), undefined)
+
+    await resolveConnectToken('github/my-connector', { preset: 'pr-author', params: { repositories: ['evloghq/evlog'] } })(call)
+    expect(getToken).toHaveBeenLastCalledWith('github/my-connector', expect.objectContaining({
+      authorizationDetails: [{ type: 'github_app_installation', repositories: ['evloghq/evlog'] }],
+    }), undefined)
+  })
+
+  it('targets the call repository after a params resolver too', async () => {
+    const resolve = resolveConnectToken('github/my-connector', {
+      preset: 'pr-author',
+      params: () => ({ validityBufferMs: 60_000 }),
+    })
+
+    await resolve({ toolName: 'createPullRequest', input: {}, owner: 'hugorcd', repo: 'hr-folio' })
+    expect(getToken).toHaveBeenLastCalledWith('github/my-connector', expect.objectContaining({
+      validityBufferMs: 60_000,
+      authorizationDetails: [{ type: 'github_app_installation', org: 'hugorcd', repositories: ['hr-folio'] }],
+    }), undefined)
+  })
+
   it('names the target owner when the App is not installed there', async () => {
     getToken.mockRejectedValueOnce(new ConnectorInstallationRequiredError('installation required'))
-    const resolve = resolveConnectToken('github/my-connector', { preset: 'pr-author', params: perRepository() })
+    const resolve = resolveConnectToken('github/my-connector', { preset: 'pr-author' })
 
     await expect(resolve({ toolName: 'createPullRequest', input: {}, owner: 'hugorcd', repo: 'hr-folio' })).rejects.toMatchObject({
       code: 'github_tools.CONNECT_INSTALLATION_REQUIRED',

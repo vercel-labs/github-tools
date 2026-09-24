@@ -341,13 +341,7 @@ connectGithubTools('github/my-connector', {
 })
 ```
 
-When the GitHub App is installed on several accounts, `connect: perRepository()` mints each token for the installation that owns the tool call's target `owner/repo`. `connect` also accepts any `(call) => params` resolver:
-
-```ts
-import { connectGithubTools, perRepository } from '@github-tools/sdk/connect'
-
-connectGithubTools('github/my-connector', { preset: 'pr-author', connect: perRepository() })
-```
+A GitHub App installed on several accounts needs no configuration: each app token is minted for the installation that owns the tool call's target `owner/repo`. Set `installationId`, `authorizationDetails` or `repositories` in `connect` to pin one installation. `connect` also accepts any `(call) => params` resolver for other per-call rules.
 
 > `@vercel/connect` is an optional peer dependency, install it only when using the `/connect` subpath.
 

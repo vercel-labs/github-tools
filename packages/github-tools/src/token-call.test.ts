@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { perRepository } from './connect/per-repository'
 import * as repositoryCore from './core/repository'
 import * as searchCore from './core/search'
 import { githubTokenCall } from './core/token'
@@ -56,22 +55,5 @@ describe('token call threading', () => {
     await runGithubToolStep('getRepository', {}, { token, context: { owner: 'evloghq', repo: 'evlog' } })
 
     expect(token).toHaveBeenCalledWith(expect.objectContaining({ toolName: 'getRepository', owner: 'evloghq', repo: 'evlog' }))
-  })
-})
-
-describe('perRepository', () => {
-  const call = { toolName: 'createPullRequest', input: {}, owner: 'hugorcd', repo: 'hr-folio' } as const
-
-  it('reads the call from the eve extension (ctx, call) form', () => {
-    expect(perRepository({ scopes: ['pull_requests:write'] })({ session: {} }, call)).toEqual({
-      scopes: ['pull_requests:write'],
-      authorizationDetails: [{ type: 'github_app_installation', org: 'hugorcd', repositories: ['hr-folio'] }],
-    })
-  })
-
-  it('returns the static params when the call has no repository target', () => {
-    const params = { installationId: 'inst_default' }
-    expect(perRepository(params)()).toBe(params)
-    expect(perRepository(params)({ toolName: 'listNotifications', input: {} })).toBe(params)
   })
 })
