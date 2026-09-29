@@ -52,3 +52,5 @@ body:
       description: |
         Optional if provided reproduction. Please try not to insert an image but copy paste the log text.
       render: shell-script
+
+# AGENTS: Use the 'technical-writer' skill when writing the content for this issue.

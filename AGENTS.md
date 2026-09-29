@@ -123,6 +123,7 @@ eve rejects a dynamic tool whose callback or live validation schema has no durab
 - **No silent fallbacks.** No empty `catch`, no `?? default` that masks a bug, no `as any` to silence TypeScript. If something can fail, let it fail loudly or handle it explicitly.
 - **Comments are rare and earn their place.** Only for constraints the code can't express. Never paraphrase the code, never narrate a change.
 - **This extends to all prose**: test names, error/log messages, changeset descriptions, PR bodies. Factual and plain — no emoji, no superlatives, no filler.
+- **Use the `technical-writer` skill** ([`.agents/skills/technical-writer/SKILL.md`](.agents/skills/technical-writer/SKILL.md)) whenever you write or edit prose: READMEs, changesets, commit messages, PR titles and bodies, and issues.
 - **No speculative code.** No unrequested options or parameters, no "just in case" branches, no keeping the old code path alongside the new one.
 - **Shape every API response.** Never return a raw Octokit response from a tool's `*Core` function — pick the fields the model actually needs.
 

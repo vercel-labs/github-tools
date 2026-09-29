@@ -86,6 +86,10 @@ pnpm changeset
 
 - Ensure `pnpm build`, `pnpm lint`, `pnpm typecheck`, and `pnpm test` all pass before submitting
 
+### Writing with AI coding agents
+
+If an AI coding agent writes any of your contribution's prose, it must use the [`technical-writer` skill](../.agents/skills/technical-writer/SKILL.md). That covers READMEs, changesets, commit messages, PR titles and bodies, and issues. The skill sets the voice and editorial standards and checks technical claims against the source. Agents that read this repo's `AGENTS.md` pick up the requirement automatically.
+
 ## Commit conventions
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):

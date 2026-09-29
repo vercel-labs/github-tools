@@ -42,3 +42,5 @@ Here are the available types and scopes:
 
 - [ ] I have linked an issue or discussion.
 - [ ] I have updated the documentation accordingly.
+
+<!-- AGENTS: Use the 'technical-writer' skill when writing the content for this pull request description and commit messages. -->
