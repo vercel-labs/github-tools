@@ -39,15 +39,12 @@ export const SEARCH_ISSUES = ['metadata:read', 'issues:read', 'pull_requests:rea
 export const UNSCOPED = [] as const
 
 /**
- * One tool in the catalog. `core` argument types vary per tool, so the field
- * is typed contravariantly (`never`) — callers cast at the single dispatch
- * boundary (`withToken` in the eve registry). `core` is a getter so the ESM
- * binding stays live (module spies in tests, hot reload).
+ * One tool in the catalog. The `*Core` implementation lives in
+ * `GITHUB_TOOL_CORES` (`./cores`) so this metadata stays free of Octokit.
  */
 type GithubToolDescriptor = {
   description: string
   inputSchema: z.ZodType
-  core: (args: never) => Promise<unknown>
   /** Present on write tools — drives `GITHUB_WRITE_TOOLS` and approval defaults. */
   write?: true
   connectScopes: readonly string[]
@@ -58,43 +55,39 @@ type GithubToolDescriptor = {
  *
  * `GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOLS`, `TOOL_CONNECT_SCOPES`, and the
  * eve tool registry are all derived from this catalog. Adding a tool here (plus
- * its `"use step"` factory in `src/tools/` and `allTools` in `src/index.ts`,
- * both enforced at compile time) is the only registration needed.
+ * its core in `GITHUB_TOOL_CORES`, its `"use step"` factory in `src/tools/` and
+ * `allTools` in `src/index.ts`, all enforced at compile time) is the only
+ * registration needed.
  */
 export const GITHUB_TOOL_CATALOG = {
   /** Get information about a GitHub repository including description, stars, forks, language, and default branch. */
   getRepository: {
     description: repository.getRepositoryDescription,
     inputSchema: repository.getRepositoryInputSchema,
-    get core() { return repository.getRepositoryCore },
     connectScopes: CONTENTS_READ,
   },
   /** List branches in a GitHub repository. */
   listBranches: {
     description: repository.listBranchesDescription,
     inputSchema: repository.listBranchesInputSchema,
-    get core() { return repository.listBranchesCore },
     connectScopes: CONTENTS_READ,
   },
   /** Get the content of a file from a GitHub repository. Prefer startLine/endLine or maxLines for large files. */
   getFileContent: {
     description: repository.getFileContentDescription,
     inputSchema: repository.getFileContentInputSchema,
-    get core() { return repository.getFileContentCore },
     connectScopes: CONTENTS_READ,
   },
   /** List the file and directory structure of a repository at a given ref. */
   getRepositoryTree: {
     description: repository.getRepositoryTreeDescription,
     inputSchema: repository.getRepositoryTreeInputSchema,
-    get core() { return repository.getRepositoryTreeCore },
     connectScopes: CONTENTS_READ,
   },
   /** Create a new branch in a GitHub repository from an existing branch or commit SHA. Requires approval by default. */
   createBranch: {
     description: repository.createBranchDescription,
     inputSchema: repository.createBranchInputSchema,
-    get core() { return repository.createBranchCore },
     write: true,
     connectScopes: CONTENTS_WRITE,
   },
@@ -102,7 +95,6 @@ export const GITHUB_TOOL_CATALOG = {
   deleteBranch: {
     description: repository.deleteBranchDescription,
     inputSchema: repository.deleteBranchInputSchema,
-    get core() { return repository.deleteBranchCore },
     write: true,
     connectScopes: CONTENTS_WRITE,
   },
@@ -110,7 +102,6 @@ export const GITHUB_TOOL_CATALOG = {
   forkRepository: {
     description: repository.forkRepositoryDescription,
     inputSchema: repository.forkRepositoryInputSchema,
-    get core() { return repository.forkRepositoryCore },
     write: true,
     connectScopes: CONTENTS_READ,
   },
@@ -118,7 +109,6 @@ export const GITHUB_TOOL_CATALOG = {
   createRepository: {
     description: repository.createRepositoryDescription,
     inputSchema: repository.createRepositoryInputSchema,
-    get core() { return repository.createRepositoryCore },
     write: true,
     connectScopes: ADMIN,
   },
@@ -126,7 +116,6 @@ export const GITHUB_TOOL_CATALOG = {
   createOrUpdateFile: {
     description: repository.createOrUpdateFileDescription,
     inputSchema: repository.createOrUpdateFileInputSchema,
-    get core() { return repository.createOrUpdateFileCore },
     write: true,
     connectScopes: CONTENTS_WRITE,
   },
@@ -134,21 +123,18 @@ export const GITHUB_TOOL_CATALOG = {
   listPullRequests: {
     description: pullRequests.listPullRequestsDescription,
     inputSchema: pullRequests.listPullRequestsInputSchema,
-    get core() { return pullRequests.listPullRequestsCore },
     connectScopes: PR_READ,
   },
   /** Get detailed information about a specific pull request. Body truncated by default (detail: summary). */
   getPullRequest: {
     description: pullRequests.getPullRequestDescription,
     inputSchema: pullRequests.getPullRequestInputSchema,
-    get core() { return pullRequests.getPullRequestCore },
     connectScopes: PR_READ,
   },
   /** Create a new pull request in a GitHub repository. Requires approval by default. */
   createPullRequest: {
     description: pullRequests.createPullRequestDescription,
     inputSchema: pullRequests.createPullRequestInputSchema,
-    get core() { return pullRequests.createPullRequestCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -156,7 +142,6 @@ export const GITHUB_TOOL_CATALOG = {
   mergePullRequest: {
     description: pullRequests.mergePullRequestDescription,
     inputSchema: pullRequests.mergePullRequestInputSchema,
-    get core() { return pullRequests.mergePullRequestCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -164,7 +149,6 @@ export const GITHUB_TOOL_CATALOG = {
   updatePullRequest: {
     description: pullRequests.updatePullRequestDescription,
     inputSchema: pullRequests.updatePullRequestInputSchema,
-    get core() { return pullRequests.updatePullRequestCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -172,7 +156,6 @@ export const GITHUB_TOOL_CATALOG = {
   addPullRequestComment: {
     description: pullRequests.addPullRequestCommentDescription,
     inputSchema: pullRequests.addPullRequestCommentInputSchema,
-    get core() { return pullRequests.addPullRequestCommentCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -180,7 +163,6 @@ export const GITHUB_TOOL_CATALOG = {
   updatePullRequestComment: {
     description: pullRequests.updatePullRequestCommentDescription,
     inputSchema: pullRequests.updatePullRequestCommentInputSchema,
-    get core() { return pullRequests.updatePullRequestCommentCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -188,7 +170,6 @@ export const GITHUB_TOOL_CATALOG = {
   deletePullRequestComment: {
     description: pullRequests.deletePullRequestCommentDescription,
     inputSchema: pullRequests.deletePullRequestCommentInputSchema,
-    get core() { return pullRequests.deletePullRequestCommentCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -196,21 +177,18 @@ export const GITHUB_TOOL_CATALOG = {
   listPullRequestFiles: {
     description: pullRequests.listPullRequestFilesDescription,
     inputSchema: pullRequests.listPullRequestFilesInputSchema,
-    get core() { return pullRequests.listPullRequestFilesCore },
     connectScopes: PR_READ,
   },
   /** List reviews on a pull request (approvals, change requests, and comments). */
   listPullRequestReviews: {
     description: pullRequests.listPullRequestReviewsDescription,
     inputSchema: pullRequests.listPullRequestReviewsInputSchema,
-    get core() { return pullRequests.listPullRequestReviewsCore },
     connectScopes: PR_READ,
   },
   /** Submit a pull request review — approve, request changes, or comment with optional inline comments on specific lines. Requires approval by default. */
   createPullRequestReview: {
     description: pullRequests.createPullRequestReviewDescription,
     inputSchema: pullRequests.createPullRequestReviewInputSchema,
-    get core() { return pullRequests.createPullRequestReviewCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -218,14 +196,12 @@ export const GITHUB_TOOL_CATALOG = {
   listPullRequestReviewThreads: {
     description: pullRequests.listPullRequestReviewThreadsDescription,
     inputSchema: pullRequests.listPullRequestReviewThreadsInputSchema,
-    get core() { return pullRequests.listPullRequestReviewThreadsCore },
     connectScopes: PR_READ,
   },
   /** Reply to a pull request review comment in its review thread. Requires approval by default. */
   replyToReviewComment: {
     description: pullRequests.replyToReviewCommentDescription,
     inputSchema: pullRequests.replyToReviewCommentInputSchema,
-    get core() { return pullRequests.replyToReviewCommentCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -233,7 +209,6 @@ export const GITHUB_TOOL_CATALOG = {
   resolveReviewThread: {
     description: pullRequests.resolveReviewThreadDescription,
     inputSchema: pullRequests.resolveReviewThreadInputSchema,
-    get core() { return pullRequests.resolveReviewThreadCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -241,7 +216,6 @@ export const GITHUB_TOOL_CATALOG = {
   requestReviewers: {
     description: pullRequests.requestReviewersDescription,
     inputSchema: pullRequests.requestReviewersInputSchema,
-    get core() { return pullRequests.requestReviewersCore },
     write: true,
     connectScopes: PR_WRITE,
   },
@@ -249,42 +223,36 @@ export const GITHUB_TOOL_CATALOG = {
   getPullRequestContext: {
     description: bundles.getPullRequestContextDescription,
     inputSchema: bundles.getPullRequestContextInputSchema,
-    get core() { return bundles.getPullRequestContextCore },
     connectScopes: PR_CONTEXT,
   },
   /** Fetch an issue plus available label names and recent comments in one call. */
   getIssueContext: {
     description: bundles.getIssueContextDescription,
     inputSchema: bundles.getIssueContextInputSchema,
-    get core() { return bundles.getIssueContextCore },
     connectScopes: ISSUES_READ,
   },
   /** List issues for a GitHub repository (excludes pull requests). */
   listIssues: {
     description: issues.listIssuesDescription,
     inputSchema: issues.listIssuesInputSchema,
-    get core() { return issues.listIssuesCore },
     connectScopes: ISSUES_READ,
   },
   /** Get detailed information about a specific issue. Body truncated by default (detail: summary). */
   getIssue: {
     description: issues.getIssueDescription,
     inputSchema: issues.getIssueInputSchema,
-    get core() { return issues.getIssueCore },
     connectScopes: ISSUES_READ,
   },
   /** List comments on a GitHub issue. Bodies are truncated by default (detail: summary). Prefer getIssueContext for the first page when triaging. */
   listIssueComments: {
     description: issues.listIssueCommentsDescription,
     inputSchema: issues.listIssueCommentsInputSchema,
-    get core() { return issues.listIssueCommentsCore },
     connectScopes: ISSUES_READ,
   },
   /** Create a new issue in a GitHub repository. Requires approval by default. */
   createIssue: {
     description: issues.createIssueDescription,
     inputSchema: issues.createIssueInputSchema,
-    get core() { return issues.createIssueCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -292,7 +260,6 @@ export const GITHUB_TOOL_CATALOG = {
   addIssueComment: {
     description: issues.addIssueCommentDescription,
     inputSchema: issues.addIssueCommentInputSchema,
-    get core() { return issues.addIssueCommentCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -300,7 +267,6 @@ export const GITHUB_TOOL_CATALOG = {
   updateIssueComment: {
     description: issues.updateIssueCommentDescription,
     inputSchema: issues.updateIssueCommentInputSchema,
-    get core() { return issues.updateIssueCommentCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -308,7 +274,6 @@ export const GITHUB_TOOL_CATALOG = {
   deleteIssueComment: {
     description: issues.deleteIssueCommentDescription,
     inputSchema: issues.deleteIssueCommentInputSchema,
-    get core() { return issues.deleteIssueCommentCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -316,7 +281,6 @@ export const GITHUB_TOOL_CATALOG = {
   closeIssue: {
     description: issues.closeIssueDescription,
     inputSchema: issues.closeIssueInputSchema,
-    get core() { return issues.closeIssueCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -324,7 +288,6 @@ export const GITHUB_TOOL_CATALOG = {
   updateIssue: {
     description: issues.updateIssueDescription,
     inputSchema: issues.updateIssueInputSchema,
-    get core() { return issues.updateIssueCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -332,14 +295,12 @@ export const GITHUB_TOOL_CATALOG = {
   listLabels: {
     description: issues.listLabelsDescription,
     inputSchema: issues.listLabelsInputSchema,
-    get core() { return issues.listLabelsCore },
     connectScopes: ISSUES_READ,
   },
   /** Add labels to an issue or pull request. Requires approval by default. */
   addLabels: {
     description: issues.addLabelsDescription,
     inputSchema: issues.addLabelsInputSchema,
-    get core() { return issues.addLabelsCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -347,7 +308,6 @@ export const GITHUB_TOOL_CATALOG = {
   removeLabel: {
     description: issues.removeLabelDescription,
     inputSchema: issues.removeLabelInputSchema,
-    get core() { return issues.removeLabelCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -355,7 +315,6 @@ export const GITHUB_TOOL_CATALOG = {
   createLabel: {
     description: issues.createLabelDescription,
     inputSchema: issues.createLabelInputSchema,
-    get core() { return issues.createLabelCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -363,7 +322,6 @@ export const GITHUB_TOOL_CATALOG = {
   updateLabel: {
     description: issues.updateLabelDescription,
     inputSchema: issues.updateLabelInputSchema,
-    get core() { return issues.updateLabelCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -371,7 +329,6 @@ export const GITHUB_TOOL_CATALOG = {
   deleteLabel: {
     description: issues.deleteLabelDescription,
     inputSchema: issues.deleteLabelInputSchema,
-    get core() { return issues.deleteLabelCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -379,7 +336,6 @@ export const GITHUB_TOOL_CATALOG = {
   addAssignees: {
     description: issues.addAssigneesDescription,
     inputSchema: issues.addAssigneesInputSchema,
-    get core() { return issues.addAssigneesCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -387,7 +343,6 @@ export const GITHUB_TOOL_CATALOG = {
   removeAssignees: {
     description: issues.removeAssigneesDescription,
     inputSchema: issues.removeAssigneesInputSchema,
-    get core() { return issues.removeAssigneesCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -395,14 +350,12 @@ export const GITHUB_TOOL_CATALOG = {
   listIssueReactions: {
     description: reactions.listIssueReactionsDescription,
     inputSchema: reactions.listIssueReactionsInputSchema,
-    get core() { return reactions.listIssueReactionsCore },
     connectScopes: ISSUES_READ,
   },
   /** React to an issue or pull request with an emoji. Requires approval by default. */
   addIssueReaction: {
     description: reactions.addIssueReactionDescription,
     inputSchema: reactions.addIssueReactionInputSchema,
-    get core() { return reactions.addIssueReactionCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -410,14 +363,12 @@ export const GITHUB_TOOL_CATALOG = {
   listCommentReactions: {
     description: reactions.listCommentReactionsDescription,
     inputSchema: reactions.listCommentReactionsInputSchema,
-    get core() { return reactions.listCommentReactionsCore },
     connectScopes: ISSUES_READ,
   },
   /** React to an issue or pull request comment with an emoji. Requires approval by default. */
   addCommentReaction: {
     description: reactions.addCommentReactionDescription,
     inputSchema: reactions.addCommentReactionInputSchema,
-    get core() { return reactions.addCommentReactionCore },
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -425,21 +376,18 @@ export const GITHUB_TOOL_CATALOG = {
   listDiscussions: {
     description: discussions.listDiscussionsDescription,
     inputSchema: discussions.listDiscussionsInputSchema,
-    get core() { return discussions.listDiscussionsCore },
     connectScopes: DISCUSSIONS_READ,
   },
   /** Get a GitHub discussion by number. Body truncated by default (detail: summary). */
   getDiscussion: {
     description: discussions.getDiscussionDescription,
     inputSchema: discussions.getDiscussionInputSchema,
-    get core() { return discussions.getDiscussionCore },
     connectScopes: DISCUSSIONS_READ,
   },
   /** Add a comment to a GitHub discussion. Requires approval by default. */
   addDiscussionComment: {
     description: discussions.addDiscussionCommentDescription,
     inputSchema: discussions.addDiscussionCommentInputSchema,
-    get core() { return discussions.addDiscussionCommentCore },
     write: true,
     connectScopes: DISCUSSIONS_WRITE,
   },
@@ -447,14 +395,12 @@ export const GITHUB_TOOL_CATALOG = {
   listNotifications: {
     description: notifications.listNotificationsDescription,
     inputSchema: notifications.listNotificationsInputSchema,
-    get core() { return notifications.listNotificationsCore },
     connectScopes: UNSCOPED,
   },
   /** Mark a single notification thread as read. Requires approval by default. */
   markNotificationRead: {
     description: notifications.markNotificationReadDescription,
     inputSchema: notifications.markNotificationReadInputSchema,
-    get core() { return notifications.markNotificationReadCore },
     write: true,
     connectScopes: UNSCOPED,
   },
@@ -462,77 +408,66 @@ export const GITHUB_TOOL_CATALOG = {
   searchCode: {
     description: search.searchCodeDescription,
     inputSchema: search.searchCodeInputSchema,
-    get core() { return search.searchCodeCore },
     connectScopes: CONTENTS_READ,
   },
   /** Search for GitHub repositories by keyword, topic, language, or other qualifiers. */
   searchRepositories: {
     description: search.searchRepositoriesDescription,
     inputSchema: search.searchRepositoriesInputSchema,
-    get core() { return search.searchRepositoriesCore },
     connectScopes: SEARCH_REPOS,
   },
   /** Search for issues and pull requests across GitHub using search qualifiers like "repo:owner/name is:open". */
   searchIssues: {
     description: search.searchIssuesDescription,
     inputSchema: search.searchIssuesInputSchema,
-    get core() { return search.searchIssuesCore },
     connectScopes: SEARCH_ISSUES,
   },
   /** List commits for a GitHub repository. Filter by file path to see commits that touched a file. For line-by-line attribution at a given ref, use getBlame instead. */
   listCommits: {
     description: commits.listCommitsDescription,
     inputSchema: commits.listCommitsInputSchema,
-    get core() { return commits.listCommitsCore },
     connectScopes: CONTENTS_READ,
   },
   /** Get detailed information about a specific commit, including the list of files changed. Patches omitted by default. */
   getCommit: {
     description: commits.getCommitDescription,
     inputSchema: commits.getCommitInputSchema,
-    get core() { return commits.getCommitCore },
     connectScopes: CONTENTS_READ,
   },
   /** Line-level git blame for a file at a commit-like ref (branch, tag, or SHA). Returns contiguous ranges mapping lines to the commits that last modified them. */
   getBlame: {
     description: commits.getBlameDescription,
     inputSchema: commits.getBlameInputSchema,
-    get core() { return commits.getBlameCore },
     connectScopes: CONTENTS_READ,
   },
   /** Compare two branches, tags, or commits — ahead/behind counts, commits in between, and differing files. Patches omitted by default. */
   compareCommits: {
     description: commits.compareCommitsDescription,
     inputSchema: commits.compareCommitsInputSchema,
-    get core() { return commits.compareCommitsCore },
     connectScopes: CONTENTS_READ,
   },
   /** List gists for the authenticated user or a specific user. */
   listGists: {
     description: gists.listGistsDescription,
     inputSchema: gists.listGistsInputSchema,
-    get core() { return gists.listGistsCore },
     connectScopes: UNSCOPED,
   },
   /** Get a gist by ID, including file contents. */
   getGist: {
     description: gists.getGistDescription,
     inputSchema: gists.getGistInputSchema,
-    get core() { return gists.getGistCore },
     connectScopes: UNSCOPED,
   },
   /** List comments on a gist. */
   listGistComments: {
     description: gists.listGistCommentsDescription,
     inputSchema: gists.listGistCommentsInputSchema,
-    get core() { return gists.listGistCommentsCore },
     connectScopes: UNSCOPED,
   },
   /** Create a new gist with one or more files. Requires approval by default. */
   createGist: {
     description: gists.createGistDescription,
     inputSchema: gists.createGistInputSchema,
-    get core() { return gists.createGistCore },
     write: true,
     connectScopes: UNSCOPED,
   },
@@ -540,7 +475,6 @@ export const GITHUB_TOOL_CATALOG = {
   updateGist: {
     description: gists.updateGistDescription,
     inputSchema: gists.updateGistInputSchema,
-    get core() { return gists.updateGistCore },
     write: true,
     connectScopes: UNSCOPED,
   },
@@ -548,7 +482,6 @@ export const GITHUB_TOOL_CATALOG = {
   deleteGist: {
     description: gists.deleteGistDescription,
     inputSchema: gists.deleteGistInputSchema,
-    get core() { return gists.deleteGistCore },
     write: true,
     connectScopes: UNSCOPED,
   },
@@ -556,7 +489,6 @@ export const GITHUB_TOOL_CATALOG = {
   createGistComment: {
     description: gists.createGistCommentDescription,
     inputSchema: gists.createGistCommentInputSchema,
-    get core() { return gists.createGistCommentCore },
     write: true,
     connectScopes: UNSCOPED,
   },
@@ -564,42 +496,36 @@ export const GITHUB_TOOL_CATALOG = {
   listWorkflows: {
     description: workflows.listWorkflowsDescription,
     inputSchema: workflows.listWorkflowsInputSchema,
-    get core() { return workflows.listWorkflowsCore },
     connectScopes: ACTIONS_READ,
   },
   /** List workflow runs for a repository, optionally filtered by workflow, branch, status, or event. */
   listWorkflowRuns: {
     description: workflows.listWorkflowRunsDescription,
     inputSchema: workflows.listWorkflowRunsInputSchema,
-    get core() { return workflows.listWorkflowRunsCore },
     connectScopes: ACTIONS_READ,
   },
   /** Get details of a specific workflow run including status, timing, and trigger info. */
   getWorkflowRun: {
     description: workflows.getWorkflowRunDescription,
     inputSchema: workflows.getWorkflowRunInputSchema,
-    get core() { return workflows.getWorkflowRunCore },
     connectScopes: ACTIONS_READ,
   },
   /** List jobs for a workflow run, including step-level status and timing. */
   listWorkflowJobs: {
     description: workflows.listWorkflowJobsDescription,
     inputSchema: workflows.listWorkflowJobsInputSchema,
-    get core() { return workflows.listWorkflowJobsCore },
     connectScopes: ACTIONS_READ,
   },
   /** Get the log output of a workflow job to diagnose failures. Returns the tail (default 200 lines) with timestamps stripped. */
   getWorkflowJobLogs: {
     description: workflows.getWorkflowJobLogsDescription,
     inputSchema: workflows.getWorkflowJobLogsInputSchema,
-    get core() { return workflows.getWorkflowJobLogsCore },
     connectScopes: ACTIONS_READ,
   },
   /** Trigger a workflow via workflow_dispatch event. Requires approval by default. */
   triggerWorkflow: {
     description: workflows.triggerWorkflowDescription,
     inputSchema: workflows.triggerWorkflowInputSchema,
-    get core() { return workflows.triggerWorkflowCore },
     write: true,
     connectScopes: ACTIONS_WRITE,
   },
@@ -607,7 +533,6 @@ export const GITHUB_TOOL_CATALOG = {
   cancelWorkflowRun: {
     description: workflows.cancelWorkflowRunDescription,
     inputSchema: workflows.cancelWorkflowRunInputSchema,
-    get core() { return workflows.cancelWorkflowRunCore },
     write: true,
     connectScopes: ACTIONS_WRITE,
   },
@@ -615,7 +540,6 @@ export const GITHUB_TOOL_CATALOG = {
   rerunWorkflowRun: {
     description: workflows.rerunWorkflowRunDescription,
     inputSchema: workflows.rerunWorkflowRunInputSchema,
-    get core() { return workflows.rerunWorkflowRunCore },
     write: true,
     connectScopes: ACTIONS_WRITE,
   },
@@ -623,56 +547,48 @@ export const GITHUB_TOOL_CATALOG = {
   listCheckRuns: {
     description: checks.listCheckRunsDescription,
     inputSchema: checks.listCheckRunsInputSchema,
-    get core() { return checks.listCheckRunsCore },
     connectScopes: CHECKS,
   },
   /** Get the combined commit status (Statuses API — legacy CI integrations) for a commit, branch, or tag. */
   getCombinedStatus: {
     description: checks.getCombinedStatusDescription,
     inputSchema: checks.getCombinedStatusInputSchema,
-    get core() { return checks.getCombinedStatusCore },
     connectScopes: CHECKS,
   },
   /** Diagnose CI failures for a ref — combined status, failing checks, and failed workflow jobs in one call. */
   getCiFailureContext: {
     description: bundles.getCiFailureContextDescription,
     inputSchema: bundles.getCiFailureContextInputSchema,
-    get core() { return bundles.getCiFailureContextCore },
     connectScopes: CI_CONTEXT,
   },
   /** List releases for a GitHub repository, newest first (includes drafts and prereleases). */
   listReleases: {
     description: releases.listReleasesDescription,
     inputSchema: releases.listReleasesInputSchema,
-    get core() { return releases.listReleasesCore },
     connectScopes: CONTENTS_READ,
   },
   /** Get the latest published release for a GitHub repository (excludes drafts and prereleases). Body truncated by default. */
   getLatestRelease: {
     description: releases.getLatestReleaseDescription,
     inputSchema: releases.getLatestReleaseInputSchema,
-    get core() { return releases.getLatestReleaseCore },
     connectScopes: CONTENTS_READ,
   },
   /** Get a specific release by ID, including its assets. Body truncated by default. */
   getRelease: {
     description: releases.getReleaseDescription,
     inputSchema: releases.getReleaseInputSchema,
-    get core() { return releases.getReleaseCore },
     connectScopes: CONTENTS_READ,
   },
   /** Fetch a release plus the previous release and tag comparison in one call. */
   getReleaseContext: {
     description: bundles.getReleaseContextDescription,
     inputSchema: bundles.getReleaseContextInputSchema,
-    get core() { return bundles.getReleaseContextCore },
     connectScopes: CONTENTS_READ,
   },
   /** Create a new release (and its tag if needed) in a GitHub repository. Requires approval by default. */
   createRelease: {
     description: releases.createReleaseDescription,
     inputSchema: releases.createReleaseInputSchema,
-    get core() { return releases.createReleaseCore },
     write: true,
     connectScopes: CONTENTS_WRITE,
   },
@@ -680,7 +596,6 @@ export const GITHUB_TOOL_CATALOG = {
   updateRelease: {
     description: releases.updateReleaseDescription,
     inputSchema: releases.updateReleaseInputSchema,
-    get core() { return releases.updateReleaseCore },
     write: true,
     connectScopes: CONTENTS_WRITE,
   },
@@ -688,7 +603,6 @@ export const GITHUB_TOOL_CATALOG = {
   deleteRelease: {
     description: releases.deleteReleaseDescription,
     inputSchema: releases.deleteReleaseInputSchema,
-    get core() { return releases.deleteReleaseCore },
     write: true,
     connectScopes: CONTENTS_WRITE,
   },

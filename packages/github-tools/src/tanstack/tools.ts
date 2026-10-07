@@ -2,6 +2,7 @@ import { toolDefinition } from '@tanstack/ai'
 import type { ServerTool } from '@tanstack/ai'
 import type { z } from 'zod'
 import { GITHUB_TOOL_CATALOG, isGithubWriteToolName } from '../core/catalog'
+import { GITHUB_TOOL_CORES } from '../core/cores'
 import { resolveApprovalMode, type ApprovalConfig, type ToolApprovalMode } from '../core/approval-policy'
 import { mergeContextArgs, softenContextSchema, type GithubToolsContext } from '../core/context'
 import { resolvePresetTools, type GithubToolPreset, type PresetToolName } from '../core/presets'
@@ -15,7 +16,7 @@ type Catalog = typeof GITHUB_TOOL_CATALOG
 /** A TanStack server tool with the catalog's input schema and core return type. */
 export type GithubTanstackTool<N extends GithubToolName = GithubToolName> = N extends GithubToolName
   ? Omit<ServerTool<Catalog[N]['inputSchema'], undefined, N, unknown, boolean>, 'execute'> & {
-    execute: (input: z.input<Catalog[N]['inputSchema']>) => ReturnType<Catalog[N]['core']>
+    execute: (input: z.input<Catalog[N]['inputSchema']>) => ReturnType<(typeof GITHUB_TOOL_CORES)[N]>
   }
   : never
 
@@ -53,7 +54,7 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     return options.context ? mergeContextArgs(args, options.context) : args
   }
   const mode = options.needsApproval ?? (isGithubWriteToolName(name) ? true : false)
-  const core = descriptor.core as (input: Record<string, unknown> & { token: string }) => Promise<unknown>
+  const core = GITHUB_TOOL_CORES[name] as (input: Record<string, unknown> & { token: string }) => Promise<unknown>
   const built = toolDefinition({
     name,
     description: options.description ?? descriptor.description,

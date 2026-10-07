@@ -779,10 +779,10 @@ Returns a `DurableGithubAgent` instance for use inside Vercel Workflow SDK funct
 
 Supports both `.stream()` (real-time output to a writable) and `.generate()` (non-streaming, returns the full text response).
 
-Requires the optional peer dependencies `workflow` and `@workflow/ai`:
+Requires the optional peer dependencies `workflow` and `@ai-sdk/workflow`:
 
 ```sh
-pnpm add workflow @workflow/ai
+pnpm add workflow @ai-sdk/workflow
 ```
 
 #### Streaming (chat UI)

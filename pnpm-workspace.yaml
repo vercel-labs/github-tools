@@ -32,6 +32,8 @@ minimumReleaseAgeExclude:
   - 'ai'
   - 'eve'
   - 'create-eve'
+  - 'workflow'
+  - '@workflow/*'
   # HugoRCD
   - 'evlog'
 
