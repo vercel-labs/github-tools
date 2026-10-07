@@ -1,5 +1,15 @@
 # @github-tools/sdk
 
+## 1.18.0
+
+### Minor Changes
+
+- [#172](https://github.com/vercel-labs/github-tools/pull/172) [`be6f4a8`](https://github.com/vercel-labs/github-tools/commit/be6f4a869b4fc9695d2fc61bac0735a7728ce9e7) Thanks [@bensabic](https://github.com/bensabic)! - Add TanStack AI tools and a prebuilt GitHub agent with Jev-based preset selection and approval through `@github-tools/sdk/tanstack`. Auto-preset continuations retain pending tools without re-routing, and `generate()` throws when a run needs human review.
+
+- [#176](https://github.com/vercel-labs/github-tools/pull/176) [`4810ba8`](https://github.com/vercel-labs/github-tools/commit/4810ba8a20898c51a8058dff665ee2a4060c7231) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Support Workflow 5 for `createDurableGithubAgent`. The optional peer ranges now accept `workflow` `^4.5.0 || ^5.0.0` and `@ai-sdk/workflow` `^1.0.16 || ^2.0.0`, so installing `workflow@5` with `@ai-sdk/workflow@2` no longer reports peer conflicts. The unused `@workflow/ai` optional peer is removed; the durable agent requires `workflow` and `@ai-sdk/workflow`.
+  
+  `createDurableGithubAgent` no longer pulls Octokit into the workflow flow bundle, which Workflow 5 rejects with `WorkflowBuildError: Workflow bundle cannot run in the workflow sandbox`. Tool implementations moved from `GITHUB_TOOL_CATALOG` to a separate internal map; the public API is unchanged.
+
 ## 1.17.0
 
 ### Minor Changes

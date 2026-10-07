@@ -1,5 +1,13 @@
 # @github-tools/eve-extension
 
+## 0.8.1
+
+### Patch Changes
+
+- [#175](https://github.com/vercel-labs/github-tools/pull/175) [`73a9e73`](https://github.com/vercel-labs/github-tools/commit/73a9e7397987e139a593f9a3868bb691aef20454) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Build the extension with eve 0.72.1. The published manifest now requires tool contract 76 and dynamic-tool contract 72, so the extension mounts on eve 0.72 and later. Releases up to 0.8.0 required tool contract 54, which eve 0.72 no longer supports.
+- Updated dependencies [[`be6f4a8`](https://github.com/vercel-labs/github-tools/commit/be6f4a869b4fc9695d2fc61bac0735a7728ce9e7), [`4810ba8`](https://github.com/vercel-labs/github-tools/commit/4810ba8a20898c51a8058dff665ee2a4060c7231)]:
+  - @github-tools/sdk@1.18.0
+
 ## 0.8.0
 
 ### Minor Changes
