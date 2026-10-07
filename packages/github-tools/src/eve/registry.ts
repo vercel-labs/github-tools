@@ -2,6 +2,7 @@ import type { ToolModelOutput } from 'eve/tools'
 import type { z } from 'zod'
 import type { CommitIdentity } from '../types'
 import { GITHUB_TOOL_CATALOG, isGithubWriteToolName } from '../core/catalog'
+import { GITHUB_TOOL_CORES } from '../core/cores'
 import { mergeContextArgs, softenContextSchema, type GithubToolsContext } from '../core/context'
 import {
   compareCommitsToModelOutput,
@@ -112,7 +113,7 @@ export function createToolRegistry(
   const entries = names.map((name): ToolRegistryEntry => {
     const descriptor = GITHUB_TOOL_CATALOG[name]
     // Argument types vary per tool; `withToken` re-narrows at the dispatch boundary.
-    const core = descriptor.core as (args: Record<string, unknown> & { token: string }) => Promise<unknown>
+    const core = GITHUB_TOOL_CORES[name] as (args: Record<string, unknown> & { token: string }) => Promise<unknown>
     const toModelOutput = EVE_TOOL_MODEL_OUTPUTS[name]
     return {
       name,
