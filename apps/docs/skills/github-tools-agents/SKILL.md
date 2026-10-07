@@ -1,6 +1,6 @@
 ---
 name: github-tools-agents
-description: Give an AI agent GitHub access via @github-tools/sdk. Mount as an eve extension, or use with the AI SDK, Vercel Workflow, and Chat SDK. Covers tools, presets, approval control, token scoping, and durable agents.
+description: Give an AI agent GitHub access via @github-tools/sdk. Mount as an eve extension, or use with the AI SDK, TanStack AI, Vercel Workflow, and Chat SDK. Covers tools, presets, approval control, token scoping, and durable agents.
 license: MIT
 metadata:
   author: "HugoRCD"
@@ -14,7 +14,7 @@ metadata:
 
 Use this skill when the user wants **GitHub API access from an LLM** via the [`@github-tools/sdk`](https://www.npmjs.com/package/@github-tools/sdk) package: `generateText` / `streamText`, `createGithubAgent`, or **durable** `createDurableGithubAgent` with the Vercel Workflow SDK.
 
-Official docs: **https://github-tools.com**, with paths such as `/getting-started/installation`, `/getting-started/quick-start`, `/frameworks/ai-sdk`, `/frameworks/eve-extension`, `/deprecated/eve` (deprecated direct import), `/frameworks/vercel-workflow`, `/frameworks/chat-sdk`, `/guide/approval-control`, `/guide/tokens-and-auth`, `/api/reference`. Copy-prompts for assistants are embedded on those pages.
+Official docs: **https://github-tools.com**, with paths such as `/getting-started/installation`, `/getting-started/quick-start`, `/frameworks/ai-sdk`, `/frameworks/tanstack-ai`, `/frameworks/eve-extension`, `/deprecated/eve` (deprecated direct import), `/frameworks/vercel-workflow`, `/frameworks/chat-sdk`, `/guide/approval-control`, `/guide/tokens-and-auth`, `/api/reference`. Copy-prompts for assistants are embedded on those pages.
 
 ## When to use
 
@@ -80,6 +80,30 @@ export async function run(messages: ModelMessage[], token: string) {
 
 **Limitation:** Durable agents require `@ai-sdk/workflow` and `WorkflowChatTransport` on the client for resumable streams. For predicate/`once` approval policies, use the [eve extension](/frameworks/eve-extension).
 
+### TanStack AI
+
+Use `@github-tools/sdk/tanstack` for native TanStack server-tool arrays, individual factories, and the prebuilt agent. Install `@tanstack/ai` alongside the SDK's `ai` and `zod` peers. Install `@tanstack/ai-vercel-gateway` for Gateway chat or default Jev evaluation:
+
+```sh
+pnpm add @github-tools/sdk @tanstack/ai@0.64 @tanstack/ai-vercel-gateway@0.3 ai zod
+```
+
+```ts
+import { createGithubAgent } from '@github-tools/sdk/tanstack'
+import { vercelGatewayText } from '@tanstack/ai-vercel-gateway'
+
+const agent = createGithubAgent({
+  adapter: vercelGatewayText('anthropic/claude-opus-5'),
+  preset: 'auto',
+  requireApproval: 'auto',
+})
+const text = await agent.generate({ prompt: 'List open PRs on vercel/ai.' })
+```
+
+`generate()` returns a string; `stream()` returns native TanStack events. Keep `GITHUB_TOKEN` and Gateway credentials on the server. TanStack auto modes use `decide()` with Gateway Jev; configure a custom evaluator with `evaluation.adapter`, not `evaluation.model`. Thresholds match the AI SDK integration. Gateway is optional with another chat adapter and custom evaluator.
+
+For direct `chat()` use, pass the array from `createGithubTools()`. Auto approval additionally requires `middleware: [createGithubApprovalMiddleware({ tools })]` and `interrupts: [githubToolApproval]`. Import the interrupt from the browser-safe `@github-tools/sdk/tanstack/interrupts` entry point and register it on the client too. Resolve it with `{ approved: boolean }` and preserve TanStack resume data and message history. The prebuilt agent installs the server middleware automatically. Static boolean approvals use TanStack's native tool-approval flow. See `/frameworks/tanstack-ai`.
+
 ### eve extension (recommended for eve agents)
 
 Requires `eve` as a peer, declared `*` and checked through the extension's generated capability metadata (transitively **`ai` v7**); built against eve 0.64. Mount from `@github-tools/eve-extension` under `agent/extensions/`.
@@ -123,7 +147,7 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`. Start with the smallest preset that fits; use `maintainer` when you need the full catalog. Multi-role: manager + sub-agents each with one preset.
 
-For an agent that takes open-ended requests, `createGithubAgent({ preset: 'auto' })` picks presets per call from the latest user message, narrows the active tools, and uses the matching system prompt. It combines at most two presets; when none clearly matches it uses the most likely one (read-only `repo-explorer` when nothing stands out). It never exposes the full catalog. Needs `ai` >= 7.0.105; not on the durable agent.
+For an agent that takes open-ended requests, `createGithubAgent({ preset: 'auto' })` picks presets per call from the latest user message, narrows the active tools, and uses the matching system prompt. It combines at most two presets; when none clearly matches it uses the most likely one (read-only `repo-explorer` when nothing stands out). It never exposes the full catalog. The AI SDK integration needs `ai` >= 7.0.105; TanStack uses its own evaluation API. Not on the durable agent.
 
 ## Working context
 
@@ -134,13 +158,13 @@ Classifiable failures are structured evlog catalog errors (`githubToolsErrors`, 
 ## Write safety
 
 - Default: writes go through **approval** (AI SDK tool approval flow) unless `requireApproval: false` or per-tool overrides.
-- For interactive agents, prefer `requireApproval: 'auto'`: low-risk writes (labels, assignees, reactions, comments, review replies, reviewer requests, notification reads, workflow re-runs) run without a prompt when an evaluation model rates them low-risk and asked for by the user; everything else still asks. Per tool: `{ updateIssue: 'auto', mergePullRequest: true }`. Tune with `evaluation: { maxRisk, minIntent, model }` only when needed. Needs `ai` >= 7.0.105; not on the durable agent. If the evaluation model fails (not enabled on AI Gateway, no credits, outage), `'auto'` approval asks and `preset: 'auto'` uses `repo-explorer`, each logging a `github_tools.EVALUATION_FAILED` warning.
+- For interactive agents, prefer `requireApproval: 'auto'`: low-risk writes (labels, assignees, reactions, comments, review replies, reviewer requests, notification reads, workflow re-runs) run without a prompt when an evaluation model rates them low-risk and asked for by the user; everything else still asks. Per tool: `{ updateIssue: 'auto', mergePullRequest: true }`. Tune with `evaluation: { maxRisk, minIntent, model }` for AI SDK/eve, or `adapter` instead of `model` for TanStack. The AI SDK integration needs `ai` >= 7.0.105; TanStack uses its own evaluation API. Not on the durable agent. If the evaluation model fails (not enabled on AI Gateway, no credits, outage), `'auto'` approval asks and `preset: 'auto'` uses `repo-explorer`, each logging a `github_tools.EVALUATION_FAILED` warning.
 - Map token scopes to tools (Actions, Contents, Issues, Pull requests, Discussions, Gists, …). Reactions fall under Issues. Gist and notification tools need account-level PAT permissions and do not work with a Vercel Connect installation token.
 - Prefer `addIssueReaction` / `addCommentReaction` over a comment when only acknowledging a thread.
 
 ## Durable steps
 
-Each packaged tool uses a named module-level **`"use step"`** function so individual GitHub calls register as workflow steps when running under the Workflow SDK. See `./references/durable-workflows.md`.
+Each AI SDK tool wrapper uses a named module-level **`"use step"`** function so individual GitHub calls register as workflow steps when running under the Workflow SDK. See `./references/durable-workflows.md`.
 
 ## Reference Documentation
 

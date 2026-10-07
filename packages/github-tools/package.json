@@ -1,7 +1,7 @@
 {
   "name": "@github-tools/sdk",
   "version": "1.17.0",
-  "description": "A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK",
+  "description": "A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, TanStack AI, Vercel Workflow, and Chat SDK",
   "author": "HugoRCD <hugo.richard@vercel.com",
   "repository": {
     "type": "git",
@@ -40,6 +40,14 @@
     "./connect/eve": {
       "types": "./dist/connect/eve.d.mts",
       "import": "./dist/connect/eve.mjs"
+    },
+    "./tanstack": {
+      "types": "./dist/tanstack.d.mts",
+      "import": "./dist/tanstack.mjs"
+    },
+    "./tanstack/interrupts": {
+      "types": "./dist/tanstack/interrupts.d.mts",
+      "import": "./dist/tanstack/interrupts.mjs"
     }
   },
   "main": "./dist/index.mjs",
@@ -63,7 +71,8 @@
     "tools",
     "agent",
     "workflow",
-    "durable"
+    "durable",
+    "tanstack-ai"
   ],
   "license": "MIT",
   "dependencies": {
@@ -77,7 +86,9 @@
     "ai": "^6.0.97 || ^7.0.0",
     "eve": ">=0.44.0",
     "workflow": "^4.5.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@tanstack/ai": "~0.64.0",
+    "@tanstack/ai-vercel-gateway": "~0.3.2"
   },
   "peerDependenciesMeta": {
     "workflow": {
@@ -94,12 +105,20 @@
     },
     "@vercel/connect": {
       "optional": true
+    },
+    "@tanstack/ai": {
+      "optional": true
+    },
+    "@tanstack/ai-vercel-gateway": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@ai-sdk/provider": "^4.0.17",
     "@ai-sdk/provider-utils": "^5.0.45",
     "@ai-sdk/workflow": "^1.0.70",
+    "@tanstack/ai": "0.64.0",
+    "@tanstack/ai-vercel-gateway": "0.3.2",
     "@types/node": "^26.5.0",
     "@vercel/connect": "^2.0.4",
     "ai": "^7.0.107",

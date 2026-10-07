@@ -1,3 +1,4 @@
+import { approvalCases, presetCases } from './core/evaluation-fixtures'
 import type { ModelMessage } from 'ai'
 import { Experimental_EvaluationMockModelV4, MockLanguageModelV4 } from 'ai/test'
 import type { Experimental_EvaluationModelV4CallOptions, LanguageModelV4CallOptions } from '@ai-sdk/provider'
@@ -35,6 +36,12 @@ const messages: ModelMessage[] = [
 type NeedsApproval = (input: unknown, options: { toolCallId: string, messages: ModelMessage[] }) => Promise<boolean>
 
 describe("requireApproval: 'auto'", () => {
+  it.each(approvalCases)('applies shared approval policy $risk/$intent', async ({ risk, intent, options, expected }) => {
+    const { model } = evaluationModel(() => ({ risk, intent }))
+    const tools = createGithubTools({ token: 'test', requireApproval: 'auto', evaluation: { model, ...options } })
+    expect(await (tools.addLabels.needsApproval as NeedsApproval)({}, { toolCallId: '1', messages })).toBe(expected)
+  })
+
   it('evaluates low-risk write tools and keeps approval on the rest', () => {
     for (const name of AUTO_APPROVAL_TOOLS) expect(resolveApprovalMode(name, 'auto')).toBe('auto')
     expect(resolveApprovalMode('mergePullRequest', 'auto')).toBe(true)
@@ -122,6 +129,11 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       system: system?.content,
     }
   }
+
+  it.each(presetCases)('applies shared routing policy $expected', async ({ probabilities, options, expected }) => {
+    const { tools } = await run(probabilities, undefined, options)
+    expect(new Set(tools)).toEqual(new Set(expected.flatMap(preset => PRESET_TOOLS[preset])))
+  })
 
   it('asks one question per preset except maintainer', async () => {
     const { questions, request } = await run({})

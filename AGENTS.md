@@ -1,6 +1,6 @@
 ## Overview
 
-`@github-tools/sdk` wraps GitHub's REST API as 84 AI SDK-compatible tools for agents and `generateText`/`streamText` calls — with presets, approval control, and integrations for eve, Vercel Workflow, and Chat SDK. Docs: [github-tools.com](https://github-tools.com).
+`@github-tools/sdk` wraps GitHub's REST API as 84 AI SDK-compatible tools for agents and `generateText`/`streamText` calls — with presets, approval control, and integrations for eve, TanStack AI, Vercel Workflow, and Chat SDK. Docs: [github-tools.com](https://github-tools.com).
 
 ## Commands
 
@@ -28,9 +28,11 @@ Verify changes with `pnpm build && pnpm lint && pnpm typecheck && pnpm test`. Th
 
 ## Monorepo Structure
 
-pnpm workspaces + Turborepo. Three packages:
+pnpm workspaces + Turborepo, with published packages, apps, and examples:
 
 - **`packages/github-tools`** — the SDK (`@github-tools/sdk`), published to npm. Built with `tsdown` to ESM (`.mjs`/`.d.mts`).
+- **`packages/github-tools-eve-extension`** — the published eve extension (`@github-tools/eve-extension`).
+- **`examples/*`** — consumer integrations used for development and canary checks.
 - **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
 - **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.getting-started/4.agent-skills.md`).
 
@@ -75,7 +77,9 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 ### Key source files
 
 - `src/index.ts` — public API: `createGithubTools()`, `allTools` composition, re-exports
-- `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`) with preset-specific system prompts
+- `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`); shared preset prompts live in `src/core/instructions.ts`
+- `src/tanstack/index.ts` and `src/tanstack/` — native TanStack tools, agent, evaluation, and approval middleware; browser-safe interrupt definition at `@github-tools/sdk/tanstack/interrupts`
+- `src/core/evaluation-policy.ts` — runtime-independent auto-approval and preset evaluation policy
 - `src/workflow.ts` — `createDurableGithubAgent()` (`WorkflowAgent` from `@ai-sdk/workflow`), exported from `@github-tools/sdk/workflow` subpath
 - `src/core/evaluation.ts` — `requireApproval: 'auto'` and `preset: 'auto'` on AI SDK `experimental_evaluate` (default model `typesafe-ai/jev`). `ai` is a static namespace import and `experimental_evaluate` is feature-detected, so the root entry still loads on `ai` 6. Keep it static: a dynamic `import('ai')` splits the chunk and breaks `eve build` of the extension
 - `src/eve-runtime.ts` — shared eve primitives for `@github-tools/eve-extension` (`listEveToolDescriptors`, `executeGithubEveTool`, approval helpers); public export `@github-tools/sdk/eve-runtime`

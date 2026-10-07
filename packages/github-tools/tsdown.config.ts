@@ -3,6 +3,8 @@ import { defineConfig } from 'tsdown'
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    tanstack: 'src/tanstack/index.ts',
+    'tanstack/interrupts': 'src/tanstack/interrupts.ts',
     workflow: 'src/workflow.ts',
     eve: 'src/eve.ts',
     'eve-runtime': 'src/eve-runtime.ts',
@@ -15,6 +17,8 @@ export default defineConfig({
   fixedExtension: true,
   external: [
     'ai',
+    '@tanstack/ai',
+    '@tanstack/ai-vercel-gateway',
     '@ai-sdk/provider',
     '@ai-sdk/provider-utils',
     'zod',

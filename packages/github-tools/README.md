@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-black?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![license](https://img.shields.io/github/license/vercel-labs/github-tools?color=black)](https://github.com/vercel-labs/github-tools/blob/main/LICENSE)
 
-**Give any agent GitHub access.** A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with [eve](https://eve.dev), the [AI SDK](https://ai-sdk.dev), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
+**Give any agent GitHub access.** A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with [eve](https://eve.dev), the [AI SDK](https://ai-sdk.dev), [TanStack AI](https://tanstack.com/ai), Vercel Workflow, and [Chat SDK](https://chat-sdk.dev).
 
 Docs: **[github-tools.com](https://github-tools.com)**
 
@@ -17,10 +17,10 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 
 | | `@github-tools/sdk` | GitHub MCP server | `gh` CLI | Raw Octokit |
 |---|---|---|---|---|
-| Integration | Native AI SDK `tool()` objects | MCP wire protocol via a separate process | Shell-out from the agent | Hand-written per call |
+| Integration | Native AI SDK and TanStack AI tools | MCP wire protocol via a separate process | Shell-out from the agent | Hand-written per call |
 | Human approval | Built in, on by default | Host-dependent, inconsistent | None | You build it |
-| Durable / retryable | Every call is a `"use step"` | No | No | No |
-| Scoped by task | Presets (7 built-in) | Full server surface, or manual filtering | Full CLI surface | You build it |
+| Durable / retryable | Workflow entry point uses `"use step"` | No | No | No |
+| Scoped by task | Presets (10 built-in) | Full server surface, or manual filtering | Full CLI surface | You build it |
 | Token-efficient output | Shaped and truncated by design | Raw API responses | Raw text, needs parsing | Raw API responses |
 | Native eve / Workflow / Chat SDK | Yes | No | No | No |
 
@@ -30,6 +30,7 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 |---|---|
 | A standalone GitHub agent, fast: 3 files, durable approval | [eve extension](#eve-extension-recommended) |
 | Scripts, chat backends, or an existing AI SDK app | Quick Start below |
+| A TanStack AI app | [TanStack AI](#tanstack-ai) |
 | Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
 | A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
 
@@ -353,6 +354,32 @@ connectGithubTools(
   { preset: 'code-review' },
 )
 ```
+
+## TanStack AI
+
+Import native tool arrays and the prebuilt agent from `@github-tools/sdk/tanstack`:
+
+```sh
+pnpm add @github-tools/sdk @tanstack/ai@0.64 @tanstack/ai-vercel-gateway@0.3 ai zod
+```
+
+```ts
+import { createGithubAgent } from '@github-tools/sdk/tanstack'
+import { vercelGatewayText } from '@tanstack/ai-vercel-gateway'
+
+const agent = createGithubAgent({
+  adapter: vercelGatewayText('anthropic/claude-opus-5'),
+  context: { owner: 'vercel', repo: 'ai' },
+  preset: 'auto',
+  requireApproval: 'auto',
+})
+
+const text = await agent.generate({ prompt: 'Summarize the open pull requests.' })
+```
+
+Set `GITHUB_TOKEN` and Gateway authentication on the server. `generate()` returns a string; `stream()` returns TanStack's native event stream. Auto modes use TanStack `decide()` with Gateway Jev and the same approval and routing thresholds as the AI SDK integration. Supply `evaluation.adapter` to use another evaluator.
+
+`createGithubTools()` returns an array for TanStack `chat({ tools })`. Direct tools with auto approval also need `createGithubApprovalMiddleware({ tools })` and the shared `githubToolApproval` interrupt from `@github-tools/sdk/tanstack/interrupts`. Register that definition on the client to handle human review. See the [TanStack AI guide](https://github-tools.com/frameworks/tanstack-ai) for tools, streaming, and approval continuation.
 
 ## eve
 
