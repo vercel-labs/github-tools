@@ -28,7 +28,7 @@ jobs:
         with:
           registry-url: https://registry.npmjs.org
 
-      # commitMode: github-api makes changesets/action skip git user setup. Without an
+      # changesets/action pushes through the GitHub API and skips git user setup. Without an
       # identity, changeset's annotated `git tag -m` fails silently (it still logs
       # "New tag") and tags only land on the remote via the API createRef path.
       - name: Configure git identity
@@ -38,19 +38,18 @@ jobs:
 
       - name: Create Release PR or Publish
         id: changesets
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        # v2 is required by @changesets/cli v3: v1 parses the v2 CLI's stdout to detect
+        # published packages, so with CLI v3 `published` stays false.
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          title: 'chore: version packages'
-          commit: 'chore: version packages'
-          commitMode: github-api
-          version: pnpm run version-packages
-          publish: pnpm run release
+          pr-title: 'chore: version packages'
+          commit-message: 'chore: version packages'
+          version-script: pnpm run version-packages
+          publish-script: pnpm run release
           # Releases are created here, then their bodies are rewritten below.
-          createGithubReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          create-github-releases: true
 
-      # createGithubReleases gives us one release per package, tagged pkg@version — that part
+      # create-github-releases gives us one release per package, tagged pkg@version — that part
       # we keep. Its *body* is the CHANGELOG section, which for a dependent package is a wall of
       # "Updated dependencies [<hash>, <hash>, …]" and is empty for packages with no changeset
       # of their own. `--generate-notes` is not the answer either: GitHub builds those from a
@@ -67,7 +66,7 @@ jobs:
 
       - name: Rewrite release notes
         if: steps.changesets.outputs.published == 'true'
-        run: node scripts/release-notes.mjs '${{ steps.changesets.outputs.publishedPackages }}'
+        run: node scripts/release-notes.mjs '${{ steps.changesets.outputs.published-packages }}'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # HEAD is always the release commit here; avoids depending on a local tag.
