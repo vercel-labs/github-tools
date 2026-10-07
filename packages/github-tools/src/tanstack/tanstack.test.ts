@@ -212,6 +212,20 @@ describe('TanStack agent and middleware', () => {
     expect(setup.write).not.toHaveBeenCalled()
   })
 
+  it('reports missing approval separately from an explicit denial', async () => {
+    const setup = execution()
+    const approval: typeof setup.approval = {
+      ...setup.approval,
+      onBeforeToolCall(ctx, call) {
+        return setup.approval.onBeforeToolCall!(ctx, { ...call, toolCallId: 'unrecorded' })
+      },
+    }
+    await collect(chat({ adapter: setup.adapter, tools: setup.tools, messages: request, middleware: [approval], interrupts: [githubToolApproval] }))
+    expect(setup.write).not.toHaveBeenCalled()
+    expect(JSON.stringify(setup.adapter.calls.at(-1)?.messages)).toContain('No approval recorded for this GitHub tool call and input.')
+    expect(JSON.stringify(setup.adapter.calls.at(-1)?.messages)).not.toContain('User denied')
+  })
+
   it('supports native generation and streaming with preset instructions', async () => {
     const adapter = new TestTextAdapter()
     const agent = github.createGithubAgent({ token: 'test', adapter, preset: 'repo-explorer', context: { owner: 'vercel', repo: 'ai' }, additionalInstructions: 'Cite files.' })
@@ -238,6 +252,36 @@ describe('TanStack agent and middleware', () => {
     expect(resumed.filter(chunk => chunk.type === 'RUN_ERROR')).toEqual([])
     expect(setup.write).toHaveBeenCalledTimes(1)
     expect(setup.evaluate.calls).toHaveLength(1)
+  })
+
+  it('resumes auto routing without another routing evaluation or losing the approved tool', async () => {
+    let routes = 0
+    const setup = execution(undefined, evaluator((state): Record<string, number> => {
+      if ('toolCall' in state) return { risk: 2, intent: 0 }
+      return ++routes === 1 ? { 'issue-triage': 1 } : { 'repo-explorer': 1 }
+    }))
+    const agent = github.createGithubAgent({ token: 'test', adapter: setup.adapter, preset: 'auto', requireApproval: 'auto', evaluation: { adapter: setup.evaluate.adapter } })
+    const chunks = await collect(agent.stream({ messages: request }))
+    const terminal = chunks.findLast(chunk => chunk.type === 'RUN_FINISHED')!
+    if (terminal.outcome?.type !== 'interrupt') throw new Error('Expected approval interrupt')
+    const interrupt = terminal.outcome.interrupts[0]
+    const resumed = await collect(agent.stream({
+      messages: [...request, { role: 'assistant', content: '', toolCalls: [toolCall()] }],
+      parentRunId: readInterruptBinding(interrupt)!.interruptedRunId,
+      resume: [{ interruptId: interrupt.id, status: 'resolved', payload: { approved: true }, metadata: wrapGenericInterruptContinuation(genericInterruptContinuationFromDescriptor(interrupt)!) }],
+    }))
+    expect(resumed.filter(chunk => chunk.type === 'RUN_ERROR')).toEqual([])
+    expect(setup.write).toHaveBeenCalledTimes(1)
+    expect(routes).toBe(1)
+    expect(setup.evaluate.calls).toHaveLength(2)
+    expect(new Set(setup.adapter.calls.at(-1)?.tools?.map(tool => tool.name))).toEqual(new Set([...PRESET_TOOLS['repo-explorer'], 'addLabels']))
+  })
+
+  it.each([true, 'auto'] as const)('rejects generate when approval policy %s interrupts the run', async requireApproval => {
+    const setup = execution(undefined, evaluator(() => ({ risk: 2, intent: 0 })))
+    const agent = github.createGithubAgent({ token: 'test', adapter: setup.adapter, preset: 'issue-triage', requireApproval, evaluation: { adapter: setup.evaluate.adapter } })
+    await expect(agent.generate({ messages: request })).rejects.toThrow('Use stream() to handle approval interrupts and continuation.')
+    expect(setup.write).not.toHaveBeenCalled()
   })
 
   it('routes per invocation without sharing concurrent state', async () => {

@@ -377,7 +377,7 @@ const agent = createGithubAgent({
 const text = await agent.generate({ prompt: 'Summarize the open pull requests.' })
 ```
 
-Set `GITHUB_TOKEN` and Gateway authentication on the server. `generate()` returns a string; `stream()` returns TanStack's native event stream. Auto modes use TanStack `decide()` with Gateway Jev and the same approval and routing thresholds as the AI SDK integration. Supply `evaluation.adapter` to use another evaluator.
+Set `GITHUB_TOKEN` and Gateway authentication on the server. `generate()` returns a string and throws on approval interrupts; `stream()` returns TanStack's native event stream. Auto modes use TanStack `decide()` with Gateway Jev and the same approval and routing thresholds as the AI SDK integration. Supply `evaluation.adapter` to use another evaluator. Auto-preset continuations skip routing and expose `repo-explorer` plus pending GitHub tools.
 
 `createGithubTools()` returns an array for TanStack `chat({ tools })`. Direct tools with auto approval also need `createGithubApprovalMiddleware({ tools })` and the shared `githubToolApproval` interrupt from `@github-tools/sdk/tanstack/interrupts`. Register that definition on the client to handle human review. See the [TanStack AI guide](https://github-tools.com/frameworks/tanstack-ai) for tools, streaming, and approval continuation.
 

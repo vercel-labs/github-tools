@@ -100,9 +100,9 @@ const agent = createGithubAgent({
 const text = await agent.generate({ prompt: 'List open PRs on vercel/ai.' })
 ```
 
-`generate()` returns a string; `stream()` returns native TanStack events. Keep `GITHUB_TOKEN` and Gateway credentials on the server. TanStack auto modes use `decide()` with Gateway Jev; configure a custom evaluator with `evaluation.adapter`, not `evaluation.model`. Thresholds match the AI SDK integration. Gateway is optional with another chat adapter and custom evaluator.
+`generate()` returns a string and throws on approval interrupts; `stream()` returns native TanStack events. Keep `GITHUB_TOKEN` and Gateway credentials on the server. TanStack auto modes use `decide()` with Gateway Jev; configure a custom evaluator with `evaluation.adapter`, not `evaluation.model`. Thresholds match the AI SDK integration. Gateway is optional with another chat adapter and custom evaluator.
 
-For direct `chat()` use, pass the array from `createGithubTools()`. Auto approval additionally requires `middleware: [createGithubApprovalMiddleware({ tools })]` and `interrupts: [githubToolApproval]`. Import the interrupt from the browser-safe `@github-tools/sdk/tanstack/interrupts` entry point and register it on the client too. Resolve it with `{ approved: boolean }` and preserve TanStack resume data and message history. The prebuilt agent installs the server middleware automatically. Static boolean approvals use TanStack's native tool-approval flow. See `/frameworks/tanstack-ai`.
+For direct `chat()` use, pass the array from `createGithubTools()`. Auto approval additionally requires `middleware: [createGithubApprovalMiddleware({ tools })]` and `interrupts: [githubToolApproval]`. Import the interrupt from the browser-safe `@github-tools/sdk/tanstack/interrupts` entry point and register it on the client too. Resolve it with `{ approved: boolean }` and preserve TanStack resume data and message history. The prebuilt agent installs the server middleware automatically. Auto-preset continuations skip routing and expose `repo-explorer` plus pending GitHub tools. Static boolean approvals use TanStack's native tool-approval flow. See `/frameworks/tanstack-ai`.
 
 ### eve extension (recommended for eve agents)
 

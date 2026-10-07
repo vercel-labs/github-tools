@@ -1,7 +1,7 @@
 import { chat, convertMessagesToModelMessages } from '@tanstack/ai'
 import type { AnyTextAdapter, ChatMiddleware, ChatStream } from '@tanstack/ai'
 import { resolveInstructions } from '../core/instructions'
-import type { GithubToolPreset } from '../core/presets'
+import { PRESET_TOOLS, type GithubToolPreset } from '../core/presets'
 import { createGithubTools, type CreateGithubToolsOptions } from './tools'
 import { selectPresets, type GithubEvaluationOptions } from './evaluation'
 import { createGithubApprovalMiddleware } from './approval'
@@ -32,7 +32,7 @@ export type GithubAgentCallOptions<A extends AnyTextAdapter> = Omit<Partial<Chat
 
 /** A reusable, stateless TanStack GitHub agent. */
 export type GithubAgent<A extends AnyTextAdapter> = {
-  /** Run the tool loop and collect TanStack's text result. Use stream() for approval UIs. */
+  /** Collect TanStack's text result. Throws on interrupts; use stream() for approval UIs. */
   generate: (options: GithubAgentCallOptions<A>) => Promise<string>
   /** Run the tool loop as native TanStack events, including approval interrupts. */
   stream: (options: GithubAgentCallOptions<A>) => ChatStream
@@ -46,10 +46,17 @@ export function createGithubAgent<A extends AnyTextAdapter>({
   async function prepare(call: GithubAgentCallOptions<A>) {
     const { prompt, messages: suppliedMessages, ...callSettings } = call
     const messages = suppliedMessages ?? [{ role: 'user' as const, content: prompt! }]
+    const modelMessages = convertMessagesToModelMessages(messages)
+    const continuingAuto = preset === 'auto' && Boolean((callSettings.resume ?? settings.resume)?.length)
     const selected = preset === 'auto'
-      ? await selectPresets(convertMessagesToModelMessages(messages), evaluation, (callSettings.abortController ?? settings.abortController)?.signal)
+      ? continuingAuto ? 'repo-explorer' : await selectPresets(modelMessages, evaluation, (callSettings.abortController ?? settings.abortController)?.signal)
       : preset
-    const tools = createGithubTools({ token, preset: selected, requireApproval, overrides, context, author, committer, coAuthors })
+    const availableTools = createGithubTools({ token, preset: continuingAuto ? undefined : selected, requireApproval, overrides, context, author, committer, coAuthors })
+    const completed = new Set(modelMessages.filter(message => message.role === 'tool').map(message => message.toolCallId))
+    const pendingNames = new Set(modelMessages.flatMap(message => message.role === 'assistant' ? message.toolCalls ?? [] : [])
+      .filter(call => !completed.has(call.id)).map(call => call.function.name))
+    const continuationNames = new Set<string>([...PRESET_TOOLS['repo-explorer'], ...pendingNames])
+    const tools = continuingAuto ? availableTools.filter(tool => continuationNames.has(tool.name)) : availableTools
     const promptPreset: GithubToolPreset | GithubToolPreset[] | undefined = typeof selected === 'string' || selected === undefined
       ? selected
       : selected.length === 1 ? selected[0] : [...selected]
@@ -58,7 +65,7 @@ export function createGithubAgent<A extends AnyTextAdapter>({
       ...callSettings,
       messages,
       tools,
-      systemPrompts: [resolveInstructions({ preset: promptPreset, instructions, additionalInstructions, context })],
+      systemPrompts: [resolveInstructions({ preset: continuingAuto ? undefined : promptPreset, instructions, additionalInstructions, context })],
       middleware: [createGithubApprovalMiddleware({ tools, evaluation }), ...middleware],
       interrupts: [githubToolApproval],
     }
@@ -66,7 +73,17 @@ export function createGithubAgent<A extends AnyTextAdapter>({
 
   return {
     async generate(call) {
-      return chat({ ...await prepare(call), stream: false })
+      const prepared = await prepare(call)
+      let interrupted = false
+      const observeInterrupt: ChatMiddleware = {
+        name: 'github-tools.generate',
+        onChunk(_ctx, chunk) {
+          if (chunk.type === 'RUN_FINISHED' && chunk.outcome?.type === 'interrupt') interrupted = true
+        },
+      }
+      const text = await chat({ ...prepared, middleware: [observeInterrupt, ...prepared.middleware], stream: false })
+      if (interrupted) throw new Error('GitHub agent requires review. Use stream() to handle approval interrupts and continuation.')
+      return text
     },
     async *stream(call) {
       yield* chat({ ...await prepare(call), stream: true })

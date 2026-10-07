@@ -81,7 +81,8 @@ export function createGithubApprovalMiddleware({ tools, evaluation }: GithubAppr
       const info = managed.get(call.toolName)
       if (!info) return
       const decision = decisionFor(ctx, call.toolCallId, call.toolName, info.resolveInput(call.args))
-      if (!decision?.approved) return { type: 'skip', result: { error: 'User denied this GitHub tool call.' } }
+      if (!decision) return { type: 'skip', result: { error: 'No approval recorded for this GitHub tool call and input.' } }
+      if (!decision.approved) return { type: 'skip', result: { error: 'User denied this GitHub tool call.' } }
     },
   }
 }
