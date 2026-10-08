@@ -27,6 +27,12 @@ function evaluationModel(answer: (options: Experimental_EvaluationModelV4CallOpt
   return { model, calls }
 }
 
+// ai 7.0.133 hands providers the state as parts, so an object arrives as [{ type: 'json', value }].
+function evaluationState({ state }: Experimental_EvaluationModelV4CallOptions): unknown {
+  if (Array.isArray(state) && state.length === 1 && state[0]?.type === 'json') return state[0].value
+  return state
+}
+
 const messages: ModelMessage[] = [
   { role: 'user', content: 'Label issue 12 as a bug' },
   { role: 'assistant', content: 'Reading the issue.' },
@@ -60,7 +66,7 @@ describe("requireApproval: 'auto'", () => {
     const input = { owner: 'vercel', repo: 'ai', issueNumber: 12, labels: ['bug'] }
 
     await expect((tools.addLabels.needsApproval as NeedsApproval)(input, { toolCallId: '1', messages })).resolves.toBe(false)
-    expect(calls[0]!.state).toMatchObject({
+    expect(evaluationState(calls[0]!)).toMatchObject({
       request: 'Add the bug label to vercel/ai#12',
       toolCall: { tool: 'addLabels', input },
     })
@@ -124,7 +130,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
     const system = calls[0]!.prompt.find(message => message.role === 'system')
     return {
       questions: Object.keys(evaluation.calls[0]!.questions),
-      request: evaluation.calls[0]!.state,
+      request: evaluationState(evaluation.calls[0]!),
       tools: (calls[0]!.tools ?? []).map(tool => tool.name),
       system: system?.content,
     }
