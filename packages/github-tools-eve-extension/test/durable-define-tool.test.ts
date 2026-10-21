@@ -26,7 +26,11 @@ import {
 // (`collectDurableDynamicToolCallbacks`). `execute` is the only required one.
 const CALLBACKS = ['execute', 'toModelOutput', 'approval', 'approvalKey', 'label'] as const
 const REQUIRED_CALLBACKS = ['execute'] as const
-const LABEL_CALLBACKS = ['start', 'delta', 'complete'] as const
+// Callback-or-object properties and the nested callbacks eve stamps on their object form.
+const NESTED_CALLBACKS: Record<string, readonly string[]> = {
+  approval: ['request', 'prompt', 'response'],
+  label: ['start', 'delta', 'complete'],
+}
 const SCHEMAS = ['inputSchema', 'outputSchema'] as const
 const sourcePath = join(dirname(fileURLToPath(import.meta.url)), '../extension/tools/github.ts')
 
@@ -127,26 +131,26 @@ function inspectDefineToolObject(arg: ObjectLiteralExpression, sourceText: (node
   return { spreadKeys, direct }
 }
 
-function assertLabelCallbacksInline(label: Expression | Node) {
-  if (!isObjectLiteralExpression(label)) {
+function assertNestedCallbacksInline(parent: string, value: Expression | Node, nested: readonly string[]) {
+  if (!isObjectLiteralExpression(value)) {
     assert.ok(
-      isDirectFunction(label),
-      'defineTool().label must be an object literal or an inline function',
+      isDirectFunction(value),
+      `defineTool().${parent} must be an object literal or an inline function`,
     )
     return
   }
 
-  for (const prop of label.properties) {
+  for (const prop of value.properties) {
     assert.ok(
       !isSpreadAssignment(prop),
-      'defineTool().label must not spread its callbacks — eve cannot stamp a durable descriptor',
+      `defineTool().${parent} must not spread its callbacks — eve cannot stamp a durable descriptor`,
     )
     const key = isPropertyAssignment(prop) || isMethodDeclaration(prop) ? propertyName(prop.name) : undefined
-    if (!key || !(LABEL_CALLBACKS as readonly string[]).includes(key)) continue
+    if (!key || !nested.includes(key)) continue
     const init = isPropertyAssignment(prop) ? prop.initializer : prop
     assert.ok(
       isDirectFunction(init),
-      `defineTool().label.${key} must be an inline function or identifier, not ${init.kind}`,
+      `defineTool().${parent}.${key} must be an inline function or identifier, not ${init.kind}`,
     )
   }
 }
@@ -178,8 +182,9 @@ describe('defineTool durable callbacks and schemas', () => {
       for (const key of CALLBACKS) {
         const init = direct.get(key)
         if (!init) continue
-        if (key === 'label') {
-          assertLabelCallbacksInline(init)
+        const nested = NESTED_CALLBACKS[key]
+        if (nested) {
+          assertNestedCallbacksInline(key, init, nested)
           continue
         }
         assert.ok(

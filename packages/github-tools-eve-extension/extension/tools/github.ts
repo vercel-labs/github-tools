@@ -22,7 +22,11 @@ import {
 } from '@github-tools/sdk/eve-runtime'
 import type { ApprovalContext } from 'eve/tools/approval'
 import { defineDurableSchema, defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
-import extension, { type GithubExtensionApprovalConfig, type GithubExtensionApprovalValue } from '../extension'
+import extension, {
+  type GithubExtensionApprovalConfig,
+  type GithubExtensionApprovalValue,
+  type GithubExtensionContext,
+} from '../extension'
 
 /**
  * Rebuild options from extension config on every call.
@@ -170,6 +174,16 @@ async function runGithubEveApproval(name: GithubToolName, request: string, ctx: 
   return mapEveApprovalValue(value)(ctx)
 }
 
+type ApprovalTarget = GithubExtensionContext & { discussionNumber?: number }
+
+function runGithubEveApprovalPrompt(name: GithubToolName, input: Record<string, unknown>) {
+  const { owner, repo, pullNumber, issueNumber, discussionNumber } = { ...extension.config.context, ...input } as ApprovalTarget
+  const action = name.replace(/[A-Z]/g, letter => ` ${letter.toLowerCase()}`)
+  const number = pullNumber ?? issueNumber ?? discussionNumber
+  const target = owner && repo ? ` on ${owner}/${repo}${number ? `#${number}` : ''}` : ''
+  return `${action[0]!.toUpperCase()}${action.slice(1)}${target}?`
+}
+
 function buildGithubEveInputSchema({ name }: { name: GithubToolName }) {
   const descriptor = listEveToolDescriptors({
     ...buildSessionOptions(),
@@ -220,7 +234,10 @@ export default defineDynamic({
             closure: { name },
             schema: buildGithubEveInputSchema,
           }),
-          approval: (approvalCtx) => runGithubEveApproval(name, request, approvalCtx),
+          approval: {
+            request: (approvalCtx) => runGithubEveApproval(name, request, approvalCtx),
+            prompt: ({ input }) => runGithubEveApprovalPrompt(name, input),
+          },
           toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
           ...(override?.outputSchema !== undefined && {
             outputSchema: defineDurableSchema({

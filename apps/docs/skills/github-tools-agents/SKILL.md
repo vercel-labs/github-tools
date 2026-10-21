@@ -106,7 +106,7 @@ For direct `chat()` use, pass the array from `createGithubTools()`. Auto approva
 
 ### eve extension (recommended for eve agents)
 
-Requires `eve` as a peer, declared `*` and checked through the extension's generated capability metadata (transitively **`ai` v7**); built against eve 0.64. Mount from `@github-tools/eve-extension` under `agent/extensions/`.
+Requires `eve` as a peer, declared `*` and checked through the extension's generated capability metadata (transitively **`ai` v7**); built against eve 0.81, so it mounts on eve 0.81 or later. Mount from `@github-tools/eve-extension` under `agent/extensions/`.
 
 ```ts
 // agent/extensions/github.ts

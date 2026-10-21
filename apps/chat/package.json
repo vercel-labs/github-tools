@@ -14,9 +14,9 @@
     "db:migrate": "nuxt db migrate"
   },
   "dependencies": {
-    "@ai-sdk/gateway": "^4.0.87",
-    "@ai-sdk/vue": "^4.0.107",
-    "@ai-sdk/workflow": "^2.0.62",
+    "@ai-sdk/gateway": "^4.0.121",
+    "@ai-sdk/vue": "^4.0.148",
+    "@ai-sdk/workflow": "^2.0.80",
     "@github-tools/sdk": "workspace:*",
     "@iconify-json/logos": "^1.2.14",
     "@iconify-json/lucide": "^1.2.130",
@@ -31,7 +31,7 @@
     "@workflow/ai": "^5.0.2",
     "@workflow/nitro": "5.0.2",
     "@workflow/nuxt": "^5.0.2",
-    "ai": "^7.0.130",
+    "ai": "^7.0.148",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "h3": "^1.15.11",

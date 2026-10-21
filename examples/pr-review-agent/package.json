@@ -12,7 +12,7 @@
     "@chat-adapter/state-memory": "latest",
     "@github-tools/sdk": "workspace:*",
     "@workflow/ai": "latest",
-    "ai": "^7.0.130",
+    "ai": "^7.0.148",
     "chat": "latest",
     "evlog": "latest",
     "workflow": "latest",

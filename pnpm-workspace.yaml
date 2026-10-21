@@ -38,6 +38,6 @@ minimumReleaseAgeExclude:
   - 'evlog'
 
 overrides:
-  '@ai-sdk/workflow>ai': 7.0.130
+  '@ai-sdk/workflow>ai': 7.0.148
   'undici@5': 6.28.0
 
