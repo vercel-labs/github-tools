@@ -1,5 +1,13 @@
 # @github-tools/eve-extension
 
+## 0.9.0
+
+### Minor Changes
+
+- [#180](https://github.com/vercel-labs/github-tools/pull/180) [`5017b58`](https://github.com/vercel-labs/github-tools/commit/5017b58f0741e3e92b3ecc701086863386483422) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Build the extension with eve 0.81.1. The published manifest now requires tool contract 93 and dynamic-tool contract 87, so the extension mounts on eve 0.81 and later. Agents on eve 0.72 to 0.80 can stay on 0.8.x.
+  
+  Approval requests for write tools now name the action and its target instead of eve's default `Approve <tool>?`, for example `Merge pull request on vercel-labs/github-tools#176?`. `owner`, `repo`, and the pull request, issue, or discussion number fall back to `context` when the call omits them.
+
 ## 0.8.1
 
 ### Patch Changes
