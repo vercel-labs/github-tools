@@ -7,9 +7,9 @@ const MAX_APPROVAL_ROUNDS = 6
 
 function requestedToolNames(events: readonly { type: string, data?: unknown }[]): string[] {
   return events.flatMap((event) => {
-    if (event.type !== 'actions.requested') return []
-    const { actions } = event.data as { actions: { kind: string, toolName?: string }[] }
-    return actions.flatMap(action => action.kind === 'tool-call' && action.toolName ? [action.toolName.split('__').at(-1)!] : [])
+    if (event.type !== 'call.requested') return []
+    const { capability } = event.data as { capability: { kind: string, name: string } }
+    return capability.kind === 'tool' ? [capability.name.split('__').at(-1)!] : []
   })
 }
 
@@ -23,8 +23,8 @@ export default TASKS.map(task => defineEval({
     t.log(`${BENCH_LOG_PREFIX}${JSON.stringify({ task: task.id, ...selection })}`)
     let turn = await t.send(task.prompt)
     let rounds = 0
-    while (turn.inputRequests.length > 0 && turn.inputRequests.every(r => r.kind === 'tool-approval') && rounds < MAX_APPROVAL_ROUNDS) {
-      t.log(`approval round ${++rounds}: ${turn.inputRequests.length} request(s)`)
+    while (turn.interactions.length > 0 && turn.interactions.every(r => r.request.kind === 'approval') && rounds < MAX_APPROVAL_ROUNDS) {
+      t.log(`approval round ${++rounds}: ${turn.interactions.length} request(s)`)
       turn = await turn.session.respondAll('approve')
     }
     t.succeeded()

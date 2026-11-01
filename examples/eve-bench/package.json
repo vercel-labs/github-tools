@@ -14,7 +14,7 @@
     "@github-tools/eve-extension": "workspace:*",
     "@github-tools/sdk": "workspace:*",
     "ai": "^7.0.148",
-    "eve": "^0.81.1",
+    "eve": "^1.0.0-rc.1",
     "zod": "^4.5.4"
   }
 }

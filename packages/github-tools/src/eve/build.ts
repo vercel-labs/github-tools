@@ -129,11 +129,7 @@ export function createEveGithubToolsDynamic(options: EveGithubToolsOptions = {})
 
   // TODO(eve-auth): resolve token from ctx.getToken('github') when eve-managed auth lands.
   // Deferred — eve does not yet expose managed GitHub tokens on the session context.
-  return defineDynamic({
-    events: {
-      'step.started': async () => buildEveToolMap(options),
-    },
-  })
+  return defineDynamic(() => buildEveToolMap(options))
 }
 
 export function listResolvedEveToolNames(options?: { preset?: undefined, include?: undefined, exclude?: undefined }): GithubToolName[]

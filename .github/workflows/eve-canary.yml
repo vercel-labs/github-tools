@@ -1,9 +1,9 @@
 name: eve canary
 
-# eve ships multiple releases a week, and the durable-callback contract has
-# changed shape before (0.44 stamping, 0.50 capability format). The AST guard in
-# packages/github-tools-eve-extension/test/ only checks the authored source;
-# this job builds and tests against eve@latest on a schedule so upstream drift
+# eve ships multiple releases a week, and the extension contract has changed
+# shape before (0.44 stamping, 0.50 capability format, 0.84 dynamic functions and
+# distribution manifests). This job builds the extension and runs the
+# examples/eve-smoke eval against eve@latest on a schedule so upstream drift
 # fails here before it reaches consumers.
 
 on:
@@ -72,11 +72,8 @@ jobs:
       - name: Build
         run: pnpm exec turbo run build --filter=@github-tools/eve
 
-      - name: Verify durable schema transform
-        run: node scripts/verify-eve-schema-transform.mjs examples/eve/.output/server
-
       - name: Typecheck
         run: pnpm exec turbo run typecheck --filter=@github-tools/sdk --filter=@github-tools/eve-extension
 
       - name: Test
-        run: pnpm exec turbo run test --filter=@github-tools/sdk --filter=@github-tools/eve-extension
+        run: pnpm exec turbo run test --filter=@github-tools/sdk --filter=@github-tools/eve-smoke

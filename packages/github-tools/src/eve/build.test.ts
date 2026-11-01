@@ -21,11 +21,13 @@ describe('createGithubTools eve integration', () => {
     }
   })
 
-  it('returns a defineDynamic wrapper with step.started resolver', async () => {
+  it('returns a defineDynamic function that resolves the preset tools', async () => {
     const dynamic = createEveGithubToolsDynamic({ token: 'ghp_test', preset: 'code-review' })
-    expect(dynamic).toMatchObject({ kind: expect.any(String), events: { 'step.started': expect.any(Function) } })
+    // eve brands defineDynamic() values with this registered symbol.
+    const resolve = (dynamic as unknown as Record<symbol, (ctx: never) => unknown>)[Symbol.for('eve.dynamic')]
+    expect(resolve).toEqual(expect.any(Function))
 
-    const tools = await dynamic.events['step.started']!({}, {} as never)
+    const tools = await resolve!({} as never) as Record<string, unknown>
     expect(Object.keys(tools!).sort()).toEqual([...PRESET_TOOLS['code-review']].sort())
   })
 

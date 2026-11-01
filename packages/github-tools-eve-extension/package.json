@@ -39,8 +39,7 @@
     "build": "eve extension build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types ./test/durable-define-tool.test.ts"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "ai",
@@ -66,9 +65,9 @@
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
-    "@vercel/connect": "^2.0.4",
+    "@vercel/connect": "^2.7.0",
     "eslint": "^10.10.0",
-    "eve": "0.81.1",
+    "eve": "1.0.0-rc.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0"
   },
