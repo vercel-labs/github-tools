@@ -34,7 +34,12 @@ export default defineEval({
     t.check(remembered.interactions.length, satisfies(value => value === 0, "'once' approval is remembered for the session"))
     t.check(remembered.reply, includes('4242'))
 
-    const second = listedTools((await remembered.session.send('tools')).reply)
-    t.check(second.has('github__addLabels'), satisfies(value => value === true, 'routing holds on later turns'))
+    const later = await remembered.session.send('tools')
+    t.check(listedTools(later.reply).has('github__addLabels'), satisfies(value => value === true, 'routing holds on later turns'))
+
+    // Seven turns including this one. The read and write turns make a second model call after
+    // their tool result, which must reuse the turn's routing.
+    const routing = await later.session.send('routing')
+    t.check(Number(routing.reply), satisfies(value => value === 7, 'routing runs once per turn, not once per model call'))
   },
 })

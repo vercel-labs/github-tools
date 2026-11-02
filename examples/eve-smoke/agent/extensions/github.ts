@@ -1,5 +1,5 @@
 import githubExtension from '@github-tools/eve-extension'
-import type { Experimental_EvaluationModel } from 'ai'
+import { routingModel } from '../../fixtures/routing'
 
 const originalFetch = globalThis.fetch
 
@@ -28,23 +28,6 @@ globalThis.fetch = async (input, init) => {
     return json({ number: 4242, title, html_url: 'https://github.com/vercel-labs/github-tools/issues/4242', state: 'open', labels: [], user: { login: 'smoke' } }, 201)
   }
   return json({ message: `Unexpected ${request.method} ${url.pathname}` }, 500)
-}
-
-// Answers `preset: 'auto'` routing with issue-triage only.
-const routingModel: Experimental_EvaluationModel = {
-  specificationVersion: 'v4',
-  provider: 'smoke',
-  modelId: 'routing-fixture',
-  supportedQuestionTypes: ['boolean'],
-  async doDecide({ questions }) {
-    return {
-      answers: Object.fromEntries(Object.keys(questions).map(preset => [
-        preset,
-        { type: 'boolean' as const, probability: preset === 'issue-triage' ? 0.9 : 0.1 },
-      ])),
-      warnings: [],
-    }
-  },
 }
 
 export default githubExtension({

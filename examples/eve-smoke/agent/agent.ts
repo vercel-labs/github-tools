@@ -1,5 +1,6 @@
 import { defineAgent } from 'eve'
 import { mockModel } from 'eve/evals'
+import { routingCalls } from '../fixtures/routing'
 
 const target = { owner: 'vercel-labs', repo: 'github-tools' }
 
@@ -17,6 +18,8 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__getRepository', input: target }] }
       case 'write':
         return { toolCalls: [{ name: 'github__createIssue', input: { ...target, title: 'smoke' } }] }
+      case 'routing':
+        return String(routingCalls())
       default:
         return `unexpected message: ${lastUserMessage}`
     }

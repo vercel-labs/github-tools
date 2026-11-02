@@ -4,7 +4,7 @@ import { BENCH_LOG_DIR, BENCH_LOG_PREFIX } from '../lib/log.ts'
 import { TASKS } from '../evals/data/tasks.ts'
 
 type Usage = { costUsd?: number, inputTokens: number, outputTokens: number, cacheReadTokens: number, cacheWriteTokens: number }
-type Event = { type: string, data: { usage?: Usage }, meta: { at: string } }
+type Event = { type: string, data: { kind?: string, usage?: Usage }, meta: { at: string } }
 type Tag = { task: string, config: string, level: string }
 
 type Run = Tag & {
@@ -34,14 +34,14 @@ function loadRuns(): Run[] {
     return readdirSync(dir).filter(f => f.endsWith('.json')).flatMap((file) => {
       const artifact = JSON.parse(readFileSync(join(dir, file), 'utf8')) as {
         verdict: string
-        result: { logs: string[], derived: { inputRequests: unknown[] } }
+        result: { logs: string[], derived: { interactions: unknown[] } }
       }
       const tagLine = artifact.result.logs.find(l => l.startsWith(BENCH_LOG_PREFIX))
       if (!tagLine) return []
       const tag = JSON.parse(tagLine.slice(BENCH_LOG_PREFIX.length)) as Tag
       const events = readFileSync(join(dir, file.replace('.json', '.events.ndjson')), 'utf8')
         .trim().split('\n').map(line => JSON.parse(line) as Event)
-      const usages = events.filter(e => e.type === 'step.completed').map(e => e.data.usage!)
+      const usages = events.filter(e => e.type === 'usage.recorded' && e.data.kind === 'model').map(e => e.data.usage!)
       const times = events.map(e => Date.parse(e.meta.at))
       return [{
         ...tag,
@@ -52,7 +52,7 @@ function loadRuns(): Run[] {
         inputTokens: usages.reduce((s, u) => s + u.inputTokens, 0),
         cacheReadTokens: usages.reduce((s, u) => s + u.cacheReadTokens, 0),
         outputTokens: usages.reduce((s, u) => s + u.outputTokens, 0),
-        approvals: artifact.result.derived.inputRequests.length,
+        approvals: artifact.result.derived.interactions.length,
         seconds: (Math.max(...times) - Math.min(...times)) / 1000,
       }]
     })
