@@ -100,7 +100,8 @@ function installationTarget(tokenParams: ConnectTokenParams): string | undefined
  */
 function toConnectCatalogError(error: unknown, tokenParams: ConnectTokenParams, call: GithubTokenCall | undefined): unknown {
   if (error instanceof UserAuthorizationRequiredError) {
-    const subjectId = tokenParams.subject.type === 'user' ? tokenParams.subject.id : tokenParams.subject.type
+    const { subject } = tokenParams
+    const subjectId = subject.type === 'user' ? subject.id : subject.type ?? 'token'
     return githubToolsErrors.CONNECT_USER_NOT_CONNECTED({ subjectId, cause: error })
   }
   if (error instanceof ConnectorInstallationRequiredError) {

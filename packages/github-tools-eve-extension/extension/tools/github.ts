@@ -14,14 +14,12 @@ import {
   selectPresets,
   type EveGithubToolsOptions,
   type EveToolOverrides,
-  type GithubEvaluationOptions,
   type GithubTokenCall,
   type GithubToolName,
-  type GithubToolPreset,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import type { ApprovalContext } from 'eve/tools/approval'
-import { defineDurableSchema, defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
+import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
 import extension, {
   type GithubExtensionApprovalConfig,
   type GithubExtensionApprovalValue,
@@ -29,10 +27,8 @@ import extension, {
 } from '../extension'
 
 /**
- * Rebuild options from extension config on every call.
- * Durable callbacks and schemas only close over a serializable tool `name`
- * (#51, #99). Callbacks must be direct `defineTool` properties, while live
- * schemas use `defineDurableSchema`; eve rejects either without a descriptor.
+ * Rebuild options from extension config. `connect` resolvers need the tool
+ * execution context, so `execute` passes it on every call.
  */
 function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   const {
@@ -106,21 +102,6 @@ function withoutPendingApprovals(messages: readonly ModelMessage[]): ModelMessag
   return messages.filter(m => m.role !== 'user' || !latestUserText([m]).startsWith(PENDING_APPROVALS_LABEL))
 }
 
-// `step.started` runs on every model step; route once per user message.
-const routedPresets = new Map<string, Promise<GithubToolPreset[]>>()
-
-function routePresets(sessionId: string, messages: readonly ModelMessage[], evaluation: GithubEvaluationOptions | undefined) {
-  const key = `${sessionId}:${messages.filter(m => m.role === 'user').length}`
-  let presets = routedPresets.get(key)
-  if (!presets) {
-    presets = selectPresets(messages, evaluation)
-    presets.catch(() => routedPresets.delete(key))
-    routedPresets.set(key, presets)
-    if (routedPresets.size > 1000) routedPresets.delete(routedPresets.keys().next().value!)
-  }
-  return presets
-}
-
 // A parked call replayed in a new process must find its tool even if routing picks other presets.
 function calledGithubTools(messages: readonly ModelMessage[]): GithubToolName[] {
   return messages.flatMap(message => message.role === 'assistant' && Array.isArray(message.content)
@@ -184,72 +165,40 @@ function runGithubEveApprovalPrompt(name: GithubToolName, input: Record<string, 
   return `${action[0]!.toUpperCase()}${action.slice(1)}${target}?`
 }
 
-function buildGithubEveInputSchema({ name }: { name: GithubToolName }) {
-  const descriptor = listEveToolDescriptors({
-    ...buildSessionOptions(),
-    preset: undefined,
-    include: [name],
-    exclude: undefined,
-  })[0]
-  if (!descriptor) {
-    throw new Error(`GitHub tool descriptor "${name}" is not available`)
-  }
-  return descriptor.inputSchema
-}
-
-function buildGithubEveOutputSchema({ name }: { name: GithubToolName }) {
-  const outputSchema = buildSessionOptions().overrides?.[name]?.outputSchema
-  if (!outputSchema) {
-    throw new Error(`GitHub tool output schema override "${name}" is not available`)
-  }
-  return outputSchema
-}
-
-export default defineDynamic({
-  events: {
-    // Re-resolve each model step (not once per session) so tool registration
-    // stays fresh across durable steps; execute still rebuilds options above.
-    'step.started': async (_event, ctx) => {
-      const sessionOptions = buildSessionOptions()
-      const { preset, evaluation } = extension.config
-      const messages = withoutPendingApprovals(ctx.messages)
-      const request = latestUserText(messages)
-      const descriptors = listEveToolDescriptors(preset === 'auto'
-        ? {
-            ...sessionOptions,
-            preset: await routePresets(ctx.session.id, messages, evaluation),
-            include: [...sessionOptions.include ?? [], ...calledGithubTools(ctx.messages)],
-          }
-        : sessionOptions)
-      const tools: Record<string, ToolDefinition> = {}
-      const toolOverrides = sessionOptions.overrides
-
-      for (const entry of descriptors) {
-        const name = entry.name
-        const override = toolOverrides?.[name]
-
-        tools[name] = defineTool({
-          description: override?.description ?? entry.description,
-          inputSchema: defineDurableSchema({
-            closure: { name },
-            schema: buildGithubEveInputSchema,
-          }),
-          approval: {
-            request: (approvalCtx) => runGithubEveApproval(name, request, approvalCtx),
-            prompt: ({ input }) => runGithubEveApprovalPrompt(name, input),
-          },
-          toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
-          ...(override?.outputSchema !== undefined && {
-            outputSchema: defineDurableSchema({
-              closure: { name },
-              schema: buildGithubEveOutputSchema,
-            }),
-          }),
-          execute: async (input, ctx) => runGithubEveTool(name, input, ctx),
-        })
+// eve runs this before every model call; `ctx.memo` keeps the `'auto'` preset
+// routing fixed for the turn, across processes.
+export default defineDynamic(async (ctx) => {
+  const sessionOptions = buildSessionOptions()
+  const { preset, evaluation } = extension.config
+  const history = await ctx.messages()
+  const messages = withoutPendingApprovals(history)
+  const request = latestUserText(messages)
+  const descriptors = listEveToolDescriptors(preset === 'auto'
+    ? {
+        ...sessionOptions,
+        preset: await ctx.memo(['presets', ctx.turn?.id ?? null], () => selectPresets(messages, evaluation)),
+        include: [...sessionOptions.include ?? [], ...calledGithubTools(history)],
       }
+    : sessionOptions)
+  const tools: Record<string, ToolDefinition> = {}
+  const toolOverrides = sessionOptions.overrides
 
-      return tools
-    },
-  },
+  for (const entry of descriptors) {
+    const name = entry.name
+    const override = toolOverrides?.[name]
+
+    tools[name] = defineTool({
+      description: override?.description ?? entry.description,
+      inputSchema: entry.inputSchema,
+      approval: {
+        request: approvalCtx => runGithubEveApproval(name, request, approvalCtx),
+        prompt: ({ input }) => runGithubEveApprovalPrompt(name, input),
+      },
+      toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
+      ...(override?.outputSchema !== undefined && { outputSchema: override.outputSchema }),
+      execute: async (input, toolCtx) => runGithubEveTool(name, input, toolCtx),
+    })
+  }
+
+  return tools
 })

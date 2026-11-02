@@ -71,9 +71,9 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
 pnpm build && pnpm lint && pnpm typecheck && pnpm test
 ```
 
-### eve extension durable callbacks and schemas
+### eve extension tools
 
-`packages/github-tools-eve-extension/extension/tools/github.ts` must set `execute`, `toModelOutput`, and `approval` as **direct** `defineTool` properties with inline functions. Spreading those keys, or passing `resolveEveApproval(...)` / `always()` as the property value, leaves them without a durable descriptor, and eve rejects a dynamic tool whose callback is missing one. The same rule covers `approvalKey` and the `label` callbacks if they are ever authored here. Live `inputSchema` and `outputSchema` values must use `defineDurableSchema` with a JSON-serializable closure. `test/durable-define-tool.test.ts` fails CI if either contract regresses.
+`packages/github-tools-eve-extension/extension/tools/github.ts` default-exports `defineDynamic(async (ctx) => tools)`. eve runs it before every model call, so callbacks and schemas are plain values rebuilt from the extension config each time. Work that must stay fixed across model calls or processes, such as `preset: 'auto'` routing, goes in `ctx.memo(key, fn)` and must return JSON. `examples/eve-smoke` mounts the built extension under `eve eval` and fails CI if routing, registration, execution, or approval gating regresses.
 
 ## Pull requests
 

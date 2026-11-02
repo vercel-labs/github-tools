@@ -28,3 +28,6 @@ apps/chat/.data
 .workflow-data/
 .vercel
 .env*
+
+# eve local state
+.eve/

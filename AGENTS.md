@@ -8,7 +8,7 @@
 pnpm build              # Build all packages (turbo)
 pnpm lint               # Lint all packages
 pnpm typecheck          # Type-check all packages
-pnpm test               # SDK vitest + eve-extension durable-callback guard
+pnpm test               # SDK vitest + eve extension smoke eval (examples/eve-smoke)
 pnpm dev                # Run the chat app in dev mode
 pnpm docs:dev           # Run the docs site in dev mode
 
@@ -24,7 +24,7 @@ pnpm version-packages   # Apply changesets
 pnpm release            # Build SDK + publish
 ```
 
-Verify changes with `pnpm build && pnpm lint && pnpm typecheck && pnpm test`. The SDK has vitest (`packages/github-tools/**/*.test.ts`). The eve extension has an AST guard (`packages/github-tools-eve-extension/test/durable-define-tool.test.ts`) that fails CI if `execute` / `toModelOutput` / `approval` are spread or not inline on `defineTool`.
+Verify changes with `pnpm build && pnpm lint && pnpm typecheck && pnpm test`. The SDK has vitest (`packages/github-tools/**/*.test.ts`). The eve extension is covered by `examples/eve-smoke`: `eve eval` mounts the built extension with a `mockModel`, a fixed routing model, and an in-process `api.github.com` stub, and checks routing, registration, execution, and approval gating.
 
 ## Monorepo Structure
 
@@ -32,7 +32,7 @@ pnpm workspaces + Turborepo, with published packages, apps, and examples:
 
 - **`packages/github-tools`** — the SDK (`@github-tools/sdk`), published to npm. Built with `tsdown` to ESM (`.mjs`/`.d.mts`).
 - **`packages/github-tools-eve-extension`** — the published eve extension (`@github-tools/eve-extension`).
-- **`examples/*`** — consumer integrations used for development and canary checks.
+- **`examples/*`** — consumer integrations used for development, smoke tests (`examples/eve-smoke`), and canary checks.
 - **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
 - **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.getting-started/4.agent-skills.md`).
 
@@ -103,9 +103,9 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 
 Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
 
-## eve extension durable callbacks and schemas (`packages/github-tools-eve-extension`)
+## eve extension dynamic tools (`packages/github-tools-eve-extension`)
 
-eve rejects a dynamic tool whose callback or live validation schema has no durable descriptor. It stamps one per callback phase (`execute`, `toModelOutput`, `approval` or its object-form `request` / `prompt` / `response`, `approvalKey`, and the `label` callbacks), and `execute` is the only required callback. In `extension/tools/github.ts`, every authored callback must be a **direct** `defineTool` property with an inline function (or identifier). Input and output schemas from the SDK or extension config must use `defineDurableSchema`. Conditional spreads and call expressions (`resolveEveApproval(...)`, `always()`) are invisible to eve's callback transform. Durable callbacks and schema factories may only close over serializable values (the tool `name`, and the latest user request string for `approval.request`) and re-read config via `buildSessionOptions()` or `extension.config`. CI enforces this via `test/durable-define-tool.test.ts`. A scheduled canary (`.github/workflows/eve-canary.yml`) additionally builds the consumer example against a coherent `eve@latest` / `ai@latest` pair and inspects the durable schema transform.
+`extension/tools/github.ts` default-exports `defineDynamic(async (ctx) => tools)`. eve runs it before every model call and rebuilds every callback and schema from what it returns, so ordinary closures and Zod schemas are fine; there are no durable descriptors to preserve. Re-read config through `buildSessionOptions()` or `extension.config`. Work that must stay fixed across model calls or processes (the `preset: 'auto'` routing) goes in `ctx.memo(key, fn)` with a JSON result. `examples/eve-smoke` runs the built extension under `eve eval` in CI. A scheduled canary (`.github/workflows/eve-canary.yml`) builds `examples/eve` and runs that smoke eval against a coherent `eve@latest` / `ai@latest` pair.
 
 ## Chat App Architecture (`apps/chat`)
 
@@ -119,7 +119,7 @@ eve rejects a dynamic tool whose callback or live validation schema has no durab
 
 - **TypeScript**: Strict mode, ESNext target, `verbatimModuleSyntax: true`
 - **ESLint**: `typescript-eslint` flat config for SDK; `@nuxt/eslint` with stylistic rules for apps (no trailing commas, 1tbs brace style)
-- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath; `@github-tools/eve-extension` declares `eve` as `*` (the consumer supplies the runtime copy; eve validates the built capability metadata) and pins an exact `eve` devDependency as its authoring/build version
+- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath; `@github-tools/eve-extension` declares `eve` as `*` (the consumer supplies the runtime copy; eve validates the built capability metadata) and pins an exact `eve` devDependency as its authoring/build version; the SDK's optional `eve` peer range ends in `|| >=1.0.0-0` because npm does not match prereleases such as `1.0.0-rc.1` against a plain `>=` range
 
 ### Code style — no slop
 

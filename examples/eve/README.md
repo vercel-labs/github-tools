@@ -68,8 +68,9 @@ agent/
 
 The **channels** are how clients reach the agent (HTTP or GitHub). The **extension** is how the
 agent calls the GitHub API. GitHub turns only dispatch when **HugoRCD** `@mention`s `botName`.
-Write-tool approval is posted as a comment via `events["input.requested"]` — eve's GitHub
-channel does not ship that handler by default.
+Write-tool approval is posted as a comment by the `interaction.opened` handler in
+`agent/channels/github.ts`. It replaces eve's default prompt, which asks for a mention, and names
+the tool being approved.
 
 To approve a parked write, reply with exactly `Yes` or `No` (no quote-reply, no `@mention`
 needed).

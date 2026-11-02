@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { always, never, once, type ApprovalContext } from 'eve/tools/approval'
+import { always, never, type ApprovalContext } from 'eve/tools/approval'
 import {
   isEveApprovalDisabled,
   mapEveApprovalValue,
@@ -10,7 +10,6 @@ import {
 const approvalCtx = {
   session: { id: 's1', auth: {}, turn: 1 },
   toolName: 'createIssue',
-  approvedTools: new Set<string>(),
   toolInput: { owner: 'vercel-labs' },
   getSandbox: () => { throw new Error('not implemented') },
   getSkill: () => { throw new Error('not implemented') },
@@ -50,7 +49,6 @@ describe('resolveEveApproval', () => {
     expect(resolveEveApproval('createIssue', { createIssue: 'once' })!(approvalCtx)).toBe('user-approval')
     expect(resolveEveApproval('createIssue', { createIssue: 'never' })!(approvalCtx)).toBe('not-applicable')
     expect(resolveEveApproval('createIssue', { createIssue: 'always' })!(approvalCtx)).toBe('user-approval')
-    expect(once()({ ...approvalCtx, approvedTools: new Set(['createIssue']) })).toBe('not-applicable')
   })
 
   it('passes through eve approval helpers and predicates', () => {
