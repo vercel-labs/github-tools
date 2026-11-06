@@ -34,6 +34,10 @@ export const ACTIONS_WRITE = ['contents:read', 'metadata:read', 'actions:read', 
 export const CHECKS = ['contents:read', 'metadata:read', 'checks:read', 'statuses:read'] as const
 export const CI_CONTEXT = ['contents:read', 'metadata:read', 'actions:read', 'checks:read', 'statuses:read'] as const
 export const ADMIN = ['metadata:read', 'administration:read', 'administration:write'] as const
+/** Merging writes the base branch, which GitHub checks as Contents (write). */
+export const PR_MERGE = ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'pull_requests:write'] as const
+/** GitHub checks a fork as Administration (write) plus Contents (read). */
+export const FORK = ['contents:read', 'metadata:read', 'administration:read', 'administration:write'] as const
 export const SEARCH_REPOS = ['metadata:read'] as const
 export const SEARCH_ISSUES = ['metadata:read', 'issues:read', 'pull_requests:read'] as const
 export const UNSCOPED = [] as const
@@ -103,7 +107,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: repository.forkRepositoryDescription,
     inputSchema: repository.forkRepositoryInputSchema,
     write: true,
-    connectScopes: CONTENTS_READ,
+    connectScopes: FORK,
   },
   /** Create a new GitHub repository for the authenticated user or a specified organization. Requires approval by default. */
   createRepository: {
@@ -143,7 +147,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.mergePullRequestDescription,
     inputSchema: pullRequests.mergePullRequestInputSchema,
     write: true,
-    connectScopes: PR_WRITE,
+    connectScopes: PR_MERGE,
   },
   /** Update a pull request — title, body, state, base branch, or draft status. Requires approval by default. */
   updatePullRequest: {

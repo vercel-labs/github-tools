@@ -1,0 +1,18 @@
+{
+  "name": "@github-tools/eve-auto-test",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "test": "eve eval --skip-report"
+  },
+  "dependencies": {
+    "@github-tools/eve-extension": "workspace:*",
+    "@vercel/connect": "^2.7.0",
+    "ai": "^7.0.148",
+    "eve": "^1.0.0-rc.1",
+    "zod": "^4.5.4"
+  }
+}
