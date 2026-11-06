@@ -2,7 +2,8 @@ import * as ai from 'ai'
 import type { Experimental_EvaluationModel, JSONValue, ModelMessage } from 'ai'
 import { GITHUB_TOOL_CATALOG } from './catalog'
 import { githubToolsErrors } from './errors'
-import { PRESET_TOOLS } from './presets'
+import { CORE_READ_TOOLS, PRESET_TOOLS } from './presets'
+import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from './tool-names'
 import { DEFAULT_EVALUATION_MODEL, RISK_QUESTION, INTENT_QUESTION, PRESET_PURPOSES, conversationState, rankPresets, requiresApproval, type RoutablePreset } from './evaluation-policy'
 export { DEFAULT_EVALUATION_MODEL, AUTO_APPROVAL_TOOLS } from './evaluation-policy'
 import type { GithubWriteToolName } from './write-tools'
@@ -43,6 +44,35 @@ export type GithubEvaluationOptions = {
    * @default 2
    */
   maxPresets?: number
+  /**
+   * What `preset: 'auto'` picks. `'tools'` asks the decision model about each tool and lists only
+   * the likely ones plus the core read tools (`CORE_READ_TOOLS`), so the model sees far fewer tool
+   * definitions. The rest stays reachable: eve defers it, and `createGithubAgent` adds an
+   * `enableGithubTools` tool. `'presets'` lists the tools of up to `maxPresets` presets and, on
+   * `createGithubAgent`, uses their system prompts.
+   * @default 'tools'
+   */
+  selection?: 'presets' | 'tools'
+  /**
+   * How long a `preset: 'auto'` decision lasts. `'session'` decides once, on the conversation's
+   * first request, so the listed tools, and the provider's cached prompt prefix they start, stay
+   * the same for the rest of the conversation; later needs go through deferred tools (eve) or
+   * `enableGithubTools` (`createGithubAgent`, which doesn't support it with `selection: 'presets'`).
+   * `'turn'` decides again for each new request, which changes the tool list and makes the
+   * provider write the whole conversation to its prompt cache again.
+   * @default 'session', except `'turn'` for presets on `createGithubAgent`
+   */
+  scope?: 'turn' | 'session'
+  /**
+   * Lowest probability for `selection: 'tools'` to list a tool beyond the core read tools.
+   * @default 0.5
+   */
+  minToolProbability?: number
+  /**
+   * Most tools `selection: 'tools'` lists beyond the core read tools, keeping the most likely ones.
+   * @default 8
+   */
+  maxTools?: number
 }
 
 /**
@@ -130,33 +160,71 @@ export async function needsAutoApproval(
  */
 export async function evaluatePresets(
   messages: readonly ModelMessage[],
-  { model = DEFAULT_EVALUATION_MODEL, minPresetProbability = 0.7, maxPresets = 2, providerOptions }: GithubEvaluationOptions = {},
+  options: GithubEvaluationOptions = {},
   abortSignal?: AbortSignal,
 ): Promise<RoutablePreset[]> {
+  const { minPresetProbability = 0.7, maxPresets = 2 } = options
+  const presets = Object.keys(PRESET_PURPOSES) as RoutablePreset[]
+  const probabilities = await decideEach(messages, presets, preset => ({
+    instructions: 'Does handling this GitHub request need the tools of this preset?',
+    criteria: { true: { purpose: PRESET_PURPOSES[preset], tools: [...PRESET_TOOLS[preset]] } },
+  }), options, abortSignal)
+  return rankPresets(probabilities, { minPresetProbability, maxPresets })
+}
+
+/**
+ * Tools the latest user message needs, from one decision call with a yes/no question per tool:
+ * the core read tools, plus up to `maxTools` others at or above `minToolProbability`, most likely
+ * first. Rejects when the decision call fails; {@link selectTools} falls back instead.
+ */
+export async function evaluateTools(
+  messages: readonly ModelMessage[],
+  options: GithubEvaluationOptions = {},
+  abortSignal?: AbortSignal,
+): Promise<GithubToolName[]> {
+  const { minToolProbability = 0.5, maxTools = 8 } = options
+  const core: readonly GithubToolName[] = CORE_READ_TOOLS
+  const candidates = ALL_GITHUB_TOOL_NAMES.filter(name => !core.includes(name))
+  const probabilities = await decideEach(messages, candidates, name => ({
+    instructions: 'Does handling this GitHub request need this tool?',
+    criteria: { true: { tool: name, description: GITHUB_TOOL_CATALOG[name].description } },
+  }), options, abortSignal)
+  const likely = candidates
+    .filter(name => probabilities[name] >= minToolProbability)
+    .toSorted((a, b) => probabilities[b] - probabilities[a])
+    .slice(0, maxTools)
+  return [...core, ...likely]
+}
+
+type BooleanQuestion = { instructions: string, criteria: { true: Record<string, JSONValue> } }
+
+// One boolean question per key against the conversation. A refused question counts as a no:
+// ask once more without it instead of losing every answer.
+async function decideEach<K extends string>(
+  messages: readonly ModelMessage[],
+  keys: readonly K[],
+  question: (key: K) => BooleanQuestion,
+  { model = DEFAULT_EVALUATION_MODEL, providerOptions }: GithubEvaluationOptions,
+  abortSignal?: AbortSignal,
+): Promise<Record<K, number>> {
   const decide = loadDecide()
   const state = conversationState(messages, messageText)
-  const ask = (presets: readonly RoutablePreset[]) => decide({
+  const ask = (asked: readonly K[]) => decide({
     model,
     providerOptions,
     state,
-    questions: Object.fromEntries(presets.map(preset => [preset, {
-      type: 'boolean' as const,
-      instructions: 'Does handling this GitHub request need the tools of this preset?',
-      criteria: { true: { purpose: PRESET_PURPOSES[preset], tools: [...PRESET_TOOLS[preset]] } },
-    }])),
+    questions: Object.fromEntries(asked.map(key => [key, { type: 'boolean' as const, ...question(key) }])),
     abortSignal,
   })
-  const presets = Object.keys(PRESET_PURPOSES) as RoutablePreset[]
-  const probabilities = Object.fromEntries(presets.map(preset => [preset, 0])) as Record<RoutablePreset, number>
-  // A refused preset question counts as a no: ask once more without it instead of losing every answer.
-  const { answers } = await ask(presets).catch((error: unknown) => {
+  const probabilities = Object.fromEntries(keys.map(key => [key, 0])) as Record<K, number>
+  const { answers } = await ask(keys).catch((error: unknown) => {
     const refused = refusedQuestions(error)
-    const remaining = presets.filter(preset => !refused?.includes(preset))
+    const remaining = keys.filter(key => !refused?.includes(key))
     if (!refused || remaining.length === 0) throw error
     return ask(remaining)
   })
-  for (const [preset, answer] of Object.entries(answers)) probabilities[preset as RoutablePreset] = answer.probability
-  return rankPresets(probabilities, { minPresetProbability, maxPresets })
+  for (const [key, answer] of Object.entries(answers)) probabilities[key as K] = answer.probability
+  return probabilities
 }
 
 /**
@@ -166,6 +234,27 @@ export async function evaluatePresets(
 export function fallbackPresets(error: unknown, { model = DEFAULT_EVALUATION_MODEL }: GithubEvaluationOptions = {}, abortSignal?: AbortSignal): RoutablePreset[] {
   warnEvaluationFailed(model, 'using the repo-explorer preset', error, abortSignal)
   return ['repo-explorer']
+}
+
+/**
+ * Logs `EVALUATION_FAILED` for a failed {@link evaluateTools} call and returns the read-only
+ * `repo-explorer` tools. Rethrows when `abortSignal` is aborted.
+ */
+export function fallbackTools(error: unknown, { model = DEFAULT_EVALUATION_MODEL }: GithubEvaluationOptions = {}, abortSignal?: AbortSignal): GithubToolName[] {
+  warnEvaluationFailed(model, 'using the repo-explorer tools', error, abortSignal)
+  return [...PRESET_TOOLS['repo-explorer']]
+}
+
+/**
+ * {@link evaluateTools}, falling back to the read-only `repo-explorer` tools (and logging
+ * `EVALUATION_FAILED`) when the decision call fails.
+ */
+export async function selectTools(
+  messages: readonly ModelMessage[],
+  options: GithubEvaluationOptions = {},
+  abortSignal?: AbortSignal,
+): Promise<GithubToolName[]> {
+  return evaluateTools(messages, options, abortSignal).catch(error => fallbackTools(error, options, abortSignal))
 }
 
 /**

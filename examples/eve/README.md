@@ -4,7 +4,7 @@ Minimal [eve](https://eve.dev) agent mounting `@github-tools/eve-extension` with
 [Vercel Connect](https://vercel.com/docs/connect) connector, `preset: 'auto'`, and
 `requireApproval: 'auto'`.
 
-`preset: 'auto'` picks at most two presets per user message and registers only their tools.
+`preset: 'auto'` lists only the tools the session's first request needs and defers the rest.
 `requireApproval: 'auto'` runs low-risk writes the user asked for (labels, reactions, comments,
 review replies) without a prompt; every other write still asks. Both call the TypeSafe Jev
 decision model (`typesafe-ai/jev-1.14.0`) through AI Gateway, using the same `VERCEL_OIDC_TOKEN`.

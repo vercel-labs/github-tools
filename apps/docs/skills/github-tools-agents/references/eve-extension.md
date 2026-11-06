@@ -55,14 +55,14 @@ export default githubExtension({
 })
 ```
 
-The tool file is a `defineDynamic` function that eve runs before every model call; it rebuilds `execute`, `toModelOutput`, `approval`, and schemas from the extension config, so they survive Workflow replay and redeploys. `preset: 'auto'` routing is kept for the turn with `ctx.memo`. `toModelOutput` also strips `rateLimit` from the model-facing payload. Execute failures return `{ error }` so the model still receives a `tool_result` — a structured `{ code, message, why, fix, link }` object for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), a plain string otherwise. The model receives it as an eve `error-text` result. An `approval` policy in `agent.ts` can add gates to GitHub tools but never remove one; match them with `toolName.startsWith('github__')`. A same-named tool in the agent, such as `agent/tools/github__createIssue.ts`, replaces the extension's.
+The tool file is a `defineDynamic` function that eve runs before every model call; it rebuilds `execute`, `toModelOutput`, `approval`, and schemas from the extension config, so they survive Workflow replay and redeploys. `preset: 'auto'` routing is kept for the session with `ctx.memo` (for the turn with `evaluation.scope: 'turn'`). `toModelOutput` also strips `rateLimit` from the model-facing payload. Execute failures return `{ error }` so the model still receives a `tool_result` — a structured `{ code, message, why, fix, link }` object for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), a plain string otherwise. The model receives it as an eve `error-text` result. An `approval` policy in `agent.ts` can add gates to GitHub tools but never remove one; match them with `toolName.startsWith('github__')`. A same-named tool in the agent, such as `agent/tools/github__createIssue.ts`, replaces the extension's.
 
 ## Approval
 
 - Default: write tools → `always()`
 - `'once'`, predicates, `always()` / `never()` passthrough
 - `requireApproval: 'auto'` (global or per tool): low-risk writes the user asked for run without a prompt; other writes keep `always()`. Needs `ai` >= 7.0.105
-- `preset: 'auto'`: the evaluation model routes each user message to at most two presets, whose tools are listed; every other tool is deferred, reachable through `eve__search` / `eve__tool` with its approval policy intact. Tools already called in the session stay listed. Tune both with `evaluation`
+- `preset: 'auto'`: the evaluation model picks the tools the session's first request needs; those and the core read tools stay listed for the session so the provider's prompt cache holds (`evaluation.scope: 'turn'` picks again for each request); every other tool is deferred, reachable through `eve__search` / `eve__tool` with its approval policy intact. Tools already called in the session stay listed. `evaluation: { selection: 'presets' }` routes to at most two presets instead. Tune both with `evaluation`
 - Approval **pauses the session durably** until a human responds
 
 ## Vercel Connect

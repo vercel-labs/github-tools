@@ -7,7 +7,10 @@ Compares `@github-tools/eve-extension` configurations on 12 GitHub tasks with [e
 | `all` (default) | Full catalog, every write asks |
 | `fixed` | `preset: ['code-review', 'issue-triage']` |
 | `auto-preset` | `preset: 'auto'` |
-| `auto` | `preset: 'auto'`, `requireApproval: 'auto'` |
+| `auto` | `preset: 'auto'`, `requireApproval: 'auto'`: picks single tools once per session |
+| `auto-presets` | `auto` with `evaluation.selection: 'presets'`: routes to presets instead |
+| `auto-turn` | `auto` with `evaluation.scope: 'turn'`: picks tools again for each request |
+| `core-deferred` | `auto` with `maxTools: 0`: only the core read tools are listed, the rest is deferred |
 
 `BENCH_LEVEL` (`conservative`, `default`, `permissive`) sets the `evaluation` thresholds, see `lib/configs.ts`.
 
@@ -25,5 +28,7 @@ BENCH_CONFIG=auto npx eve eval --skip-report
 pnpm decisions # routing and approval accuracy per level, writes .eve/bench/decisions.json
 pnpm report    # aggregates every run into .eve/bench/report.md
 ```
+
+`npx eve eval conversation` runs six different requests in one session instead of the 12 single-turn tasks, to measure prompt caching across turns (`npx eve eval tasks` runs only the single-turn tasks).
 
 eve allows one dev server per agent, so run configurations one after another. Costs vary 2–4× between runs of the same task; compare token counts for small differences.

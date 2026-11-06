@@ -64,6 +64,33 @@ export const ROUTING_CASES: RoutingCase[] = [
   { prompt: 'Is anything on fire in acme/web?', needs: ['ci-ops'] },
 ]
 
+/**
+ * Requests and the tools `selection: 'tools'` must list for them, beyond the core read tools.
+ * `readOnly` requests must list no write tool; `repliedTo` is the assistant message a short reply answers.
+ */
+export const TOOL_CASES: { prompt: string, tools: string[], readOnly?: boolean, repliedTo?: string }[] = [
+  { prompt: 'Merge PR #5 in acme/web.', tools: ['mergePullRequest'] },
+  { prompt: 'Approve PR #812 in nuxt/ui if the tests pass.', tools: ['createPullRequestReview'] },
+  { prompt: 'Reply to the unresolved review threads on my PR #33 in acme/web and resolve them.', tools: ['listPullRequestReviewThreads', 'replyToReviewComment', 'resolveReviewThread'] },
+  { prompt: 'Close all issues labeled wontfix in acme/web that have been inactive for a year.', tools: ['listIssues', 'closeIssue'] },
+  { prompt: 'Assign issue #77 in acme/web to @jane and label it p1.', tools: ['addAssignees', 'addLabels'] },
+  { prompt: 'The deploy workflow on main in acme/web is stuck, cancel it.', tools: ['listWorkflowRuns', 'cancelWorkflowRun'] },
+  { prompt: 'Trigger the nightly workflow in acme/web on the release branch.', tools: ['triggerWorkflow'] },
+  { prompt: 'Draft release notes for v2.3.0 of acme/web and publish the release.', tools: ['createRelease'] },
+  { prompt: 'Answer the latest unanswered question in the acme/web Discussions.', tools: ['listDiscussions', 'addDiscussionComment'] },
+  { prompt: 'Mark all my notifications from dependabot as read.', tools: ['listNotifications', 'markNotificationRead'] },
+  { prompt: 'Bump the lodash version in package.json of acme/web and open a PR.', tools: ['createBranch', 'createOrUpdateFile', 'createPullRequest'] },
+  { prompt: 'Find the PR that broke CI on main in acme/web and comment on it with the failing job logs.', tools: ['getWorkflowJobLogs', 'addPullRequestComment'] },
+  { prompt: 'Fusionne la PR #5 de acme/web.', tools: ['mergePullRequest'] },
+  { prompt: 'Etiquette l’issue #77 de acme/web avec bug.', tools: ['addLabels'] },
+  { prompt: 'yes', repliedTo: 'CI is green on PR #5 in acme/web. Should I merge it?', tools: ['mergePullRequest'] },
+  { prompt: 'do it', repliedTo: 'I can add the p1 label to acme/web#77. Want me to?', tools: ['addLabels'] },
+  { prompt: 'What does the README of vercel/ai say about streaming?', tools: [], readOnly: true },
+  { prompt: 'Who last changed the retry logic in packages/ai/src/retry.ts of vercel/ai?', tools: ['getBlame'], readOnly: true },
+  { prompt: 'Why did the latest CI run on main fail in acme/web?', tools: ['getCiFailureContext'], readOnly: true },
+  { prompt: 'hey, what can you do?', tools: [], readOnly: true },
+]
+
 export type ApprovalCase = {
   id: string
   /** `true` when running without a human is the right call. */
