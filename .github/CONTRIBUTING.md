@@ -19,11 +19,14 @@ export GITHUB_TOKEN=github_pat_xxxxxxxxxxxx
 
 ## Development
 
-This is a pnpm monorepo managed by Turborepo with three packages:
+This is a pnpm monorepo managed by Turborepo:
 
 - `packages/github-tools` — the SDK (`@github-tools/sdk`)
+- `packages/github-tools-eve-extension` — the eve extension (`@github-tools/eve-extension`)
 - `apps/chat` — demo chat app
 - `apps/docs` — documentation site
+- `examples/*` — integrations and smoke tests
+- `tests/*` — eval-only agents for the eve extension
 
 ### Common commands
 
@@ -55,7 +58,7 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
    - `packages/github-tools/src/index.ts` — add to `allTools` in `createGithubTools()` (compile-enforced by `satisfies AllGithubTools`), re-export the factory at the bottom (guarded by `src/index.test.ts`)
    - `packages/github-tools/src/core/presets.ts` — add to every preset it belongs in (update each preset's JSDoc tool list too)
    - `packages/github-tools/src/connect/scopes.ts` — only if a preset now needs a scope family it did not have: update `PRESET_CONNECT_SCOPES`
-   - `packages/github-tools/src/agents.ts` — mention the tool in `PRESET_INSTRUCTIONS` for presets where it changes the agent's behavior
+   - `packages/github-tools/src/core/instructions.ts` — mention the tool in `PRESET_INSTRUCTIONS` for presets where it changes the agent's behavior
 4. **Chat app metadata** — add a `GITHUB_TOOL_META` entry in `apps/chat/shared/utils/tools/github.ts`
 5. **Documentation**:
    - `apps/docs/content/docs/5.api/1.tools-catalog.md`
@@ -102,4 +105,4 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](./LICENSE).
+By contributing, you agree that your contributions will be licensed under the [MIT License](../LICENSE).

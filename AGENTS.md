@@ -50,9 +50,10 @@ Every tool splits into a **core** function and a **tool factory**. This split is
 export const myToolInputSchema = z.object({ /* .describe() on every field */ })
 export const myToolDescription = 'One sentence, present tense.'
 export async function myToolCore({ token, ...args }: { token: string /* ... */ }) {
-  const octokit = createOctokit(token)
-  const { data } = await octokit.rest.someEndpoint(...)
-  return shapedResult // Always shape the return — never return raw API responses
+  return withOctokit(token, async (octokit) => {
+    const { data } = await octokit.rest.someEndpoint(...)
+    return shapedResult // Always shape the return — never return raw API responses
+  })
 }
 
 // src/tools/{domain}.ts — the "use step" directive + ai SDK wrapper
@@ -85,7 +86,7 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 - `src/core/evaluation.ts` — `requireApproval: 'auto'` and `preset: 'auto'` on AI SDK `experimental_evaluate` (default model `typesafe-ai/jev`). `ai` is a static namespace import and `experimental_evaluate` is feature-detected, so the root entry still loads on `ai` 6. Keep it static: a dynamic `import('ai')` splits the chunk and breaks `eve build` of the extension
 - `src/eve-runtime.ts` — shared eve primitives for `@github-tools/eve-extension` (`listEveToolDescriptors`, `executeGithubEveTool`, approval helpers); public export `@github-tools/sdk/eve-runtime`
 - `src/eve.ts` — deprecated consumer `createGithubTools` / per-tool factories for `agent/tools/` (`@github-tools/sdk/eve`)
-- `src/client.ts` — `createOctokit(token)` wrapper
+- `src/client.ts` — `createOctokit(token)` and `withOctokit(token, fn)`, which core functions use to call the GitHub API
 - `src/types.ts` — `ToolOptions`, `CommitToolOptions`, `ToolOverrides`, `GithubTool`
 - `src/tools/` — domain files (the `ai` SDK wrapper layer): `repository.ts`, `pull-requests.ts`, `issues.ts`, `reactions.ts`, `discussions.ts`, `notifications.ts`, `commits.ts`, `gists.ts`, `workflows.ts`, `search.ts`, `checks.ts`, `releases.ts`, `bundles.ts`
 - `src/core/catalog.ts` — **single source of truth for tools**: one `GITHUB_TOOL_CATALOG` entry per tool (description, schema, `write` flag, Connect scopes). `GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOLS`, `TOOL_CONNECT_SCOPES`, and the eve tool registry are derived from it. Registering a tool = catalog entry + `GITHUB_TOOL_CORES` entry (`src/core/cores.ts`) + `"use step"` factory + `allTools` in `index.ts` (the last two are compile-enforced via `satisfies`). Keep `*Core` references out of the catalog: `createDurableGithubAgent` runs in the workflow flow bundle, and workflow 5 rejects a flow bundle that reaches Octokit
@@ -102,7 +103,7 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 
 ### Presets
 
-Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/agents.ts`. Composable via arrays.
+Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) defined in `src/core/presets.ts` as tool name arrays, with matching system prompts in `src/core/instructions.ts`. Composable via arrays.
 
 ## eve extension dynamic tools (`packages/github-tools-eve-extension`)
 
@@ -120,7 +121,7 @@ Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security
 
 - **TypeScript**: Strict mode, ESNext target, `verbatimModuleSyntax: true`
 - **ESLint**: `typescript-eslint` flat config for SDK; `@nuxt/eslint` with stylistic rules for apps (no trailing commas, 1tbs brace style)
-- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@workflow/ai` are optional peer deps for the workflow subpath; `@github-tools/eve-extension` declares `eve` as `*` (the consumer supplies the runtime copy; eve validates the built capability metadata) and pins an exact `eve` devDependency as its authoring/build version; the SDK's optional `eve` peer range ends in `|| >=1.0.0-0` because npm does not match prereleases such as `1.0.0-rc.1` against a plain `>=` range
+- **Peer deps**: `ai` and `zod` are peer deps of the SDK; `workflow` and `@ai-sdk/workflow` are optional peer deps for the workflow subpath; `@github-tools/eve-extension` declares `eve` as `*` (the consumer supplies the runtime copy; eve validates the built capability metadata) and pins an exact `eve` devDependency as its authoring/build version; the SDK's optional `eve` peer range ends in `|| >=1.0.0-0` because npm does not match prereleases such as `1.0.0-rc.1` against a plain `>=` range
 
 ### Code style — no slop
 

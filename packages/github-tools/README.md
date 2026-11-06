@@ -758,7 +758,7 @@ const custom = createGithubAgent({
 
 // Use the agent
 const result = await reviewer.generate({ prompt: 'Review this PR' })
-const stream = reviewer.stream({ prompt: 'Review this PR' })
+const stream = await reviewer.stream({ prompt: 'Review this PR' })
 ```
 
 | Option | Description |
@@ -825,7 +825,7 @@ async function agentTurn(prompt: string) {
 
 > See [`examples/pr-review-agent`](../../examples/pr-review-agent) for a complete PR review agent built with Chat SDK and Vercel Workflow.
 
-All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `experimental_telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
+All presets (`code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) work with `createDurableGithubAgent`. Options mirror `createGithubAgent` with additional pass-through for `WorkflowAgentOptions` fields like `telemetry`, `onStepEnd`, `onEnd`, and `prepareStep`. Write tools honor `requireApproval` via `needsApproval`.
 
 ### `resolveGithubToken(token?)`
 
