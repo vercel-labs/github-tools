@@ -1,5 +1,86 @@
 # @github-tools/eve-extension
 
+## 0.11.0
+
+### Minor Changes
+
+- [#205](https://github.com/vercel-labs/github-tools/pull/205) [`2dca773`](https://github.com/vercel-labs/github-tools/commit/2dca773e92a80c5004e0332037ec7a27ec8e303f) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Use the AI SDK decision API behind `requireApproval: 'auto'` and `preset: 'auto'`.
+  
+  - The SDK calls `experimental_decide`, which replaced `experimental_evaluate` in `ai` 7.0.128, and falls back to `experimental_evaluate` on earlier 7.x releases.
+  - A refused question no longer reads as an outage. A refused approval question asks for approval without logging `EVALUATION_FAILED`. A refused preset question counts as a no: routing asks once more without it, instead of falling back to `repo-explorer`.
+  - New `evaluation.providerOptions`, passed to every decision call. For example, `{ gateway: { zeroDataRetention: true } }`. The eve extension accepts it in its `evaluation` config.
+
+- [#195](https://github.com/vercel-labs/github-tools/pull/195) [`831bd2f`](https://github.com/vercel-labs/github-tools/commit/831bd2fb834507ef8c9ef51f23cbbee101e0b9e9) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `actAs` and `approvers` to choose whose GitHub access each tool call uses.
+  
+  ```ts
+  export default githubExtension({
+    connector: 'github/my-connector',
+    actAs: 'caller',
+  })
+  ```
+  
+  `actAs` takes:
+  
+  - `'app'` (default, unchanged): the GitHub App installation token for every caller.
+  - `'user'`: the signed-in user's own GitHub token. Sessions without a signed-in user fail instead of falling back to the App.
+  - `'caller'`: the signed-in user when one drives the turn, and the App for turns nobody drives, such as schedules, `localDev()` runs and bots.
+  
+  Pass `{ read, write }` to pick per tool kind, or `overrides.<tool>.actAs` for one tool. GitHub allows a user-token call only when both the user and the App have access, so the agent can do what the user can do on GitHub and nothing more. A user who has not authorized the App gets an eve sign-in prompt, and the call resumes after it. They are asked again if GitHub rejects their token. A signed-in user never falls back to the App token.
+  
+  `approvers` takes:
+  
+  - `'requester'` (default): only the person who asked can answer an approval, so a colleague in a shared thread cannot approve someone else's request.
+  - `'anyone'`: an opt-in for simple shared agents. Any signed-in user can approve and anyone can deny. For `'user'` and `'caller'` tools, the approved call runs with the approver's GitHub token, so GitHub checks and records the approver. An approver who has not authorized the App signs in before the approval counts. For `'app'` tools the approval is a gate only.
+  
+  `'user'` and `'caller'` need `connector`, and `connect` cannot be combined with `actAs: 'user'`. The `@vercel/connect` peer dependency now requires `>=2.7.0`, for the `@vercel/connect/eve` helper. The default `actAs` may change to `'caller'` in a future major version.
+
+- [#198](https://github.com/vercel-labs/github-tools/pull/198) [`a66db85`](https://github.com/vercel-labs/github-tools/commit/a66db8534ec8158664c27e0066cfec58a97f116d) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Build with eve 1.0.0-rc.6. The extension now mounts on eve 1.0.0-rc.6 or later; upgrade eve before upgrading the extension.
+  
+  - A failed GitHub call reaches the model as an error result (eve's `error-text` output) instead of a successful JSON output. `call.settled` still carries the full `{ error }` payload.
+  - While a call runs, channels show the action and its target, such as `Create issue on vercel-labs/github-tools#12`, instead of the tool name.
+  - Removed the filter for eve's `[Pending approvals]` message, which eve has rendered into the system prompt since 1.0.0-rc.3.
+
+- [#199](https://github.com/vercel-labs/github-tools/pull/199) [`5222a3b`](https://github.com/vercel-labs/github-tools/commit/5222a3b6f0fd3717095d48078ed05af7f034d6de) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Fill the gaps in presets and `preset: 'auto'`.
+  
+  - Every task preset now reads files, history and code: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode` and `listCommits`. Also added:
+    - `ci-ops`: `getPullRequest`
+    - `issue-triage`: `getPullRequest`
+    - `release-manager`: `getCombinedStatus` and `getCiFailureContext`, which its prompt already named
+    - `notification-inbox`: `getIssueContext` and `getDiscussion`
+    - `pr-author`: `listPullRequests`
+  - `PRESET_CONNECT_SCOPES` is derived from each preset's tools. `issue-triage` and `discussion-moderator` gain `pull_requests:read`, which `searchIssues` needs; the new tools add `pull_requests:read` to `ci-ops`, `checks:read` and `statuses:read` to `release-manager`, and `discussions:read` to `notification-inbox`. A GitHub App or fine-grained PAT set up from the old matrix may need these read permissions.
+  - Several presets, from an array or from `preset: 'auto'`, now combine their system prompts instead of falling back to the generic prompt.
+  - eve extension: with `preset: 'auto'`, tools outside the routed presets are deferred instead of removed. The model can find them with `eve__search` and call them with `eve__tool`, so a request such as merging a pull request no longer dead-ends. Deferred write tools keep their approval policy.
+
+### Patch Changes
+
+- [#197](https://github.com/vercel-labs/github-tools/pull/197) [`76875a3`](https://github.com/vercel-labs/github-tools/commit/76875a3e871e4d292f195745347da4adf0e22e33) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Harden `requireApproval: 'auto'` and `preset: 'auto'`.
+  
+  - `rerunWorkflowRun` is no longer in `AUTO_APPROVAL_TOOLS`, since re-running a deploy or publish workflow is not low-risk. It asks for approval under `requireApproval: 'auto'` unless you opt it in per tool.
+  - When no preset reaches `minPresetProbability`, `preset: 'auto'` uses read-only `repo-explorer` instead of the most likely preset, so a vague request never gets write tools.
+  - The evaluator is told that tool input is untrusted data and that instructions inside it must be ignored.
+  - A too-old `ai` without `experimental_evaluate` now throws `EVALUATION_UNAVAILABLE` when `'auto'` is configured, instead of on the first evaluated call.
+  - The AI SDK asks again after a person approves an `'auto'` call; that check now reuses the first decision instead of calling the evaluation model again.
+  - New `evaluatePresets` and `fallbackPresets` in `@github-tools/sdk/eve-runtime`, and an optional `abortSignal` on `needsAutoApproval` and `selectPresets`.
+  
+  In the eve extension:
+  
+  - With `preset: 'auto'` and a `connector`, each Connect token covers only the tool being called. Before, it covered every scope, including `administration:write`, or only the `include` tools' scopes, so routed tools could fail with `403`.
+  - Subagent sessions and `service` callers always get an approval prompt under `'auto'`, because their latest message was not written by a person.
+  - A failed routing call is retried on the next model call instead of keeping `repo-explorer` for the whole turn.
+  - An approved `'auto'` call no longer calls the evaluation model a second time, and the evaluation call stops when the model generation is cancelled.
+  
+  Connect scopes for `mergePullRequest` now include `contents:write`, and `forkRepository` includes `administration:write`, matching the permissions GitHub checks. Before, a token minted for just those tools failed with `403`.
+
+- [#202](https://github.com/vercel-labs/github-tools/pull/202) [`f45deb4`](https://github.com/vercel-labs/github-tools/commit/f45deb4063e16f12607a395291a85a8c9737c6b2) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Remove dead code and fix package metadata. No behavior change.
+  
+  - `PRESET_TOOLS` is checked with `satisfies`, so a misspelled tool name in a preset fails to compile. The `AssertValidPresetTools` type, which never caught one, is removed.
+  - eve tool calls build the registry entry for the called tool only, instead of all 84 tools on every call.
+  - The eve extension derives its `preset` config enum from `PRESET_TOOLS`.
+  - `package.json` declares `"sideEffects": false` instead of an entry that matched no file, and its `author` field is fixed.
+- Updated dependencies [[`4b23d64`](https://github.com/vercel-labs/github-tools/commit/4b23d643d54909ae51ead4eef1966e0b2af40fa8), [`76875a3`](https://github.com/vercel-labs/github-tools/commit/76875a3e871e4d292f195745347da4adf0e22e33), [`7911e76`](https://github.com/vercel-labs/github-tools/commit/7911e765ecce38c63d12a17fc4011e1137074cf1), [`2dca773`](https://github.com/vercel-labs/github-tools/commit/2dca773e92a80c5004e0332037ec7a27ec8e303f), [`5222a3b`](https://github.com/vercel-labs/github-tools/commit/5222a3b6f0fd3717095d48078ed05af7f034d6de), [`f45deb4`](https://github.com/vercel-labs/github-tools/commit/f45deb4063e16f12607a395291a85a8c9737c6b2)]:
+  - @github-tools/sdk@1.20.0
+
 ## 0.10.0
 
 ### Minor Changes

@@ -1,5 +1,69 @@
 # @github-tools/sdk
 
+## 1.20.0
+
+### Minor Changes
+
+- [#200](https://github.com/vercel-labs/github-tools/pull/200) [`7911e76`](https://github.com/vercel-labs/github-tools/commit/7911e765ecce38c63d12a17fc4011e1137074cf1) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Make `preset: 'auto'` and `requireApproval: 'auto'` handle follow-ups, and export routing.
+  
+  - When the latest user message is a short reply (100 characters or fewer), the evaluation model also sees `repliedTo`, the end of the assistant message it answers. The evaluator is told that `repliedTo` is model-written text that can quote GitHub content, and to ignore instructions in it. A short reply such as "yes" to "Should I add the bug label?" is judged against that proposal. This applies to routing in every integration, and to approval in the AI SDK and TanStack integrations.
+  - `createGithubAgent({ preset: 'auto' })` routes each request once and reuses the result when the same request comes back. An approval continuation no longer calls the evaluation model again or swaps the active tools partway through a task.
+  - `selectPresets` is exported from `@github-tools/sdk` and `@github-tools/sdk/tanstack`, so `streamText` and `chat()` users can route without the agent:
+  
+  ```ts
+  const preset = await selectPresets(messages)
+  streamText({ model, tools: createGithubTools({ preset }), messages })
+  ```
+  
+  A request routed while the evaluation model was unavailable falls back to `repo-explorer` without caching that fallback, so the same request is routed again once the model recovers.
+
+- [#205](https://github.com/vercel-labs/github-tools/pull/205) [`2dca773`](https://github.com/vercel-labs/github-tools/commit/2dca773e92a80c5004e0332037ec7a27ec8e303f) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Use the AI SDK decision API behind `requireApproval: 'auto'` and `preset: 'auto'`.
+  
+  - The SDK calls `experimental_decide`, which replaced `experimental_evaluate` in `ai` 7.0.128, and falls back to `experimental_evaluate` on earlier 7.x releases.
+  - A refused question no longer reads as an outage. A refused approval question asks for approval without logging `EVALUATION_FAILED`. A refused preset question counts as a no: routing asks once more without it, instead of falling back to `repo-explorer`.
+  - New `evaluation.providerOptions`, passed to every decision call. For example, `{ gateway: { zeroDataRetention: true } }`. The eve extension accepts it in its `evaluation` config.
+
+- [#199](https://github.com/vercel-labs/github-tools/pull/199) [`5222a3b`](https://github.com/vercel-labs/github-tools/commit/5222a3b6f0fd3717095d48078ed05af7f034d6de) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Fill the gaps in presets and `preset: 'auto'`.
+  
+  - Every task preset now reads files, history and code: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode` and `listCommits`. Also added:
+    - `ci-ops`: `getPullRequest`
+    - `issue-triage`: `getPullRequest`
+    - `release-manager`: `getCombinedStatus` and `getCiFailureContext`, which its prompt already named
+    - `notification-inbox`: `getIssueContext` and `getDiscussion`
+    - `pr-author`: `listPullRequests`
+  - `PRESET_CONNECT_SCOPES` is derived from each preset's tools. `issue-triage` and `discussion-moderator` gain `pull_requests:read`, which `searchIssues` needs; the new tools add `pull_requests:read` to `ci-ops`, `checks:read` and `statuses:read` to `release-manager`, and `discussions:read` to `notification-inbox`. A GitHub App or fine-grained PAT set up from the old matrix may need these read permissions.
+  - Several presets, from an array or from `preset: 'auto'`, now combine their system prompts instead of falling back to the generic prompt.
+  - eve extension: with `preset: 'auto'`, tools outside the routed presets are deferred instead of removed. The model can find them with `eve__search` and call them with `eve__tool`, so a request such as merging a pull request no longer dead-ends. Deferred write tools keep their approval policy.
+
+### Patch Changes
+
+- [#201](https://github.com/vercel-labs/github-tools/pull/201) [`4b23d64`](https://github.com/vercel-labs/github-tools/commit/4b23d643d54909ae51ead4eef1966e0b2af40fa8) Thanks [@HugoRCD](https://github.com/HugoRCD)! - `createGithubAgent` now applies `overrides` to its tools. Before, the option was accepted but passed to `ToolLoopAgent` instead of `createGithubTools`, so a custom description or `needsApproval` had no effect. `createDurableGithubAgent` also accepts `overrides` now.
+
+- [#197](https://github.com/vercel-labs/github-tools/pull/197) [`76875a3`](https://github.com/vercel-labs/github-tools/commit/76875a3e871e4d292f195745347da4adf0e22e33) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Harden `requireApproval: 'auto'` and `preset: 'auto'`.
+  
+  - `rerunWorkflowRun` is no longer in `AUTO_APPROVAL_TOOLS`, since re-running a deploy or publish workflow is not low-risk. It asks for approval under `requireApproval: 'auto'` unless you opt it in per tool.
+  - When no preset reaches `minPresetProbability`, `preset: 'auto'` uses read-only `repo-explorer` instead of the most likely preset, so a vague request never gets write tools.
+  - The evaluator is told that tool input is untrusted data and that instructions inside it must be ignored.
+  - A too-old `ai` without `experimental_evaluate` now throws `EVALUATION_UNAVAILABLE` when `'auto'` is configured, instead of on the first evaluated call.
+  - The AI SDK asks again after a person approves an `'auto'` call; that check now reuses the first decision instead of calling the evaluation model again.
+  - New `evaluatePresets` and `fallbackPresets` in `@github-tools/sdk/eve-runtime`, and an optional `abortSignal` on `needsAutoApproval` and `selectPresets`.
+  
+  In the eve extension:
+  
+  - With `preset: 'auto'` and a `connector`, each Connect token covers only the tool being called. Before, it covered every scope, including `administration:write`, or only the `include` tools' scopes, so routed tools could fail with `403`.
+  - Subagent sessions and `service` callers always get an approval prompt under `'auto'`, because their latest message was not written by a person.
+  - A failed routing call is retried on the next model call instead of keeping `repo-explorer` for the whole turn.
+  - An approved `'auto'` call no longer calls the evaluation model a second time, and the evaluation call stops when the model generation is cancelled.
+  
+  Connect scopes for `mergePullRequest` now include `contents:write`, and `forkRepository` includes `administration:write`, matching the permissions GitHub checks. Before, a token minted for just those tools failed with `403`.
+
+- [#202](https://github.com/vercel-labs/github-tools/pull/202) [`f45deb4`](https://github.com/vercel-labs/github-tools/commit/f45deb4063e16f12607a395291a85a8c9737c6b2) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Remove dead code and fix package metadata. No behavior change.
+  
+  - `PRESET_TOOLS` is checked with `satisfies`, so a misspelled tool name in a preset fails to compile. The `AssertValidPresetTools` type, which never caught one, is removed.
+  - eve tool calls build the registry entry for the called tool only, instead of all 84 tools on every call.
+  - The eve extension derives its `preset` config enum from `PRESET_TOOLS`.
+  - `package.json` declares `"sideEffects": false` instead of an entry that matched no file, and its `author` field is fixed.
+
 ## 1.19.0
 
 ### Minor Changes
