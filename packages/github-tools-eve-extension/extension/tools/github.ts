@@ -1,8 +1,10 @@
-import { connectGithubToken, resolveGithubConnector } from '@github-tools/sdk/connect'
+import { connectGithubScopesForTools, connectGithubToken, resolveGithubConnector } from '@github-tools/sdk/connect'
 import { connect } from '@vercel/connect/eve'
 import {
   AUTO_APPROVAL_TOOLS,
+  evaluatePresets,
   executeGithubEveTool,
+  fallbackPresets,
   formatGithubEveToolOutput,
   githubToolsErrors,
   GITHUB_TOOL_NAMES,
@@ -12,7 +14,6 @@ import {
   listEveToolDescriptors,
   mapEveApprovalValue,
   needsAutoApproval,
-  selectPresets,
   type EveGithubToolsOptions,
   type EveToolOverrides,
   type GithubTokenCall,
@@ -51,7 +52,8 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
   const excludeNames = exclude as GithubToolName[] | undefined
 
   // `connect` and `connect.subject` may be resolvers over the execution
-  // context and tool call, so params resolve per tool call.
+  // context and tool call, so params resolve per tool call. With `preset: 'auto'`
+  // the tool set changes per turn, so each token covers only the tool being called.
   const resolvedToken = connector
     ? connectGithubToken(connector, {
         preset: preset === 'auto' ? undefined : preset,
@@ -64,7 +66,11 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
           const resolvedSubject = typeof subject === 'function'
             ? await subject(requireToolContext(ctx))
             : subject
-          return { ...params, ...(resolvedSubject && { subject: resolvedSubject }) }
+          return {
+            ...(preset === 'auto' && call && { scopes: connectGithubScopesForTools([call.toolName]) }),
+            ...params,
+            ...(resolvedSubject && { subject: resolvedSubject }),
+          }
         },
       })
     : token
@@ -209,15 +215,37 @@ function isErrorResult(output: unknown): output is { error: unknown } {
   return output != null && typeof output === 'object' && !Array.isArray(output) && 'error' in output && output.error != null
 }
 
+// Delegated and service sessions get their latest user message from another model or
+// system, not from a person, so it cannot stand in for the person's request.
+function isPersonRequest(ctx: ApprovalContext): boolean {
+  return ctx.session.parent === undefined && ctx.session.auth.current?.principalType !== 'service'
+}
+
+// eve asks the request policy again once a person approves; reuse the first decision.
+const autoDecisions = new Map<string, Promise<boolean>>()
+const MAX_CACHED_DECISIONS = 100
+
+function autoApprovalDecision(writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<boolean> {
+  const key = `${ctx.session.id}:${ctx.callId}`
+  const cached = autoDecisions.get(key)
+  if (cached) return cached
+  const messages: ModelMessage[] = [{ role: 'user', content: request }]
+  const decision = needsAutoApproval(writeTool, ctx.toolInput, messages, extension.config.evaluation, ctx.abortSignal)
+  autoDecisions.set(key, decision)
+  decision.catch(() => autoDecisions.delete(key))
+  if (autoDecisions.size > MAX_CACHED_DECISIONS) autoDecisions.delete(autoDecisions.keys().next().value!)
+  return decision
+}
+
 async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext) {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
 
-  const { requireApproval, overrides, evaluation } = extension.config
+  const { requireApproval, overrides } = extension.config
   const value = approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
   if (value === 'auto') {
-    const messages: ModelMessage[] = [{ role: 'user', content: request }]
-    return await needsAutoApproval(writeTool, ctx.toolInput, messages, evaluation) ? 'user-approval' : 'not-applicable'
+    if (!isPersonRequest(ctx)) return 'user-approval'
+    return await autoApprovalDecision(writeTool, request, ctx) ? 'user-approval' : 'not-applicable'
   }
   if (isEveApprovalDisabled(value)) return 'not-applicable'
   return mapEveApprovalValue(value)(ctx)
@@ -244,7 +272,9 @@ export default defineDynamic(async (ctx) => {
   const descriptors = listEveToolDescriptors(preset === 'auto'
     ? {
         ...sessionOptions,
-        preset: await ctx.memo(['presets', ctx.turn?.id ?? null], () => selectPresets(messages, evaluation)),
+        // A failed memo keeps no result, so the next model call retries routing instead of staying on the fallback.
+        preset: await ctx.memo(['presets', ctx.turn?.id ?? null], ({ abortSignal }) => evaluatePresets(messages, evaluation, abortSignal))
+          .catch((error: unknown) => fallbackPresets(error, evaluation)),
         include: [...sessionOptions.include ?? [], ...calledGithubTools(messages)],
       }
     : sessionOptions)

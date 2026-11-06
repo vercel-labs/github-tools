@@ -64,6 +64,12 @@ describe('connectGithubScopesForPreset', () => {
 })
 
 describe('connectGithubScopesForTools', () => {
+  // Under eve's `preset: 'auto'` each token covers one tool, so a tool's own scopes must be complete.
+  it('covers the GitHub permissions merge and fork check', () => {
+    expect(connectGithubScopesForTools(['mergePullRequest'])).toEqual(expect.arrayContaining(['contents:write', 'pull_requests:write']))
+    expect(connectGithubScopesForTools(['forkRepository'])).toEqual(expect.arrayContaining(['contents:read', 'administration:write']))
+  })
+
   it('always includes metadata:read', () => {
     expect(connectGithubScopesForTools(['getRepository'])).toEqual([
       'contents:read',
@@ -121,10 +127,10 @@ describe('connectGithubScopesForSelection', () => {
     expect(scopes).not.toContain('administration:write')
   })
 
-  it('drops administration when createRepository is excluded from maintainer', () => {
+  it('drops administration when createRepository and forkRepository are excluded from maintainer', () => {
     const scopes = connectGithubScopesForSelection({
       preset: 'maintainer',
-      exclude: ['createRepository'],
+      exclude: ['createRepository', 'forkRepository'],
     })
     expect(scopes).not.toContain('administration:write')
     expect(scopes).not.toContain('administration:read')

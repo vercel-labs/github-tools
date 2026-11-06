@@ -384,6 +384,24 @@ importers:
         specifier: ^4.5.4
         version: 4.5.4
 
+  tests/eve-auto:
+    dependencies:
+      '@github-tools/eve-extension':
+        specifier: workspace:*
+        version: link:../../packages/github-tools-eve-extension
+      '@vercel/connect':
+        specifier: ^2.7.0
+        version: 2.7.0(@ai-sdk/mcp@2.0.48(zod@4.5.4))(@modelcontextprotocol/sdk@1.30.0(zod@4.5.4))(ai@7.0.148(zod@4.5.4))(eve@1.0.0-rc.6)
+      ai:
+        specifier: ^7.0.148
+        version: 7.0.148(zod@4.5.4)
+      eve:
+        specifier: ^1.0.0-rc.6
+        version: 1.0.0-rc.6(f89f4bbfdb34a6fc8f8951979bbb6462)
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
+
 packages:
 
   '@adonisjs/hash@9.1.1':
