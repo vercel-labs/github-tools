@@ -67,7 +67,7 @@
     "@types/node": "^26.5.0",
     "@vercel/connect": "^2.7.0",
     "eslint": "^10.10.0",
-    "eve": "1.0.0-rc.1",
+    "eve": "1.0.0-rc.6",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0"
   },
