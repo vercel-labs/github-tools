@@ -1,8 +1,12 @@
 import type { GithubToolPreset } from './presets'
 import type { GithubWriteToolName } from './write-tools'
 
-/** Evaluation model used by `'auto'` approval and `preset: 'auto'` unless `evaluation.model` is set. */
-export const DEFAULT_EVALUATION_MODEL = 'typesafe-ai/jev'
+/**
+ * Decision model used by `'auto'` approval and `preset: 'auto'` unless `evaluation.model` is set.
+ * Pinned to a Jev release so the default thresholds keep matching the model they were set for;
+ * `'typesafe-ai/jev'` follows the latest release instead.
+ */
+export const DEFAULT_EVALUATION_MODEL = 'typesafe-ai/jev-1.14.0'
 
 /**
  * Write tools `requireApproval: 'auto'` evaluates: labels, assignees, reactions, comments,

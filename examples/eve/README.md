@@ -7,7 +7,7 @@ Minimal [eve](https://eve.dev) agent mounting `@github-tools/eve-extension` with
 `preset: 'auto'` picks at most two presets per user message and registers only their tools.
 `requireApproval: 'auto'` runs low-risk writes the user asked for (labels, reactions, comments,
 review replies) without a prompt; every other write still asks. Both call the TypeSafe Jev
-evaluation model (`typesafe-ai/jev`) through AI Gateway, using the same `VERCEL_OIDC_TOKEN`.
+decision model (`typesafe-ai/jev-1.14.0`) through AI Gateway, using the same `VERCEL_OIDC_TOKEN`.
 
 ## Setup
 

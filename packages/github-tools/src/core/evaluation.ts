@@ -14,7 +14,7 @@ import type { GithubWriteToolName } from './write-tools'
 export type GithubEvaluationOptions = {
   /**
    * Decision model for AI SDK `experimental_decide`: an AI Gateway ID or a model instance.
-   * @default 'typesafe-ai/jev'
+   * @default 'typesafe-ai/jev-1.14.0'
    */
   model?: Experimental_EvaluationModel
   /**
