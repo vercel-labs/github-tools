@@ -62,7 +62,7 @@ The tool file is a `defineDynamic` function that eve runs before every model cal
 - Default: write tools → `always()`
 - `'once'`, predicates, `always()` / `never()` passthrough
 - `requireApproval: 'auto'` (global or per tool): low-risk writes the user asked for run without a prompt; other writes keep `always()`. Needs `ai` >= 7.0.105
-- `preset: 'auto'`: the evaluation model routes each user message to at most two presets; tools already called in the session stay registered. Tune both with `evaluation`
+- `preset: 'auto'`: the evaluation model routes each user message to at most two presets, whose tools are listed; every other tool is deferred, reachable through `eve__search` / `eve__tool` with its approval policy intact. Tools already called in the session stay listed. Tune both with `evaluation`
 - Approval **pauses the session durably** until a human responds
 
 ## Vercel Connect

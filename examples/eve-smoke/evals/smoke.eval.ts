@@ -11,7 +11,7 @@ export default defineEval({
     const first = await t.send('tools')
     const tools = listedTools(first.reply)
     t.check(tools.has('github__addLabels'), satisfies(value => value === true, 'routed issue-triage tools are registered'))
-    t.check(tools.has('github__mergePullRequest'), satisfies(value => value === false, 'unrouted tools are absent'))
+    t.check(tools.has('github__mergePullRequest'), satisfies(value => value === false, 'unrouted tools are not listed'))
     t.check(tools.get('github__getRepository'), satisfies(value => value === 'Smoke: get repository', 'description override applies'))
 
     const read = await first.session.send('read')
@@ -34,12 +34,17 @@ export default defineEval({
     t.check(remembered.interactions.length, satisfies(value => value === 0, "'once' approval is remembered for the session"))
     t.check(remembered.reply, includes('4242'))
 
-    const later = await remembered.session.send('tools')
+    // A tool outside the routed presets is deferred: the model can still call it through eve__tool.
+    const deferred = await remembered.session.send('deferred read')
+    t.check(deferred.requireToolCall('github__listBranches').status, equals('completed'))
+    t.check(deferred.reply, includes('abc123'))
+
+    const later = await deferred.session.send('tools')
     t.check(listedTools(later.reply).has('github__addLabels'), satisfies(value => value === true, 'routing holds on later turns'))
 
-    // Seven turns including this one. The read and write turns make a second model call after
+    // Eight turns including this one. The read and write turns make a second model call after
     // their tool result, which must reuse the turn's routing.
     const routing = await later.session.send('routing')
-    t.check(Number(routing.reply), satisfies(value => value === 7, 'routing runs once per turn, not once per model call'))
+    t.check(Number(routing.reply), satisfies(value => value === 8, 'routing runs once per turn, not once per model call'))
   },
 })

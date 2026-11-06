@@ -15,8 +15,8 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
   /**
    * Restrict tools and system prompt to a predefined preset.
    *
-   * Selects a subset of tools and, when a single preset is passed,
-   * sets a matching system prompt. Combine presets with an array to merge tool sets.
+   * Selects a subset of tools and sets the preset's system prompt. Combine presets with an array
+   * to merge their tool sets and system prompts.
    *
    * `'auto'` picks presets per call from the latest user message with an evaluation model
    * (Jev by default, see `evaluation`), then narrows `activeTools` and uses the matching
