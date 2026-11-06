@@ -76,4 +76,4 @@ jobs:
         run: pnpm exec turbo run typecheck --filter=@github-tools/sdk --filter=@github-tools/eve-extension
 
       - name: Test
-        run: pnpm exec turbo run test --filter=@github-tools/sdk --filter=@github-tools/eve-smoke
+        run: pnpm exec turbo run test --filter=@github-tools/sdk --filter=@github-tools/eve-smoke --filter=@github-tools/eve-act-as-user

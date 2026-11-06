@@ -1,0 +1,29 @@
+import { defineAgent } from 'eve'
+import { mockModel } from 'eve/evals'
+import { githubCalls } from '../fixtures/github-calls'
+
+const target = { owner: 'vercel-labs', repo: 'github-tools' }
+
+export default defineAgent({
+  defaultTools: false,
+  model: mockModel(({ messages, lastUserMessage, toolResults }) => {
+    if (messages.at(-1)?.role === 'tool') {
+      const last = toolResults.at(-1)!
+      return `result ${last.name} ${last.isError ? 'error' : 'ok'} ${JSON.stringify(last.output)}`
+    }
+    switch (lastUserMessage) {
+      case 'read':
+        return { toolCalls: [{ name: 'github__getRepository', input: target }] }
+      case 'write':
+        return { toolCalls: [{ name: 'github__createIssue', input: { ...target, title: 'eval' } }] }
+      case 'strict read':
+        return { toolCalls: [{ name: 'strict__getRepository', input: target }] }
+      case 'strict write':
+        return { toolCalls: [{ name: 'strict__createIssue', input: { ...target, title: 'eval' } }] }
+      case 'github calls':
+        return JSON.stringify(githubCalls())
+      default:
+        return `unexpected message: ${lastUserMessage}`
+    }
+  }),
+})

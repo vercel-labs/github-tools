@@ -55,7 +55,7 @@
     "zod": "^4.5.4"
   },
   "peerDependencies": {
-    "@vercel/connect": ">=0.3.2",
+    "@vercel/connect": ">=2.7.0",
     "eve": "*"
   },
   "peerDependenciesMeta": {
