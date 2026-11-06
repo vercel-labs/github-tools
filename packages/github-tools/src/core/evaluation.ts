@@ -3,7 +3,7 @@ import type { Experimental_EvaluationModel, JSONValue, ModelMessage } from 'ai'
 import { GITHUB_TOOL_CATALOG } from './catalog'
 import { githubToolsErrors } from './errors'
 import { PRESET_TOOLS } from './presets'
-import { DEFAULT_EVALUATION_MODEL, RISK_QUESTION, INTENT_QUESTION, PRESET_PURPOSES, rankPresets, requiresApproval, type RoutablePreset } from './evaluation-policy'
+import { DEFAULT_EVALUATION_MODEL, RISK_QUESTION, INTENT_QUESTION, PRESET_PURPOSES, conversationState, rankPresets, requiresApproval, type RoutablePreset } from './evaluation-policy'
 export { DEFAULT_EVALUATION_MODEL, AUTO_APPROVAL_TOOLS } from './evaluation-policy'
 import type { GithubWriteToolName } from './write-tools'
 
@@ -83,7 +83,7 @@ export async function needsAutoApproval(
   const result = await evaluate({
     model,
     state: {
-      request: latestUserText(messages),
+      ...conversationState(messages, messageText),
       toolCall: {
         tool: toolName,
         description: GITHUB_TOOL_CATALOG[toolName].description,
@@ -120,7 +120,7 @@ export async function evaluatePresets(
   const presets = Object.keys(PRESET_PURPOSES) as RoutablePreset[]
   const { answers } = await evaluate({
     model,
-    state: { request: latestUserText(messages) },
+    state: conversationState(messages, messageText),
     questions: Object.fromEntries(presets.map(preset => [preset, {
       type: 'boolean' as const,
       instructions: 'Does handling this GitHub request need the tools of this preset?',
@@ -153,8 +153,15 @@ export async function selectPresets(
 }
 
 export function latestUserText(messages: readonly ModelMessage[]): string {
-  const message = messages.findLast(m => m.role === 'user')
-  if (!message) return ''
+  return conversationState(messages, messageText).request
+}
+
+/** The `request` and `repliedTo` the evaluation model sees for these messages. */
+export function evaluationRequest(messages: readonly ModelMessage[]) {
+  return conversationState(messages, messageText)
+}
+
+function messageText(message: ModelMessage): string {
   if (typeof message.content === 'string') return message.content
   return message.content.flatMap(part => part.type === 'text' ? [part.text] : []).join('\n')
 }

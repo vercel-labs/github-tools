@@ -98,6 +98,17 @@ describe('TanStack evaluation', () => {
     expect(await selectPresets(request, { adapter: evaluator(() => probabilities).adapter, ...options })).toEqual(expected)
   })
 
+  it('shows the evaluator the assistant message a short reply answers', async () => {
+    const { adapter, calls } = evaluator(() => ({ risk: 0, intent: 1 }))
+    const conversation: ModelMessage[] = [
+      { role: 'user', content: 'Triage issue 12 on vercel/ai' },
+      { role: 'assistant', content: 'It looks like a bug. Should I add the bug label?' },
+      { role: 'user', content: 'yes' },
+    ]
+    await needsAutoApproval('addLabels', { labels: ['bug'] }, conversation, { adapter })
+    expect(calls[0].state).toMatchObject({ request: 'yes', repliedTo: 'It looks like a bug. Should I add the bug label?' })
+  })
+
   it('matches preset ranking and falls back to read-only on ties', async () => {
     expect(await selectPresets(request, { adapter: evaluator(() => ({})).adapter })).toEqual(['repo-explorer'])
     const adapter = evaluator(() => ({ 'ci-ops': 0.8, 'code-review': 0.9, 'repo-explorer': 0.99 })).adapter

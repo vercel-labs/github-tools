@@ -85,6 +85,18 @@ describe("requireApproval: 'auto'", () => {
     await expect(needsApproval(1.5, 0.5, { maxRisk: 1.5, minIntent: 0.5 })).resolves.toBe(false)
   })
 
+  it('shows the evaluator the assistant message a short reply answers', async () => {
+    const { model, calls } = evaluationModel(() => ({ risk: 0, intent: 1 }))
+    const tools = createGithubTools({ token: 'test', requireApproval: 'auto', evaluation: { model } })
+    const conversation: ModelMessage[] = [
+      { role: 'user', content: 'Triage vercel/ai#12' },
+      { role: 'assistant', content: [{ type: 'text', text: 'It looks like a bug. Should I add the bug label?' }] },
+      { role: 'user', content: 'yes' },
+    ]
+    await (tools.addLabels.needsApproval as NeedsApproval)({}, { toolCallId: '1', messages: conversation })
+    expect(evaluationState(calls[0]!)).toMatchObject({ request: 'yes', repliedTo: 'It looks like a bug. Should I add the bug label?' })
+  })
+
   it('reuses a decision when the AI SDK asks again for the same call', async () => {
     const { model, calls } = evaluationModel(() => ({ risk: 2, intent: 0.95 }))
     const tools = createGithubTools({ token: 'test', requireApproval: 'auto', evaluation: { model } })
@@ -160,6 +172,60 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       system: system?.content,
     }
   }
+
+  it('routes a repeated request once, so an approval continuation keeps its tools', async () => {
+    const evaluation = evaluationModel(() => ({ 'ci-ops': 0.9 }))
+    const agent = createGithubAgent({
+      model: new MockLanguageModelV4({
+        doGenerate: async () => ({
+          content: [{ type: 'text', text: 'ok' }],
+          finishReason: { unified: 'stop', raw: 'stop' },
+          usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } },
+          warnings: [],
+        }),
+      }),
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model },
+    })
+    await agent.generate({ prompt: 'Why is CI red on main?' })
+    await agent.generate({ prompt: 'Why is CI red on main?' })
+    expect(evaluation.calls).toHaveLength(1)
+    await agent.generate({ prompt: 'Rerun the failed jobs' })
+    expect(evaluation.calls).toHaveLength(2)
+  })
+
+  it('routes a request again after the evaluator fails on it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let failing = true
+    const evaluation = evaluationModel(() => {
+      if (failing) throw new Error('Gateway unavailable')
+      return { 'ci-ops': 0.9 }
+    })
+    const calls: LanguageModelV4CallOptions[] = []
+    const agent = createGithubAgent({
+      model: new MockLanguageModelV4({
+        doGenerate: async (options) => {
+          calls.push(options)
+          return {
+            content: [{ type: 'text', text: 'ok' }],
+            finishReason: { unified: 'stop', raw: 'stop' },
+            usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } },
+            warnings: [],
+          }
+        },
+      }),
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model },
+    })
+    await agent.generate({ prompt: 'Why is CI red on main?' })
+    expect(new Set((calls[0]!.tools ?? []).map(tool => tool.name))).toEqual(new Set(PRESET_TOOLS['repo-explorer']))
+    failing = false
+    await agent.generate({ prompt: 'Why is CI red on main?' })
+    expect(new Set((calls[1]!.tools ?? []).map(tool => tool.name))).toEqual(new Set(PRESET_TOOLS['ci-ops']))
+    warn.mockRestore()
+  })
 
   it.each(presetCases)('applies shared routing policy $expected', async ({ probabilities, options, expected }) => {
     const { tools } = await run(probabilities, undefined, options)

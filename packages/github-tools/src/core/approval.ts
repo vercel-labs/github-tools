@@ -1,5 +1,5 @@
 import type { ModelMessage } from 'ai'
-import { assertEvaluationAvailable, latestUserText, needsAutoApproval, type GithubEvaluationOptions } from './evaluation'
+import { assertEvaluationAvailable, evaluationRequest, needsAutoApproval, type GithubEvaluationOptions } from './evaluation'
 import type { GithubWriteToolName } from './write-tools'
 import { resolveApprovalMode, type ApprovalConfig } from './approval-policy'
 export { resolveApprovalMode } from './approval-policy'
@@ -11,7 +11,7 @@ const MAX_CACHED_DECISIONS = 100
  * Resolve the AI SDK `needsApproval` value for a write tool.
  * `'auto'` becomes a function that evaluates each call with {@link needsAutoApproval}.
  * The AI SDK asks again once a person approves, so each decision is reused for the same
- * call, input and request instead of calling the evaluation model twice.
+ * call, input and request (with the message it replies to) instead of calling the evaluation model twice.
  */
 export function resolveAiSdkApproval(
   toolName: GithubWriteToolName,
@@ -23,7 +23,7 @@ export function resolveAiSdkApproval(
   assertEvaluationAvailable()
   const decisions = new Map<string, Promise<boolean>>()
   return (input, { toolCallId, messages }) => {
-    const key = JSON.stringify([toolCallId, input, latestUserText(messages)])
+    const key = JSON.stringify([toolCallId, input, evaluationRequest(messages)])
     const cached = decisions.get(key)
     if (cached) return cached
     const decision = needsAutoApproval(toolName, input, messages, evaluation)
