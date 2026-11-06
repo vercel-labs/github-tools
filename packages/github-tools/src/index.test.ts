@@ -11,3 +11,13 @@ describe('index exports', () => {
     }
   })
 })
+
+describe('agent overrides', () => {
+  it('applies tool overrides in createGithubAgent and createDurableGithubAgent', async () => {
+    const { createGithubAgent } = await import('./agents')
+    const { createDurableGithubAgent } = await import('./workflow')
+    const overrides = { listIssues: { description: 'Custom list issues' } }
+    expect(createGithubAgent({ model: 'test/model', token: 'test', overrides }).tools.listIssues.description).toBe('Custom list issues')
+    expect(createDurableGithubAgent({ model: 'test/model', token: 'test', overrides }).tools.listIssues.description).toBe('Custom list issues')
+  })
+})
