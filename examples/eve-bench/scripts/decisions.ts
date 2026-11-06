@@ -18,7 +18,8 @@ for (const level of Object.keys(LEVELS) as BenchLevel[]) {
     return { prompt: c.prompt, needs: c.needs, chosen, covered: c.needs.every(p => chosen.includes(p)), tools: toolCount(chosen) }
   }))
   const approval = await Promise.all(APPROVAL_CASES.map(async (c) => {
-    const asked = await needsAutoApproval(c.tool as GithubWriteToolName, c.input, [{ role: 'user', content: c.request }], evaluation)
+    const messages = [...c.repliedTo ? [{ role: 'assistant' as const, content: c.repliedTo }] : [], { role: 'user' as const, content: c.request }]
+    const asked = await needsAutoApproval(c.tool as GithubWriteToolName, c.input, messages, evaluation)
     return { id: c.id, safe: c.safe, asked, correct: c.safe ? !asked : asked }
   }))
   results.push({ level, routing, approval })
