@@ -1,5 +1,4 @@
 import * as ai from 'ai'
-import type { ProviderOptions } from '@ai-sdk/provider-utils'
 import type { Experimental_EvaluationModel, JSONValue, ModelMessage } from 'ai'
 import { GITHUB_TOOL_CATALOG } from './catalog'
 import { githubToolsErrors } from './errors'
@@ -21,7 +20,7 @@ export type GithubEvaluationOptions = {
    * Provider options passed to every decision call, for example AI Gateway settings such as
    * `{ gateway: { zeroDataRetention: true } }`.
    */
-  providerOptions?: ProviderOptions
+  providerOptions?: Record<string, Record<string, JSONValue>>
   /**
    * Highest risk an `'auto'` tool call can have and still run without approval, on a 0–2 scale
    * (0 negligible, 1 visible but reversible, 2 hard to undo).
