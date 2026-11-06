@@ -140,8 +140,10 @@ export interface GithubExtensionConfig {
   /**
    * Who may answer an approval.
    *
-   * - `'requester'` (default): only the person who asked for the call.
-   * - `'anyone'`: any signed-in user can approve, and anyone can deny. For
+   * - `'requester'` (default): only the person who asked for the call. A
+   *   colleague in a shared thread cannot approve it for them.
+   * - `'anyone'`: opt-in for simple shared agents. Any signed-in user can
+   *   approve, and anyone can deny. For
    *   tools that act as `'user'` or `'caller'`, the approved call runs with
    *   the approver's GitHub token, so GitHub records the approver and checks
    *   their permissions, and an approver who has not authorized the App signs

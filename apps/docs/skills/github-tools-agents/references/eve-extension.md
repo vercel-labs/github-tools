@@ -82,7 +82,6 @@ By default every caller shares the GitHub App installation's permissions. `actAs
 export default githubExtension({
   connector: 'github/my-connector',
   actAs: 'caller',
-  approvers: 'anyone',
   preset: 'maintainer',
 })
 ```
@@ -93,7 +92,7 @@ export default githubExtension({
 - `{ read, write }` picks per tool kind (each defaults to `'app'`); `overrides.<tool>.actAs` picks per tool.
 - GitHub allows a user-token call only when both the user and the App have access, so a maintainer can merge and a reader gets `403`.
 - A user who has not authorized the App gets an eve `sign-in` interaction, and the call resumes after it; a `401` asks them to sign in again. A signed-in user never falls back to the App.
-- `approvers: 'requester'` (default): only the requester answers. `'anyone'`: any signed-in user can approve and anyone can deny; for `'user'`/`'caller'` tools the approved call runs with the approver's token, so GitHub checks and records the approver, and an approver who has not authorized the App signs in before the approval counts. For `'app'` tools the approval is a gate only.
+- `approvers: 'requester'` (default): only the requester can approve or deny, so a colleague in a shared thread cannot approve someone else's request. `'anyone'` (opt-in, for simple shared agents): any signed-in user can approve and anyone can deny; for `'user'`/`'caller'` tools the approved call runs with the approver's token, so GitHub checks and records the approver, and an approver who has not authorized the App signs in before the approval counts. For `'app'` tools the approval is a gate only.
 - `'user'`/`'caller'` need `connector`; `connect` configures App tokens and cannot be combined with `actAs: 'user'`.
 
 One GitHub App installed on several accounts needs no configuration: each app token targets the installation owning the call's `owner/repo`, after `context` defaults. Tools without a repository target (search, gists, notifications) use the connector's default installation. Set `installationId`, `authorizationDetails` or `repositories` in `connect` to pin one installation; user subjects are left untouched. `connect` also accepts a custom `(ctx, call) => params` resolver, where `call` is `{ toolName, input, owner?, repo? }`. A missing installation surfaces as `CONNECT_INSTALLATION_REQUIRED` naming the account.

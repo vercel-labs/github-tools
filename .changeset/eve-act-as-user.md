@@ -8,7 +8,6 @@ Add `actAs` and `approvers` to choose whose GitHub access each tool call uses.
 export default githubExtension({
   connector: 'github/my-connector',
   actAs: 'caller',
-  approvers: 'anyone',
 })
 ```
 
@@ -22,7 +21,7 @@ Pass `{ read, write }` to pick per tool kind, or `overrides.<tool>.actAs` for on
 
 `approvers` takes:
 
-- `'requester'` (default): only the person who asked can answer an approval.
-- `'anyone'`: any signed-in user can approve and anyone can deny. For `'user'` and `'caller'` tools, the approved call runs with the approver's GitHub token, so GitHub checks and records the approver. An approver who has not authorized the App signs in before the approval counts. For `'app'` tools the approval is a gate only.
+- `'requester'` (default): only the person who asked can answer an approval, so a colleague in a shared thread cannot approve someone else's request.
+- `'anyone'`: an opt-in for simple shared agents. Any signed-in user can approve and anyone can deny. For `'user'` and `'caller'` tools, the approved call runs with the approver's GitHub token, so GitHub checks and records the approver. An approver who has not authorized the App signs in before the approval counts. For `'app'` tools the approval is a gate only.
 
 `'user'` and `'caller'` need `connector`, and `connect` cannot be combined with `actAs: 'user'`. The `@vercel/connect` peer dependency now requires `>=2.7.0`, for the `@vercel/connect/eve` helper. The default `actAs` may change to `'caller'` in a future major version.

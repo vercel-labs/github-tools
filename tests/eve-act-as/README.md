@@ -21,5 +21,5 @@ The eval checks that:
 
 ```bash
 pnpm --filter @github-tools/sdk --filter @github-tools/eve-extension build
-pnpm --filter @github-tools/eve-act-as-user test
+pnpm --filter @github-tools/eve-act-as-test test
 ```
