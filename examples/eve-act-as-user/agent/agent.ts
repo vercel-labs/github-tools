@@ -16,6 +16,8 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__getRepository', input: target }] }
       case 'write':
         return { toolCalls: [{ name: 'github__createIssue', input: { ...target, title: 'eval' } }] }
+      case 'comment':
+        return { toolCalls: [{ name: 'github__addIssueComment', input: { ...target, issueNumber: 1, body: 'eval' } }] }
       case 'strict read':
         return { toolCalls: [{ name: 'strict__getRepository', input: target }] }
       case 'strict write':

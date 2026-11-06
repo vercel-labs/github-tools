@@ -57,6 +57,14 @@ export default defineEval({
     const approved = await completeSignIn(t, approving)
     t.check(approved.reply, includes('4242'))
 
+    // An App tool still needs a signed-in approver, and the approved call runs as the App.
+    const comment = await t.send('comment', as('bob'))
+    const byLocal = await comment.session.respond([{ interactionId: comment.interactions[0]!.interactionId, optionId: 'approve' }])
+    const localRefusal = byLocal.session.events.findLast(event => event.type === 'response.settled')
+    t.check(localRefusal?.data, satisfies(data => (data as { outcome?: string }).outcome === 'refused', 'approval by a caller who is not signed in is refused'))
+    const commented = await byLocal.session.respond([{ interactionId: comment.interactions[0]!.interactionId, optionId: 'approve' }], as('bob'))
+    t.check(commented.reply, includes('issuecomment-77'))
+
     // actAs: 'user', approvers: 'requester' (`strict__*`)
 
     // With no signed-in user, the call fails instead of falling back to the App.
@@ -86,6 +94,7 @@ export default defineEval({
       'GET /repos/vercel-labs/github-tools ghu_alice',
       'POST /repos/vercel-labs/github-tools/issues ghu_bob',
       'POST /repos/vercel-labs/github-tools/issues ghu_carol',
+      'POST /repos/vercel-labs/github-tools/issues/1/comments ghs_app',
       'POST /repos/vercel-labs/github-tools/issues ghu_alice',
       'GET /repos/vercel-labs/github-tools ghu_revoked',
       'GET /repos/vercel-labs/github-tools ghu_dave',

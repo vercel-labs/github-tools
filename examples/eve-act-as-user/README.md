@@ -14,6 +14,7 @@ The eval checks that:
 - a reader who approves their own write gets GitHub's `403`
 - anyone can deny without signing in
 - a maintainer who approves a reader's write signs in first, and the write runs with the maintainer's token
+- an `'app'` tool still needs a signed-in approver, and the approved call runs as the App
 - with `'user'`, a session with no signed-in user fails instead of using the App token
 - with the default approvers, another user cannot approve
 - a user who never authorized the App gets a sign-in prompt, and a user whose token GitHub rejects signs in again and the call resumes

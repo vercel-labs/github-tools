@@ -63,5 +63,10 @@ globalThis.fetch = async (input, init) => {
     const { title } = await request.json() as { title: string }
     return json({ number: 4242, title, html_url: 'https://github.com/vercel-labs/github-tools/issues/4242', state: 'open', labels: [], user: { login: 'eval' } }, 201)
   }
+  if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/issues/1/comments') {
+    if (!canWrite.has(token)) return json({ message: 'Resource not accessible by integration' }, 403)
+    const { body } = await request.json() as { body: string }
+    return json({ id: 77, html_url: 'https://github.com/vercel-labs/github-tools/issues/1#issuecomment-77', body, user: { login: 'eval[bot]' }, created_at: '2026-11-06T00:00:00Z' }, 201)
+  }
   return json({ message: `Unexpected ${request.method} ${url.pathname}` }, 500)
 }

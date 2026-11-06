@@ -184,10 +184,15 @@ async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolC
   return result
 }
 
-// Only set with `approvers: 'anyone'`; without it, eve lets only the requester answer.
-async function runGithubEveApprovalResponse(name: GithubToolName, { response, auth }: ApprovalResponseContext): Promise<ApprovalResponseDecision> {
-  if (response.decision === 'deny' || actAsFor(name) === 'app') return { status: 'allowed' }
-  if (!isUser(response.principal)) return { status: 'rejected', reason: 'Sign in to approve this GitHub action.' }
+// Only set with `approvers: 'anyone'`: any signed-in user, or the requester, may approve. Without it, eve lets only the requester answer.
+async function runGithubEveApprovalResponse(name: GithubToolName, { request, response, auth }: ApprovalResponseContext): Promise<ApprovalResponseDecision> {
+  if (response.decision === 'deny') return { status: 'allowed' }
+  if (!isUser(response.principal)) {
+    return samePrincipal(response.principal, request.principal)
+      ? { status: 'allowed' }
+      : { status: 'rejected', reason: 'Sign in to approve this GitHub action.' }
+  }
+  if (actAsFor(name) === 'app') return { status: 'allowed' }
   // Signs the approver in before the approval counts, since the call will run with their token.
   await auth.getToken(await githubUserAuth())
   return { status: 'allowed' }
