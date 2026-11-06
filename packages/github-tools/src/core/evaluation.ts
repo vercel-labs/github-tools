@@ -29,7 +29,7 @@ export type GithubEvaluationOptions = {
   minIntent?: number
   /**
    * Lowest probability for `preset: 'auto'` to select a preset. When no preset reaches it,
-   * the single most likely preset is used.
+   * read-only `repo-explorer` is used.
    * @default 0.7
    */
   minPresetProbability?: number
@@ -40,12 +40,21 @@ export type GithubEvaluationOptions = {
   maxPresets?: number
 }
 
+/**
+ * Throws `EVALUATION_UNAVAILABLE` when the installed `ai` has no `experimental_evaluate`.
+ * Call it where `'auto'` is configured, so a too-old `ai` fails at setup instead of mid-conversation.
+ */
+export function assertEvaluationAvailable() {
+  loadEvaluate()
+}
+
 function loadEvaluate() {
   if (!('experimental_evaluate' in ai)) throw githubToolsErrors.EVALUATION_UNAVAILABLE()
   return ai.experimental_evaluate
 }
 
-function warnEvaluationFailed(model: Experimental_EvaluationModel, fallback: string, error: unknown) {
+function warnEvaluationFailed(model: Experimental_EvaluationModel, fallback: string, error: unknown, abortSignal?: AbortSignal) {
+  abortSignal?.throwIfAborted()
   const cause = error instanceof Error ? error : new Error(String(error))
   console.warn('[github-tools]', githubToolsErrors.EVALUATION_FAILED({
     model: typeof model === 'string' ? model : model.modelId,
@@ -58,13 +67,17 @@ function warnEvaluationFailed(model: Experimental_EvaluationModel, fallback: str
 /**
  * Whether an `'auto'` write tool call needs human approval: `false` only when the model
  * rates it low-risk and asked for by the latest user message. When the evaluation call
- * fails, logs `EVALUATION_FAILED` and asks for approval.
+ * fails, logs `EVALUATION_FAILED` and asks for approval. An aborted `abortSignal` rejects.
+ *
+ * The latest user message is trusted as the person's request: pass messages a person wrote,
+ * not a prompt another model generated.
  */
 export async function needsAutoApproval(
   toolName: GithubWriteToolName,
   input: unknown,
   messages: readonly ModelMessage[],
   { model = DEFAULT_EVALUATION_MODEL, maxRisk = 1, minIntent = 0.6 }: GithubEvaluationOptions = {},
+  abortSignal?: AbortSignal,
 ): Promise<boolean> {
   const evaluate = loadEvaluate()
   const result = await evaluate({
@@ -81,8 +94,9 @@ export async function needsAutoApproval(
       risk: { type: 'score', ...RISK_QUESTION },
       intent: { type: 'boolean', ...INTENT_QUESTION },
     },
+    abortSignal,
   }).catch((error: unknown) => {
-    warnEvaluationFailed(model, `asking approval for ${toolName}`, error)
+    warnEvaluationFailed(model, `asking approval for ${toolName}`, error, abortSignal)
     return undefined
   })
   if (!result) return true
@@ -93,18 +107,18 @@ export async function needsAutoApproval(
 /**
  * Presets the latest user message needs, from one evaluation call with an independent
  * yes/no question per preset. Returns up to `maxPresets` presets at or above
- * `minPresetProbability`, most likely first; when none qualifies, the single most likely preset.
- * `repo-explorer` is only returned when no other preset qualifies.
- * When the evaluation call fails, logs `EVALUATION_FAILED` and returns read-only `repo-explorer`.
- * Never returns `maintainer`, so the full catalog is never exposed.
+ * `minPresetProbability`, most likely first, and read-only `repo-explorer` when none qualifies.
+ * `repo-explorer` is only combined with no other preset. Rejects when the evaluation call fails;
+ * {@link selectPresets} falls back instead. Never returns `maintainer`, so the full catalog is never exposed.
  */
-export async function selectPresets(
+export async function evaluatePresets(
   messages: readonly ModelMessage[],
   { model = DEFAULT_EVALUATION_MODEL, minPresetProbability = 0.7, maxPresets = 2 }: GithubEvaluationOptions = {},
+  abortSignal?: AbortSignal,
 ): Promise<RoutablePreset[]> {
   const evaluate = loadEvaluate()
   const presets = Object.keys(PRESET_PURPOSES) as RoutablePreset[]
-  const result = await evaluate({
+  const { answers } = await evaluate({
     model,
     state: { request: latestUserText(messages) },
     questions: Object.fromEntries(presets.map(preset => [preset, {
@@ -112,13 +126,30 @@ export async function selectPresets(
       instructions: 'Does handling this GitHub request need the tools of this preset?',
       criteria: { true: { purpose: PRESET_PURPOSES[preset], tools: [...PRESET_TOOLS[preset]] } },
     }])),
-  }).catch((error: unknown) => {
-    warnEvaluationFailed(model, 'using the repo-explorer preset', error)
-    return undefined
+    abortSignal,
   })
-  if (!result) return ['repo-explorer']
-  const { answers } = result
   return rankPresets(Object.fromEntries(presets.map(preset => [preset, answers[preset].probability])) as Record<RoutablePreset, number>, { minPresetProbability, maxPresets })
+}
+
+/**
+ * Logs `EVALUATION_FAILED` for a failed {@link evaluatePresets} call and returns the read-only
+ * `repo-explorer` fallback. Rethrows when `abortSignal` is aborted.
+ */
+export function fallbackPresets(error: unknown, { model = DEFAULT_EVALUATION_MODEL }: GithubEvaluationOptions = {}, abortSignal?: AbortSignal): RoutablePreset[] {
+  warnEvaluationFailed(model, 'using the repo-explorer preset', error, abortSignal)
+  return ['repo-explorer']
+}
+
+/**
+ * {@link evaluatePresets}, falling back to read-only `repo-explorer` (and logging
+ * `EVALUATION_FAILED`) when the evaluation call fails.
+ */
+export async function selectPresets(
+  messages: readonly ModelMessage[],
+  options: GithubEvaluationOptions = {},
+  abortSignal?: AbortSignal,
+): Promise<RoutablePreset[]> {
+  return evaluatePresets(messages, options, abortSignal).catch(error => fallbackPresets(error, options, abortSignal))
 }
 
 export function latestUserText(messages: readonly ModelMessage[]): string {
