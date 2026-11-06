@@ -23,6 +23,9 @@ globalThis.fetch = async (input, init) => {
       open_issues_count: 3,
     })
   }
+  if (request.method === 'GET' && url.pathname === '/repos/vercel-labs/github-tools/branches') {
+    return json([{ name: 'main', commit: { sha: 'abc123' }, protected: true }])
+  }
   if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/issues') {
     const { title } = await request.json() as { title: string }
     return json({ number: 4242, title, html_url: 'https://github.com/vercel-labs/github-tools/issues/4242', state: 'open', labels: [], user: { login: 'smoke' } }, 201)

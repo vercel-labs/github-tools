@@ -130,9 +130,11 @@ describe('connectGithubToken', () => {
     expect(getToken).toHaveBeenCalledWith('github/my-connector', {
       subject: { type: 'app' },
       installationId: 'inst_abc',
+      // searchIssues and getPullRequest read pull requests.
       scopes: [
         'contents:read',
         'metadata:read',
+        'pull_requests:read',
         'issues:read',
         'issues:write',
       ],

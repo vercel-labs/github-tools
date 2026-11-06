@@ -234,20 +234,22 @@ function runGithubEveApprovalPrompt(name: GithubToolName, input: Record<string, 
 }
 
 // eve runs this before every model call; `ctx.memo` keeps the `'auto'` preset
-// routing fixed for the turn, across processes.
+// routing fixed for the turn, across processes. With `'auto'`, the routed presets
+// are listed and every other tool is deferred: the model finds it with `eve__search`.
 export default defineDynamic(async (ctx) => {
   const sessionOptions = buildSessionOptions()
   const { preset, evaluation } = extension.config
   const history = await ctx.messages()
   const messages = withoutPendingApprovals(history)
   const request = latestUserText(messages)
-  const descriptors = listEveToolDescriptors(preset === 'auto'
-    ? {
+  const listed = preset === 'auto'
+    ? new Set(listEveToolDescriptors({
         ...sessionOptions,
         preset: await ctx.memo(['presets', ctx.turn?.id ?? null], () => selectPresets(messages, evaluation)),
         include: [...sessionOptions.include ?? [], ...calledGithubTools(history)],
-      }
-    : sessionOptions)
+      }).map(entry => entry.name))
+    : undefined
+  const descriptors = listEveToolDescriptors(listed ? { ...sessionOptions, preset: undefined, include: undefined } : sessionOptions)
   const tools: Record<string, ToolDefinition> = {}
   const toolOverrides = sessionOptions.overrides
 
@@ -256,6 +258,7 @@ export default defineDynamic(async (ctx) => {
     const override = toolOverrides?.[name]
 
     tools[name] = defineTool({
+      ...(listed && !listed.has(name) && { deferred: true }),
       description: override?.description ?? entry.description,
       inputSchema: entry.inputSchema,
       approval: {

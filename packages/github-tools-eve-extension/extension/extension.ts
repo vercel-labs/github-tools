@@ -168,7 +168,8 @@ export interface GithubExtensionConfig {
   connect?: GithubExtensionConnectParams | GithubExtensionConnectResolver
   /**
    * Restrict tools to a preset (or array of presets). Prefer a focused preset; omit or use `maintainer` for the full catalog.
-   * `'auto'` picks up to two presets per user message with an evaluation model, and never exposes the full catalog.
+   * `'auto'` lists up to two presets per user message, picked with an evaluation model, and defers every other tool:
+   * the model can still find it with `eve__search`.
    */
   preset?: GithubToolPreset | GithubToolPreset[] | 'auto'
   /**

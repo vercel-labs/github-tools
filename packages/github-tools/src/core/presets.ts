@@ -5,30 +5,34 @@ import type { GithubToolName } from './tool-names'
  * Pass to {@link createGithubTools}, {@link createGithubAgent}, or {@link createDurableGithubAgent}.
  * Presets can be combined by passing an array.
  */
+// Every task preset can read the repository's files, history and code, so a task never stalls on context.
+const CORE_READ_TOOLS = ['getRepository', 'getFileContent', 'getRepositoryTree', 'searchCode', 'listCommits'] as const
+
 export const PRESET_TOOLS = {
   /**
    * **Code review** — review pull requests and submit feedback.
    *
-   * Tools: `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `listPullRequestReviewThreads`, `getPullRequestContext`,
-   * `getFileContent`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `listBranches`,
-   * `searchCode`, `listCheckRuns`, `getCombinedStatus`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`,
-   * `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`.
+   * Tools: `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`,
+   * `listPullRequestReviewThreads`, `getPullRequestContext`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`,
+   * `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `listCheckRuns`, `getCombinedStatus`,
+   * `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`,
+   * `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`.
    *
    * Agent prompt: optimized for thorough PR review with inline feedback.
    */
   'code-review': [
-    'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'listPullRequestReviewThreads', 'getPullRequestContext', 'getFileContent', 'listCommits', 'getCommit', 'getBlame', 'compareCommits',
-    'getRepository', 'listBranches', 'searchCode', 'listCheckRuns', 'getCombinedStatus',
+    'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'listPullRequestReviewThreads', 'getPullRequestContext', 'getCommit', 'getBlame', 'compareCommits',
+    ...CORE_READ_TOOLS, 'listBranches', 'listCheckRuns', 'getCombinedStatus',
     'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'replyToReviewComment', 'resolveReviewThread', 'requestReviewers',
   ],
   /**
    * **Issue triage** — manage and organize GitHub issues.
    *
-   * Tools: `listIssues`, `getIssueContext`, `listIssueComments`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`,
-   * `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`,
-   * `addAssignees`, `removeAssignees`,
-   * `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`,
-   * `searchRepositories`, `searchCode`, `searchIssues`.
+   * Tools: `listIssues`, `getIssueContext`, `listIssueComments`, `createIssue`, `addIssueComment`, `updateIssueComment`,
+   * `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`,
+   * `addAssignees`, `removeAssignees`, `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`,
+   * `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `searchRepositories`, `searchIssues`,
+   * `getPullRequest`.
    *
    * Prefer `getIssueContext` (issue + `labelNames` + recent comments) over separate get/list calls.
    * Use `listIssueComments` to paginate beyond the comments returned by `getIssueContext`.
@@ -40,21 +44,21 @@ export const PRESET_TOOLS = {
     'listIssues', 'getIssueContext', 'listIssueComments', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'addLabels', 'removeLabel', 'createLabel', 'updateLabel', 'deleteLabel', 'addAssignees', 'removeAssignees',
     'listIssueReactions', 'addIssueReaction', 'listCommentReactions', 'addCommentReaction',
-    'getRepository', 'searchRepositories', 'searchCode', 'searchIssues',
+    ...CORE_READ_TOOLS, 'searchRepositories', 'searchIssues', 'getPullRequest',
   ],
   /**
    * **CI operations** — monitor and manage GitHub Actions workflows.
    *
-   * Tools: `getRepository`, `listBranches`, `listCommits`, `getCommit`,
-   * `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getWorkflowJobLogs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`,
-   * `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
+   * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getCommit`,
+   * `getPullRequest`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getWorkflowJobLogs`,
+   * `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
    *
    * Diagnose a failure with `getCiFailureContext` first, then read the failing job's output with `getWorkflowJobLogs`.
    * Agent prompt: optimized for diagnosing CI failures and managing workflow runs.
    */
   'ci-ops': [
-    'getRepository', 'listBranches',
-    'listCommits', 'getCommit',
+    ...CORE_READ_TOOLS, 'listBranches',
+    'getCommit', 'getPullRequest',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'getWorkflowJobLogs', 'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',
   ],
@@ -91,9 +95,9 @@ export const PRESET_TOOLS = {
    * Agent prompt: optimized for finding and reporting security risks without making changes.
    */
   'security-audit': [
-    'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree',
-    'listCommits', 'getCommit', 'getBlame', 'compareCommits',
-    'searchCode', 'searchRepositories', 'searchIssues',
+    ...CORE_READ_TOOLS, 'listBranches',
+    'getCommit', 'getBlame', 'compareCommits',
+    'searchRepositories', 'searchIssues',
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'getPullRequestContext',
     'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'getWorkflowJobLogs',
@@ -102,58 +106,59 @@ export const PRESET_TOOLS = {
   /**
    * **Release manager** — prepare and publish GitHub releases.
    *
-   * Tools: `getRepository`, `listBranches`, `listCommits`, `getCommit`, `compareCommits`,
-   * `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`,
-   * `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`,
-   * `listPullRequests`, `getPullRequest`.
+   * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getCommit`,
+   * `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`,
+   * `deleteRelease`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`,
+   * `getCombinedStatus`, `getCiFailureContext`, `listPullRequests`, `getPullRequest`.
    *
    * Agent prompt: optimized for summarizing changes and cutting releases safely.
    */
   'release-manager': [
-    'getRepository', 'listBranches', 'listCommits', 'getCommit', 'compareCommits',
+    ...CORE_READ_TOOLS, 'listBranches', 'getCommit', 'compareCommits',
     'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext', 'createRelease', 'updateRelease', 'deleteRelease',
-    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow',
+    'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'triggerWorkflow', 'getCombinedStatus', 'getCiFailureContext',
     'listPullRequests', 'getPullRequest',
   ],
   /**
    * **Discussion moderator** — answer and moderate repository Discussions.
    *
-   * Tools: `listDiscussions`, `getDiscussion`, `addDiscussionComment`,
-   * `getRepository`, `searchIssues`, `getIssueContext`, `addIssueComment`.
+   * Tools: `listDiscussions`, `getDiscussion`, `addDiscussionComment`, `getRepository`, `getFileContent`, `getRepositoryTree`,
+   * `searchCode`, `listCommits`, `searchIssues`, `getIssueContext`, `addIssueComment`.
    *
    * Prefer discussions for Q&A; link related issues with `getIssueContext` / `addIssueComment` when needed.
    * Agent prompt: optimized for clear, on-topic discussion replies.
    */
   'discussion-moderator': [
     'listDiscussions', 'getDiscussion', 'addDiscussionComment',
-    'getRepository', 'searchIssues', 'getIssueContext', 'addIssueComment',
+    ...CORE_READ_TOOLS, 'searchIssues', 'getIssueContext', 'addIssueComment',
   ],
   /**
    * **Notification inbox** — triage authenticated-user notification threads.
    *
-   * Tools: `listNotifications`, `markNotificationRead`, `getIssue`, `getPullRequest`, `getRepository`.
+   * Tools: `listNotifications`, `markNotificationRead`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`,
+   * `listCommits`, `getIssue`, `getIssueContext`, `getPullRequest`, `getDiscussion`.
    *
    * Requires a user PAT with the Notifications account permission — not available on Connect installation tokens.
    * Agent prompt: optimized for clearing inbox noise and following up on actionable threads.
    */
   'notification-inbox': [
     'listNotifications', 'markNotificationRead',
-    'getIssue', 'getPullRequest', 'getRepository',
+    ...CORE_READ_TOOLS, 'getIssue', 'getIssueContext', 'getPullRequest', 'getDiscussion',
   ],
   /**
    * **PR author** — open pull requests without the full write surface.
    *
-   * Tools: `getRepository`, `listBranches`, `getFileContent`, `createBranch`, `deleteBranch`, `createOrUpdateFile`,
-   * `createPullRequest`, `updatePullRequest`, `getPullRequest`, `listPullRequestFiles`,
-   * `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`,
-   * `compareCommits`, `getCommit`.
+   * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `createBranch`,
+   * `deleteBranch`, `createOrUpdateFile`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`,
+   * `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`,
+   * `getCommit`.
    *
    * Respond to review feedback with `listPullRequestReviewThreads` → `replyToReviewComment` → `resolveReviewThread`.
    * Agent prompt: optimized for branching, editing files, and opening focused PRs.
    */
   'pr-author': [
-    'getRepository', 'listBranches', 'getFileContent', 'createBranch', 'deleteBranch', 'createOrUpdateFile',
-    'createPullRequest', 'updatePullRequest', 'getPullRequest', 'listPullRequestFiles',
+    ...CORE_READ_TOOLS, 'listBranches', 'createBranch', 'deleteBranch', 'createOrUpdateFile',
+    'createPullRequest', 'updatePullRequest', 'listPullRequests', 'getPullRequest', 'listPullRequestFiles',
     'listPullRequestReviewThreads', 'replyToReviewComment', 'resolveReviewThread',
     'compareCommits', 'getCommit',
   ],
