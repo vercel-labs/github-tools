@@ -78,6 +78,24 @@ export type GithubExtensionApprovalConfig =
   | Partial<Record<GithubWriteToolName, GithubExtensionApprovalValue>>
 
 /**
+ * Whose GitHub access a tool call uses: the GitHub App installation
+ * (`'app'`), the signed-in user (`'user'`), or the user when one drives the
+ * turn and the App otherwise (`'caller'`).
+ */
+export type GithubActAs = 'app' | 'user' | 'caller'
+
+/** One identity for every tool, or one for read tools and one for write tools. */
+export type GithubExtensionActAs = GithubActAs | { read?: GithubActAs, write?: GithubActAs }
+
+/** Who may answer an approval: only the requester, or any signed-in user. */
+export type GithubExtensionApprovers = 'requester' | 'anyone'
+
+/** Per-tool overrides, including the tool's own `actAs`. */
+export type GithubExtensionToolOverrides = {
+  [K in GithubToolName]?: NonNullable<EveToolOverrides[K]> & { actAs?: GithubActAs }
+}
+
+/**
  * Config passed to `githubExtension({ ... })` at the agent mount site.
  * Declared as an interface (not only a Zod schema) so IDE hovers show JSDoc.
  */
@@ -96,10 +114,50 @@ export interface GithubExtensionConfig {
    */
   connector?: GithubConnectorInput
   /**
+   * Whose GitHub access the tools use when `connector` is set.
+   *
+   * - `'app'` (default): the connector's GitHub App installation. Every
+   *   caller shares the App's permissions.
+   * - `'user'`: the signed-in user of the eve session. Each user authorizes
+   *   the GitHub App once, through eve's sign-in prompt, and every call then
+   *   runs with their own GitHub token. Sessions without a signed-in user
+   *   (schedules, `localDev()`) fail instead of falling back to the App.
+   * - `'caller'`: `'user'` when a signed-in user drives the turn, the App when
+   *   nobody does (schedules, automations, bots). A user who has not
+   *   authorized the App is asked to sign in; the call never falls back to
+   *   the App for them.
+   *
+   * GitHub allows a user-token call only when both the user and the App have
+   * access, so a maintainer can do what a maintainer can, and a reader can
+   * only read. An approved call runs with the approver's token: see
+   * `approvers`.
+   *
+   * Pass `{ read, write }` to pick per tool kind (each defaults to `'app'`),
+   * and `overrides.<tool>.actAs` for a single tool. The default may change to
+   * `'caller'` in a future major version.
+   */
+  actAs?: GithubExtensionActAs
+  /**
+   * Who may answer an approval.
+   *
+   * - `'requester'` (default): only the person who asked for the call. A
+   *   colleague in a shared thread cannot approve it for them.
+   * - `'anyone'`: opt-in for simple shared agents. Any signed-in user can
+   *   approve, and anyone can deny. For
+   *   tools that act as `'user'` or `'caller'`, the approved call runs with
+   *   the approver's GitHub token, so GitHub records the approver and checks
+   *   their permissions, and an approver who has not authorized the App signs
+   *   in before the approval counts. For `'app'` tools the approval is a gate
+   *   only: the call still runs as the App.
+   */
+  approvers?: GithubExtensionApprovers
+  /**
    * Vercel Connect token params passed through to `getToken` when `connector`
    * is set. `subject` defaults to `{ type: 'app' }` (the project's GitHub App
-   * installation, shared by every caller); pass a value or a per-caller
-   * resolver to mint per-user tokens instead.
+   * installation, shared by every caller). For per-user tokens, prefer
+   * `actAs: 'user'` or `'caller'`, which also let eve prompt users who have
+   * not connected GitHub yet. With `'caller'`, these params apply to the
+   * calls that run as the App.
    *
    * App tokens target the GitHub App installation owning each call's
    * repository, so an App installed on several accounts needs nothing here;
@@ -132,8 +190,8 @@ export interface GithubExtensionConfig {
   requireApproval?: GithubExtensionApprovalConfig
   /** Tuning for `preset: 'auto'` and `'auto'` approval. The evaluation model defaults to TypeSafe Jev. */
   evaluation?: GithubEvaluationOptions
-  /** Per-tool overrides (`description`, `approval`, `toModelOutput`, `outputSchema`). */
-  overrides?: EveToolOverrides
+  /** Per-tool overrides (`description`, `approval`, `actAs`, `toModelOutput`, `outputSchema`). */
+  overrides?: GithubExtensionToolOverrides
   /** Default author for commit-creating tools. */
   author?: CommitIdentity
   /** Default committer for commit-creating tools. */
@@ -157,6 +215,8 @@ const presetNameSchema = z.enum([
 const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [GithubToolName, ...GithubToolName[]])
 const writeToolNameSchema = z.enum(Object.values(GITHUB_WRITE_TOOLS) as [GithubWriteToolName, ...GithubWriteToolName[]])
 
+const actAsSchema = z.enum(['app', 'user', 'caller'])
+
 const commitIdentitySchema = z.object({
   name: z.string(),
   email: z.string(),
@@ -169,6 +229,8 @@ const configSchema = z.object({
   connector: z.custom<GithubConnectorInput>(
     value => typeof value === 'string' || typeof value === 'function',
   ).optional(),
+  actAs: z.union([actAsSchema, z.object({ read: actAsSchema.optional(), write: actAsSchema.optional() })]).optional(),
+  approvers: z.enum(['requester', 'anyone']).optional(),
   connect: z.union([
     z.record(z.string(), z.unknown()),
     z.custom<GithubExtensionConnectResolver>(value => typeof value === 'function'),
@@ -195,10 +257,22 @@ const configSchema = z.object({
     minPresetProbability: z.number().optional(),
     maxPresets: z.number().optional(),
   }).optional(),
-  overrides: z.partialRecord(toolNameSchema, z.unknown()).optional(),
+  overrides: z.partialRecord(toolNameSchema, z.looseObject({ actAs: actAsSchema.optional() })).optional(),
   author: commitIdentitySchema.optional(),
   committer: commitIdentitySchema.optional(),
   coAuthors: z.array(commitIdentitySchema).optional(),
+}).superRefine((config, ctx) => {
+  const { actAs } = config
+  const identities = [
+    ...(typeof actAs === 'object' ? [actAs.read, actAs.write] : [actAs]),
+    ...Object.values(config.overrides ?? {}).map(override => override?.actAs),
+  ]
+  if (config.connector === undefined && identities.some(identity => identity !== undefined && identity !== 'app')) {
+    ctx.addIssue({ code: 'custom', path: ['actAs'], message: '`actAs: \'user\'` and `\'caller\'` need a Vercel Connect `connector`.' })
+  }
+  if (actAs === 'user' && config.connect !== undefined) {
+    ctx.addIssue({ code: 'custom', path: ['connect'], message: '`connect` configures App tokens and cannot be combined with `actAs: \'user\'`.' })
+  }
 }) as z.ZodType<GithubExtensionConfig, GithubExtensionConfig>
 
 export default defineExtension({

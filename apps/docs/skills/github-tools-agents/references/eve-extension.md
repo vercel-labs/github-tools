@@ -36,7 +36,7 @@ Tools are exposed to the model as `<namespace>__<toolName>`: `agent/extensions/g
 
 ## Config schema
 
-`token`, `connector`, `connect`, `preset`, `include`, `exclude`, `requireApproval`, `overrides`, `author`/`committer`/`coAuthors`, see `/frameworks/eve-extension#config-schema`.
+`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `requireApproval`, `overrides`, `author`/`committer`/`coAuthors`, see `/frameworks/eve-extension#config-schema`.
 
 `token` is `string | (() => Promise<string>)` (`GithubTokenInput`). Pass an async provider for rotating GitHub App installation tokens. Falls back to `GITHUB_TOKEN` when omitted; `connector` takes priority.
 
@@ -76,17 +76,24 @@ export default githubExtension({
 
 No separate `connectGithubTools` import needed. `connector` is a mount-config field.
 
-`connect.subject` defaults to `{ type: 'app' }` (the project's GitHub App installation — one identity shared by every caller). For multi-user apps where each user connects their own GitHub account, pass a per-caller resolver so each caller gets their own connection token:
+By default every caller shares the GitHub App installation's permissions. `actAs` picks whose GitHub access each call uses:
 
 ```ts
 export default githubExtension({
   connector: 'github/my-connector',
-  preset: 'issue-triage',
-  connect: {
-    subject: (ctx) => ({ type: 'user', id: ctx.session.auth.current!.principalId }),
-  },
+  actAs: 'caller',
+  preset: 'maintainer',
 })
 ```
+
+- `'app'` (default): the App installation for everyone.
+- `'user'`: the signed-in user's own GitHub token. Sessions without a `principalType: 'user'` caller (schedules, `localDev()`) fail with `principal_required`.
+- `'caller'`: the user when one drives the turn, the App otherwise (schedules, `localDev()`, bots). Recommended when the agent works both on its own and for people. The default may become `'caller'` in a future major.
+- `{ read, write }` picks per tool kind (each defaults to `'app'`); `overrides.<tool>.actAs` picks per tool.
+- GitHub allows a user-token call only when both the user and the App have access, so a maintainer can merge and a reader gets `403`.
+- A user who has not authorized the App gets an eve `sign-in` interaction, and the call resumes after it; a `401` asks them to sign in again. A signed-in user never falls back to the App.
+- `approvers: 'requester'` (default): only the requester can approve or deny, so a colleague in a shared thread cannot approve someone else's request. `'anyone'` (opt-in, for simple shared agents): any signed-in user can approve and anyone can deny; for `'user'`/`'caller'` tools the approved call runs with the approver's token, so GitHub checks and records the approver, and an approver who has not authorized the App signs in before the approval counts. For `'app'` tools the approval is a gate only.
+- `'user'`/`'caller'` need `connector`; `connect` configures App tokens and cannot be combined with `actAs: 'user'`.
 
 One GitHub App installed on several accounts needs no configuration: each app token targets the installation owning the call's `owner/repo`, after `context` defaults. Tools without a repository target (search, gists, notifications) use the connector's default installation. Set `installationId`, `authorizationDetails` or `repositories` in `connect` to pin one installation; user subjects are left untouched. `connect` also accepts a custom `(ctx, call) => params` resolver, where `call` is `{ toolName, input, owner?, repo? }`. A missing installation surfaces as `CONNECT_INSTALLATION_REQUIRED` naming the account.
 

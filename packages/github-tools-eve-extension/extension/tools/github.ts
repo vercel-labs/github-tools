@@ -1,4 +1,5 @@
-import { connectGithubToken } from '@github-tools/sdk/connect'
+import { connectGithubToken, resolveGithubConnector } from '@github-tools/sdk/connect'
+import { connect } from '@vercel/connect/eve'
 import {
   AUTO_APPROVAL_TOOLS,
   executeGithubEveTool,
@@ -18,9 +19,10 @@ import {
   type GithubToolName,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
-import type { ApprovalContext } from 'eve/tools/approval'
+import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision } from 'eve/tools/approval'
 import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
 import extension, {
+  type GithubActAs,
   type GithubExtensionApprovalConfig,
   type GithubExtensionApprovalValue,
   type GithubExtensionContext,
@@ -132,8 +134,74 @@ function requireToolCall(call: GithubTokenCall | undefined): GithubTokenCall {
   return call
 }
 
+type Principal = ApprovalResponseContext['response']['principal']
+
+function actAsFor(name: GithubToolName): GithubActAs {
+  const { actAs, overrides } = extension.config
+  const override = overrides?.[name]?.actAs
+  if (override) return override
+  if (typeof actAs === 'object') return (writeToolName(name) ? actAs.write : actAs.read) ?? 'app'
+  return actAs ?? 'app'
+}
+
+function isUser(principal: Principal | null | undefined): principal is Principal {
+  return principal?.principalType === 'user'
+}
+
+function samePrincipal(a: Principal, b: Principal | null | undefined): boolean {
+  return b != null
+    && a.authenticator === b.authenticator
+    && a.issuer === b.issuer
+    && a.principalType === b.principalType
+    && a.principalId === b.principalId
+}
+
+// eve resolves the signed-in user's token, asks them to authorize the GitHub
+// App when they have not, and never hands one user's token to another.
+async function githubUserAuth() {
+  return connect(await resolveGithubConnector(extension.config.connector!))
+}
+
 async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolContext) {
-  return executeGithubEveTool(name, input as Record<string, unknown>, buildSessionOptions(ctx))
+  const args = input as Record<string, unknown>
+  const actAs = actAsFor(name)
+  if (actAs === 'app') return executeGithubEveTool(name, args, buildSessionOptions(ctx))
+
+  const requester = ctx.session.auth.current
+  const approver = ctx.approval?.responder
+  const auth = await githubUserAuth()
+  // Someone else approved: the call runs with their token, so GitHub checks and records the approver.
+  if (isUser(approver) && !samePrincipal(approver, requester)) {
+    const { token } = await approver.getToken(auth)
+    return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
+  }
+  if (actAs === 'caller' && !isUser(requester)) return executeGithubEveTool(name, args, buildSessionOptions(ctx))
+
+  const { token } = await ctx.getToken(auth)
+  const result = await executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
+  // A 401 means the user revoked the authorization: drop the token and ask them to sign in again.
+  if (isUnauthorized(result)) ctx.requireAuth(auth)
+  return result
+}
+
+// Only set with `approvers: 'anyone'`: any signed-in user, or the requester, may approve. Without it, eve lets only the requester answer.
+async function runGithubEveApprovalResponse(name: GithubToolName, { request, response, auth }: ApprovalResponseContext): Promise<ApprovalResponseDecision> {
+  if (response.decision === 'deny') return { status: 'allowed' }
+  if (!isUser(response.principal)) {
+    return samePrincipal(response.principal, request.principal)
+      ? { status: 'allowed' }
+      : { status: 'rejected', reason: 'Sign in to approve this GitHub action.' }
+  }
+  if (actAsFor(name) === 'app') return { status: 'allowed' }
+  // Signs the approver in before the approval counts, since the call will run with their token.
+  await auth.getToken(await githubUserAuth())
+  return { status: 'allowed' }
+}
+
+function isUnauthorized(result: unknown): boolean {
+  if (result == null || typeof result !== 'object' || !('error' in result)) return false
+  const { error } = result
+  return error != null && typeof error === 'object' && 'code' in error && error.code === githubToolsErrors.UNAUTHORIZED.code
 }
 
 function runGithubEveToModelOutput(name: GithubToolName, output: unknown) {
@@ -193,6 +261,9 @@ export default defineDynamic(async (ctx) => {
       approval: {
         request: approvalCtx => runGithubEveApproval(name, request, approvalCtx),
         prompt: ({ input }) => runGithubEveApprovalPrompt(name, input),
+        ...(extension.config.approvers === 'anyone' && {
+          response: responseCtx => runGithubEveApprovalResponse(name, responseCtx),
+        }),
       },
       toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
       ...(override?.outputSchema !== undefined && { outputSchema: override.outputSchema }),
