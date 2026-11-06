@@ -45,18 +45,19 @@ export type GithubEvaluationOptions = {
    */
   maxPresets?: number
   /**
-   * What `preset: 'auto'` picks. `'presets'` lists the tools of up to `maxPresets` presets.
-   * `'tools'` asks the decision model about each tool and lists only the likely ones plus the
-   * core read tools (`CORE_READ_TOOLS`), so the model sees far fewer tool definitions. The rest
-   * stays reachable: eve defers it, and `createGithubAgent` adds an `enableGithubTools` tool.
-   * @default 'presets'
+   * What `preset: 'auto'` picks. `'tools'` asks the decision model about each tool and lists only
+   * the likely ones plus the core read tools (`CORE_READ_TOOLS`), so the model sees far fewer tool
+   * definitions. The rest stays reachable: eve defers it, and `createGithubAgent` adds an
+   * `enableGithubTools` tool. `'presets'` lists the tools of up to `maxPresets` presets and, on
+   * `createGithubAgent`, uses their system prompts.
+   * @default 'tools'
    */
   selection?: 'presets' | 'tools'
   /**
    * How long a `preset: 'auto'` decision lasts. `'session'` decides once, on the conversation's
    * first request, so the listed tools, and the provider's cached prompt prefix they start, stay
    * the same for the rest of the conversation; later needs go through deferred tools (eve) or
-   * `enableGithubTools` (`createGithubAgent`, which needs `selection: 'tools'` for this).
+   * `enableGithubTools` (`createGithubAgent`, which doesn't support it with `selection: 'presets'`).
    * `'turn'` decides again for each new request, which changes the tool list and makes the
    * provider write the whole conversation to its prompt cache again.
    * @default 'session', except `'turn'` for presets on `createGithubAgent`

@@ -9,9 +9,9 @@ export const CONFIGS = {
   'fixed': { preset: ['code-review', 'issue-triage'] },
   'auto-preset': { preset: 'auto' },
   'auto': { preset: 'auto', requireApproval: 'auto' },
-  'auto-tools': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'tools' } },
-  'auto-tools-turn': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'tools', scope: 'turn' } },
-  'core-deferred': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'tools', maxTools: 0 } },
+  'auto-presets': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'presets' } },
+  'auto-turn': { preset: 'auto', requireApproval: 'auto', evaluation: { scope: 'turn' } },
+  'core-deferred': { preset: 'auto', requireApproval: 'auto', evaluation: { maxTools: 0 } },
 } satisfies Record<string, Omit<GithubExtensionConfig, 'evaluation'> & { evaluation?: Pick<GithubEvaluationOptions, 'selection' | 'scope' | 'maxTools'> }>
 
 /** Confidence levels for the `'auto'` modes, selected with `BENCH_LEVEL`. */

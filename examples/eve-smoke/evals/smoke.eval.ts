@@ -10,8 +10,8 @@ export default defineEval({
   async test(t) {
     const first = await t.send('tools')
     const tools = listedTools(first.reply)
-    t.check(tools.has('github__addLabels'), satisfies(value => value === true, 'routed issue-triage tools are registered'))
-    t.check(tools.has('github__mergePullRequest'), satisfies(value => value === false, 'unrouted tools are not listed'))
+    t.check(tools.has('github__addLabels'), satisfies(value => value === true, 'picked tools are registered'))
+    t.check(tools.has('github__mergePullRequest'), satisfies(value => value === false, 'tools that were not picked are not listed'))
     t.check(tools.get('github__getRepository'), satisfies(value => value === 'Smoke: get repository', 'description override applies'))
 
     const read = await first.session.send('read')
@@ -34,7 +34,7 @@ export default defineEval({
     t.check(remembered.interactions.length, satisfies(value => value === 0, "'once' approval is remembered for the session"))
     t.check(remembered.reply, includes('4242'))
 
-    // A tool outside the routed presets is deferred: the model can still call it through eve__tool.
+    // A tool that was not picked is deferred: the model can still call it through eve__tool.
     const deferred = await remembered.session.send('deferred read')
     t.check(deferred.requireToolCall('github__listBranches').status, equals('completed'))
     t.check(deferred.reply, includes('abc123'))

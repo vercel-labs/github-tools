@@ -20,7 +20,7 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__addLabels', input: { ...issue, labels: ['wontfix'] } }] }
       case 'routed tools':
       case 'routed tools for CI':
-        return JSON.stringify(tools.map(tool => tool.name).filter(name => name.startsWith('github__')).toSorted())
+        return JSON.stringify(tools.map(tool => tool.name).filter(name => name.startsWith('presets__')).toSorted())
       case 'picked tools':
       case 'picked tools to merge':
         return JSON.stringify(tools.map(tool => tool.name).filter(name => name.startsWith('picked__')).toSorted())

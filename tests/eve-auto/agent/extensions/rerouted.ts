@@ -6,5 +6,5 @@ import '../../fixtures/stubs'
 export default githubExtension({
   connector: 'github/eval',
   preset: 'auto',
-  evaluation: { model: evaluationModel, selection: 'tools', scope: 'turn' },
+  evaluation: { model: evaluationModel, scope: 'turn' },
 })

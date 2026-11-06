@@ -46,11 +46,12 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
    * Selects a subset of tools and sets the preset's system prompt. Combine presets with an array
    * to merge their tool sets and system prompts.
    *
-   * `'auto'` picks presets per call from the latest user message with an evaluation model
-   * (Jev by default, see `evaluation`), then narrows `activeTools` and uses the matching
-   * system prompt. Combines at most two presets (`evaluation.maxPresets`), and only uses
-   * read-only `repo-explorer` when no other preset qualifies or none clears the threshold.
-   * Never exposes the full catalog. Needs `ai` 7.0.105 or later, checked when the agent is created.
+   * `'auto'` asks an evaluation model (Jev by default, see `evaluation`) which tools the
+   * conversation's first request needs, and narrows `activeTools` to those and the core read
+   * tools for the whole conversation. An `enableGithubTools` tool lets the model list any other
+   * GitHub tool. With `evaluation.selection: 'presets'`, it routes each request to at most two
+   * presets instead and uses their system prompts. Needs `ai` 7.0.105 or later, checked when the
+   * agent is created.
    *
    * @see {@link GithubToolPreset} for available presets and included tools.
    */
@@ -141,7 +142,7 @@ export function createGithubAgent({
 }: CreateGithubAgentOptions): ToolLoopAgent<never, AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
   const staticPreset = preset === 'auto' ? undefined : preset
   const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, overrides, context, author, committer, coAuthors })
-  const byTool = preset === 'auto' && evaluation?.selection === 'tools'
+  const byTool = preset === 'auto' && evaluation?.selection !== 'presets'
   // `activeTools` only names tools the agent has, so the tool set always holds every GitHub tool.
   const agentTools: ToolSet = byTool ? { ...tools, [ENABLE_GITHUB_TOOLS]: enableGithubToolsTool } : tools
   const settings = {
@@ -157,7 +158,7 @@ export function createGithubAgent({
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
     const prepareStep = agentOptions.prepareStep as typeof settings.prepareStep
     const routed = cachedRouting(messages => evaluateTools(messages, evaluation), (error: unknown) => fallbackTools(error, evaluation))
-    const picks = (messages: readonly ModelMessage[]) => routed(evaluation.scope === 'turn' ? messages : firstRequest(messages))
+    const picks = (messages: readonly ModelMessage[]) => routed(evaluation?.scope === 'turn' ? messages : firstRequest(messages))
     const activeTools = async (messages: readonly ModelMessage[]) =>
       // `enableGithubTools` is in the tool set but not in its public type.
       [...new Set<string>([...await picks(messages), ...enabledTools(messages), ENABLE_GITHUB_TOOLS])] as (keyof typeof tools)[]

@@ -7,7 +7,7 @@ export function routingCalls(): number {
   return calls
 }
 
-// Answers `preset: 'auto'` routing with issue-triage only.
+// Picks addLabels and createIssue for every request.
 export const routingModel: Experimental_EvaluationModel = {
   specificationVersion: 'v4',
   provider: 'smoke',
@@ -16,9 +16,9 @@ export const routingModel: Experimental_EvaluationModel = {
   async doDecide({ questions }) {
     calls++
     return {
-      answers: Object.fromEntries(Object.keys(questions).map(preset => [
-        preset,
-        { type: 'boolean' as const, probability: preset === 'issue-triage' ? 0.9 : 0.1 },
+      answers: Object.fromEntries(Object.keys(questions).map(tool => [
+        tool,
+        { type: 'boolean' as const, probability: tool === 'addLabels' || tool === 'createIssue' ? 0.9 : 0.1 },
       ])),
       warnings: [],
     }

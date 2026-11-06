@@ -29,20 +29,14 @@ export default defineEval({
     const approved = await wontfix.session.respond([{ interactionId: wontfix.interactions[0]!.interactionId, optionId: 'approve' }], as('user:alice'))
     t.check(approved.reply, includes('wontfix'))
 
-    // Presets are routed once per session, so a later request that would route elsewhere keeps the tools.
-    const routed = await t.send('routed tools', as('user:alice'))
-    t.check(JSON.parse(routed.reply ?? '[]'), includes('github__addLabels'))
-    const routedLater = await routed.session.send('routed tools for CI', as('user:alice'))
-    t.check(JSON.parse(routedLater.reply ?? '[]'), equals(JSON.parse(routed.reply ?? '[]')))
-
-    // With selection: 'tools', only the picked tool and the core read tools are listed.
+    // By default, only the picked tool and the core read tools are listed.
     const picked = await t.send('picked tools', as('user:alice'))
     t.check(JSON.parse(picked.reply ?? '[]'), equals(['picked__addLabels', 'picked__getFileContent', 'picked__getRepository', 'picked__getRepositoryTree', 'picked__listCommits', 'picked__searchCode']))
     // A tool that was not picked is deferred, not removed: the model still reaches it through eve__tool.
     const deferred = await picked.session.send('picked deferred', as('user:alice'))
     t.check(deferred.requireToolCall('picked__listBranches').status, equals('completed'))
 
-    // Tools are picked once per session too.
+    // Tools are picked once per session, so a later request that would pick others keeps the list.
     const later = await deferred.session.send('picked tools to merge', as('user:alice'))
     t.check(JSON.parse(later.reply ?? '[]'), equals(JSON.parse(picked.reply ?? '[]')))
 
@@ -51,6 +45,12 @@ export default defineEval({
     t.check(JSON.parse(rerouted.reply ?? '[]'), includes('rerouted__addLabels'))
     const reroutedLater = await rerouted.session.send('rerouted tools to merge', as('user:alice'))
     t.check(JSON.parse(reroutedLater.reply ?? '[]'), includes('rerouted__mergePullRequest'))
+
+    // With selection: 'presets', presets are routed once per session too.
+    const routed = await t.send('routed tools', as('user:alice'))
+    t.check(JSON.parse(routed.reply ?? '[]'), includes('presets__addLabels'))
+    const routedLater = await routed.session.send('routed tools for CI', as('user:alice'))
+    t.check(JSON.parse(routedLater.reply ?? '[]'), equals(JSON.parse(routed.reply ?? '[]')))
 
     const records = await t.send('recorded', as('user:alice'))
     t.check(JSON.parse(records.reply ?? '{}'), equals({

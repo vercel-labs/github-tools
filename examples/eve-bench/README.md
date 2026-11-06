@@ -7,10 +7,10 @@ Compares `@github-tools/eve-extension` configurations on 12 GitHub tasks with [e
 | `all` (default) | Full catalog, every write asks |
 | `fixed` | `preset: ['code-review', 'issue-triage']` |
 | `auto-preset` | `preset: 'auto'` |
-| `auto` | `preset: 'auto'`, `requireApproval: 'auto'` |
-| `auto-tools` | `preset: 'auto'`, `requireApproval: 'auto'`, `evaluation: { selection: 'tools' }` |
-| `auto-tools-turn` | `auto-tools` with `evaluation.scope: 'turn'`: tools are picked again for each request |
-| `core-deferred` | `auto-tools` with `maxTools: 0`: only the core read tools are listed, the rest is deferred |
+| `auto` | `preset: 'auto'`, `requireApproval: 'auto'`: picks single tools once per session |
+| `auto-presets` | `auto` with `evaluation.selection: 'presets'`: routes to presets instead |
+| `auto-turn` | `auto` with `evaluation.scope: 'turn'`: picks tools again for each request |
+| `core-deferred` | `auto` with `maxTools: 0`: only the core read tools are listed, the rest is deferred |
 
 `BENCH_LEVEL` (`conservative`, `default`, `permissive`) sets the `evaluation` thresholds, see `lib/configs.ts`.
 

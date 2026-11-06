@@ -167,7 +167,7 @@ describe("requireApproval: 'auto'", () => {
   })
 })
 
-describe("createGithubAgent({ preset: 'auto' })", () => {
+describe("createGithubAgent({ preset: 'auto', evaluation: { selection: 'presets' } })", () => {
   async function run(probabilities: Record<string, number> | Error, prompt = 'Why is CI red on main?', options = {}) {
     const evaluation = evaluationModel(() => {
       if (probabilities instanceof Error) throw probabilities
@@ -191,7 +191,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model, ...options },
+      evaluation: { model: evaluation.model, selection: 'presets', ...options },
     })
     await agent.generate({ prompt })
     const system = calls[0]!.prompt.find(message => message.role === 'system')
@@ -216,7 +216,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model },
+      evaluation: { model: evaluation.model, selection: 'presets' },
     })
     await agent.generate({ prompt: 'Why is CI red on main?' })
     await agent.generate({ prompt: 'Why is CI red on main?' })
@@ -247,7 +247,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model },
+      evaluation: { model: evaluation.model, selection: 'presets' },
     })
     await agent.generate({ prompt: 'Why is CI red on main?' })
     expect(new Set((calls[0]!.tools ?? []).map(tool => tool.name))).toEqual(new Set(PRESET_TOOLS['repo-explorer']))
@@ -338,7 +338,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
   })
 })
 
-describe("evaluation: { selection: 'tools' }", () => {
+describe("evaluation: { selection: 'tools' }, the default", () => {
   const core = ['getRepository', 'getFileContent', 'getRepositoryTree', 'searchCode', 'listCommits']
   const usage = {
     inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
@@ -383,7 +383,7 @@ describe("evaluation: { selection: 'tools' }", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model, selection: 'tools' },
+      evaluation: { model: evaluation.model },
       stopWhen: () => calls.length >= 2,
     })
     await agent.generate({ prompt: 'Merge vercel/ai#12 once it is green' })
@@ -430,7 +430,7 @@ describe("evaluation: { selection: 'tools' }", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model, selection: 'tools', scope },
+      evaluation: { model: evaluation.model, scope },
     })
     await agent.generate({ prompt: 'Merge vercel/ai#12' })
     await agent.generate({ messages: [
@@ -458,7 +458,7 @@ describe("evaluation: { selection: 'tools' }", () => {
   })
 
   it("rejects scope: 'session' with presets on createGithubAgent", () => {
-    expect(() => createGithubAgent({ model: 'test/model', token: 'test', preset: 'auto', evaluation: { scope: 'session' } }))
+    expect(() => createGithubAgent({ model: 'test/model', token: 'test', preset: 'auto', evaluation: { selection: 'presets', scope: 'session' } }))
       .toThrow(expect.objectContaining({ code: 'github_tools.SESSION_SCOPE_NEEDS_TOOL_SELECTION' }))
   })
 })

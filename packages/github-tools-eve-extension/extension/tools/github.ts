@@ -265,8 +265,8 @@ function describeGithubCall(name: GithubToolName, input: Readonly<Record<string,
 }
 
 // eve runs this before every model call; `ctx.memo` keeps the `'auto'` routing fixed
-// for the turn or the session, across processes. With `'auto'`, the routed presets (or, with
-// `evaluation.selection: 'tools'`, the picked tools) are listed and every other tool
+// for the session or the turn, across processes. With `'auto'`, the picked tools (or, with
+// `evaluation.selection: 'presets'`, the routed presets) are listed and every other tool
 // is deferred: the model finds it with `eve__search`.
 export default defineDynamic(async (ctx) => {
   const sessionOptions = buildSessionOptions()
@@ -278,7 +278,7 @@ export default defineDynamic(async (ctx) => {
   const routingKey = evaluation?.scope === 'turn' ? ctx.turn?.id ?? null : null
   const routed = preset !== 'auto'
     ? undefined
-    : evaluation?.selection === 'tools'
+    : evaluation?.selection !== 'presets'
       ? { include: await ctx.memo(['tools', routingKey], ({ abortSignal }) => evaluateTools(messages, evaluation, abortSignal))
           .catch((error: unknown) => fallbackTools(error, evaluation)) }
       : { preset: await ctx.memo(['presets', routingKey], ({ abortSignal }) => evaluatePresets(messages, evaluation, abortSignal))
