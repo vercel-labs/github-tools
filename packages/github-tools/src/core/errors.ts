@@ -61,8 +61,8 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     status: 500,
     message: '`evaluation.scope: \'session\'` on `createGithubAgent` needs `evaluation.selection: \'tools\'`.',
     why: 'With presets, a request later in the conversation could need a tool outside the presets picked for the first request, and the agent would have no way to reach it. Tool selection adds `enableGithubTools` for that.',
-    fix: 'Set `evaluation.selection: \'tools\'`, or keep the default `scope: \'turn\'` with presets. The eve extension supports `scope: \'session\'` with either selection, because it defers unlisted tools.',
-    link: 'https://github-tools.com/guide/presets#pick-single-tools-instead-of-presets',
+    fix: 'Set `evaluation.selection: \'tools\'`, or keep the default `scope: \'turn\'` with presets. The eve extension uses `scope: \'session\'` with either selection, because it defers unlisted tools.',
+    link: 'https://github-tools.com/guide/presets#keep-the-prompt-cache-across-requests',
   },
   EVALUATION_UNAVAILABLE: {
     status: 500,

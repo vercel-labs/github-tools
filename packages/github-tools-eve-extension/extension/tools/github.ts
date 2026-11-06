@@ -275,8 +275,7 @@ export default defineDynamic(async (ctx) => {
   const request = latestUserText(messages)
   // A failed memo keeps no result, so the next model call retries routing instead of staying on the fallback.
   // Memos are per session, so `scope: 'session'` keeps the first turn's routing for the whole session.
-  const scope = evaluation?.scope ?? (evaluation?.selection === 'tools' ? 'session' : 'turn')
-  const routingKey = scope === 'session' ? null : ctx.turn?.id ?? null
+  const routingKey = evaluation?.scope === 'turn' ? ctx.turn?.id ?? null : null
   const routed = preset !== 'auto'
     ? undefined
     : evaluation?.selection === 'tools'

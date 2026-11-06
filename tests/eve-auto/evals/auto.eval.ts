@@ -29,6 +29,12 @@ export default defineEval({
     const approved = await wontfix.session.respond([{ interactionId: wontfix.interactions[0]!.interactionId, optionId: 'approve' }], as('user:alice'))
     t.check(approved.reply, includes('wontfix'))
 
+    // Presets are routed once per session, so a later request that would route elsewhere keeps the tools.
+    const routed = await t.send('routed tools', as('user:alice'))
+    t.check(JSON.parse(routed.reply ?? '[]'), includes('github__addLabels'))
+    const routedLater = await routed.session.send('routed tools for CI', as('user:alice'))
+    t.check(JSON.parse(routedLater.reply ?? '[]'), equals(JSON.parse(routed.reply ?? '[]')))
+
     // With selection: 'tools', only the picked tool and the core read tools are listed.
     const picked = await t.send('picked tools', as('user:alice'))
     t.check(JSON.parse(picked.reply ?? '[]'), equals(['picked__addLabels', 'picked__getFileContent', 'picked__getRepository', 'picked__getRepositoryTree', 'picked__listCommits', 'picked__searchCode']))
@@ -36,7 +42,7 @@ export default defineEval({
     const deferred = await picked.session.send('picked deferred', as('user:alice'))
     t.check(deferred.requireToolCall('picked__listBranches').status, equals('completed'))
 
-    // Tools are picked once per session, so a later request that would pick others keeps the list.
+    // Tools are picked once per session too.
     const later = await deferred.session.send('picked tools to merge', as('user:alice'))
     t.check(JSON.parse(later.reply ?? '[]'), equals(JSON.parse(picked.reply ?? '[]')))
 

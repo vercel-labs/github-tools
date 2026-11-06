@@ -10,7 +10,7 @@ createGithubAgent({ model, preset: 'auto', evaluation: { selection: 'tools' } })
 ```
 
 - `minToolProbability` (default `0.5`) and `maxTools` (default `8`) tune how many tools are listed.
-- Tools are picked once, on the conversation's first request, so the tool list stays the same and providers that cache prompts keep reading the cached conversation instead of writing it again. `evaluation.scope: 'turn'` picks again for each request. The eve extension also accepts `scope: 'session'` with preset routing.
+- Tools are picked once, on the conversation's first request, so the tool list stays the same and providers that cache prompts keep reading the cached conversation instead of writing it again. `evaluation.scope: 'turn'` picks again for each request.
 - The rest of the catalog stays reachable:
   - `createGithubAgent` adds an `enableGithubTools` tool (`ENABLE_GITHUB_TOOLS`) that names every GitHub tool; tools the model enables are listed from the next step.
   - The eve extension defers the rest, reachable through `eve__search`.

@@ -42,9 +42,9 @@ export default defineEval({
     const later = await deferred.session.send('tools')
     t.check(listedTools(later.reply).has('github__addLabels'), satisfies(value => value === true, 'routing holds on later turns'))
 
-    // Eight turns including this one. The read and write turns make a second model call after
-    // their tool result, which must reuse the turn's routing.
+    // Eight turns including this one, and the read and write turns make a second model call after
+    // their tool result. All of them reuse the session's first routing.
     const routing = await later.session.send('routing')
-    t.check(Number(routing.reply), satisfies(value => value === 8, 'routing runs once per turn, not once per model call'))
+    t.check(Number(routing.reply), satisfies(value => value === 1, 'routing runs once per session, not once per turn or model call'))
   },
 })

@@ -59,7 +59,7 @@ export type GithubEvaluationOptions = {
    * `enableGithubTools` (`createGithubAgent`, which needs `selection: 'tools'` for this).
    * `'turn'` decides again for each new request, which changes the tool list and makes the
    * provider write the whole conversation to its prompt cache again.
-   * @default 'session' with `selection: 'tools'`, `'turn'` with presets
+   * @default 'session', except `'turn'` for presets on `createGithubAgent`
    */
   scope?: 'turn' | 'session'
   /**
