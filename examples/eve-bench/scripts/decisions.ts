@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { needsAutoApproval, PRESET_TOOLS, selectPresets, selectTools, type GithubToolPreset, type GithubWriteToolName } from '@github-tools/sdk/eve-runtime'
+import { GITHUB_WRITE_TOOLS, needsAutoApproval, PRESET_TOOLS, selectPresets, selectTools, type GithubToolPreset, type GithubWriteToolName } from '@github-tools/sdk/eve-runtime'
 import { LEVELS, type BenchLevel } from '../lib/configs.ts'
 import { benchEvaluator } from '../lib/evaluator.ts'
 import { BENCH_LOG_DIR } from '../lib/log.ts'
@@ -23,8 +23,10 @@ for (const level of Object.keys(LEVELS) as BenchLevel[]) {
     return { id: c.id, safe: c.safe, asked, correct: c.safe ? !asked : asked }
   }))
   const selection = await Promise.all(TOOL_CASES.map(async (c) => {
-    const listed = await selectTools([{ role: 'user', content: c.prompt }], { ...evaluation, selection: 'tools' })
-    return { prompt: c.prompt, needs: c.tools, listed, covered: c.tools.every(t => listed.includes(t as never)), tools: listed.length }
+    const messages = [...c.repliedTo ? [{ role: 'assistant' as const, content: c.repliedTo }] : [], { role: 'user' as const, content: c.prompt }]
+    const listed = await selectTools(messages, { ...evaluation, selection: 'tools' })
+    const writes = listed.filter(t => Object.hasOwn(GITHUB_WRITE_TOOLS, t))
+    return { prompt: c.prompt, needs: c.tools, listed, covered: c.tools.every(t => listed.includes(t as never)), clean: !c.readOnly || writes.length === 0, tools: listed.length }
   }))
   results.push({ level, routing, approval, selection })
   const safe = approval.filter(a => a.safe)
@@ -35,6 +37,7 @@ for (const level of Object.keys(LEVELS) as BenchLevel[]) {
     safeAutoRun: `${safe.filter(a => !a.asked).length}/${safe.length}`,
     unsafeCaught: `${unsafe.filter(a => a.asked).length}/${unsafe.length}`,
     toolSelectionCoverage: `${selection.filter(s => s.covered).length}/${selection.length}`,
+    readOnlyWithoutWrites: `${selection.filter(s => s.clean).length}/${selection.length}`,
     meanSelectedTools: +(selection.reduce((s, r) => s + r.tools, 0) / selection.length).toFixed(1),
   })
 }
