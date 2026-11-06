@@ -4,6 +4,7 @@ import type { ToolContext } from 'eve/tools'
 import {
   GITHUB_TOOL_NAMES,
   GITHUB_WRITE_TOOLS,
+  PRESET_TOOLS,
   type CommitIdentity,
   type EveApprovalValue,
   type EveToolOverrides,
@@ -201,18 +202,7 @@ export interface GithubExtensionConfig {
   coAuthors?: CommitIdentity[]
 }
 
-const presetNameSchema = z.enum([
-  'code-review',
-  'issue-triage',
-  'ci-ops',
-  'repo-explorer',
-  'security-audit',
-  'release-manager',
-  'discussion-moderator',
-  'notification-inbox',
-  'pr-author',
-  'maintainer',
-])
+const presetNameSchema = z.enum(Object.keys(PRESET_TOOLS) as [GithubToolPreset, ...GithubToolPreset[]])
 const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [GithubToolName, ...GithubToolName[]])
 const writeToolNameSchema = z.enum(Object.values(GITHUB_WRITE_TOOLS) as [GithubWriteToolName, ...GithubWriteToolName[]])
 

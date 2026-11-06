@@ -49,7 +49,7 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
 
 1. **Core logic** — add `{name}InputSchema` (zod, `.describe()` on every field), `{name}Description`, and `{name}Core({ token, ...args })` to `packages/github-tools/src/core/{domain}.ts`. Shape the return — never return the raw Octokit response. REST list tools return `pagedList(...)` (`{ items, hasMore, page, perPage, nextPage? }`); object-shaped lists add the same paging fields next to existing keys (`checkRuns`, `runs`, …).
 2. **Tool factory** — add the `"use step"` wrapper and the exported factory to `packages/github-tools/src/tools/{domain}.ts`. Read tools take `(token)`; write tools also take `({ needsApproval = true }: ToolOptions = {})`.
-3. **Register** (new domain? add a re-export in `packages/github-tools/src/core/index.ts` too):
+3. **Register**:
    - `packages/github-tools/src/core/catalog.ts` — add one `GITHUB_TOOL_CATALOG` entry (JSDoc, `description`, `inputSchema`, `write: true` for write tools, `connectScopes`). `GITHUB_TOOL_NAMES`, `GITHUB_WRITE_TOOLS`, `TOOL_CONNECT_SCOPES`, and the eve registry are all derived from it — no separate registration
    - `packages/github-tools/src/core/cores.ts` — add the tool's `get name()` entry to `GITHUB_TOOL_CORES`. It stays out of the catalog so tool metadata does not pull Octokit into a Vercel Workflow flow bundle
    - `packages/github-tools/src/index.ts` — add to `allTools` in `createGithubTools()` (compile-enforced by `satisfies AllGithubTools`), re-export the factory at the bottom (guarded by `src/index.test.ts`)
@@ -63,7 +63,6 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
    - `apps/docs/content/docs/4.guide/1.presets.md` and `apps/docs/content/docs/4.guide/4.tokens-and-auth.md` if the tool changes a preset's tool list or scopes
    - `apps/docs/content/docs/4.guide/6.working-context.md` if the tool is a composite or changes default payload behavior (`detail`, `includePatch`, ranges)
    - `packages/github-tools/README.md` (tool tables, preset tables, write tools list, token permissions) — the root `README.md` is a symlink to this file, no separate edit needed
-   - New preset? Add it to `packages/github-tools-eve-extension/extension/extension.ts`'s `presetNameSchema` enum too
 6. **Changeset** — `pnpm changeset` (`minor`)
 7. Run checks:
 

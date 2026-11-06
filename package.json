@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
-    "build:docs": "pnpm --filter @github-tools/docs build",
     "build:packages": "turbo run build --filter=@github-tools/sdk --filter=@github-tools/eve-extension",
     "dev": "turbo run --filter=@github-tools/chat dev",
     "dev:pr-review-agent": "pnpm --filter @github-tools/pr-review-agent dev",
