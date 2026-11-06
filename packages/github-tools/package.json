@@ -2,7 +2,7 @@
   "name": "@github-tools/sdk",
   "version": "1.19.0",
   "description": "A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, TanStack AI, Vercel Workflow, and Chat SDK",
-  "author": "HugoRCD <hugo.richard@vercel.com",
+  "author": "HugoRCD <hugo.richard@vercel.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vercel-labs/github-tools.git",
@@ -13,9 +13,7 @@
     "url": "https://github.com/vercel-labs/github-tools/issues"
   },
   "type": "module",
-  "sideEffects": [
-    "./dist/agents-*.mjs"
-  ],
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",

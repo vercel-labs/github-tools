@@ -98,7 +98,7 @@ export function createGithubAgent({
       const selected = await selectPresets(messages, evaluation)
       const next = {
         ...call,
-        activeTools: [...resolvePresetTools(selected)!],
+        activeTools: [...resolvePresetTools(selected)],
         instructions: resolveInstructions({ preset: selected.length === 1 ? selected[0] : selected, instructions, additionalInstructions, context }),
       }
       return prepareCall ? prepareCall(next) : next

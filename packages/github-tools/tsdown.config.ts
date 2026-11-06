@@ -23,7 +23,6 @@ export default defineConfig({
     '@ai-sdk/provider-utils',
     'zod',
     'workflow',
-    '@workflow/ai',
     '@ai-sdk/workflow',
     'eve',
     'eve/tools',

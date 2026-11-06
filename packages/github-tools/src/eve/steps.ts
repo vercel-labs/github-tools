@@ -1,7 +1,7 @@
 import { mergeContextArgs } from '../core/context'
 import { EvlogError, toModelErrorPayload } from '../core/errors'
 import { githubTokenCall, resolveGithubToken } from '../core/token'
-import { createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
+import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
 
 async function executeGithubToolStep(
   name: GithubToolName,
@@ -9,7 +9,7 @@ async function executeGithubToolStep(
   ctx: ToolBuildContext,
 ) {
   'use step'
-  const entry = createToolRegistry(ctx).find(tool => tool.name === name)
+  const [entry] = createToolRegistry(ctx, ALL_GITHUB_TOOL_NAMES.filter(tool => tool === name))
   if (!entry) {
     throw new Error(`Unknown GitHub tool: ${name}`)
   }

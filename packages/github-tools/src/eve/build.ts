@@ -67,7 +67,7 @@ export function buildEveToolDefinition(
     coAuthors: options.coAuthors,
   }
 
-  const entry = createToolRegistry(ctx).find(tool => tool.name === name)
+  const [entry] = createToolRegistry(ctx, ALL_GITHUB_TOOL_NAMES.filter(tool => tool === name))
   if (!entry) {
     throw new Error(`Unknown GitHub tool: ${name}`)
   }

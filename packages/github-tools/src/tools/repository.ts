@@ -27,13 +27,11 @@ import {
   createOrUpdateFileInputSchema,
   createOrUpdateFileDescription,
   createOrUpdateFileCore,
-  composeCommitMessage,
 } from '../core/repository'
 import { getFileContentToModelOutput, getRepositoryTreeToModelOutput } from '../core/model-output'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { CommitToolOptions, ToolOptions, GithubTool } from '../types'
 
-export { composeCommitMessage }
 
 async function getRepositoryStep(args: Parameters<typeof getRepositoryCore>[0]) {
   "use step"

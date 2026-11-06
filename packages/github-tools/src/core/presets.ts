@@ -179,7 +179,7 @@ export const PRESET_TOOLS = {
     'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext', 'createRelease', 'updateRelease', 'deleteRelease',
   ],
-} as const
+} as const satisfies Record<string, readonly GithubToolName[]>
 
 export type GithubToolPreset = keyof typeof PRESET_TOOLS
 
@@ -189,19 +189,13 @@ export type PresetToolName<P extends GithubToolPreset> = Extract<(typeof PRESET_
 /** Tool names included when combining multiple presets. */
 export type CombinedPresetToolNames<P extends readonly GithubToolPreset[]> = PresetToolName<P[number]>
 
-/** Ensures every preset only references valid {@link GithubToolName} values at compile time. */
-export type AssertValidPresetTools = {
-  [K in GithubToolPreset]: PresetToolName<K> extends GithubToolName ? true : never
-}
-
 /**
  * Resolve a preset (or array of presets) into the set of tool names it includes.
  *
  * @param preset - A single preset or array of presets to combine.
- * @returns A `Set` of tool names, or `null` when `preset` is falsy.
+ * @returns A `Set` of tool names.
  */
-export function resolvePresetTools(preset: GithubToolPreset | GithubToolPreset[]): Set<GithubToolName> | null {
-  if (!preset) return null
+export function resolvePresetTools(preset: GithubToolPreset | GithubToolPreset[]): Set<GithubToolName> {
   const presets = Array.isArray(preset) ? preset : [preset]
   const tools = new Set<GithubToolName>()
   for (const p of presets) {
