@@ -15,19 +15,22 @@ const MAX_CACHED_ROUTES = 100
 /** Name of the tool `selection: 'tools'` adds so the model can list more GitHub tools. */
 export const ENABLE_GITHUB_TOOLS = 'enableGithubTools'
 
+const enableGithubToolsInput = z.object({
+  names: z.array(z.enum(ALL_GITHUB_TOOL_NAMES as [GithubToolName, ...GithubToolName[]])).describe('GitHub tool names to list from the next step'),
+})
+
 const enableGithubToolsTool = tool({
   description: 'List more GitHub tools for this task. Your tool list shows the GitHub tools picked for the request; call this with the names of any others you need (every GitHub tool is in the `names` enum), and they are listed from your next step.',
-  inputSchema: z.object({
-    names: z.array(z.enum(ALL_GITHUB_TOOL_NAMES as [GithubToolName, ...GithubToolName[]])).describe('GitHub tool names to list from the next step'),
-  }),
+  inputSchema: enableGithubToolsInput,
   execute: async ({ names }) => ({ enabled: names.map(name => ({ name, description: GITHUB_TOOL_CATALOG[name].description })) }),
 })
 
-// Tools the model asked for with `enableGithubTools`, in this call or an earlier one.
+// Tools the model asked for with `enableGithubTools`, in this call or an earlier one. The history
+// keeps the model's raw input, so a call that fails the tool's schema enables nothing.
 function enabledTools(messages: readonly ModelMessage[]): GithubToolName[] {
   return messages.flatMap(message => message.role === 'assistant' && Array.isArray(message.content)
     ? message.content.flatMap(part => part.type === 'tool-call' && part.toolName === ENABLE_GITHUB_TOOLS
-      ? (part.input as { names?: GithubToolName[] }).names ?? []
+      ? enableGithubToolsInput.safeParse(part.input).data?.names ?? []
       : [])
     : [])
 }

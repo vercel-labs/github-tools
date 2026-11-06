@@ -392,4 +392,29 @@ describe("evaluation: { selection: 'tools' }", () => {
     expect(listed(calls[1]!)).toEqual(new Set([...core, 'getPullRequest', 'enableGithubTools', 'mergePullRequest']))
     expect(evaluation.calls).toHaveLength(1)
   })
+
+  it('ignores an enableGithubTools call with invalid input instead of failing the next step', async () => {
+    const evaluation = evaluationModel(() => ({}))
+    const calls: LanguageModelV4CallOptions[] = []
+    const agent = createGithubAgent({
+      model: new MockLanguageModelV4({
+        doGenerate: async (options) => {
+          calls.push(options)
+          return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
+        },
+      }),
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model, selection: 'tools' },
+    })
+    await agent.generate({
+      messages: [
+        { role: 'user', content: 'Merge vercel/ai#12' },
+        { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'enableGithubTools', input: null }] },
+        { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'call-1', toolName: 'enableGithubTools', output: { type: 'error-text', value: 'Invalid input' } }] },
+        { role: 'user', content: 'Merge vercel/ai#12' },
+      ],
+    })
+    expect(new Set((calls[0]!.tools ?? []).map(tool => tool.name))).toEqual(new Set([...core, 'enableGithubTools']))
+  })
 })
