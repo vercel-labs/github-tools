@@ -57,6 +57,13 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Keep Connect resolver calls on the tool execute path; use static `connect` params when no execution context is available.',
     link: 'https://github-tools.com/frameworks/eve-extension#per-user-tokens',
   },
+  SESSION_SCOPE_NEEDS_TOOL_SELECTION: {
+    status: 500,
+    message: '`evaluation.scope: \'session\'` on `createGithubAgent` needs `evaluation.selection: \'tools\'`.',
+    why: 'With presets, a request later in the conversation could need a tool outside the presets picked for the first request, and the agent would have no way to reach it. Tool selection adds `enableGithubTools` for that.',
+    fix: 'Set `evaluation.selection: \'tools\'`, or keep the default `scope: \'turn\'` with presets. The eve extension supports `scope: \'session\'` with either selection, because it defers unlisted tools.',
+    link: 'https://github-tools.com/guide/presets#pick-single-tools-instead-of-presets',
+  },
   EVALUATION_UNAVAILABLE: {
     status: 500,
     message: '`requireApproval: \'auto\'` and `preset: \'auto\'` need `experimental_decide` (or `experimental_evaluate`) from `ai` 7.0.105 or later.',

@@ -417,4 +417,48 @@ describe("evaluation: { selection: 'tools' }", () => {
     })
     expect(new Set((calls[0]!.tools ?? []).map(tool => tool.name))).toEqual(new Set([...core, 'enableGithubTools']))
   })
+
+  async function twoRequests(scope?: 'turn' | 'session') {
+    const evaluation = evaluationModel(({ state }) => ({ [JSON.stringify(state).includes('label') ? 'addLabels' : 'mergePullRequest']: 0.9 }))
+    const calls: LanguageModelV4CallOptions[] = []
+    const agent = createGithubAgent({
+      model: new MockLanguageModelV4({
+        doGenerate: async (options) => {
+          calls.push(options)
+          return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
+        },
+      }),
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model, selection: 'tools', scope },
+    })
+    await agent.generate({ prompt: 'Merge vercel/ai#12' })
+    await agent.generate({ messages: [
+      { role: 'user', content: 'Merge vercel/ai#12' },
+      { role: 'assistant', content: 'Merged.' },
+      { role: 'user', content: 'Now label vercel/ai#13 as a bug' },
+    ] })
+    const listed = (call: LanguageModelV4CallOptions) => new Set((call.tools ?? []).map(tool => tool.name))
+    return { first: listed(calls[0]!), second: listed(calls[1]!), decisions: evaluation.calls.length }
+  }
+
+  it("keeps the first request's picks for the whole conversation by default", async () => {
+    const { first, second, decisions } = await twoRequests()
+    expect(second).toEqual(first)
+    expect(second).toContain('mergePullRequest')
+    expect(decisions).toBe(1)
+  })
+
+  it("picks again for each new request with scope: 'turn'", async () => {
+    const { first, second, decisions } = await twoRequests('turn')
+    expect(first).toContain('mergePullRequest')
+    expect(second).toContain('addLabels')
+    expect(second).not.toContain('mergePullRequest')
+    expect(decisions).toBe(2)
+  })
+
+  it("rejects scope: 'session' with presets on createGithubAgent", () => {
+    expect(() => createGithubAgent({ model: 'test/model', token: 'test', preset: 'auto', evaluation: { scope: 'session' } }))
+      .toThrow(expect.objectContaining({ code: 'github_tools.SESSION_SCOPE_NEEDS_TOOL_SELECTION' }))
+  })
 })

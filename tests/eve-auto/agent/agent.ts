@@ -19,7 +19,11 @@ export default defineAgent({
       case 'label wontfix':
         return { toolCalls: [{ name: 'github__addLabels', input: { ...issue, labels: ['wontfix'] } }] }
       case 'picked tools':
+      case 'picked tools to merge':
         return JSON.stringify(tools.map(tool => tool.name).filter(name => name.startsWith('picked__')).toSorted())
+      case 'rerouted tools':
+      case 'rerouted tools to merge':
+        return JSON.stringify(tools.map(tool => tool.name).filter(name => name.startsWith('rerouted__')).toSorted())
       case 'picked deferred':
         return { toolCalls: [{ name: 'eve__tool', input: { name: 'picked__listBranches', input: { owner: issue.owner, repo: issue.repo } } }] }
       case 'recorded':

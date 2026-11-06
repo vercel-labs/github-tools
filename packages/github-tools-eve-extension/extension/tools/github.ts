@@ -265,7 +265,7 @@ function describeGithubCall(name: GithubToolName, input: Readonly<Record<string,
 }
 
 // eve runs this before every model call; `ctx.memo` keeps the `'auto'` routing fixed
-// for the turn, across processes. With `'auto'`, the routed presets (or, with
+// for the turn or the session, across processes. With `'auto'`, the routed presets (or, with
 // `evaluation.selection: 'tools'`, the picked tools) are listed and every other tool
 // is deferred: the model finds it with `eve__search`.
 export default defineDynamic(async (ctx) => {
@@ -274,12 +274,15 @@ export default defineDynamic(async (ctx) => {
   const messages = await ctx.messages()
   const request = latestUserText(messages)
   // A failed memo keeps no result, so the next model call retries routing instead of staying on the fallback.
+  // Memos are per session, so `scope: 'session'` keeps the first turn's routing for the whole session.
+  const scope = evaluation?.scope ?? (evaluation?.selection === 'tools' ? 'session' : 'turn')
+  const routingKey = scope === 'session' ? null : ctx.turn?.id ?? null
   const routed = preset !== 'auto'
     ? undefined
     : evaluation?.selection === 'tools'
-      ? { include: await ctx.memo(['tools', ctx.turn?.id ?? null], ({ abortSignal }) => evaluateTools(messages, evaluation, abortSignal))
+      ? { include: await ctx.memo(['tools', routingKey], ({ abortSignal }) => evaluateTools(messages, evaluation, abortSignal))
           .catch((error: unknown) => fallbackTools(error, evaluation)) }
-      : { preset: await ctx.memo(['presets', ctx.turn?.id ?? null], ({ abortSignal }) => evaluatePresets(messages, evaluation, abortSignal))
+      : { preset: await ctx.memo(['presets', routingKey], ({ abortSignal }) => evaluatePresets(messages, evaluation, abortSignal))
           .catch((error: unknown) => fallbackPresets(error, evaluation)) }
   const listed = routed && new Set(listEveToolDescriptors({
     ...sessionOptions,

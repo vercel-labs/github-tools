@@ -36,6 +36,16 @@ export default defineEval({
     const deferred = await picked.session.send('picked deferred', as('user:alice'))
     t.check(deferred.requireToolCall('picked__listBranches').status, equals('completed'))
 
+    // Tools are picked once per session, so a later request that would pick others keeps the list.
+    const later = await deferred.session.send('picked tools to merge', as('user:alice'))
+    t.check(JSON.parse(later.reply ?? '[]'), equals(JSON.parse(picked.reply ?? '[]')))
+
+    // With scope: 'turn', each new request picks again.
+    const rerouted = await t.send('rerouted tools', as('user:alice'))
+    t.check(JSON.parse(rerouted.reply ?? '[]'), includes('rerouted__addLabels'))
+    const reroutedLater = await rerouted.session.send('rerouted tools to merge', as('user:alice'))
+    t.check(JSON.parse(reroutedLater.reply ?? '[]'), includes('rerouted__mergePullRequest'))
+
     const records = await t.send('recorded', as('user:alice'))
     t.check(JSON.parse(records.reply ?? '{}'), equals({
       // Connect reuses a token for the same params, so the later addLabels calls mint none.

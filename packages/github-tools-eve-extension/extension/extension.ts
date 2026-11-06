@@ -248,6 +248,7 @@ const configSchema = z.object({
     minPresetProbability: z.number().optional(),
     maxPresets: z.number().optional(),
     selection: z.enum(['presets', 'tools']).optional(),
+    scope: z.enum(['turn', 'session']).optional(),
     minToolProbability: z.number().optional(),
     maxTools: z.number().optional(),
     providerOptions: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),

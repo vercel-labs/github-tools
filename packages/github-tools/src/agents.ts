@@ -6,6 +6,7 @@ import type { AllGithubTools, GithubToolsBaseOptions } from './core/tool-types'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
 import { assertEvaluationAvailable, evaluatePresets, evaluateTools, evaluationRequest, fallbackPresets, fallbackTools } from './core/evaluation'
 import { GITHUB_TOOL_CATALOG } from './core/catalog'
+import { githubToolsErrors } from './core/errors'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from './core/tool-names'
 import { resolveInstructions } from './core/instructions'
 export { resolveInstructions } from './core/instructions'
@@ -65,6 +66,12 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
    * Ignored when `instructions` is set.
    */
   additionalInstructions?: string
+}
+
+// With `scope: 'session'`, routing sees only the conversation up to its first request.
+function firstRequest(messages: readonly ModelMessage[]): readonly ModelMessage[] {
+  const index = messages.findIndex(message => message.role === 'user')
+  return index === -1 ? messages : messages.slice(0, index + 1)
 }
 
 function callMessages(call: { prompt?: unknown, messages?: unknown }): ModelMessage[] {
@@ -143,11 +150,14 @@ export function createGithubAgent({
     instructions: resolveInstructions({ preset: staticPreset, instructions, additionalInstructions, context }),
   } as ToolLoopAgentSettings<never, typeof tools>
 
+  if (preset === 'auto' && evaluation?.scope === 'session' && !byTool) throw githubToolsErrors.SESSION_SCOPE_NEEDS_TOOL_SELECTION()
+
   if (byTool) {
     assertEvaluationAvailable()
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
     const prepareStep = agentOptions.prepareStep as typeof settings.prepareStep
-    const picks = cachedRouting(messages => evaluateTools(messages, evaluation), (error: unknown) => fallbackTools(error, evaluation))
+    const routed = cachedRouting(messages => evaluateTools(messages, evaluation), (error: unknown) => fallbackTools(error, evaluation))
+    const picks = (messages: readonly ModelMessage[]) => routed(evaluation.scope === 'turn' ? messages : firstRequest(messages))
     const activeTools = async (messages: readonly ModelMessage[]) =>
       // `enableGithubTools` is in the tool set but not in its public type.
       [...new Set<string>([...await picks(messages), ...enabledTools(messages), ENABLE_GITHUB_TOOLS])] as (keyof typeof tools)[]

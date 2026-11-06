@@ -10,7 +10,9 @@ export const CONFIGS = {
   'auto-preset': { preset: 'auto' },
   'auto': { preset: 'auto', requireApproval: 'auto' },
   'auto-tools': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'tools' } },
-} satisfies Record<string, Omit<GithubExtensionConfig, 'evaluation'> & { evaluation?: Pick<GithubEvaluationOptions, 'selection'> }>
+  'auto-tools-turn': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'tools', scope: 'turn' } },
+  'core-deferred': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'tools', maxTools: 0 } },
+} satisfies Record<string, Omit<GithubExtensionConfig, 'evaluation'> & { evaluation?: Pick<GithubEvaluationOptions, 'selection' | 'scope' | 'maxTools'> }>
 
 /** Confidence levels for the `'auto'` modes, selected with `BENCH_LEVEL`. */
 export const LEVELS = {

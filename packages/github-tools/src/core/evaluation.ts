@@ -53,6 +53,16 @@ export type GithubEvaluationOptions = {
    */
   selection?: 'presets' | 'tools'
   /**
+   * How long a `preset: 'auto'` decision lasts. `'session'` decides once, on the conversation's
+   * first request, so the listed tools, and the provider's cached prompt prefix they start, stay
+   * the same for the rest of the conversation; later needs go through deferred tools (eve) or
+   * `enableGithubTools` (`createGithubAgent`, which needs `selection: 'tools'` for this).
+   * `'turn'` decides again for each new request, which changes the tool list and makes the
+   * provider write the whole conversation to its prompt cache again.
+   * @default 'session' with `selection: 'tools'`, `'turn'` with presets
+   */
+  scope?: 'turn' | 'session'
+  /**
    * Lowest probability for `selection: 'tools'` to list a tool beyond the core read tools.
    * @default 0.5
    */
