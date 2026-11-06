@@ -116,7 +116,7 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
-For an agent that handles open-ended requests, `createGithubAgent({ model, preset: 'auto' })` picks presets per call from the latest user message. It narrows the tools the model sees to at most two presets and uses the matching system prompt. When no preset clearly matches, it uses the most likely one, and read-only `repo-explorer` when nothing stands out, so the full catalog is never exposed. This needs `ai` 7.0.105 or later.
+For an agent that handles open-ended requests, `createGithubAgent({ model, preset: 'auto' })` picks presets per call from the latest user message. It narrows the tools the model sees to at most two presets and uses the matching system prompt. When no preset clearly matches, it uses read-only `repo-explorer`, so the full catalog is never exposed. This needs `ai` 7.0.105 or later.
 
 ### Cherry-Picking Tools
 

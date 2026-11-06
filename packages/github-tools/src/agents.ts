@@ -3,7 +3,7 @@ import type { ToolLoopAgentSettings, ToolSet } from 'ai'
 import { createGithubTools } from './index'
 import type { AllGithubTools, GithubToolsBaseOptions } from './core/tool-types'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
-import { evaluationRequest, selectPresets } from './core/evaluation'
+import { assertEvaluationAvailable, evaluationRequest, selectPresets } from './core/evaluation'
 import type { RoutablePreset } from './core/evaluation-policy'
 import type { GithubToolName } from './core/tool-names'
 import { resolveInstructions } from './core/instructions'
@@ -24,8 +24,8 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
    * `'auto'` picks presets per call from the latest user message with an evaluation model
    * (Jev by default, see `evaluation`), then narrows `activeTools` and uses the matching
    * system prompt. Combines at most two presets (`evaluation.maxPresets`), and only uses
-   * read-only `repo-explorer` when no other preset qualifies; when none clears the threshold,
-   * uses the most likely one. Never exposes the full catalog. Needs `ai` 7.0.105 or later.
+   * read-only `repo-explorer` when no other preset qualifies or none clears the threshold.
+   * Never exposes the full catalog. Needs `ai` 7.0.105 or later, checked when the agent is created.
    *
    * @see {@link GithubToolPreset} for available presets and included tools.
    */
@@ -92,6 +92,7 @@ export function createGithubAgent({
   } as ToolLoopAgentSettings<never, typeof tools>
 
   if (preset === 'auto') {
+    assertEvaluationAvailable()
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
     // An approval continuation repeats the same request: reuse its routing so the tools don't change mid-task.
     const routing = new Map<string, Promise<RoutablePreset[]>>()
