@@ -18,3 +18,5 @@ In the eve extension:
 - Subagent sessions and `service` callers always get an approval prompt under `'auto'`, because their latest message was not written by a person.
 - A failed routing call is retried on the next model call instead of keeping `repo-explorer` for the whole turn.
 - An approved `'auto'` call no longer calls the evaluation model a second time, and the evaluation call stops when the model generation is cancelled.
+
+Connect scopes for `mergePullRequest` now include `contents:write`, and `forkRepository` includes `administration:write`, matching the permissions GitHub checks. Before, a token minted for just those tools failed with `403`.
