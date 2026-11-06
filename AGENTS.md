@@ -83,7 +83,7 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 - `src/tanstack/index.ts` and `src/tanstack/` — native TanStack tools, agent, evaluation, and approval middleware; browser-safe interrupt definition at `@github-tools/sdk/tanstack/interrupts`
 - `src/core/evaluation-policy.ts` — runtime-independent auto-approval and preset evaluation policy
 - `src/workflow.ts` — `createDurableGithubAgent()` (`WorkflowAgent` from `@ai-sdk/workflow`), exported from `@github-tools/sdk/workflow` subpath
-- `src/core/evaluation.ts` — `requireApproval: 'auto'` and `preset: 'auto'` on AI SDK `experimental_evaluate` (default model `typesafe-ai/jev`). `ai` is a static namespace import and `experimental_evaluate` is feature-detected, so the root entry still loads on `ai` 6. Keep it static: a dynamic `import('ai')` splits the chunk and breaks `eve build` of the extension
+- `src/core/evaluation.ts` — `requireApproval: 'auto'` and `preset: 'auto'` on AI SDK `experimental_decide` (default model `typesafe-ai/jev`). `ai` is a static namespace import and `experimental_decide` (or `experimental_evaluate` before ai 7.0.128) is feature-detected, so the root entry still loads on `ai` 6. Keep it static: a dynamic `import('ai')` splits the chunk and breaks `eve build` of the extension
 - `src/eve-runtime.ts` — shared eve primitives for `@github-tools/eve-extension` (`listEveToolDescriptors`, `executeGithubEveTool`, approval helpers); public export `@github-tools/sdk/eve-runtime`
 - `src/eve.ts` — deprecated consumer `createGithubTools` / per-tool factories for `agent/tools/` (`@github-tools/sdk/eve`)
 - `src/client.ts` — `createOctokit(token)` and `withOctokit(token, fn)`, which core functions use to call the GitHub API
