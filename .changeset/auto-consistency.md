@@ -12,3 +12,5 @@ Make `preset: 'auto'` and `requireApproval: 'auto'` handle follow-ups, and expor
 const preset = await selectPresets(messages)
 streamText({ model, tools: createGithubTools({ preset }), messages })
 ```
+
+A request routed while the evaluation model was unavailable falls back to `repo-explorer` without caching that fallback, so the same request is routed again once the model recovers.

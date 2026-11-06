@@ -195,6 +195,38 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
     expect(evaluation.calls).toHaveLength(2)
   })
 
+  it('routes a request again after the evaluator fails on it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let failing = true
+    const evaluation = evaluationModel(() => {
+      if (failing) throw new Error('Gateway unavailable')
+      return { 'ci-ops': 0.9 }
+    })
+    const calls: LanguageModelV4CallOptions[] = []
+    const agent = createGithubAgent({
+      model: new MockLanguageModelV4({
+        doGenerate: async (options) => {
+          calls.push(options)
+          return {
+            content: [{ type: 'text', text: 'ok' }],
+            finishReason: { unified: 'stop', raw: 'stop' },
+            usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } },
+            warnings: [],
+          }
+        },
+      }),
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model },
+    })
+    await agent.generate({ prompt: 'Why is CI red on main?' })
+    expect(new Set((calls[0]!.tools ?? []).map(tool => tool.name))).toEqual(new Set(PRESET_TOOLS['repo-explorer']))
+    failing = false
+    await agent.generate({ prompt: 'Why is CI red on main?' })
+    expect(new Set((calls[1]!.tools ?? []).map(tool => tool.name))).toEqual(new Set(PRESET_TOOLS['ci-ops']))
+    warn.mockRestore()
+  })
+
   it.each(presetCases)('applies shared routing policy $expected', async ({ probabilities, options, expected }) => {
     const { tools } = await run(probabilities, undefined, options)
     expect(new Set(tools)).toEqual(new Set(expected.flatMap(preset => PRESET_TOOLS[preset])))

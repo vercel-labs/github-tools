@@ -3,7 +3,7 @@ import type { ToolLoopAgentSettings, ToolSet } from 'ai'
 import { createGithubTools } from './index'
 import type { AllGithubTools, GithubToolsBaseOptions } from './core/tool-types'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
-import { assertEvaluationAvailable, evaluationRequest, selectPresets } from './core/evaluation'
+import { assertEvaluationAvailable, evaluatePresets, evaluationRequest, fallbackPresets } from './core/evaluation'
 import type { RoutablePreset } from './core/evaluation-policy'
 import type { GithubToolName } from './core/tool-names'
 import { resolveInstructions } from './core/instructions'
@@ -95,17 +95,21 @@ export function createGithubAgent({
     assertEvaluationAvailable()
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
     // An approval continuation repeats the same request: reuse its routing so the tools don't change mid-task.
+    // Only successful evaluations are kept, so a request routed while the evaluator was down is routed again.
     const routing = new Map<string, Promise<RoutablePreset[]>>()
     settings.prepareCall = async (call) => {
       const messages = typeof call.prompt === 'string'
         ? [{ role: 'user' as const, content: call.prompt }]
         : call.prompt ?? call.messages ?? []
       const key = JSON.stringify(evaluationRequest(messages))
-      if (!routing.has(key)) {
-        routing.set(key, selectPresets(messages, evaluation))
+      let routed = routing.get(key)
+      if (!routed) {
+        routed = evaluatePresets(messages, evaluation)
+        routing.set(key, routed)
+        routed.catch(() => routing.delete(key))
         if (routing.size > MAX_CACHED_ROUTES) routing.delete(routing.keys().next().value!)
       }
-      const selected = await routing.get(key)!
+      const selected = await routed.catch((error: unknown) => fallbackPresets(error, evaluation))
       const next = {
         ...call,
         activeTools: [...resolvePresetTools(selected)!],
