@@ -1,7 +1,7 @@
 import { boolean, decide, score } from '@tanstack/ai'
 import type { EvaluateAdapter, ModelMessage } from '@tanstack/ai'
 import { GITHUB_TOOL_CATALOG } from '../core/catalog'
-import { DEFAULT_EVALUATION_MODEL, INTENT_QUESTION, PRESET_PURPOSES, RISK_QUESTION, rankPresets, requiresApproval, type RoutablePreset } from '../core/evaluation-policy'
+import { DEFAULT_EVALUATION_MODEL, INTENT_QUESTION, PRESET_PURPOSES, RISK_QUESTION, conversationState, rankPresets, requiresApproval, type RoutablePreset } from '../core/evaluation-policy'
 import { PRESET_TOOLS } from '../core/presets'
 import { githubToolsErrors } from '../core/errors'
 import type { GithubToolName } from '../core/tool-names'
@@ -27,8 +27,10 @@ async function evaluationAdapter(options: GithubEvaluationOptions) {
 }
 
 export function latestUserText(messages: readonly ModelMessage[]): string {
-  const message = messages.findLast(message => message.role === 'user')
-  if (!message) return ''
+  return conversationState(messages, messageText).request
+}
+
+function messageText(message: ModelMessage): string {
   if (typeof message.content === 'string') return message.content
   return message.content?.flatMap(part => part.type === 'text' ? [part.content] : []).join('\n') ?? ''
 }
@@ -50,7 +52,7 @@ export async function needsAutoApproval(name: GithubToolName, input: unknown, me
   try {
     const result = await decide({
       adapter: await evaluationAdapter(options),
-      state: { request: latestUserText(messages), toolCall: { tool: name, description: GITHUB_TOOL_CATALOG[name].description, input } },
+      state: { ...conversationState(messages, messageText), toolCall: { tool: name, description: GITHUB_TOOL_CATALOG[name].description, input } },
       questions: {
         risk: score({ instructions: RISK_QUESTION.instructions, levels: RISK_QUESTION.criteria }),
         intent: boolean(INTENT_QUESTION),
@@ -71,7 +73,7 @@ export async function selectPresets(messages: readonly ModelMessage[], options: 
     const presets = Object.keys(PRESET_PURPOSES) as RoutablePreset[]
     const result = await decide({
       adapter: await evaluationAdapter(options),
-      state: { request: latestUserText(messages) },
+      state: conversationState(messages, messageText),
       questions: Object.fromEntries(presets.map(preset => [preset, boolean({
         instructions: 'Does handling this GitHub request need the tools of this preset?',
         criteria: { true: JSON.stringify({ purpose: PRESET_PURPOSES[preset], tools: [...PRESET_TOOLS[preset]] }) },
