@@ -41,7 +41,12 @@ globalThis.fetch = async (input, init) => {
     return json({ url: returnUrl, connector: { serviceName: 'GitHub' } })
   }
 
-  if (url.hostname !== 'api.github.com') return originalFetch(input, init)
+  // Only the local eve server is reachable, so the eval can never use a real token or service.
+  if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') return originalFetch(input, init)
+  if (url.hostname !== 'api.github.com') {
+    console.error(`[stubs] blocked ${request.method} ${url.href}`)
+    return json({ message: `Blocked ${request.method} ${url.hostname} in the eval` }, 599)
+  }
   const token = request.headers.get('authorization')?.replace(/^(token|bearer) /i, '') ?? ''
   recordGithubCall(`${request.method} ${url.pathname} ${token}`)
   if (!/^gh[us]_/.test(token) || token === 'ghu_revoked') return json({ message: 'Bad credentials' }, 401)
