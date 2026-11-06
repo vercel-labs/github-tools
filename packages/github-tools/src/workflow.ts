@@ -20,6 +20,7 @@ import { resolveInstructions } from './agents'
 import type { AllGithubTools } from './core/tool-types'
 import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './core/presets'
 import type { GithubToolName } from './core/tool-names'
+import type { GithubToolsBaseOptions } from './core/tool-types'
 import type { StaticApprovalConfig } from './index'
 import type { CommitIdentity } from './types'
 import type { GithubTokenInput } from './core/token'
@@ -140,6 +141,11 @@ export type CreateDurableGithubAgentOptions =
      */
     requireApproval?: StaticApprovalConfig
     /**
+     * Per-tool overrides (`description`, `title`, `needsApproval`, …), as on `createGithubTools`.
+     * `execute`, `inputSchema`, and `outputSchema` cannot be overridden.
+     */
+    overrides?: GithubToolsBaseOptions['overrides']
+    /**
      * Fully replace the default system prompt.
      * When set, `preset` system prompts and `additionalInstructions` are ignored.
      */
@@ -214,6 +220,7 @@ export function createDurableGithubAgent({
   token,
   preset,
   requireApproval,
+  overrides,
   context,
   instructions,
   additionalInstructions,
@@ -222,7 +229,7 @@ export function createDurableGithubAgent({
   coAuthors,
   ...agentOptions
 }: CreateDurableGithubAgentOptions): DurableGithubAgent<AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
-  const tools = createGithubTools({ token, requireApproval, preset, context, author, committer, coAuthors })
+  const tools = createGithubTools({ token, requireApproval, preset, overrides, context, author, committer, coAuthors })
 
   return new DurableGithubAgent({
     ...agentOptions,

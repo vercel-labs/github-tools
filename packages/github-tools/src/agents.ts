@@ -72,6 +72,7 @@ export function createGithubAgent({
   preset,
   requireApproval,
   evaluation,
+  overrides,
   context,
   instructions,
   additionalInstructions,
@@ -81,7 +82,7 @@ export function createGithubAgent({
   ...agentOptions
 }: CreateGithubAgentOptions): ToolLoopAgent<never, AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
   const staticPreset = preset === 'auto' ? undefined : preset
-  const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, context, author, committer, coAuthors })
+  const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, overrides, context, author, committer, coAuthors })
   const settings = {
     ...agentOptions,
     tools,
