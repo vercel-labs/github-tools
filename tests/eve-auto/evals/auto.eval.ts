@@ -29,6 +29,13 @@ export default defineEval({
     const approved = await wontfix.session.respond([{ interactionId: wontfix.interactions[0]!.interactionId, optionId: 'approve' }], as('user:alice'))
     t.check(approved.reply, includes('wontfix'))
 
+    // With selection: 'tools', only the picked tool and the core read tools are listed.
+    const picked = await t.send('picked tools', as('user:alice'))
+    t.check(JSON.parse(picked.reply ?? '[]'), equals(['picked__addLabels', 'picked__getFileContent', 'picked__getRepository', 'picked__getRepositoryTree', 'picked__listCommits', 'picked__searchCode']))
+    // A tool that was not picked is deferred, not removed: the model still reaches it through eve__tool.
+    const deferred = await picked.session.send('picked deferred', as('user:alice'))
+    t.check(deferred.requireToolCall('picked__listBranches').status, equals('completed'))
+
     const records = await t.send('recorded', as('user:alice'))
     t.check(JSON.parse(records.reply ?? '{}'), equals({
       // Connect reuses a token for the same params, so the later addLabels calls mint none.

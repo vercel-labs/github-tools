@@ -6,7 +6,7 @@ const issue = { owner: 'vercel-labs', repo: 'github-tools', issueNumber: 12 }
 
 export default defineAgent({
   defaultTools: false,
-  model: mockModel(({ messages, lastUserMessage, toolResults }) => {
+  model: mockModel(({ messages, lastUserMessage, tools, toolResults }) => {
     if (messages.at(-1)?.role === 'tool') {
       const last = toolResults.at(-1)!
       return `result ${last.name} ${last.isError ? 'error' : 'ok'} ${JSON.stringify(last.output)}`
@@ -18,6 +18,10 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__addLabels', input: { ...issue, labels: ['bug'] } }] }
       case 'label wontfix':
         return { toolCalls: [{ name: 'github__addLabels', input: { ...issue, labels: ['wontfix'] } }] }
+      case 'picked tools':
+        return JSON.stringify(tools.map(tool => tool.name).filter(name => name.startsWith('picked__')).toSorted())
+      case 'picked deferred':
+        return { toolCalls: [{ name: 'eve__tool', input: { name: 'picked__listBranches', input: { owner: issue.owner, repo: issue.repo } } }] }
       case 'recorded':
         return JSON.stringify(recorded())
       default:

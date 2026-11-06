@@ -325,3 +325,59 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
     warn.mockRestore()
   })
 })
+
+describe("evaluation: { selection: 'tools' }", () => {
+  const core = ['getRepository', 'getFileContent', 'getRepositoryTree', 'searchCode', 'listCommits']
+  const usage = {
+    inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
+    outputTokens: { total: 1, text: 1, reasoning: 0 },
+  }
+
+  it('lists the core read tools plus the likely ones, most likely first', async () => {
+    const { evaluateTools } = await import('./core/evaluation')
+    const { model, calls } = evaluationModel(() => ({ mergePullRequest: 0.9, getPullRequest: 0.95, addLabels: 0.4, createRelease: 0.6 }))
+    await expect(evaluateTools(messages, { model, maxTools: 2 })).resolves.toEqual([...core, 'getPullRequest', 'mergePullRequest'])
+    expect(Object.keys(calls[0]!.questions)).not.toContain('getRepository')
+    expect(Object.keys(calls[0]!.questions)).toHaveLength(84 - core.length)
+  })
+
+  it('falls back to the repo-explorer tools when the decision model fails', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { selectTools } = await import('./core/evaluation')
+    const { model } = evaluationModel(() => {
+      throw new Error('Gateway unavailable')
+    })
+    await expect(selectTools(messages, { model })).resolves.toEqual([...PRESET_TOOLS['repo-explorer']])
+    warn.mockRestore()
+  })
+
+  it('lists the picked tools and adds the ones the model enables', async () => {
+    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9 }))
+    const calls: LanguageModelV4CallOptions[] = []
+    const agent = createGithubAgent({
+      model: new MockLanguageModelV4({
+        doGenerate: async (options) => {
+          calls.push(options)
+          if (calls.length === 1) {
+            return {
+              content: [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'enableGithubTools', input: JSON.stringify({ names: ['mergePullRequest'] }) }],
+              finishReason: { unified: 'tool-calls', raw: 'tool_calls' },
+              usage,
+              warnings: [],
+            }
+          }
+          return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
+        },
+      }),
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model, selection: 'tools' },
+      stopWhen: () => calls.length >= 2,
+    })
+    await agent.generate({ prompt: 'Merge vercel/ai#12 once it is green' })
+    const listed = (call: LanguageModelV4CallOptions) => new Set((call.tools ?? []).map(tool => tool.name))
+    expect(listed(calls[0]!)).toEqual(new Set([...core, 'getPullRequest', 'enableGithubTools']))
+    expect(listed(calls[1]!)).toEqual(new Set([...core, 'getPullRequest', 'enableGithubTools', 'mergePullRequest']))
+    expect(evaluation.calls).toHaveLength(1)
+  })
+})

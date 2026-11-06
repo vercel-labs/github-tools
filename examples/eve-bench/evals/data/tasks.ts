@@ -64,6 +64,22 @@ export const ROUTING_CASES: RoutingCase[] = [
   { prompt: 'Is anything on fire in acme/web?', needs: ['ci-ops'] },
 ]
 
+/** Requests and the tools `selection: 'tools'` must list for them, beyond the core read tools. */
+export const TOOL_CASES: { prompt: string, tools: string[] }[] = [
+  { prompt: 'Merge PR #5 in acme/web.', tools: ['mergePullRequest'] },
+  { prompt: 'Approve PR #812 in nuxt/ui if the tests pass.', tools: ['createPullRequestReview'] },
+  { prompt: 'Reply to the unresolved review threads on my PR #33 in acme/web and resolve them.', tools: ['listPullRequestReviewThreads', 'replyToReviewComment', 'resolveReviewThread'] },
+  { prompt: 'Close all issues labeled wontfix in acme/web that have been inactive for a year.', tools: ['listIssues', 'closeIssue'] },
+  { prompt: 'Assign issue #77 in acme/web to @jane and label it p1.', tools: ['addAssignees', 'addLabels'] },
+  { prompt: 'The deploy workflow on main in acme/web is stuck, cancel it.', tools: ['listWorkflowRuns', 'cancelWorkflowRun'] },
+  { prompt: 'Trigger the nightly workflow in acme/web on the release branch.', tools: ['triggerWorkflow'] },
+  { prompt: 'Draft release notes for v2.3.0 of acme/web and publish the release.', tools: ['createRelease'] },
+  { prompt: 'Answer the latest unanswered question in the acme/web Discussions.', tools: ['listDiscussions', 'addDiscussionComment'] },
+  { prompt: 'Mark all my notifications from dependabot as read.', tools: ['listNotifications', 'markNotificationRead'] },
+  { prompt: 'Bump the lodash version in package.json of acme/web and open a PR.', tools: ['createBranch', 'createOrUpdateFile', 'createPullRequest'] },
+  { prompt: 'Find the PR that broke CI on main in acme/web and comment on it with the failing job logs.', tools: ['getWorkflowJobLogs', 'addPullRequestComment'] },
+]
+
 export type ApprovalCase = {
   id: string
   /** `true` when running without a human is the right call. */

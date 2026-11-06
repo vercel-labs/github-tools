@@ -3,8 +3,10 @@ import { connect } from '@vercel/connect/eve'
 import {
   AUTO_APPROVAL_TOOLS,
   evaluatePresets,
+  evaluateTools,
   executeGithubEveTool,
   fallbackPresets,
+  fallbackTools,
   formatGithubEveToolOutput,
   githubToolsErrors,
   GITHUB_TOOL_NAMES,
@@ -262,23 +264,28 @@ function describeGithubCall(name: GithubToolName, input: Readonly<Record<string,
   return `${action[0]!.toUpperCase()}${action.slice(1)}${target}`
 }
 
-// eve runs this before every model call; `ctx.memo` keeps the `'auto'` preset
-// routing fixed for the turn, across processes. With `'auto'`, the routed presets
-// are listed and every other tool is deferred: the model finds it with `eve__search`.
+// eve runs this before every model call; `ctx.memo` keeps the `'auto'` routing fixed
+// for the turn, across processes. With `'auto'`, the routed presets (or, with
+// `evaluation.selection: 'tools'`, the picked tools) are listed and every other tool
+// is deferred: the model finds it with `eve__search`.
 export default defineDynamic(async (ctx) => {
   const sessionOptions = buildSessionOptions()
   const { preset, evaluation } = extension.config
   const messages = await ctx.messages()
   const request = latestUserText(messages)
-  const listed = preset === 'auto'
-    ? new Set(listEveToolDescriptors({
-        ...sessionOptions,
-        // A failed memo keeps no result, so the next model call retries routing instead of staying on the fallback.
-        preset: await ctx.memo(['presets', ctx.turn?.id ?? null], ({ abortSignal }) => evaluatePresets(messages, evaluation, abortSignal))
-          .catch((error: unknown) => fallbackPresets(error, evaluation)),
-        include: [...sessionOptions.include ?? [], ...calledGithubTools(messages)],
-      }).map(entry => entry.name))
-    : undefined
+  // A failed memo keeps no result, so the next model call retries routing instead of staying on the fallback.
+  const routed = preset !== 'auto'
+    ? undefined
+    : evaluation?.selection === 'tools'
+      ? { include: await ctx.memo(['tools', ctx.turn?.id ?? null], ({ abortSignal }) => evaluateTools(messages, evaluation, abortSignal))
+          .catch((error: unknown) => fallbackTools(error, evaluation)) }
+      : { preset: await ctx.memo(['presets', ctx.turn?.id ?? null], ({ abortSignal }) => evaluatePresets(messages, evaluation, abortSignal))
+          .catch((error: unknown) => fallbackPresets(error, evaluation)) }
+  const listed = routed && new Set(listEveToolDescriptors({
+    ...sessionOptions,
+    preset: routed.preset,
+    include: [...routed.include ?? [], ...sessionOptions.include ?? [], ...calledGithubTools(messages)],
+  }).map(entry => entry.name))
   const descriptors = listEveToolDescriptors(listed ? { ...sessionOptions, preset: undefined, include: undefined } : sessionOptions)
   const tools: Record<string, ToolDefinition> = {}
   const toolOverrides = sessionOptions.overrides

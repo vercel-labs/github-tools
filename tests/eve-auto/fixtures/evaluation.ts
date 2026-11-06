@@ -3,7 +3,8 @@ import { recorded } from './record'
 
 type Answer = { type: 'boolean', probability: number } | { type: 'score', score: number }
 
-// Routes every request to issue-triage. Rates adding `bug` negligible and asked for, and any other label hard to undo.
+// Routes every request to issue-triage, and picks only addLabels when asked about single tools.
+// Rates adding `bug` negligible and asked for, and any other label hard to undo.
 export const evaluationModel: Experimental_EvaluationModel = {
   specificationVersion: 'v4',
   provider: 'eval',
@@ -16,6 +17,9 @@ export const evaluationModel: Experimental_EvaluationModel = {
       const labels = JSON.stringify(state).includes('"bug"') ? 0 : 2
       answers.risk = { type: 'score', score: labels }
       answers.intent = { type: 'boolean', probability: 1 }
+    }
+    else if ('addLabels' in questions) {
+      for (const tool of Object.keys(questions)) answers[tool] = { type: 'boolean', probability: tool === 'addLabels' ? 0.9 : 0.1 }
     }
     else {
       for (const preset of Object.keys(questions)) answers[preset] = { type: 'boolean', probability: preset === 'issue-triage' ? 0.9 : 0.1 }

@@ -5,8 +5,8 @@ import type { GithubToolName } from './tool-names'
  * Pass to {@link createGithubTools}, {@link createGithubAgent}, or {@link createDurableGithubAgent}.
  * Presets can be combined by passing an array.
  */
-// Every task preset can read the repository's files, history and code, so a task never stalls on context.
-const CORE_READ_TOOLS = ['getRepository', 'getFileContent', 'getRepositoryTree', 'searchCode', 'listCommits'] as const
+/** Read tools every task preset, and every `selection: 'tools'` result, includes, so a task never stalls on context. */
+export const CORE_READ_TOOLS = ['getRepository', 'getFileContent', 'getRepositoryTree', 'searchCode', 'listCommits'] as const
 
 export const PRESET_TOOLS = {
   /**
