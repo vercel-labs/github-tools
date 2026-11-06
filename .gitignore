@@ -31,3 +31,4 @@ apps/chat/.data
 
 # eve local state
 .eve/
+.eve-extension-build-*/
