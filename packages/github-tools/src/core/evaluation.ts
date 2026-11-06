@@ -1,4 +1,5 @@
 import * as ai from 'ai'
+import type { ProviderOptions } from '@ai-sdk/provider-utils'
 import type { Experimental_EvaluationModel, JSONValue, ModelMessage } from 'ai'
 import { GITHUB_TOOL_CATALOG } from './catalog'
 import { githubToolsErrors } from './errors'
@@ -12,10 +13,15 @@ import type { GithubWriteToolName } from './write-tools'
  */
 export type GithubEvaluationOptions = {
   /**
-   * Evaluation model for AI SDK `experimental_evaluate`: an AI Gateway ID or a model instance.
+   * Decision model for AI SDK `experimental_decide`: an AI Gateway ID or a model instance.
    * @default 'typesafe-ai/jev'
    */
   model?: Experimental_EvaluationModel
+  /**
+   * Provider options passed to every decision call, for example AI Gateway settings such as
+   * `{ gateway: { zeroDataRetention: true } }`.
+   */
+  providerOptions?: ProviderOptions
   /**
    * Highest risk an `'auto'` tool call can have and still run without approval, on a 0–2 scale
    * (0 negligible, 1 visible but reversible, 2 hard to undo).
@@ -41,16 +47,26 @@ export type GithubEvaluationOptions = {
 }
 
 /**
- * Throws `EVALUATION_UNAVAILABLE` when the installed `ai` has no `experimental_evaluate`.
- * Call it where `'auto'` is configured, so a too-old `ai` fails at setup instead of mid-conversation.
+ * Throws `EVALUATION_UNAVAILABLE` when the installed `ai` has neither `experimental_decide`
+ * nor `experimental_evaluate`. Call it where `'auto'` is configured, so a too-old `ai` fails
+ * at setup instead of mid-conversation.
  */
 export function assertEvaluationAvailable() {
-  loadEvaluate()
+  loadDecide()
 }
 
-function loadEvaluate() {
-  if (!('experimental_evaluate' in ai)) throw githubToolsErrors.EVALUATION_UNAVAILABLE()
-  return ai.experimental_evaluate
+// `experimental_decide` replaced `experimental_evaluate` in ai 7.0.128; the old name stays an alias.
+function loadDecide(): typeof ai.experimental_decide {
+  const exports: Partial<Pick<typeof ai, 'experimental_decide' | 'experimental_evaluate'>> = ai
+  const decide = exports.experimental_decide ?? exports.experimental_evaluate
+  if (!decide) throw githubToolsErrors.EVALUATION_UNAVAILABLE()
+  return decide
+}
+
+// `decide` throws when the model refuses any question; the error names the refused questions.
+function refusedQuestions(error: unknown): readonly string[] | undefined {
+  const exports: Partial<Pick<typeof ai, 'Experimental_DecisionRefusalError'>> = ai
+  return exports.Experimental_DecisionRefusalError?.isInstance(error) ? error.questionIds : undefined
 }
 
 function warnEvaluationFailed(model: Experimental_EvaluationModel, fallback: string, error: unknown, abortSignal?: AbortSignal) {
@@ -76,12 +92,13 @@ export async function needsAutoApproval(
   toolName: GithubWriteToolName,
   input: unknown,
   messages: readonly ModelMessage[],
-  { model = DEFAULT_EVALUATION_MODEL, maxRisk = 1, minIntent = 0.6 }: GithubEvaluationOptions = {},
+  { model = DEFAULT_EVALUATION_MODEL, maxRisk = 1, minIntent = 0.6, providerOptions }: GithubEvaluationOptions = {},
   abortSignal?: AbortSignal,
 ): Promise<boolean> {
-  const evaluate = loadEvaluate()
-  const result = await evaluate({
+  const decide = loadDecide()
+  const result = await decide({
     model,
+    providerOptions,
     state: {
       ...conversationState(messages, messageText),
       toolCall: {
@@ -96,7 +113,8 @@ export async function needsAutoApproval(
     },
     abortSignal,
   }).catch((error: unknown) => {
-    warnEvaluationFailed(model, `asking approval for ${toolName}`, error, abortSignal)
+    // A refusal is an answer, not an outage: it gives no evidence the call is safe, so a person decides.
+    if (!refusedQuestions(error)) warnEvaluationFailed(model, `asking approval for ${toolName}`, error, abortSignal)
     return undefined
   })
   if (!result) return true
@@ -113,14 +131,15 @@ export async function needsAutoApproval(
  */
 export async function evaluatePresets(
   messages: readonly ModelMessage[],
-  { model = DEFAULT_EVALUATION_MODEL, minPresetProbability = 0.7, maxPresets = 2 }: GithubEvaluationOptions = {},
+  { model = DEFAULT_EVALUATION_MODEL, minPresetProbability = 0.7, maxPresets = 2, providerOptions }: GithubEvaluationOptions = {},
   abortSignal?: AbortSignal,
 ): Promise<RoutablePreset[]> {
-  const evaluate = loadEvaluate()
-  const presets = Object.keys(PRESET_PURPOSES) as RoutablePreset[]
-  const { answers } = await evaluate({
+  const decide = loadDecide()
+  const state = conversationState(messages, messageText)
+  const ask = (presets: readonly RoutablePreset[]) => decide({
     model,
-    state: conversationState(messages, messageText),
+    providerOptions,
+    state,
     questions: Object.fromEntries(presets.map(preset => [preset, {
       type: 'boolean' as const,
       instructions: 'Does handling this GitHub request need the tools of this preset?',
@@ -128,7 +147,17 @@ export async function evaluatePresets(
     }])),
     abortSignal,
   })
-  return rankPresets(Object.fromEntries(presets.map(preset => [preset, answers[preset].probability])) as Record<RoutablePreset, number>, { minPresetProbability, maxPresets })
+  const presets = Object.keys(PRESET_PURPOSES) as RoutablePreset[]
+  const probabilities = Object.fromEntries(presets.map(preset => [preset, 0])) as Record<RoutablePreset, number>
+  // A refused preset question counts as a no: ask once more without it instead of losing every answer.
+  const { answers } = await ask(presets).catch((error: unknown) => {
+    const refused = refusedQuestions(error)
+    const remaining = presets.filter(preset => !refused?.includes(preset))
+    if (!refused || remaining.length === 0) throw error
+    return ask(remaining)
+  })
+  for (const [preset, answer] of Object.entries(answers)) probabilities[preset as RoutablePreset] = answer.probability
+  return rankPresets(probabilities, { minPresetProbability, maxPresets })
 }
 
 /**

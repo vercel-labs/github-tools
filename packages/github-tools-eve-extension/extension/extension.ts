@@ -247,6 +247,7 @@ const configSchema = z.object({
     minIntent: z.number().optional(),
     minPresetProbability: z.number().optional(),
     maxPresets: z.number().optional(),
+    providerOptions: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
   }).optional(),
   overrides: z.partialRecord(toolNameSchema, z.looseObject({ actAs: actAsSchema.optional() })).optional(),
   author: commitIdentitySchema.optional(),
