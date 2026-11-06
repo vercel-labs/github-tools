@@ -20,7 +20,7 @@ import {
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision } from 'eve/tools/approval'
-import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
+import { defineDynamic, defineTool, toolOutput, type ToolContext, type ToolDefinition } from 'eve/tools'
 import extension, {
   type GithubActAs,
   type GithubExtensionApprovalConfig,
@@ -95,13 +95,6 @@ function approvalValue(
   if (requireApproval === 'auto') return autoApprovalTools.has(writeTool) ? 'auto' : true
   if (typeof requireApproval === 'object') return requireApproval[writeTool] ?? true
   return requireApproval ?? true
-}
-
-// eve resumes an approval batch with a user message starting with this label; it is not a user request.
-const PENDING_APPROVALS_LABEL = '[Pending approvals]'
-
-function withoutPendingApprovals(messages: readonly ModelMessage[]): ModelMessage[] {
-  return messages.filter(m => m.role !== 'user' || !latestUserText([m]).startsWith(PENDING_APPROVALS_LABEL))
 }
 
 // A parked call replayed in a new process must find its tool even if routing picks other presets.
@@ -199,14 +192,21 @@ async function runGithubEveApprovalResponse(name: GithubToolName, { request, res
 }
 
 function isUnauthorized(result: unknown): boolean {
-  if (result == null || typeof result !== 'object' || !('error' in result)) return false
+  if (!isErrorResult(result)) return false
   const { error } = result
-  return error != null && typeof error === 'object' && 'code' in error && error.code === githubToolsErrors.UNAUTHORIZED.code
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === githubToolsErrors.UNAUTHORIZED.code
 }
 
 function runGithubEveToModelOutput(name: GithubToolName, output: unknown) {
   const custom = buildSessionOptions().overrides?.[name]?.toModelOutput
-  return custom ? custom(output) : formatGithubEveToolOutput(name, output)
+  if (custom) return custom(output)
+  // A failed call returns `{ error }`; marking it as an error result keeps providers and MCP clients from reading it as a success.
+  if (isErrorResult(output)) return toolOutput.errorText(JSON.stringify({ error: output.error }))
+  return formatGithubEveToolOutput(name, output)
+}
+
+function isErrorResult(output: unknown): output is { error: unknown } {
+  return output != null && typeof output === 'object' && !Array.isArray(output) && 'error' in output && output.error != null
 }
 
 async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext) {
@@ -225,12 +225,13 @@ async function runGithubEveApproval(name: GithubToolName, request: string, ctx: 
 
 type ApprovalTarget = GithubExtensionContext & { discussionNumber?: number }
 
-function runGithubEveApprovalPrompt(name: GithubToolName, input: Record<string, unknown>) {
+// "Create issue on owner/repo#12": the channel label while a call runs, and the approval prompt.
+function describeGithubCall(name: GithubToolName, input: Readonly<Record<string, unknown>>) {
   const { owner, repo, pullNumber, issueNumber, discussionNumber } = { ...extension.config.context, ...input } as ApprovalTarget
   const action = name.replace(/[A-Z]/g, letter => ` ${letter.toLowerCase()}`)
   const number = pullNumber ?? issueNumber ?? discussionNumber
   const target = owner && repo ? ` on ${owner}/${repo}${number ? `#${number}` : ''}` : ''
-  return `${action[0]!.toUpperCase()}${action.slice(1)}${target}?`
+  return `${action[0]!.toUpperCase()}${action.slice(1)}${target}`
 }
 
 // eve runs this before every model call; `ctx.memo` keeps the `'auto'` preset
@@ -238,14 +239,13 @@ function runGithubEveApprovalPrompt(name: GithubToolName, input: Record<string, 
 export default defineDynamic(async (ctx) => {
   const sessionOptions = buildSessionOptions()
   const { preset, evaluation } = extension.config
-  const history = await ctx.messages()
-  const messages = withoutPendingApprovals(history)
+  const messages = await ctx.messages()
   const request = latestUserText(messages)
   const descriptors = listEveToolDescriptors(preset === 'auto'
     ? {
         ...sessionOptions,
         preset: await ctx.memo(['presets', ctx.turn?.id ?? null], () => selectPresets(messages, evaluation)),
-        include: [...sessionOptions.include ?? [], ...calledGithubTools(history)],
+        include: [...sessionOptions.include ?? [], ...calledGithubTools(messages)],
       }
     : sessionOptions)
   const tools: Record<string, ToolDefinition> = {}
@@ -260,11 +260,12 @@ export default defineDynamic(async (ctx) => {
       inputSchema: entry.inputSchema,
       approval: {
         request: approvalCtx => runGithubEveApproval(name, request, approvalCtx),
-        prompt: ({ input }) => runGithubEveApprovalPrompt(name, input),
+        prompt: ({ input }) => `${describeGithubCall(name, input)}?`,
         ...(extension.config.approvers === 'anyone' && {
           response: responseCtx => runGithubEveApprovalResponse(name, responseCtx),
         }),
       },
+      label: { start: input => describeGithubCall(name, input as Record<string, unknown>) },
       toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
       ...(override?.outputSchema !== undefined && { outputSchema: override.outputSchema }),
       execute: async (input, toolCtx) => runGithubEveTool(name, input, toolCtx),

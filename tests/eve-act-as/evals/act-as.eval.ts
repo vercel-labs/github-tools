@@ -39,11 +39,16 @@ export default defineEval({
     // A signed-in user's turn runs as them.
     const read = await t.send('read', as('alice'))
     t.check(read.requireToolCall('github__getRepository').status, equals('completed'))
+    // Channels show the call's label instead of the tool name.
+    t.check(JSON.stringify(read.events), includes('"label":"Get repository on vercel-labs/github-tools"'))
 
     // A reader approving their own write gets GitHub's refusal, not the App's access.
     const ownWrite = await t.send('write', as('bob'))
     t.check(ownWrite.interactions.map(interaction => interaction.request.prompt), equals(['Create issue on vercel-labs/github-tools?']))
-    t.check((await answer(ownWrite, 'approve', 'bob')).reply, includes('github_tools.FORBIDDEN'))
+    const forbidden = await answer(ownWrite, 'approve', 'bob')
+    t.check(forbidden.reply, includes('github_tools.FORBIDDEN'))
+    // The model gets the failure as an error result, not as a successful output.
+    t.check(forbidden.reply, includes('result github__createIssue error'))
 
     // Anyone signed in can deny, without connecting GitHub first.
     const denied = await answer(await t.send('write', as('bob')), 'deny', 'erin')

@@ -19,7 +19,7 @@ This is **the recommended way** to add GitHub tools to an eve agent. The legacy 
 pnpm add @github-tools/eve-extension
 ```
 
-`eve` is a required peer dependency, declared as `*`: the consuming agent provides the runtime copy and eve checks the extension's generated capability metadata rather than an npm range. This release is built against eve 1.0.0-rc.1 and mounts on eve 1.0.0-rc.1 or later. `@vercel/connect` is optional (install it only when using `connector`):
+`eve` is a required peer dependency, declared as `*`: the consuming agent provides the runtime copy and eve checks the extension's generated capability metadata rather than an npm range. This release is built against eve 1.0.0-rc.6 and mounts on eve 1.0.0-rc.6 or later. `@vercel/connect` is optional (install it only when using `connector`):
 
 ```sh
 pnpm add eve
