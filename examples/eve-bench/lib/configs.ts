@@ -9,7 +9,8 @@ export const CONFIGS = {
   'fixed': { preset: ['code-review', 'issue-triage'] },
   'auto-preset': { preset: 'auto' },
   'auto': { preset: 'auto', requireApproval: 'auto' },
-} satisfies Record<string, Omit<GithubExtensionConfig, 'evaluation'>>
+  'auto-tools': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'tools' } },
+} satisfies Record<string, Omit<GithubExtensionConfig, 'evaluation'> & { evaluation?: Pick<GithubEvaluationOptions, 'selection'> }>
 
 /** Confidence levels for the `'auto'` modes, selected with `BENCH_LEVEL`. */
 export const LEVELS = {

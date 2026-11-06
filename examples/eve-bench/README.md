@@ -8,6 +8,7 @@ Compares `@github-tools/eve-extension` configurations on 12 GitHub tasks with [e
 | `fixed` | `preset: ['code-review', 'issue-triage']` |
 | `auto-preset` | `preset: 'auto'` |
 | `auto` | `preset: 'auto'`, `requireApproval: 'auto'` |
+| `auto-tools` | `preset: 'auto'`, `requireApproval: 'auto'`, `evaluation: { selection: 'tools' }` |
 
 `BENCH_LEVEL` (`conservative`, `default`, `permissive`) sets the `evaluation` thresholds, see `lib/configs.ts`.
 
