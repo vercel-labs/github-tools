@@ -35,6 +35,12 @@ describe('findSecret', () => {
     expect(findSecret({ files: { 'id_rsa': { content: privateKey } } })).toBe('a private key')
   })
 
+  it('finds GitHub tokens longer than 36 characters, and credentials in object keys', () => {
+    expect(findSecret({ body: fake('gh', 's_', 'A1b2C3d4E5'.repeat(5)) })).toBe('a GitHub token')
+    expect(findSecret({ body: fake('gh', 'r_', 'A1b2C3d4E5'.repeat(7), 'f6G7h8') })).toBe('a GitHub token')
+    expect(findSecret({ files: { [githubToken]: { content: 'notes' } } })).toBe('a GitHub token')
+  })
+
   it('leaves ordinary text and placeholders alone', () => {
     expect(findSecret({ title: 'Rotate the ghp_xxx token', body: 'Set GITHUB_TOKEN=<your token>', labels: ['security'] })).toBeUndefined()
   })
