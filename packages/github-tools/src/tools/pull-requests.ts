@@ -58,6 +58,7 @@ import {
 import { listPullRequestFilesToModelOutput } from '../core/model-output'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { CommitIdentity, ToolOptions, GithubTool } from '../types'
+import type { GithubGuardrails } from '../core/guardrails'
 
 export type MergeToolOptions = ToolOptions & {
   coAuthors?: CommitIdentity[]
@@ -66,8 +67,8 @@ export type MergeToolOptions = ToolOptions & {
 }
 
 export type UpdateBranchToolOptions = ToolOptions & {
-  /** Branches the pull request's head branch must match, as in `guardrails.branches`. */
-  branches?: string[]
+  /** Repositories and branches the pull request's head must match, as in `guardrails`. */
+  guardrails?: Pick<GithubGuardrails, 'repositories' | 'branches'>
 }
 
 async function listPullRequestsStep(args: Parameters<typeof listPullRequestsCore>[0]) {
@@ -310,10 +311,10 @@ async function updatePullRequestBranchStep(args: Parameters<typeof updatePullReq
 }
 
 /** Merge a pull request's base branch into its head branch. Requires approval by default. */
-export const updatePullRequestBranch = (token: GithubTokenInput, { needsApproval = true, branches }: UpdateBranchToolOptions = {}): GithubTool =>
+export const updatePullRequestBranch = (token: GithubTokenInput, { needsApproval = true, guardrails }: UpdateBranchToolOptions = {}): GithubTool =>
   tool({
     description: updatePullRequestBranchDescription,
     needsApproval,
     inputSchema: updatePullRequestBranchInputSchema,
-    execute: async args => updatePullRequestBranchStep({ token: await resolveGithubToken(token, githubTokenCall('updatePullRequestBranch', args)), ...args, branches }),
+    execute: async args => updatePullRequestBranchStep({ token: await resolveGithubToken(token, githubTokenCall('updatePullRequestBranch', args)), ...args, guardrails }),
   })

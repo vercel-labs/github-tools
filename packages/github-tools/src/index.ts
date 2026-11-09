@@ -166,7 +166,7 @@ export function createGithubTools({
     enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors, branches }),
     disablePullRequestAutoMerge: disablePullRequestAutoMerge(resolveToken, approval('disablePullRequestAutoMerge')),
     updatePullRequest: updatePullRequest(resolveToken, approval('updatePullRequest')),
-    updatePullRequestBranch: updatePullRequestBranch(resolveToken, { ...approval('updatePullRequestBranch'), branches }),
+    updatePullRequestBranch: updatePullRequestBranch(resolveToken, { ...approval('updatePullRequestBranch'), guardrails }),
     addPullRequestComment: addPullRequestComment(resolveToken, approval('addPullRequestComment')),
     updatePullRequestComment: updatePullRequestComment(resolveToken, approval('updatePullRequestComment')),
     deletePullRequestComment: deletePullRequestComment(resolveToken, approval('deletePullRequestComment')),

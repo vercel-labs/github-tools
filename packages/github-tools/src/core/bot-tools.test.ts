@@ -28,7 +28,7 @@ function stubGithub(routes: Record<string, unknown>) {
 
 const user = (login: string) => ({ login, id: 1 })
 const issue = (number: number, repo = 'ai') => ({ id: 1000 + number, number, title: `Issue ${number}`, state: 'open', html_url: `https://github.com/vercel/${repo}/issues/${number}`, user: user('octocat'), assignees: [user('octocat')], labels: [] })
-const pull = { number: 12, head: { ref: 'feature/x', sha: 'abc' }, base: { ref: 'main' } }
+const pull = { number: 12, head: { ref: 'feature/x', sha: 'abc', repo: { full_name: 'vercel/ai' } }, base: { ref: 'main' } }
 const updated = { message: 'Updating pull request branch.', url: 'https://github.com/vercel/ai/pull/12' }
 
 afterEach(() => {
@@ -66,8 +66,8 @@ describe('updatePullRequestBranch', () => {
   })
 
   it('checks the head branch against guardrails.branches before updating it', async () => {
-    const requests = stubGithub({ 'GET /repos/vercel/ai/pulls/12': { ...pull, head: { ref: 'agent/fix', sha: 'abc' } }, 'PUT /repos/vercel/ai/pulls/12/update-branch': updated })
-    await expect(updatePullRequestBranchCore({ token: 'test', owner: 'vercel', repo: 'ai', pullNumber: 12, branches: ['agent/*'] })).resolves.toMatchObject(updated)
+    const requests = stubGithub({ 'GET /repos/vercel/ai/pulls/12': { ...pull, head: { ref: 'agent/fix', sha: 'abc', repo: { full_name: 'vercel/ai' } } }, 'PUT /repos/vercel/ai/pulls/12/update-branch': updated })
+    await expect(updatePullRequestBranchCore({ token: 'test', owner: 'vercel', repo: 'ai', pullNumber: 12, guardrails: { branches: ['agent/*'] } })).resolves.toMatchObject(updated)
     expect(requests.map(request => request.route)).toEqual(['GET /repos/vercel/ai/pulls/12', 'PUT /repos/vercel/ai/pulls/12/update-branch'])
   })
 
@@ -84,6 +84,14 @@ describe('updatePullRequestBranch', () => {
     await expect(executeGithubEveTool('updatePullRequestBranch', input, { token: 'test', guardrails })).resolves.toMatchObject({ error: { code: 'github_tools.GUARDRAIL_BLOCKED' } })
 
     expect(requests.map(request => request.route)).toEqual(Array(3).fill('GET /repos/vercel/ai/pulls/12'))
+  })
+
+  it('refuses a fork head outside guardrails.repositories', async () => {
+    const fork = { ...pull, head: { ref: 'agent/fix', sha: 'abc', repo: { full_name: 'someone/ai' } } }
+    const requests = stubGithub({ 'GET /repos/vercel/ai/pulls/12': fork, 'PUT /repos/vercel/ai/pulls/12/update-branch': updated })
+    await expect(updatePullRequestBranchCore({ token: 'test', owner: 'vercel', repo: 'ai', pullNumber: 12, guardrails: { repositories: ['vercel/*'] } }))
+      .rejects.toThrow('Pull request #12\'s branch is in `someone/ai`, outside the repositories these tools may act on: `vercel/*`.')
+    expect(requests.map(request => request.route)).toEqual(['GET /repos/vercel/ai/pulls/12'])
   })
 })
 

@@ -117,9 +117,10 @@ export function createToolRegistry(
   }
   // Spread after the input, so the branches a merge or branch update may write can't come from the model.
   const branches = ctx.guardrails?.branches
-  const guardExtras: Partial<Record<GithubToolName, Record<string, unknown>>> = branches
-    ? { mergePullRequest: { branches }, enablePullRequestAutoMerge: { branches }, updatePullRequestBranch: { branches } }
-    : {}
+  const guardExtras: Partial<Record<GithubToolName, Record<string, unknown>>> = {
+    ...branches && { mergePullRequest: { branches }, enablePullRequestAutoMerge: { branches } },
+    ...ctx.guardrails && { updatePullRequestBranch: { guardrails: ctx.guardrails } },
+  }
 
   const entries = names.map((name): ToolRegistryEntry => {
     const descriptor = GITHUB_TOOL_CATALOG[name]

@@ -11,7 +11,7 @@ export type GithubGuardrails = {
    * A call to any other repository fails. Tools without a repository target (search, gists,
    * notifications) are not restricted. `createRepository` and `forkRepository` run only when the
    * new repository's full name matches, so they need `org` or `organization`. `addSubIssue` also
-   * checks the sub-issue's repository.
+   * checks the sub-issue's repository, and `updatePullRequestBranch` the head's repository, which can be a fork.
    */
   repositories?: string[]
   /**
@@ -42,10 +42,18 @@ export function mergeGuardrailViolation(branches: readonly string[] | undefined,
   return `Merges are limited to base branches matching ${list(branches)}, and pull request #${pullNumber} targets \`${base}\`.`
 }
 
-/** Why `branches` block updating pull request `pullNumber`'s head branch `head`, or `undefined` when they allow it. */
-export function updateBranchGuardrailViolation(branches: readonly string[] | undefined, pullNumber: number, head: string): string | undefined {
-  if (!branches || patternsMatch(branches, head)) return undefined
-  return `Writes are limited to branches matching ${list(branches)}, and pull request #${pullNumber}'s branch is \`${head}\`.`
+/**
+ * Why `guardrails` block updating pull request `pullNumber`'s head branch, or `undefined` when they allow it.
+ * The head can live in a fork, so its repository is checked as well as its branch.
+ */
+export function updateBranchGuardrailViolation(
+  { repositories, branches }: Pick<GithubGuardrails, 'repositories' | 'branches'>,
+  pullNumber: number,
+  head: { repository: string, branch: string },
+): string | undefined {
+  if (repositories && !patternsMatch(repositories, head.repository, 'i')) return `Pull request #${pullNumber}'s branch is in \`${head.repository}\`, outside the repositories these tools may act on: ${list(repositories)}.`
+  if (branches && !patternsMatch(branches, head.branch)) return `Writes are limited to branches matching ${list(branches)}, and pull request #${pullNumber}'s branch is \`${head.branch}\`.`
+  return undefined
 }
 
 function newRepository(call: GithubTokenCall): string | null | undefined {
