@@ -50,6 +50,9 @@ overrides:
   'unhead': 3.4.3
   '@unhead/vue': 3.4.3
   '@unhead/bundler': 3.4.3
+  # Two tailwind-merge versions give tailwind-variants two installs, and Nitro's file tracing can ship
+  # chunks from the wrong one.
+  'tailwind-merge': 3.7.0
   # Nuxt UI's editor needs every tiptap package on one version. Without this, extensions resolve
   # newer than @tiptap/core and Vite's dependency optimizer fails on the missing exports.
   '@tiptap/core': 3.33.0
