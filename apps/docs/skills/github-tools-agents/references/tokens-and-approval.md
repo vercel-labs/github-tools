@@ -20,7 +20,7 @@ The docs site lists each tool and whether it writes:
 - **Actions**: workflow runs, dispatch, cancel, rerun.
 - **Gists**: read vs write/delete.
 
-See `/api/tools-catalog` and `/guide/tokens-and-auth`.
+See `/reference/tools` and `/auth`.
 
 ## `requireApproval` (non-durable)
 
@@ -36,5 +36,5 @@ With `createGithubTools` / `createGithubAgent`:
 
 ## Doc paths (site)
 
-- `/guide/approval-control`
-- `/guide/tokens-and-auth`
+- `/approval`
+- `/auth`

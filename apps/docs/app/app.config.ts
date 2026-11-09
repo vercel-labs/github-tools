@@ -99,7 +99,7 @@ export default defineAppConfig({
         root: 'relative py-10 sm:py-12',
         title: 'text-4xl sm:text-5xl font-normal tracking-tight text-pretty text-highlighted',
         description: 'text-lg font-normal text-toned mt-4',
-        headline: 'text-sm text-muted font-normal mb-3',
+        headline: 'hidden',
       },
     },
     contentToc: {
@@ -194,9 +194,7 @@ export default defineAppConfig({
         },
       },
       p: {
-        slots: {
-          root: 'text-base/7 font-normal text-toned',
-        },
+        base: 'my-5 text-base/7 font-normal text-toned text-pretty',
       },
     },
     pageFeature: {
@@ -233,49 +231,43 @@ export default defineAppConfig({
   footer: {
     sections: [
       {
-        title: 'Getting Started',
+        title: 'Start',
         links: [
-          { label: 'Introduction', to: '/getting-started/introduction' },
-          { label: 'Installation', to: '/getting-started/installation' },
-          { label: 'Quick Start', to: '/getting-started/quick-start' },
-          { label: 'Agent Skills', to: '/getting-started/agent-skills' },
+          { label: 'Introduction', to: '/start/introduction' },
+          { label: 'Installation', to: '/start/installation' },
+          { label: 'Quick start', to: '/start/quick-start' },
+          { label: 'Agent skills', to: '/start/agent-skills' },
         ],
       },
       {
-        title: 'Frameworks',
+        title: 'Core',
         links: [
-          { label: 'eve extension', to: '/frameworks/eve-extension' },
-          { label: 'AI SDK', to: '/frameworks/ai-sdk' },
-          { label: 'Vercel Workflow', to: '/frameworks/vercel-workflow' },
-          { label: 'Chat SDK', to: '/frameworks/chat-sdk' },
+          { label: 'Tools', to: '/tools' },
+          { label: 'Presets', to: '/presets' },
+          { label: 'Approval', to: '/approval' },
+          { label: 'Auth', to: '/auth' },
+          { label: 'Context', to: '/context' },
+          { label: 'Commits', to: '/commits' },
+          { label: 'Errors', to: '/errors' },
         ],
       },
       {
-        title: 'Examples',
+        title: 'Integrations',
         links: [
-          { label: 'Overview', to: '/examples/overview' },
-          { label: 'eve Stale Issue Triager', to: '/examples/eve-stale-issue-triager' },
-          { label: 'Manager & Sub-agents', to: '/examples/manager-agent-with-subagents' },
-          { label: 'Recipes', to: '/examples/recipes' },
+          { label: 'eve', to: '/integrations/eve' },
+          { label: 'AI SDK', to: '/integrations/ai-sdk' },
+          { label: 'TanStack AI', to: '/integrations/tanstack-ai' },
+          { label: 'Vercel Workflow', to: '/integrations/workflow' },
+          { label: 'Chat SDK', to: '/integrations/chat-sdk' },
         ],
       },
       {
-        title: 'Guides',
+        title: 'Reference',
         links: [
-          { label: 'Presets', to: '/guide/presets' },
-          { label: 'Approval Control', to: '/guide/approval-control' },
-          { label: 'Commit Attribution', to: '/guide/commit-attribution' },
-          { label: 'Tokens & Auth', to: '/guide/tokens-and-auth' },
-          { label: 'Vercel Connect', to: '/guide/vercel-connect' },
-          { label: 'Working Context', to: '/guide/working-context' },
-          { label: 'Errors', to: '/guide/errors' },
-        ],
-      },
-      {
-        title: 'API',
-        links: [
-          { label: 'Tools Catalog', to: '/api/tools-catalog' },
-          { label: 'API Reference', to: '/api/reference' },
+          { label: 'API', to: '/reference/api' },
+          { label: 'Tool catalog', to: '/reference/tools' },
+          { label: 'Glossary', to: '/reference/glossary' },
+          { label: 'Examples', to: '/examples' },
         ],
       },
       {
@@ -283,7 +275,6 @@ export default defineAppConfig({
         links: [
           { label: 'GitHub', to: 'https://github.com/vercel-labs/github-tools' },
           { label: 'npm', to: 'https://www.npmjs.com/package/@github-tools/sdk' },
-          { label: 'Agent Skills', to: '/getting-started/agent-skills' },
         ],
       },
     ],

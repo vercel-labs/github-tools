@@ -30,7 +30,7 @@ pnpm add workflow @ai-sdk/workflow @github-tools/sdk ai zod
 
 `requireApproval` maps to `needsApproval` on write tools. `WorkflowAgent` pauses the workflow and emits approval requests to the stream until the user responds. Wire the client with `WorkflowChatTransport` and a GET reconnect route.
 
-For predicate/`once` approval policies, prefer the [eve extension](/frameworks/eve-extension).
+For predicate/`once` approval policies, prefer the [eve extension](/integrations/eve).
 
 ## Framework notes
 
@@ -39,5 +39,5 @@ For predicate/`once` approval policies, prefer the [eve extension](/frameworks/e
 
 ## Doc paths (site)
 
-- `/frameworks/vercel-workflow`
-- `/api/reference` (`createDurableGithubAgent` section)
+- `/integrations/workflow`
+- `/reference/api` (`createDurableGithubAgent` section)

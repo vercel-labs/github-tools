@@ -1,9 +1,13 @@
 <script setup lang="ts">
+const route = useRoute()
 const appConfig = useAppConfig()
 </script>
 
 <template>
-  <div class="border-t border-default">
+  <div
+    v-if="route.meta.layout !== 'docs'"
+    class="border-t border-default"
+  >
     <UContainer>
       <footer class="py-12 sm:py-16">
         <div class="mb-10 max-w-sm">

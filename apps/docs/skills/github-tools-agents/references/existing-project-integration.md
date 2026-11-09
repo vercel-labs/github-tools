@@ -51,7 +51,7 @@ Align the PAT with the preset:
 
 ## Doc paths (site)
 
-- `/getting-started/installation`
-- `/getting-started/quick-start`
-- `/guide/presets`
-- `/guide/tokens-and-auth`
+- `/start/installation`
+- `/start/quick-start`
+- `/presets`
+- `/auth`

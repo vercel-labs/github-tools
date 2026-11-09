@@ -1,27 +1,40 @@
+<script setup lang="ts">
+const route = useRoute()
+const menuOpen = ref(false)
+
+watch(() => route.path, () => {
+  menuOpen.value = false
+})
+</script>
+
 <template>
-  <UMain>
-    <UContainer class="py-6 sm:py-8">
-      <!--
-        Fixed-width left column instead of the default fractional `col-span-2`.
-        A `col-span` sidebar resizes with the grid, so it visibly narrows whenever
-        anything shrinks the available width (e.g. opening the AI assistant panel),
-        shifting where the sidebar ends relative to the page title.
-      -->
-      <UPage
-        :ui="{
-          root: 'lg:grid-cols-[16rem_minmax(0,1fr)]',
-          left: 'lg:col-span-1',
-          center: 'lg:col-span-1',
-        }"
-      >
-        <template #left>
-          <UPageAside>
-            <DocsAsideLeftTop />
-            <DocsAsideLeftBody />
-          </UPageAside>
-        </template>
+  <div class="docs-shell min-h-dvh lg:ps-72">
+    <aside class="fixed inset-y-0 start-0 z-40 hidden w-72 border-e border-default bg-muted lg:block">
+      <DocsSidebar />
+    </aside>
+
+    <USlideover
+      v-model:open="menuOpen"
+      side="left"
+      :ui="{ content: 'max-w-72 bg-muted' }"
+    >
+      <template #content>
+        <DocsSidebar />
+      </template>
+    </USlideover>
+
+    <DocsTopBar @open-menu="menuOpen = true" />
+
+    <UMain>
+      <UContainer class="max-w-6xl">
         <slot />
-      </UPage>
-    </UContainer>
-  </UMain>
+      </UContainer>
+    </UMain>
+  </div>
 </template>
+
+<style>
+.docs-shell {
+  --ui-header-height: 3.5rem;
+}
+</style>

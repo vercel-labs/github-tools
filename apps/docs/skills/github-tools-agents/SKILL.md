@@ -14,7 +14,7 @@ metadata:
 
 Use this skill when the user wants **GitHub API access from an LLM** via the [`@github-tools/sdk`](https://www.npmjs.com/package/@github-tools/sdk) package: `generateText` / `streamText`, `createGithubAgent`, or **durable** `createDurableGithubAgent` with the Vercel Workflow SDK.
 
-Official docs: **https://github-tools.com**, with paths such as `/getting-started/installation`, `/getting-started/quick-start`, `/frameworks/ai-sdk`, `/frameworks/tanstack-ai`, `/frameworks/eve-extension`, `/deprecated/eve` (deprecated direct import), `/frameworks/vercel-workflow`, `/frameworks/chat-sdk`, `/guide/approval-control`, `/guide/tokens-and-auth`, `/api/reference`. Copy-prompts for assistants are embedded on those pages.
+Official docs: **https://github-tools.com**, with paths such as `/start/installation`, `/start/quick-start`, `/integrations/ai-sdk`, `/integrations/tanstack-ai`, `/integrations/eve`, `/reference/upgrade` (migrating off the deprecated direct import), `/integrations/workflow`, `/integrations/chat-sdk`, `/approval`, `/auth`, `/presets`, `/reference/api`, `/reference/tools`.
 
 ## When to use
 
@@ -80,7 +80,7 @@ export async function run(messages: ModelMessage[], token: string) {
 
 For bots and background jobs, call `await agent.generate({ messages })` from the same `'use workflow'` function (needs `@ai-sdk/workflow` >= 2.0.59) and return plain fields such as `result.text` and `result.responseMessages`; each model and tool call is its own step.
 
-**Limitation:** Durable agents require `@ai-sdk/workflow` and `WorkflowChatTransport` on the client for resumable streams. For predicate/`once` approval policies, use the [eve extension](/frameworks/eve-extension).
+**Limitation:** Durable agents require `@ai-sdk/workflow` and `WorkflowChatTransport` on the client for resumable streams. For predicate/`once` approval policies, use the [eve extension](/integrations/eve).
 
 ### TanStack AI
 
@@ -104,7 +104,7 @@ const text = await agent.generate({ prompt: 'List open PRs on vercel/ai.' })
 
 `generate()` returns a string and throws on approval interrupts; `stream()` returns native TanStack events. Keep `GITHUB_TOKEN` and Gateway credentials on the server. TanStack auto modes use `decide()` with Gateway Jev; configure a custom evaluator with `evaluation.adapter`, not `evaluation.model`. Thresholds match the AI SDK integration. Gateway is optional with another chat adapter and custom evaluator.
 
-For direct `chat()` use, pass the array from `createGithubTools()`. Auto approval additionally requires `middleware: [createGithubApprovalMiddleware({ tools })]` and `interrupts: [githubToolApproval]`. Import the interrupt from the browser-safe `@github-tools/sdk/tanstack/interrupts` entry point and register it on the client too. Resolve it with `{ approved: boolean }` and preserve TanStack resume data and message history. The prebuilt agent installs the server middleware automatically. Auto-preset continuations skip routing and expose `repo-explorer` plus pending GitHub tools. Static boolean approvals use TanStack's native tool-approval flow. See `/frameworks/tanstack-ai`.
+For direct `chat()` use, pass the array from `createGithubTools()`. Auto approval additionally requires `middleware: [createGithubApprovalMiddleware({ tools })]` and `interrupts: [githubToolApproval]`. Import the interrupt from the browser-safe `@github-tools/sdk/tanstack/interrupts` entry point and register it on the client too. Resolve it with `{ approved: boolean }` and preserve TanStack resume data and message history. The prebuilt agent installs the server middleware automatically. Auto-preset continuations skip routing and expose `repo-explorer` plus pending GitHub tools. Static boolean approvals use TanStack's native tool-approval flow. See `/integrations/tanstack-ai`.
 
 ### eve extension (recommended for eve agents)
 
@@ -117,7 +117,7 @@ import githubExtension from '@github-tools/eve-extension'
 export default githubExtension({ preset: 'code-review' })
 ```
 
-See `./references/eve-extension.md` and `/frameworks/eve-extension`.
+See `./references/eve-extension.md` and `/integrations/eve`.
 
 ### eve agent, direct import (deprecated)
 
@@ -130,7 +130,7 @@ import { createGithubTools } from '@github-tools/sdk/eve'
 export default createGithubTools({ preset: 'code-review' })
 ```
 
-See `./references/eve-agents.md` and `/deprecated/eve`.
+See `./references/eve-agents.md` and `/reference/upgrade`.
 
 ## Presets
 

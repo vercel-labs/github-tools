@@ -18,19 +18,19 @@ const frameworks = [
   {
     title: 'AI SDK',
     description: 'Already have an AI SDK app? Drop the tools into generateText, streamText, or a ToolLoopAgent.',
-    to: '/frameworks/ai-sdk',
+    to: '/integrations/ai-sdk',
     icon: 'i-lucide-sparkles',
   },
   {
     title: 'Vercel Workflow',
     description: 'Need agents that survive restarts and long approvals? Every tool call is a durable, retryable step.',
-    to: '/frameworks/vercel-workflow',
+    to: '/integrations/workflow',
     icon: 'i-lucide-refresh-cw',
   },
   {
     title: 'Chat SDK',
     description: 'Building a GitHub, Slack, or Discord bot? Durable multi-turn sessions in ~60 lines.',
-    to: '/frameworks/chat-sdk',
+    to: '/integrations/chat-sdk',
     icon: 'i-lucide-message-square',
   },
 ]
@@ -39,32 +39,32 @@ const pillars = [
   {
     title: 'Agent-ready',
     description: 'Mount as an eve extension in one file: a complete, durable GitHub agent in 3.',
-    to: '/frameworks/eve-extension',
+    to: '/integrations/eve',
     icon: 'i-custom:eve',
     featured: true,
   },
   {
     title: 'Scoped by task',
     description: 'Presets hand an agent exactly what a job needs (code review, issue triage, security audits, releases), nothing more.',
-    to: '/guide/presets',
+    to: '/presets',
     icon: 'i-lucide-layers',
   },
   {
     title: 'Safe by default',
     description: 'Every write pauses for human approval unless you opt out. Approve once per session, or gate on a predicate.',
-    to: '/guide/approval-control',
+    to: '/approval',
     icon: 'i-lucide-shield-check',
   },
   {
     title: 'Durable by design',
     description: 'Every tool call is a "use step" boundary, so agents survive restarts, retries, and long-running approvals.',
-    to: '/frameworks/vercel-workflow',
+    to: '/integrations/workflow',
     icon: 'i-lucide-refresh-cw',
   },
   {
     title: 'Token-efficient',
     description: 'Shaped outputs, truncated patches, paginated list tools, and toolpick integration keep token usage down.',
-    to: '/api/tools-catalog',
+    to: '/reference/tools',
     icon: 'i-lucide-gauge',
   },
 ]
@@ -122,7 +122,7 @@ const activeEveFile = ref(0)
           </p>
           <div class="flex flex-wrap items-center gap-3">
             <UButton
-              to="/frameworks/eve-extension"
+              to="/integrations/eve"
               color="neutral"
               variant="solid"
               size="md"
@@ -130,7 +130,7 @@ const activeEveFile = ref(0)
               Build a GitHub agent
             </UButton>
             <UButton
-              to="/getting-started/quick-start"
+              to="/start/quick-start"
               color="neutral"
               variant="outline"
               size="md"
@@ -181,7 +181,7 @@ const activeEveFile = ref(0)
             <pre class="min-h-32 min-w-0 flex-1 overflow-x-auto whitespace-pre px-4 py-4 font-mono text-xs leading-relaxed text-toned sm:text-sm"><code>{{ eveFiles[activeEveFile]!.code }}</code></pre>
             <div class="flex items-center justify-end border-t border-default px-4 py-3.5">
               <UButton
-                to="/frameworks/eve-extension"
+                to="/integrations/eve"
                 variant="link"
                 color="neutral"
                 size="sm"

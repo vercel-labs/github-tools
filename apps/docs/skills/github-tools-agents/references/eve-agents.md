@@ -4,7 +4,7 @@ description: Deprecated. Register GitHub tools in eve via @github-tools/sdk/eve 
 tags: [eve, defineDynamic, approval, filesystem, durable, human-in-the-loop, deprecated]
 ---
 
-# eve agents (deprecated direct import)
+# eve agents (migrating off the deprecated direct import)
 
 **Deprecated.** Prefer `./eve-extension.md`. `@github-tools/eve-extension` mounted under `agent/extensions/` is now the recommended way to add GitHub tools to an eve agent. This direct `@github-tools/sdk/eve` import still works and is documented below for existing agents.
 
@@ -57,5 +57,5 @@ export default createGithubTools({
 
 ## Docs
 
-- `/deprecated/eve`
+- `/reference/upgrade`
 - Prefer `examples/eve/` (`pnpm dev:eve`) with the extension; this direct-import path has no dedicated starter

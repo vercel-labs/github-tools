@@ -1,8 +1,11 @@
 <script setup lang="ts">
+const route = useRoute()
 const appConfig = useAppConfig()
 const { forced: forcedColorMode } = useDocusColorMode()
 
 const { isEnabled: isAssistantEnabled } = useAssistant()
+const { isEnabled, locales } = useDocusI18n()
+const { subNavigationMode } = useSubNavigation()
 
 const links = computed(() => appConfig.github && appConfig.github.url
   ? [
@@ -17,7 +20,11 @@ const links = computed(() => appConfig.github && appConfig.github.url
 </script>
 
 <template>
-  <UHeader :ui="{ left: 'lg:flex-none', center: 'flex-1', right: 'gap-2 [&_button]:text-highlighted [&_button:hover]:bg-elevated/50', body: 'sm:p-4' }">
+  <UHeader
+    v-if="route.meta.layout !== 'docs'"
+    :ui="{ center: 'flex-1' }"
+    :class="{ 'flex flex-col': subNavigationMode === 'header' }"
+  >
     <AppHeaderCenter />
 
     <template #left>
@@ -25,10 +32,32 @@ const links = computed(() => appConfig.github && appConfig.github.url
     </template>
 
     <template #right>
+      <UButton
+        to="/docs"
+        label="Docs"
+        color="neutral"
+        variant="ghost"
+      />
+
       <AppHeaderCTA />
 
       <template v-if="isAssistantEnabled">
         <AssistantChat />
+      </template>
+
+      <template v-if="isEnabled && locales.length > 1">
+        <ClientOnly>
+          <LanguageSelect />
+
+          <template #fallback>
+            <div class="h-8 w-8 animate-pulse bg-neutral-200 dark:bg-neutral-800 rounded-md" />
+          </template>
+        </ClientOnly>
+
+        <USeparator
+          orientation="vertical"
+          class="h-8"
+        />
       </template>
 
       <UContentSearchButton class="lg:hidden" />
@@ -37,7 +66,7 @@ const links = computed(() => appConfig.github && appConfig.github.url
         <UColorModeButton />
 
         <template #fallback>
-          <div class="h-8 w-8 animate-pulse bg-elevated rounded-md" />
+          <div class="h-8 w-8 animate-pulse bg-neutral-200 dark:bg-neutral-800 rounded-md" />
         </template>
       </ClientOnly>
 
@@ -45,7 +74,6 @@ const links = computed(() => appConfig.github && appConfig.github.url
         <UButton
           v-for="(link, index) of links"
           :key="index"
-          class="text-highlighted"
           v-bind="{ color: 'neutral', variant: 'ghost', ...link }"
         />
       </template>
@@ -54,14 +82,20 @@ const links = computed(() => appConfig.github && appConfig.github.url
     <template #toggle="{ open, toggle }">
       <IconMenuToggle
         :open="open"
-        variant="outline"
-        class="lg:hidden rounded-full"
+        class="lg:hidden"
         @click="toggle"
       />
     </template>
 
     <template #body>
       <AppHeaderBody />
+    </template>
+
+    <template
+      v-if="subNavigationMode === 'header'"
+      #bottom
+    >
+      <AppHeaderBottom />
     </template>
   </UHeader>
 </template>

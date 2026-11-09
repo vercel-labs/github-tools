@@ -16,7 +16,7 @@ import type { ConnectGithubEveToolsOptions } from './types'
  * import is also **not durable** under multi-turn eve Workflow replay (`defineTool` inside
  * `node_modules` is not hoisted); mount `@github-tools/eve-extension` instead
  * (see https://github.com/vercel-labs/github-tools/issues/51 and
- * https://github-tools.com/frameworks/eve-extension).
+ * https://github-tools.com/integrations/eve).
  *
  * Shared runtime helpers used by the extension are on `@github-tools/sdk/eve-runtime`
  * (not deprecated).
