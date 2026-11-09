@@ -61,10 +61,11 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
    - `packages/github-tools/src/core/instructions.ts` — mention the tool in `PRESET_INSTRUCTIONS` for presets where it changes the agent's behavior
 4. **Chat app metadata** — add a `GITHUB_TOOL_META` entry in `apps/chat/shared/utils/tools/github.ts`
 5. **Documentation**:
-   - `apps/docs/content/docs/5.reference/2.tools.md` (the tool catalog; `src/docs.test.ts` fails until the tool is listed)
-   - `apps/docs/content/docs/2.core/2.presets.md` and `apps/docs/content/docs/2.core/4.auth.md` if the tool changes a preset's tool count or scopes
-   - `apps/docs/content/docs/2.core/3.approval.md` if the write tool joins `AUTO_APPROVAL_TOOLS`
-   - `apps/docs/content/docs/2.core/5.context.md` if the tool is a context tool or changes default payload behavior (`detail`, `includePatch`, ranges)
+   - `apps/docs/content/docs/7.reference/2.tools.md` (the tool catalog; `src/docs.test.ts` fails until the tool is listed)
+   - `apps/docs/app/utils/figure-data/presets.ts` if the tool joins a preset: regenerate it with `apps/docs/scripts/generate-preset-figure-data.mjs` (`src/docs.test.ts` fails until you do)
+   - `apps/docs/content/docs/3.core/2.presets.md` and `apps/docs/content/docs/3.core/4.auth.md` if the tool changes a preset's tool count or scopes
+   - `apps/docs/content/docs/3.core/3.approval.md` if the write tool joins `AUTO_APPROVAL_TOOLS`
+   - `apps/docs/content/docs/3.core/5.context.md` if the tool is a context tool or changes default payload behavior (`detail`, `includePatch`, ranges)
    - `packages/github-tools/README.md` (tool tables, preset tables, write tools list, token permissions) — the root `README.md` is a symlink to this file, no separate edit needed
 6. **Changeset** — `pnpm changeset` (`minor`)
 7. Run checks:

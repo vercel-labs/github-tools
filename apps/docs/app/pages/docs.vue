@@ -35,37 +35,41 @@ useSeoMeta({
 
 <template>
   <div class="mx-auto max-w-5xl py-14 sm:py-20">
-    <h1 class="text-4xl font-medium tracking-tight text-highlighted sm:text-5xl">
+    <h1 class="home-rise text-[2.5rem]/12 font-[450] tracking-[-0.04em] text-highlighted sm:text-5xl/[56px]">
       GitHub tools docs
     </h1>
-    <p class="mt-4 text-lg text-toned">
+    <p
+      class="home-rise mt-4 max-w-[68ch] text-lg/7 text-toned"
+      style="--i: 1"
+    >
       {{ description }}
     </p>
 
     <section
-      v-for="section in sections"
+      v-for="(section, sectionIndex) in sections"
       :key="section.label"
       class="mt-14"
     >
-      <h2 class="text-xl font-medium text-highlighted">
+      <h2 class="text-xl/[26px] font-[450] tracking-[-0.015em] text-highlighted">
         {{ section.label }}
       </h2>
       <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <NuxtLink
-          v-for="card in section.cards"
+          v-for="(card, index) in section.cards"
           :key="card.to"
           :to="card.to"
-          class="group flex flex-col overflow-hidden rounded-lg border border-default bg-muted transition-colors hover:border-accented hover:bg-elevated"
+          class="home-card group flex flex-col overflow-hidden rounded-lg border border-default bg-muted transition-[background-color,border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-accented hover:bg-elevated"
+          :style="{ '--i': sectionIndex * 4 + index }"
         >
           <div class="h-32 p-5">
             <UIcon
               v-if="card.icon"
               :name="card.icon"
-              class="size-5 text-highlighted"
+              class="size-5 text-highlighted transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-110"
             />
           </div>
           <div class="flex-1 border-t border-default p-5">
-            <p class="text-[15px] font-medium text-highlighted">
+            <p class="text-base/6 font-medium text-highlighted">
               {{ card.title }}
             </p>
             <p class="mt-1.5 line-clamp-3 text-sm/6 text-muted">
@@ -77,3 +81,25 @@ useSeoMeta({
     </section>
   </div>
 </template>
+
+<style>
+.home-card,
+.home-rise {
+  animation: home-rise 600ms cubic-bezier(0.23, 1, 0.32, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+@keyframes home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-card,
+  .home-rise {
+    animation: none;
+  }
+}
+</style>

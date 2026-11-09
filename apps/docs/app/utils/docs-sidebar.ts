@@ -17,8 +17,16 @@ export const docsSidebar: DocsSidebarGroup[] = [
       { path: '/start/introduction' },
       { path: '/start/installation' },
       { path: '/start/quick-start' },
-      { path: '/start/agent-skills' },
-    ],
+      { path: '/start/agent-skills' }
+    ]
+  },
+  {
+    label: 'Learn',
+    items: [
+      { path: '/learn/github-agents' },
+      { path: '/learn/tool-calls' },
+      { path: '/learn/first-agent' }
+    ]
   },
   {
     label: 'Core',
@@ -29,8 +37,8 @@ export const docsSidebar: DocsSidebarGroup[] = [
       { path: '/auth' },
       { path: '/context' },
       { path: '/commits' },
-      { path: '/errors' },
-    ],
+      { path: '/errors' }
+    ]
   },
   {
     label: 'Integrations',
@@ -40,19 +48,27 @@ export const docsSidebar: DocsSidebarGroup[] = [
       { path: '/integrations/ai-sdk' },
       { path: '/integrations/tanstack-ai' },
       { path: '/integrations/workflow' },
-      { path: '/integrations/chat-sdk' },
-    ],
+      { path: '/integrations/chat-sdk' }
+    ]
   },
   {
-    label: 'Examples',
+    label: 'Guides',
     items: [
-      { path: '/examples', title: 'Overview' },
-      { path: '/examples/eve-stale-issue-triager' },
-      { path: '/examples/ai-sdk-release-notes-generator' },
-      { path: '/examples/vercel-workflow-ci-failure-bot' },
-      { path: '/examples/chat-sdk-issue-triage-bot' },
-      { path: '/examples/manager-agent-with-subagents' },
-    ],
+      { path: '/guides', title: 'Overview' },
+      { path: '/guides/review-pull-requests' },
+      { path: '/guides/triage-issues' },
+      { path: '/guides/fix-failing-ci' },
+      { path: '/guides/release-notes' },
+      { path: '/guides/chat-bot' },
+      { path: '/guides/multi-agent' }
+    ]
+  },
+  {
+    label: 'Compare',
+    items: [
+      { path: '/compare/github-mcp-server' },
+      { path: '/compare/octokit-and-gh-cli' }
+    ]
   },
   {
     label: 'Reference',
@@ -60,15 +76,16 @@ export const docsSidebar: DocsSidebarGroup[] = [
       { path: '/reference/api' },
       { path: '/reference/tools' },
       { path: '/reference/glossary' },
-      { path: '/reference/upgrade' },
-    ],
-  },
+      { path: '/reference/upgrade' }
+    ]
+  }
 ]
 
 /** Sections of the docs home, each a row of cards. */
 export const docsHomeSections: { label: string, paths: string[] }[] = [
-  { label: 'Popular', paths: ['/start/quick-start', '/integrations/eve', '/approval', '/presets'] },
-  { label: 'Core', paths: ['/tools', '/auth', '/context', '/errors'] },
-  { label: 'Integrations', paths: ['/integrations/ai-sdk', '/integrations/tanstack-ai', '/integrations/workflow', '/integrations/chat-sdk'] },
-  { label: 'Examples', paths: ['/examples/eve-stale-issue-triager', '/examples/ai-sdk-release-notes-generator', '/examples/vercel-workflow-ci-failure-bot', '/examples/manager-agent-with-subagents'] },
+  { label: 'New to GitHub agents', paths: ['/learn/github-agents', '/learn/tool-calls', '/learn/first-agent', '/start/quick-start'] },
+  { label: 'Guides', paths: ['/guides/review-pull-requests', '/guides/triage-issues', '/guides/fix-failing-ci', '/guides/chat-bot'] },
+  { label: 'Core', paths: ['/tools', '/presets', '/approval', '/auth'] },
+  { label: 'Integrations', paths: ['/integrations/eve', '/integrations/ai-sdk', '/integrations/tanstack-ai', '/integrations/workflow'] },
+  { label: 'Compare', paths: ['/compare/github-mcp-server', '/compare/octokit-and-gh-cli'] }
 ]

@@ -23,7 +23,7 @@ const groups = computed(() => docsSidebar.map(group => ({
 const links = [
   { label: 'GitHub', icon: 'i-simple-icons-github', to: appConfig.github?.url },
   { label: 'npm', icon: 'i-simple-icons-npm', to: 'https://www.npmjs.com/package/@github-tools/sdk' },
-  { label: 'Releases', icon: 'i-lucide-tag', to: 'https://github.com/vercel-labs/github-tools/releases' }
+  { label: 'Releases', icon: 'i-nucleo-tag', to: 'https://github.com/vercel-labs/github-tools/releases' }
 ]
 </script>
 
@@ -56,7 +56,7 @@ const links = [
         :key="group.label"
         class="mb-6 last:mb-0"
       >
-        <p class="mb-1 px-2 text-xs font-medium text-muted">
+        <p class="mb-1 px-2 text-[13px] font-medium text-muted">
           {{ group.label }}
         </p>
         <ul>
@@ -66,7 +66,8 @@ const links = [
           >
             <NuxtLink
               :to="item.to"
-              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors"
+              :aria-current="route.path === item.to ? 'page' : undefined"
+              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
               :class="route.path === item.to ? 'bg-accented text-highlighted' : 'text-toned hover:bg-elevated hover:text-highlighted'"
             >
               <UIcon
@@ -98,3 +99,4 @@ const links = [
     </div>
   </div>
 </template>
+

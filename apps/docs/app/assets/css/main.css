@@ -10,54 +10,78 @@ html {
   font-weight: 400;
 }
 
+/*
+ * Geist tokens from https://vercel.com/design.md (vercel-brand.css), mapped onto Nuxt UI's
+ * semantic tokens so every component, figure and page reads one scale.
+ * Gray steps follow Geist: 100-300 surfaces, 400-600 borders, 700-800 tertiary text,
+ * 900 secondary text, 1000 primary text. Values are the light/dark pairs of each step.
+ */
 :root {
   overscroll-behavior-y: none;
 
-  /* Geist light — https://vercel.com/design.md */
+  --geist-background-100: oklch(1 0 0);
+  --geist-background-200: oklch(0.984 0 0);
+  --geist-gray-100: oklch(0.961 0 0);
+  --geist-gray-200: oklch(0.94 0 0);
+  --geist-gray-300: oklch(0.925 0 0);
+  --geist-gray-500: oklch(0.836 0 0);
+  --geist-gray-700: oklch(0.65 0 0);
+  --geist-gray-800: oklch(0.59 0 0);
+  --geist-gray-900: oklch(0.42 0 0);
+  --geist-gray-1000: oklch(0.205 0 0);
+  --geist-gray-alpha-300: oklch(0 0 0 / 0.1);
+  --geist-gray-alpha-400: oklch(0 0 0 / 0.08);
+  --geist-gray-alpha-500: oklch(0 0 0 / 0.21);
+  --geist-amber-900: oklch(52.79% 0.1496 54.65);
+  --geist-green-900: oklch(51.75% 0.1453 147.65);
+  --geist-red-700: oklch(62.56% 0.2524 23.03);
+
   --ui-container: 91.5rem;
-  --ui-radius: 0.175rem;
-  --ui-primary: #171717;
+  /* Geist radii: 6px controls (rounded-md), 8px blocks (rounded-lg). */
+  --ui-radius: 0.25rem;
 
-  --ui-bg: #ffffff;
-  --ui-bg-muted: #fafafa;
-  --ui-bg-elevated: #f2f2f2;
-  --ui-bg-accented: #ebebeb;
-  --ui-bg-inverted: #171717;
+  --ui-primary: var(--geist-gray-1000);
+  --ui-success: var(--geist-green-900);
+  --ui-warning: var(--geist-amber-900);
+  --ui-error: var(--geist-red-700);
 
-  --ui-text-dimmed: #a8a8a8;
-  --ui-text-muted: #8f8f8f;
-  --ui-text-toned: #4d4d4d;
-  --ui-text: #4d4d4d;
-  --ui-text-highlighted: #171717;
-  --ui-text-inverted: #ffffff;
+  --ui-bg: var(--geist-background-100);
+  --ui-bg-muted: var(--geist-background-200);
+  --ui-bg-elevated: var(--geist-gray-100);
+  --ui-bg-accented: var(--geist-gray-200);
+  --ui-bg-inverted: var(--geist-gray-1000);
 
-  --ui-border: #00000014;
-  --ui-border-muted: #00000014;
-  --ui-border-accented: #0000001a;
-  --ui-border-inverted: #171717;
+  --ui-text-dimmed: var(--geist-gray-700);
+  --ui-text-muted: var(--geist-gray-800);
+  --ui-text-toned: var(--geist-gray-900);
+  --ui-text: var(--geist-gray-900);
+  --ui-text-highlighted: var(--geist-gray-1000);
+  --ui-text-inverted: var(--geist-background-100);
+
+  --ui-border: var(--geist-gray-alpha-400);
+  --ui-border-muted: var(--geist-gray-alpha-300);
+  --ui-border-accented: var(--geist-gray-alpha-500);
+  --ui-border-inverted: var(--geist-gray-1000);
 }
 
 .dark {
-  /* Vercel dark — https://vercel.com/design.dark.md */
-  --ui-primary: #ededed;
-
-  --ui-bg: #000000;
-  --ui-bg-muted: #111111;
-  --ui-bg-elevated: #0a0a0a;
-  --ui-bg-accented: #171717;
-  --ui-bg-inverted: #ededed;
-
-  --ui-text-dimmed: #666666;
-  --ui-text-muted: #888888;
-  --ui-text-toned: #a0a0a0;
-  --ui-text: #a0a0a0;
-  --ui-text-highlighted: #ffffff;
-  --ui-text-inverted: #171717;
-
-  --ui-border: #ffffff1a;
-  --ui-border-muted: #ffffff14;
-  --ui-border-accented: #ffffff24;
-  --ui-border-inverted: #ededed;
+  --geist-background-100: oklch(0 0 0);
+  --geist-background-200: oklch(0.027 0 0);
+  --geist-gray-100: oklch(0.218 0 0);
+  --geist-gray-200: oklch(0.239 0 0);
+  --geist-gray-300: oklch(0.281 0 0);
+  --geist-gray-500: oklch(0.39 0 0);
+  /* Dark Geist keeps 700 lighter than 800, so tertiary text swaps the two to stay below secondary. */
+  --geist-gray-700: oklch(0.59 0 0);
+  --geist-gray-800: oklch(0.65 0 0);
+  --geist-gray-900: oklch(0.706 0 0);
+  --geist-gray-1000: oklch(0.946 0 0);
+  --geist-gray-alpha-300: oklch(1 0 0 / 0.13);
+  --geist-gray-alpha-400: oklch(1 0 0 / 0.14);
+  --geist-gray-alpha-500: oklch(1 0 0 / 0.24);
+  --geist-amber-900: oklch(77.21% 0.1991 64.28);
+  --geist-green-900: oklch(73.1% 0.2158 148.29);
+  --geist-red-700: oklch(62.56% 0.2234 23.03);
 }
 
 :where(code, kbd, samp, pre, .font-mono) {
@@ -72,16 +96,8 @@ html {
   --tw-ring-color: var(--ui-primary);
 }
 
-.vercel-card {
-  @apply rounded-xl border border-default bg-elevated p-6 transition-colors hover:bg-muted;
-}
-
 .vercel-section-label {
-  @apply font-mono text-xs uppercase tracking-widest text-muted;
-}
-
-.vercel-command-bar {
-  @apply flex items-center gap-2 rounded-full border border-default bg-elevated px-4 py-2 font-mono text-sm text-toned;
+  @apply text-[13px] font-medium text-muted;
 }
 
 /* AI assistant (right sidebar): contain overflow without breaking link layout */
@@ -125,4 +141,42 @@ aside[data-side="right"] .prose :where(table) {
   display: block;
   max-width: 100%;
   overflow-x: auto;
+}
+
+/*
+ * Figure tokens, read from the Geist scale above.
+ * Signal is the site's ink (Geist gray-1000): allowed, sent or current.
+ * Warn (Geist amber-900) is the only color, and means waiting on a person or an error.
+ */
+:root,
+.dark {
+  --d-line: var(--geist-gray-alpha-400);
+  --d-line-strong: var(--geist-gray-alpha-500);
+  --d-raised: var(--geist-background-200);
+  --d-raised-strong: var(--geist-gray-100);
+  --d-signal: var(--geist-gray-1000);
+  --d-signal-text: var(--geist-gray-1000);
+  --d-signal-fg: var(--geist-background-100);
+  --d-warn: var(--geist-amber-900);
+  --d-ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Figures share one vocabulary: a step reveals with opacity and a 4px rise. */
+.d-step {
+  transition: opacity 420ms var(--d-ease), transform 420ms var(--d-ease), color 240ms ease, background-color 240ms ease, border-color 240ms ease;
+}
+
+.d-step[data-on='false'] {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .d-step {
+    transition: opacity 200ms ease;
+  }
+
+  .d-step[data-on='false'] {
+    transform: none;
+  }
 }

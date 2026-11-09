@@ -24,7 +24,7 @@ Official docs: **https://github-tools.com**, with paths such as `/start/installa
 - **Reusable agent**: "Use `createGithubAgent` with a preset" / custom system instructions.
 - **Durable**: "Run the agent inside Vercel Workflow" / `"use workflow"` / crash-safe tool steps.
 - **Safety**: "Gate merges / file writes with approval" / fine-grained PAT scopes.
-- **Narrow scope**: Prefer a preset (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) or cherry-picked tool factories. For multi-role products, use a manager with preset-scoped sub-agents (`/examples/manager-agent-with-subagents`).
+- **Narrow scope**: Prefer a preset (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`) or cherry-picked tool factories. For multi-role products, use a manager with preset-scoped sub-agents (`/guides/multi-agent`).
 
 ## Install (required)
 

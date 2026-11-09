@@ -91,18 +91,22 @@ export default defineAppConfig({
     },
     header: {
       slots: {
-        root: 'bg-default border-b border-default/50 h-(--ui-header-height) sticky top-0 z-50',
+        root: 'bg-default/80 backdrop-blur border-b border-default h-(--ui-header-height) sticky top-0 z-50',
+        container: 'max-w-[72rem]',
       },
     },
     pageHeader: {
       slots: {
         root: 'relative py-10 sm:py-12',
-        title: 'text-4xl sm:text-5xl font-normal tracking-tight text-pretty text-highlighted',
-        description: 'text-lg font-normal text-toned mt-4',
+        title: 'text-[2rem]/10 sm:text-[2.5rem]/12 font-[450] tracking-[-0.035em] text-pretty text-highlighted',
+        description: 'text-lg/7 font-normal text-toned mt-3',
         headline: 'hidden',
       },
     },
     contentToc: {
+      defaultVariants: {
+        highlightVariant: 'circuit',
+      },
       slots: {
         trigger: 'text-sm font-normal text-highlighted',
         link: 'text-sm font-normal py-1',
@@ -159,22 +163,22 @@ export default defineAppConfig({
     prose: {
       h1: {
         slots: {
-          base: 'font-normal',
+          base: 'text-[2rem]/10 font-[450] tracking-[-0.035em]',
         },
       },
       h2: {
         slots: {
-          base: 'font-normal',
+          base: 'text-2xl/8 font-[450] tracking-[-0.025em]',
         },
       },
       h3: {
         slots: {
-          base: 'font-normal',
+          base: 'text-xl/[26px] font-[450] tracking-[-0.015em]',
         },
       },
       h4: {
         slots: {
-          base: 'font-normal',
+          base: 'text-base/6 font-medium',
         },
       },
       a: {
@@ -184,7 +188,7 @@ export default defineAppConfig({
         base: 'font-normal',
       },
       th: {
-        base: 'font-normal',
+        base: 'text-[13px] font-medium text-highlighted',
       },
       prompt: {
         slots: {
@@ -194,7 +198,7 @@ export default defineAppConfig({
         },
       },
       p: {
-        base: 'my-5 text-base/7 font-normal text-toned text-pretty',
+        base: 'my-4 text-base/6 font-normal text-toned text-pretty',
       },
     },
     pageFeature: {
@@ -267,7 +271,7 @@ export default defineAppConfig({
           { label: 'API', to: '/reference/api' },
           { label: 'Tool catalog', to: '/reference/tools' },
           { label: 'Glossary', to: '/reference/glossary' },
-          { label: 'Examples', to: '/examples' },
+          { label: 'Guides', to: '/guides' },
         ],
       },
       {
