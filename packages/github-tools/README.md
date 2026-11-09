@@ -190,6 +190,10 @@ The checks run before any request reaches GitHub, and a blocked call fails with 
 
 `dryRun: true` runs reads as usual, but no write reaches GitHub and nobody is asked to approve one. Each write goes through `guardrails`, then returns `{ dryRun: true, tool, input, approval, message }`, where `approval` says whether a person would have been asked. Use it to roll out a bot that runs on its own, test against real data, or compare models, before letting it write. It fits writes that stand on their own (labels, comments, reviews), not chains where a later step needs an earlier write's result. See [Shadow mode](https://github-tools.com/guide/approval-control#shadow-mode).
 
+### Text from GitHub
+
+Tool results drop HTML comments and invisible Unicode characters from issue, pull request, comment, review, release and discussion bodies, since a rendered page hides them but a model reads them. The default agent prompts tell the model to treat GitHub text as data and act only on what the user asked. See [Text from GitHub](https://github-tools.com/guide/approval-control#text-from-github).
+
 ### Tool overrides
 
 The `overrides` option lets you customize any AI SDK [`tool()`](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling) property on a per-tool basis, keyed by tool name.

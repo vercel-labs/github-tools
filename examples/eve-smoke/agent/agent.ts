@@ -24,6 +24,8 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__createIssue', input: { owner: 'vercel', repo: 'next.js', title: 'smoke' } }] }
       case 'dry-run write':
         return { toolCalls: [{ name: 'dryrun__createIssue', input: { ...target, title: 'smoke' } }] }
+      case 'thread read':
+        return { toolCalls: [{ name: 'github__getRepository', input: {} }] }
       case 'deferred read':
         return { toolCalls: [{ name: 'eve__tool', input: { name: 'github__listBranches', input: target } }] }
       case 'instructions':

@@ -73,5 +73,14 @@ export default defineEval({
     // their tool result. All of them reuse the session's first routing.
     const routing = await later.session.send('routing')
     t.check(Number(routing.reply), satisfies(value => value === 1, 'routing runs once per session, not once per turn or model call'))
+
+    // On eve's GitHub channel, the thread fills `context`: the model leaves out owner and repo,
+    // and the system prompt names the thread. This starts a new session, so it runs after the routing count.
+    const fromThread = { headers: { 'x-eval-github': 'vercel-labs/github-tools#12' } }
+    const thread = await t.send('thread read', fromThread)
+    t.check(thread.requireToolCall('github__getRepository').status, equals('completed'))
+    t.check(thread.reply, includes('stubbed-repo'))
+    const threadInstructions = await thread.session.send('instructions', fromThread)
+    t.check(threadInstructions.reply, includes('vercel-labs/github-tools'))
   },
 })
