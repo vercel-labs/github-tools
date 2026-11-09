@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { withOctokit } from '../client'
 import { withComposedRateLimit } from './rate-limit'
 import { getCombinedStatusCore, listCheckRunsCore } from './checks'
 import { compareCommitsCore } from './commits'
@@ -14,7 +15,7 @@ import {
   listPullRequestReviewsCore,
 } from './pull-requests'
 import { getLatestReleaseCore, getReleaseCore, listReleasesCore } from './releases'
-import { listWorkflowJobsCore, listWorkflowRunsCore } from './workflows'
+import { getWorkflowJobLogsCore, getWorkflowRunCore, listWorkflowJobsCore, listWorkflowRunsCore } from './workflows'
 
 export const getPullRequestContextInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
@@ -25,10 +26,38 @@ export const getPullRequestContextInputSchema = z.object({
   includeChecks: z.boolean().optional().default(false).describe('Include check runs and combined status for the PR head SHA'),
   includePatch: z.boolean().optional().default(false).describe('Include diff patches in files (token-heavy; prefer false then fetch specific files with listPullRequestFiles)'),
   filesPerPage: z.number().optional().default(100).describe('Max files to return when includeFiles is true (max 100)'),
+  includeLinkedIssues: z.boolean().optional().default(false).describe('Include the issues this pull request closes when merged ("Fixes #12" in its body, or linked in the sidebar). Needs read access to issues'),
   detail: detailSchema,
 })
 
-export const getPullRequestContextDescription = 'Fetch pull request details plus files, reviews, and optional CI checks in one call — prefer this over separate getPullRequest / listPullRequestFiles / listPullRequestReviews calls. filesHasMore / reviewsHasMore mean more pages exist on those lists.'
+export const getPullRequestContextDescription = 'Fetch pull request details plus files, reviews, and optional CI checks and linked issues in one call — prefer this over separate getPullRequest / listPullRequestFiles / listPullRequestReviews calls. filesHasMore / reviewsHasMore mean more pages exist on those lists.'
+
+const CLOSING_ISSUES_QUERY = `query($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      closingIssuesReferences(first: 10) { nodes { number title state url repository { nameWithOwner } } }
+    }
+  }
+}`
+
+type ClosingIssuesQueryData = {
+  repository: { pullRequest: { closingIssuesReferences: { nodes: Array<{ number: number, title: string, state: string, url: string, repository: { nameWithOwner: string } }> } } }
+}
+
+async function listLinkedIssues({ token, owner, repo, pullNumber }: { token: string, owner: string, repo: string, pullNumber: number }) {
+  return withOctokit(token, async (octokit) => {
+    const data = (await octokit.graphql(CLOSING_ISSUES_QUERY, { owner, name: repo, number: pullNumber })) as ClosingIssuesQueryData
+    return {
+      items: data.repository.pullRequest.closingIssuesReferences.nodes.map(issue => ({
+        repository: issue.repository.nameWithOwner,
+        number: issue.number,
+        title: issue.title,
+        state: issue.state,
+        url: issue.url,
+      })),
+    }
+  })
+}
 
 export async function getPullRequestContextCore({
   token,
@@ -40,6 +69,7 @@ export async function getPullRequestContextCore({
   includeChecks,
   includePatch,
   filesPerPage,
+  includeLinkedIssues,
   detail = 'summary',
 }: {
   token: string
@@ -51,11 +81,12 @@ export async function getPullRequestContextCore({
   includeChecks: boolean
   includePatch: boolean
   filesPerPage: number
+  includeLinkedIssues: boolean
   detail?: DetailLevel
 }) {
   const pullRequest = await getPullRequestCore({ token, owner, repo, pullNumber, detail })
 
-  const [files, reviews, checks] = await Promise.all([
+  const [files, reviews, checks, linkedIssues] = await Promise.all([
     includeFiles
       ? listPullRequestFilesCore({
           token,
@@ -76,6 +107,9 @@ export async function getPullRequestContextCore({
           getCombinedStatusCore({ token, owner, repo, ref: pullRequest.headSha }),
         ]).then(([checkRuns, combinedStatus]) => ({ checkRuns, combinedStatus }))
       : Promise.resolve(undefined),
+    includeLinkedIssues
+      ? listLinkedIssues({ token, owner, repo, pullNumber })
+      : Promise.resolve(undefined),
   ])
 
   return withComposedRateLimit({
@@ -83,6 +117,7 @@ export async function getPullRequestContextCore({
     ...files !== undefined ? { files: files.items, filesHasMore: files.hasMore } : {},
     ...reviews !== undefined ? { reviews: reviews.items, reviewsHasMore: reviews.hasMore } : {},
     ...checks !== undefined ? { checks } : {},
+    ...linkedIssues !== undefined ? { linkedIssues: linkedIssues.items } : {},
   })
 }
 
@@ -151,19 +186,23 @@ export async function getIssueContextCore({
 export const getReleaseContextInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
-  releaseId: z.number().optional().describe('Release ID — omit to use the latest published release'),
+  releaseId: z.number().optional().describe('Release ID. Omit this and `tag` to use the latest published release'),
+  tag: z.string().optional().describe('Release tag, such as "v2.3.0". Omit this and `releaseId` to use the latest published release'),
+  previousTag: z.string().optional().describe('Tag to compare against, such as "v2.2.0". Defaults to the release published before this one; set it when a repository publishes several packages'),
   includePrevious: z.boolean().optional().default(true).describe('Include the previous release for comparison'),
   includeCompare: z.boolean().optional().default(true).describe('Include a compare between the previous and current release tags'),
   detail: detailSchema,
 })
 
-export const getReleaseContextDescription = 'Fetch a release (latest or by ID) plus the previous release and tag comparison in one call — prefer this when preparing or reviewing a release'
+export const getReleaseContextDescription = 'Fetch a release (latest, by ID, or by tag) plus the release before it and the comparison between their tags in one call — prefer this when preparing or reviewing a release'
 
 export async function getReleaseContextCore({
   token,
   owner,
   repo,
   releaseId,
+  tag,
+  previousTag,
   includePrevious,
   includeCompare,
   detail = 'summary',
@@ -172,25 +211,32 @@ export async function getReleaseContextCore({
   owner: string
   repo: string
   releaseId?: number
+  tag?: string
+  previousTag?: string
   includePrevious: boolean
   includeCompare: boolean
   detail?: DetailLevel
 }) {
-  const release = releaseId != null
-    ? await getReleaseCore({ token, owner, repo, releaseId, detail })
+  const release = releaseId !== undefined || tag !== undefined
+    ? await getReleaseCore({ token, owner, repo, releaseId, tag, detail })
     : await getLatestReleaseCore({ token, owner, repo, detail })
 
-  let previous: Awaited<ReturnType<typeof listReleasesCore>>['items'][number] | undefined
-  if (includePrevious || includeCompare) {
+  let previous: Awaited<ReturnType<typeof getReleaseCore>> | Awaited<ReturnType<typeof listReleasesCore>>['items'][number] | undefined
+  if (previousTag !== undefined) {
+    previous = await getReleaseCore({ token, owner, repo, tag: previousTag, detail })
+  }
+  else if (includePrevious || includeCompare) {
     const releases = await listReleasesCore({
       token,
       owner,
       repo,
-      perPage: 10,
+      perPage: 30,
       maxPages: 1,
       detail,
     })
-    previous = releases.items.find(r => r.id !== release.id && !r.draft)
+    // Releases come newest first, so the previous one is the next published release after this one.
+    const index = releases.items.findIndex(r => r.id === release.id)
+    previous = index === -1 ? undefined : releases.items.slice(index + 1).find(r => !r.draft)
   }
 
   let comparison: Awaited<ReturnType<typeof compareCommitsCore>> | undefined
@@ -215,12 +261,16 @@ export async function getReleaseContextCore({
 export const getCiFailureContextInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
-  ref: z.string().describe('Branch, tag, or commit SHA to inspect'),
-  maxFailedRuns: z.number().optional().default(5).describe('Max recent failed workflow runs to include'),
-  maxFailedJobs: z.number().optional().default(10).describe('Max failed jobs (with failed steps) from the latest failed run'),
+  ref: z.string().optional().describe('Branch, tag, or commit SHA to inspect. Pass this or `runId`'),
+  runId: z.number().optional().describe('Workflow run ID to diagnose, such as the number in a run URL. Pass this or `ref`'),
+  maxFailedRuns: z.number().optional().default(5).describe('Max recent failed workflow runs to include for a `ref`'),
+  maxFailedJobs: z.number().optional().default(10).describe('Max failed jobs (with failed steps) from the run'),
+  logLines: z.number().optional().default(40).describe('Lines from the end of the log of each of the first three failed jobs; 0 to skip logs'),
 })
 
-export const getCiFailureContextDescription = 'Diagnose CI failures for a ref in one call — combined status, failing check runs, recent failed workflow runs, and failed jobs/steps from the latest failure'
+export const getCiFailureContextDescription = 'Diagnose CI failures in one call, for a ref or one workflow run: failing checks and statuses (for a ref), recent failed runs, failed jobs and steps, and the end of each failed job\'s log'
+
+const MAX_LOGGED_JOBS = 3
 
 const FAILURE_CONCLUSIONS = new Set(['failure', 'timed_out', 'action_required', 'cancelled', 'startup_failure'])
 
@@ -229,16 +279,29 @@ export async function getCiFailureContextCore({
   owner,
   repo,
   ref,
+  runId,
   maxFailedRuns,
   maxFailedJobs,
+  logLines,
 }: {
   token: string
   owner: string
   repo: string
-  ref: string
+  ref?: string
+  runId?: number
   maxFailedRuns: number
   maxFailedJobs: number
+  logLines: number
 }) {
+  if (runId !== undefined) {
+    const [run, failedJobs] = await Promise.all([
+      getWorkflowRunCore({ token, owner, repo, runId }),
+      failedJobsWithLogs({ token, owner, repo, runId, maxFailedJobs, logLines }),
+    ])
+    return withComposedRateLimit({ run, failedJobs })
+  }
+  if (ref === undefined) throw new Error('getCiFailureContext needs `ref` or `runId`.')
+
   const [combinedStatus, checkRunsResult, failedRuns] = await Promise.all([
     getCombinedStatusCore({ token, owner, repo, ref }),
     listCheckRunsCore({ token, owner, repo, ref, perPage: 100, maxPages: 1 }),
@@ -259,58 +322,9 @@ export async function getCiFailureContextCore({
   )
 
   const latestFailedRun = failedRuns.runs[0]
-  let latestFailure:
-    | {
-        run: (typeof failedRuns.runs)[number]
-        jobs: Array<{
-          id: number
-          name: string
-          status: string
-          conclusion: string | null
-          url: string | null
-          startedAt: string
-          completedAt: string | null
-          steps?: Array<{
-            name: string
-            status: string
-            conclusion: string | null
-            number: number
-            startedAt?: string | null
-            completedAt?: string | null
-          }>
-        }>
-      }
-    | undefined
-
-  if (latestFailedRun) {
-    const jobsResult = await listWorkflowJobsCore({
-      token,
-      owner,
-      repo,
-      runId: latestFailedRun.id,
-      filter: 'latest',
-      perPage: 100,
-      page: 1,
-    })
-
-    const failedJobs = jobsResult.jobs
-      .filter(job => job.conclusion != null && FAILURE_CONCLUSIONS.has(job.conclusion))
-      .slice(0, maxFailedJobs)
-      .map(job => ({
-        id: job.id,
-        name: job.name,
-        status: job.status,
-        conclusion: job.conclusion,
-        url: job.url,
-        startedAt: job.startedAt,
-        completedAt: job.completedAt,
-        steps: job.steps?.filter(
-          step => step.conclusion != null && FAILURE_CONCLUSIONS.has(step.conclusion),
-        ),
-      }))
-
-    latestFailure = { run: latestFailedRun, jobs: failedJobs }
-  }
+  const latestFailure = latestFailedRun
+    ? { run: latestFailedRun, jobs: await failedJobsWithLogs({ token, owner, repo, runId: latestFailedRun.id, maxFailedJobs, logLines }) }
+    : undefined
 
   return withComposedRateLimit({
     ref,
@@ -320,4 +334,38 @@ export async function getCiFailureContextCore({
     recentFailedRuns: failedRuns.runs,
     ...latestFailure !== undefined ? { latestFailure } : {},
   })
+}
+
+async function failedJobsWithLogs({ token, owner, repo, runId, maxFailedJobs, logLines }: {
+  token: string
+  owner: string
+  repo: string
+  runId: number
+  maxFailedJobs: number
+  logLines: number
+}) {
+  const jobsResult = await listWorkflowJobsCore({ token, owner, repo, runId, filter: 'latest', perPage: 100, page: 1 })
+  const failedJobs = jobsResult.jobs
+    .filter(job => job.conclusion != null && FAILURE_CONCLUSIONS.has(job.conclusion))
+    .slice(0, maxFailedJobs)
+    .map(job => ({
+      id: job.id,
+      name: job.name,
+      status: job.status,
+      conclusion: job.conclusion,
+      url: job.url,
+      startedAt: job.startedAt,
+      completedAt: job.completedAt,
+      steps: job.steps?.filter(
+        step => step.conclusion != null && FAILURE_CONCLUSIONS.has(step.conclusion),
+      ),
+    }))
+  if (logLines === 0) return failedJobs
+  // GitHub deletes logs after the retention period, so one missing log reports its error instead of failing the diagnosis.
+  const logs = await Promise.all(failedJobs.slice(0, MAX_LOGGED_JOBS).map(job =>
+    getWorkflowJobLogsCore({ token, owner, repo, jobId: job.id, maxLines: logLines })
+      .then(({ log, omittedLines }) => ({ log, omittedLogLines: omittedLines }))
+      .catch((error: unknown) => ({ logError: error instanceof Error ? error.message : String(error) })),
+  ))
+  return failedJobs.map((job, index) => ({ ...job, ...logs[index] }))
 }

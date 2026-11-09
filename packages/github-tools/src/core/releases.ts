@@ -68,15 +68,19 @@ export async function getLatestReleaseCore({ token, owner, repo, detail = 'summa
 export const getReleaseInputSchema = z.object({
   owner: z.string().describe('Repository owner'),
   repo: z.string().describe('Repository name'),
-  releaseId: z.number().describe('Release ID (from listReleases or getLatestRelease)'),
+  releaseId: z.number().optional().describe('Release ID (from listReleases or getLatestRelease). Pass this or `tag`'),
+  tag: z.string().optional().describe('Release tag, such as "v2.3.0". Pass this or `releaseId`'),
   detail: detailSchema,
 })
 
-export const getReleaseDescription = 'Get a specific release by ID, including its assets. Body truncated by default (detail: summary)'
+export const getReleaseDescription = 'Get a specific release by ID or tag, including its assets. Body truncated by default (detail: summary)'
 
-export async function getReleaseCore({ token, owner, repo, releaseId, detail = 'summary' }: { token: string, owner: string, repo: string, releaseId: number, detail?: DetailLevel }) {
+export async function getReleaseCore({ token, owner, repo, releaseId, tag, detail = 'summary' }: { token: string, owner: string, repo: string, releaseId?: number, tag?: string, detail?: DetailLevel }) {
+  if (releaseId === undefined && tag === undefined) throw new Error('getRelease needs `releaseId` or `tag`.')
   return withOctokit(token, async (octokit) => {
-  const { data } = await octokit.rest.repos.getRelease({ owner, repo, release_id: releaseId })
+  const { data } = tag !== undefined
+    ? await octokit.rest.repos.getReleaseByTag({ owner, repo, tag })
+    : await octokit.rest.repos.getRelease({ owner, repo, release_id: releaseId! })
   return {
     id: data.id,
     tagName: data.tag_name,
