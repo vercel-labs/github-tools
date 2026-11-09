@@ -287,7 +287,8 @@ function describeGithubCall(name: GithubToolName, inputSchema: z.ZodType, input:
 }
 
 const PAST_TENSE: Record<string, string> = {
-  add: 'Added', cancel: 'Cancelled', close: 'Closed', create: 'Created', delete: 'Deleted', fork: 'Forked',
+  add: 'Added', cancel: 'Cancelled', close: 'Closed', create: 'Created', delete: 'Deleted', disable: 'Disabled',
+  edit: 'Edited', enable: 'Enabled', fork: 'Forked',
   mark: 'Marked', merge: 'Merged', remove: 'Removed', reply: 'Replied', request: 'Requested', rerun: 'Reran',
   resolve: 'Resolved', trigger: 'Triggered', update: 'Updated',
 }

@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createGithubAgent, createGithubTools, AUTO_APPROVAL_TOOLS, PRESET_TOOLS } from './index'
 import { resolveApprovalMode } from './core/approval'
 import { resolveInstructions } from './agents'
+import { ALL_GITHUB_TOOL_NAMES } from './core/catalog'
 
 function evaluationModel(answer: (options: Experimental_DecisionModelV4CallOptions) => Record<string, number>) {
   const calls: Experimental_DecisionModelV4CallOptions[] = []
@@ -350,7 +351,7 @@ describe("evaluation: { selection: 'tools' }, the default", () => {
     const { model, calls } = evaluationModel(() => ({ mergePullRequest: 0.9, getPullRequest: 0.95, addLabels: 0.4, createRelease: 0.6 }))
     await expect(evaluateTools(messages, { model, maxTools: 2 })).resolves.toEqual([...core, 'getPullRequest', 'mergePullRequest'])
     expect(Object.keys(calls[0]!.questions)).not.toContain('getRepository')
-    expect(Object.keys(calls[0]!.questions)).toHaveLength(85 - core.length)
+    expect(Object.keys(calls[0]!.questions)).toHaveLength(ALL_GITHUB_TOOL_NAMES.length - core.length)
   })
 
   it('falls back to the repo-explorer tools when the decision model fails', async () => {

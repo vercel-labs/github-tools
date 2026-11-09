@@ -109,6 +109,7 @@ export function createToolRegistry(
     createOrUpdateFile: { author: ctx.author, committer: ctx.committer, coAuthors: ctx.coAuthors },
     editFiles: { author: ctx.author, committer: ctx.committer, coAuthors: ctx.coAuthors },
     mergePullRequest: { coAuthors: ctx.coAuthors },
+    enablePullRequestAutoMerge: { coAuthors: ctx.coAuthors },
   }
 
   const entries = names.map((name): ToolRegistryEntry => {

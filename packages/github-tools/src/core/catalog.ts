@@ -125,6 +125,12 @@ export const GITHUB_TOOL_CATALOG = {
     write: true,
     connectScopes: CONTENTS_WRITE,
   },
+  /** List the required checks, required reviews and other rules that protect a branch. */
+  getBranchRules: {
+    description: repository.getBranchRulesDescription,
+    inputSchema: repository.getBranchRulesInputSchema,
+    connectScopes: CONTENTS_READ,
+  },
   /** Edit files in one commit on a new or existing branch, and optionally open a pull request. Requires approval by default. */
   editFiles: {
     description: repository.editFilesDescription,
@@ -157,6 +163,20 @@ export const GITHUB_TOOL_CATALOG = {
     inputSchema: pullRequests.mergePullRequestInputSchema,
     write: true,
     connectScopes: PR_MERGE,
+  },
+  /** Merge a pull request once its required checks and reviews pass. Requires approval by default. */
+  enablePullRequestAutoMerge: {
+    description: pullRequests.enablePullRequestAutoMergeDescription,
+    inputSchema: pullRequests.enablePullRequestAutoMergeInputSchema,
+    write: true,
+    connectScopes: PR_MERGE,
+  },
+  /** Cancel a pending auto-merge. Requires approval by default. */
+  disablePullRequestAutoMerge: {
+    description: pullRequests.disablePullRequestAutoMergeDescription,
+    inputSchema: pullRequests.disablePullRequestAutoMergeInputSchema,
+    write: true,
+    connectScopes: PR_WRITE,
   },
   /** Update a pull request — title, body, state, base branch, or draft status. Requires approval by default. */
   updatePullRequest: {

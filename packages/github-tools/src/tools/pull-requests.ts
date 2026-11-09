@@ -12,6 +12,12 @@ import {
   mergePullRequestInputSchema,
   mergePullRequestDescription,
   mergePullRequestCore,
+  enablePullRequestAutoMergeInputSchema,
+  enablePullRequestAutoMergeDescription,
+  enablePullRequestAutoMergeCore,
+  disablePullRequestAutoMergeInputSchema,
+  disablePullRequestAutoMergeDescription,
+  disablePullRequestAutoMergeCore,
   updatePullRequestInputSchema,
   updatePullRequestDescription,
   updatePullRequestCore,
@@ -258,4 +264,32 @@ export const requestReviewers = (token: GithubTokenInput, { needsApproval = true
     needsApproval,
     inputSchema: requestReviewersInputSchema,
     execute: async args => requestReviewersStep({ token: await resolveGithubToken(token, githubTokenCall('requestReviewers', args)), ...args }),
+  })
+
+async function enablePullRequestAutoMergeStep(args: Parameters<typeof enablePullRequestAutoMergeCore>[0]) {
+  "use step"
+  return enablePullRequestAutoMergeCore(args)
+}
+
+/** Merge a pull request automatically once its required checks and reviews pass. Requires approval by default. */
+export const enablePullRequestAutoMerge = (token: GithubTokenInput, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
+  tool({
+    description: enablePullRequestAutoMergeDescription,
+    needsApproval,
+    inputSchema: enablePullRequestAutoMergeInputSchema,
+    execute: async args => enablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('enablePullRequestAutoMerge', args)), coAuthors, ...args }),
+  })
+
+async function disablePullRequestAutoMergeStep(args: Parameters<typeof disablePullRequestAutoMergeCore>[0]) {
+  "use step"
+  return disablePullRequestAutoMergeCore(args)
+}
+
+/** Cancel a pending auto-merge. Requires approval by default. */
+export const disablePullRequestAutoMerge = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: disablePullRequestAutoMergeDescription,
+    needsApproval,
+    inputSchema: disablePullRequestAutoMergeInputSchema,
+    execute: async args => disablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('disablePullRequestAutoMerge', args)), ...args }),
   })

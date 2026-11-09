@@ -62,6 +62,9 @@ export async function getPullRequestCore({ token, owner, repo, pullNumber, detai
     draft: data.draft,
     merged: data.merged,
     mergeable: data.mergeable,
+    // 'blocked' (required checks or reviews), 'behind', 'dirty' (conflicts), 'unstable', 'clean'…
+    mergeableState: data.mergeable_state,
+    autoMerge: data.auto_merge ? { mergeMethod: data.auto_merge.merge_method, enabledBy: data.auto_merge.enabled_by?.login } : null,
     additions: data.additions,
     deletions: data.deletions,
     changedFiles: data.changed_files,
@@ -570,5 +573,76 @@ export async function requestReviewersCore({ token, owner, repo, pullNumber, rev
     requestedReviewers: data.requested_reviewers?.map(r => r.login),
     requestedTeams: data.requested_teams?.map(t => t.slug),
   }
+  })
+}
+
+const AUTO_MERGE_METHODS = { merge: 'MERGE', squash: 'SQUASH', rebase: 'REBASE' } as const
+
+export const enablePullRequestAutoMergeInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  pullNumber: z.number().describe('Pull request number'),
+  mergeMethod: z.enum(['merge', 'squash', 'rebase']).optional().default('merge').describe('Merge strategy to use once the pull request can merge'),
+  commitTitle: z.string().optional().describe('Title for the merge commit'),
+  commitMessage: z.string().optional().describe('Body of the merge commit'),
+})
+
+export const enablePullRequestAutoMergeDescription = 'Merge a pull request automatically once its required checks and reviews pass. The repository must allow auto-merge; a pull request that can already merge needs mergePullRequest instead'
+
+const ENABLE_AUTO_MERGE_MUTATION = `mutation($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod, $commitHeadline: String, $commitBody: String) {
+  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: $mergeMethod, commitHeadline: $commitHeadline, commitBody: $commitBody }) {
+    pullRequest { number url autoMergeRequest { enabledAt mergeMethod } }
+  }
+}`
+
+type AutoMergeResult = { pullRequest: { number: number, url: string, autoMergeRequest: { enabledAt: string, mergeMethod: string } | null } }
+
+/** Idempotent: enabling auto-merge again replaces the pending request with the same settings. */
+export async function enablePullRequestAutoMergeCore({ token, owner, repo, pullNumber, mergeMethod, commitTitle, commitMessage, coAuthors }: {
+  token: string
+  owner: string
+  repo: string
+  pullNumber: number
+  mergeMethod: 'merge' | 'squash' | 'rebase'
+  commitTitle?: string
+  commitMessage?: string
+  coAuthors?: CommitIdentity[]
+}) {
+  return withOctokit(token, async (octokit) => {
+  const { data: pr } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
+  const { enablePullRequestAutoMerge: { pullRequest } } = await octokit.graphql<{ enablePullRequestAutoMerge: AutoMergeResult }>(ENABLE_AUTO_MERGE_MUTATION, {
+    pullRequestId: pr.node_id,
+    mergeMethod: AUTO_MERGE_METHODS[mergeMethod],
+    commitHeadline: commitTitle,
+    commitBody: composeCommitMessage(commitMessage ?? '', coAuthors) || undefined,
+  })
+  return {
+    number: pullRequest.number,
+    url: pullRequest.url,
+    autoMerge: pullRequest.autoMergeRequest && { enabledAt: pullRequest.autoMergeRequest.enabledAt, mergeMethod: pullRequest.autoMergeRequest.mergeMethod.toLowerCase() },
+  }
+  })
+}
+
+export const disablePullRequestAutoMergeInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  pullNumber: z.number().describe('Pull request number'),
+})
+
+export const disablePullRequestAutoMergeDescription = 'Cancel a pending auto-merge, so the pull request stays open when its checks pass'
+
+const DISABLE_AUTO_MERGE_MUTATION = `mutation($pullRequestId: ID!) {
+  disablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId }) {
+    pullRequest { number url autoMergeRequest { enabledAt mergeMethod } }
+  }
+}`
+
+/** Idempotent: a pull request without auto-merge stays without it. */
+export async function disablePullRequestAutoMergeCore({ token, owner, repo, pullNumber }: { token: string, owner: string, repo: string, pullNumber: number }) {
+  return withOctokit(token, async (octokit) => {
+  const { data: pr } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
+  const { disablePullRequestAutoMerge: { pullRequest } } = await octokit.graphql<{ disablePullRequestAutoMerge: AutoMergeResult }>(DISABLE_AUTO_MERGE_MUTATION, { pullRequestId: pr.node_id })
+  return { number: pullRequest.number, url: pullRequest.url, autoMerge: null }
   })
 }
