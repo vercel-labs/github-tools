@@ -549,7 +549,7 @@ List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those f
 | `addPullRequestComment` | Post a comment on a PR |
 | `updatePullRequestComment` | Edit the body of a PR comment |
 | `deletePullRequestComment` | Permanently delete a PR comment |
-| `createPullRequestReview` | Submit a formal review (approve, request changes, or comment) with inline comments |
+| `createPullRequestReview` | Submit a formal review (approve, request changes, or comment) with inline comments on a line or a range of lines, including suggested changes |
 | `replyToReviewComment` | Reply to a review comment in its thread |
 | `resolveReviewThread` | Mark a review thread as resolved |
 | `requestReviewers` | Request reviews from users or teams on a PR |

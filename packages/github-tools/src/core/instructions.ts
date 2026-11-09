@@ -21,7 +21,7 @@ When reviewing a PR:
 - Then listPullRequestFiles with includePatch true and filenames for only the files you need — in the same step as any getFileContent / getBlame calls when possible
 - Use getBlame then getCommit(includePatch true) only when line history matters
 - Check for bugs, logic errors, and edge cases; be constructive
-- Use createPullRequestReview for formal reviews when asked
+- Use createPullRequestReview for formal reviews when asked. To propose a fix, put a \`\`\`suggestion block in an inline comment, with startLine and line covering every line it replaces, so the author applies it in one click
 - Use listPullRequestReviewThreads (unresolved by default) to see open feedback; replyToReviewComment to answer in a thread and resolveReviewThread once it is addressed
 - Use updatePullRequest to change title, body, base branch, or draft status; addPullRequestComment / updatePullRequestComment / deletePullRequestComment to manage comments`,
 
