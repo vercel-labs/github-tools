@@ -51,13 +51,24 @@ import {
   requestReviewersInputSchema,
   requestReviewersDescription,
   requestReviewersCore,
+  updatePullRequestBranchInputSchema,
+  updatePullRequestBranchDescription,
+  updatePullRequestBranchCore,
 } from '../core/pull-requests'
 import { listPullRequestFilesToModelOutput } from '../core/model-output'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { CommitIdentity, ToolOptions, GithubTool } from '../types'
+import type { GithubGuardrails } from '../core/guardrails'
 
 export type MergeToolOptions = ToolOptions & {
   coAuthors?: CommitIdentity[]
+  /** Base branches the pull request may be merged into, as in `guardrails.branches`. */
+  branches?: string[]
+}
+
+export type UpdateBranchToolOptions = ToolOptions & {
+  /** Repositories and branches the pull request's head must match, as in `guardrails`. */
+  guardrails?: Pick<GithubGuardrails, 'repositories' | 'branches'>
 }
 
 async function listPullRequestsStep(args: Parameters<typeof listPullRequestsCore>[0]) {
@@ -106,12 +117,12 @@ async function mergePullRequestStep(args: Parameters<typeof mergePullRequestCore
 }
 
 /** Merge a pull request. Requires approval by default. */
-export const mergePullRequest = (token: GithubTokenInput, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
+export const mergePullRequest = (token: GithubTokenInput, { needsApproval = true, coAuthors, branches }: MergeToolOptions = {}): GithubTool =>
   tool({
     description: mergePullRequestDescription,
     needsApproval,
     inputSchema: mergePullRequestInputSchema,
-    execute: async args => mergePullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('mergePullRequest', args)), coAuthors, ...args }),
+    execute: async args => mergePullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('mergePullRequest', args)), coAuthors, ...args, branches }),
   })
 
 async function updatePullRequestStep(args: Parameters<typeof updatePullRequestCore>[0]) {
@@ -272,12 +283,12 @@ async function enablePullRequestAutoMergeStep(args: Parameters<typeof enablePull
 }
 
 /** Merge a pull request automatically once its required checks and reviews pass. Requires approval by default. */
-export const enablePullRequestAutoMerge = (token: GithubTokenInput, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
+export const enablePullRequestAutoMerge = (token: GithubTokenInput, { needsApproval = true, coAuthors, branches }: MergeToolOptions = {}): GithubTool =>
   tool({
     description: enablePullRequestAutoMergeDescription,
     needsApproval,
     inputSchema: enablePullRequestAutoMergeInputSchema,
-    execute: async args => enablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('enablePullRequestAutoMerge', args)), coAuthors, ...args }),
+    execute: async args => enablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('enablePullRequestAutoMerge', args)), coAuthors, ...args, branches }),
   })
 
 async function disablePullRequestAutoMergeStep(args: Parameters<typeof disablePullRequestAutoMergeCore>[0]) {
@@ -292,4 +303,18 @@ export const disablePullRequestAutoMerge = (token: GithubTokenInput, { needsAppr
     needsApproval,
     inputSchema: disablePullRequestAutoMergeInputSchema,
     execute: async args => disablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('disablePullRequestAutoMerge', args)), ...args }),
+  })
+
+async function updatePullRequestBranchStep(args: Parameters<typeof updatePullRequestBranchCore>[0]) {
+  "use step"
+  return updatePullRequestBranchCore(args)
+}
+
+/** Merge a pull request's base branch into its head branch. Requires approval by default. */
+export const updatePullRequestBranch = (token: GithubTokenInput, { needsApproval = true, guardrails }: UpdateBranchToolOptions = {}): GithubTool =>
+  tool({
+    description: updatePullRequestBranchDescription,
+    needsApproval,
+    inputSchema: updatePullRequestBranchInputSchema,
+    execute: async args => updatePullRequestBranchStep({ token: await resolveGithubToken(token, githubTokenCall('updatePullRequestBranch', args)), ...args, guardrails }),
   })

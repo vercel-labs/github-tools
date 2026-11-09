@@ -51,6 +51,15 @@ import {
   removeAssigneesInputSchema,
   removeAssigneesDescription,
   removeAssigneesCore,
+  listMilestonesInputSchema,
+  listMilestonesDescription,
+  listMilestonesCore,
+  listSubIssuesInputSchema,
+  listSubIssuesDescription,
+  listSubIssuesCore,
+  addSubIssueInputSchema,
+  addSubIssueDescription,
+  addSubIssueCore,
 } from '../core/issues'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { ToolOptions, GithubTool } from '../types'
@@ -287,4 +296,44 @@ export const removeAssignees = (token: GithubTokenInput, { needsApproval = true 
     needsApproval,
     inputSchema: removeAssigneesInputSchema,
     execute: async args => removeAssigneesStep({ token: await resolveGithubToken(token, githubTokenCall('removeAssignees', args)), ...args }),
+  })
+
+async function listMilestonesStep(args: Parameters<typeof listMilestonesCore>[0]) {
+  "use step"
+  return listMilestonesCore(args)
+}
+
+/** List milestones in a GitHub repository with their due dates and issue counts. */
+export const listMilestones = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: listMilestonesDescription,
+    inputSchema: listMilestonesInputSchema,
+    execute: async args => listMilestonesStep({ token: await resolveGithubToken(token, githubTokenCall('listMilestones', args)), ...args }),
+  })
+
+async function listSubIssuesStep(args: Parameters<typeof listSubIssuesCore>[0]) {
+  "use step"
+  return listSubIssuesCore(args)
+}
+
+/** List the sub-issues of an issue. */
+export const listSubIssues = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: listSubIssuesDescription,
+    inputSchema: listSubIssuesInputSchema,
+    execute: async args => listSubIssuesStep({ token: await resolveGithubToken(token, githubTokenCall('listSubIssues', args)), ...args }),
+  })
+
+async function addSubIssueStep(args: Parameters<typeof addSubIssueCore>[0]) {
+  "use step"
+  return addSubIssueCore(args)
+}
+
+/** Add an existing issue as a sub-issue of another issue. Requires approval by default. */
+export const addSubIssue = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: addSubIssueDescription,
+    needsApproval,
+    inputSchema: addSubIssueInputSchema,
+    execute: async args => addSubIssueStep({ token: await resolveGithubToken(token, githubTokenCall('addSubIssue', args)), ...args }),
   })

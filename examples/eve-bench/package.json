@@ -7,6 +7,7 @@
   },
   "scripts": {
     "eval": "eve eval",
+    "test": "node --test lib/gh-command.test.ts",
     "report": "node --experimental-strip-types scripts/report.ts",
     "decisions": "node --experimental-strip-types scripts/decisions.ts",
     "agent-conversation": "node --experimental-strip-types scripts/agent-conversation.ts"
@@ -16,6 +17,7 @@
     "@github-tools/sdk": "workspace:*",
     "ai": "^7.0.148",
     "eve": "^1.0.0-rc.6",
+    "just-bash": "3.6.0",
     "zod": "^4.5.4"
   }
 }

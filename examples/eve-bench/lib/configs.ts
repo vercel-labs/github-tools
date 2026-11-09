@@ -6,6 +6,8 @@ type GithubExtensionConfig = NonNullable<Parameters<typeof githubExtension>[0]>
 /** Extension configurations the benchmark compares, selected with `BENCH_CONFIG`. */
 export const CONFIGS = {
   'all': {},
+  // No GitHub tools: the agent uses `gh` in a sandbox instead, see agent/sandbox.ts.
+  'cli': { include: [] },
   'fixed': { preset: ['code-review', 'issue-triage'] },
   'auto-preset': { preset: 'auto' },
   'auto': { preset: 'auto', requireApproval: 'auto' },

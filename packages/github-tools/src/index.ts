@@ -1,7 +1,7 @@
-import type { ToolSet } from 'ai'
-import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules } from './tools/repository'
-import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge } from './tools/pull-requests'
-import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
+import type { ModelMessage, ToolSet } from 'ai'
+import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules, getCollaboratorPermission } from './tools/repository'
+import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge, updatePullRequestBranch } from './tools/pull-requests'
+import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees, listMilestones, listSubIssues, addSubIssue } from './tools/issues'
 import { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 import { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
 import { listNotifications, markNotificationRead } from './tools/notifications'
@@ -9,18 +9,21 @@ import { searchCode, searchRepositories, searchIssues } from './tools/search'
 import { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-import { listCheckRuns, getCombinedStatus } from './tools/checks'
+import { listCheckRuns, getCombinedStatus, createCommitStatus } from './tools/checks'
 import { listCodeScanningAlerts, listDependabotAlerts, listSecretScanningAlerts } from './tools/security'
 import { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 import { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
-import { resolveAiSdkApproval } from './core/approval'
+import { resolveAiSdkApproval, resolveAiSdkToolApproval } from './core/approval'
 import { bindToolsContext } from './core/context'
 import { stripRateLimit } from './core/rate-limit'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
 import type { GithubTool } from './types'
 import { type GithubToolName } from './core/tool-names'
 import { type AllGithubTools, type GithubToolsBaseOptions } from './core/tool-types'
-import { createGithubTokenResolver } from './core/token'
+import { githubTokenCall, withGithubGuardrails } from './core/token'
+import { guardrailViolation } from './core/guardrails'
+import { dryRunWrite, type GithubDryRunApproval } from './core/dry-run'
+import { isGithubWriteToolName } from './core/catalog'
 import type { GithubWriteToolName } from './core/write-tools'
 
 export type { GithubWriteToolName } from './core/write-tools'
@@ -30,6 +33,9 @@ export { AUTO_APPROVAL_TOOLS, DEFAULT_EVALUATION_MODEL, selectPresets, selectToo
 export { CORE_READ_TOOLS } from './core/presets'
 export { CALL_GITHUB_TOOL } from './agents'
 export type { GithubToolsContext } from './core/context'
+export type { GithubGuardrails } from './core/guardrails'
+export type { GithubDryRunApproval, GithubDryRunResult } from './core/dry-run'
+export { withGithubGuardrails } from './core/token'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
 export type { GithubToolName } from './core/tool-names'
 export type { AllGithubTools, GithubToolsForPreset, PickGithubTools } from './core/tool-types'
@@ -106,6 +112,15 @@ export function createGithubTools(options?: GithubToolsOptions): AllGithubTools 
  *     addPullRequestComment: false,
  *   }
  * })
+ *
+ * // Try an agent on real repositories without changing them
+ * createGithubTools({ token, dryRun: true })
+ *
+ * // Only act on one org, and only write to agent branches
+ * createGithubTools({
+ *   token,
+ *   guardrails: { repositories: ['vercel-labs/*'], branches: ['agent/*'] },
+ * })
  * ```
  */
 export function createGithubTools({
@@ -118,9 +133,12 @@ export function createGithubTools({
   author,
   committer,
   coAuthors,
+  guardrails,
+  dryRun,
 }: GithubToolsOptions = {}): AllGithubTools | Pick<AllGithubTools, GithubToolName> {
-  const resolveToken = createGithubTokenResolver(token)
-  const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveAiSdkApproval(name, requireApproval, evaluation) })
+  const resolveToken = withGithubGuardrails(token, guardrails)
+  const approval = (name: GithubWriteToolName) => ({ needsApproval: guardedApproval(name, resolveAiSdkApproval(name, requireApproval, evaluation), guardrails) })
+  const branches = guardrails?.branches
   const allowed = preset ? resolvePresetTools(preset) : null
 
   const allTools = {
@@ -146,14 +164,16 @@ export function createGithubTools({
     createOrUpdateFile: createOrUpdateFile(resolveToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
     editFiles: editFiles(resolveToken, { ...approval('editFiles'), author, committer, coAuthors }),
     getBranchRules: getBranchRules(resolveToken),
+    getCollaboratorPermission: getCollaboratorPermission(resolveToken),
     listCodeScanningAlerts: listCodeScanningAlerts(resolveToken),
     listDependabotAlerts: listDependabotAlerts(resolveToken),
     listSecretScanningAlerts: listSecretScanningAlerts(resolveToken),
     createPullRequest: createPullRequest(resolveToken, approval('createPullRequest')),
-    mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors }),
-    enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors }),
+    mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors, branches }),
+    enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors, branches }),
     disablePullRequestAutoMerge: disablePullRequestAutoMerge(resolveToken, approval('disablePullRequestAutoMerge')),
     updatePullRequest: updatePullRequest(resolveToken, approval('updatePullRequest')),
+    updatePullRequestBranch: updatePullRequestBranch(resolveToken, { ...approval('updatePullRequestBranch'), guardrails }),
     addPullRequestComment: addPullRequestComment(resolveToken, approval('addPullRequestComment')),
     updatePullRequestComment: updatePullRequestComment(resolveToken, approval('updatePullRequestComment')),
     deletePullRequestComment: deletePullRequestComment(resolveToken, approval('deletePullRequestComment')),
@@ -181,6 +201,9 @@ export function createGithubTools({
     deleteLabel: deleteLabel(resolveToken, approval('deleteLabel')),
     addAssignees: addAssignees(resolveToken, approval('addAssignees')),
     removeAssignees: removeAssignees(resolveToken, approval('removeAssignees')),
+    listMilestones: listMilestones(resolveToken),
+    listSubIssues: listSubIssues(resolveToken),
+    addSubIssue: addSubIssue(resolveToken, approval('addSubIssue')),
     listIssueReactions: listIssueReactions(resolveToken),
     addIssueReaction: addIssueReaction(resolveToken, approval('addIssueReaction')),
     listCommentReactions: listCommentReactions(resolveToken),
@@ -207,6 +230,7 @@ export function createGithubTools({
     rerunWorkflowRun: rerunWorkflowRun(resolveToken, approval('rerunWorkflowRun')),
     listCheckRuns: listCheckRuns(resolveToken),
     getCombinedStatus: getCombinedStatus(resolveToken),
+    createCommitStatus: createCommitStatus(resolveToken, approval('createCommitStatus')),
     getCiFailureContext: getCiFailureContext(resolveToken),
     listReleases: listReleases(resolveToken),
     getLatestRelease: getLatestRelease(resolveToken),
@@ -226,9 +250,20 @@ export function createGithubTools({
     }
   }
 
+  // A dry run asks nobody; each result reports what approval would have decided instead.
+  const wouldApprove = async (name: GithubWriteToolName, input: unknown, options: { toolCallId: string, messages: ModelMessage[] }): Promise<GithubDryRunApproval> => {
+    const override = overrides?.[name]?.needsApproval
+    if (override !== undefined) return { required: (typeof override === 'function' ? await override(input, { ...options, context: undefined }) : override) === true }
+    const status = await resolveAiSdkToolApproval(name, requireApproval, evaluation)(input, options)
+    if (status === undefined || status === 'user-approval') return { required: status === 'user-approval' }
+    return { required: status.type === 'user-approval', reason: status.reason }
+  }
+  const withDryRun = (name: GithubToolName, tool: GithubTool): GithubTool => dryRun && isGithubWriteToolName(name)
+    ? { ...tool, needsApproval: false, execute: async (args, { toolCallId, messages }) => dryRunWrite(name, args as Record<string, unknown>, guardrails, () => wouldApprove(name, args, { toolCallId, messages })) }
+    : tool
   const scoped = bindToolsContext(
     Object.fromEntries(
-      Object.entries(allTools).map(([name, tool]) => [name, withStrippedRateLimit(tool)]),
+      Object.entries(allTools).map(([name, tool]) => [name, withStrippedRateLimit(withDryRun(name as GithubToolName, tool))]),
     ) as typeof allTools,
     context,
   )
@@ -238,6 +273,15 @@ export function createGithubTools({
   return Object.fromEntries(
     Object.entries(scoped).filter(([name]) => allowed.has(name as GithubToolName))
   ) as Pick<typeof scoped, GithubToolName>
+}
+
+// A call the guardrails block fails in `execute`, so nobody is asked to approve it first.
+function guardedApproval(name: GithubWriteToolName, needsApproval: GithubTool['needsApproval'], guardrails: GithubToolsOptions['guardrails']): GithubTool['needsApproval'] {
+  if (!guardrails) return needsApproval
+  return async (input, options) => {
+    if (guardrailViolation(githubTokenCall(name, input as Record<string, unknown>), guardrails)) return false
+    return typeof needsApproval === 'function' ? needsApproval(input, options) : needsApproval === true
+  }
 }
 
 function withStrippedRateLimit(tool: GithubTool): GithubTool {
@@ -256,9 +300,9 @@ export type GithubTools = AllGithubTools & ToolSet
 
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'
-export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules } from './tools/repository'
-export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge } from './tools/pull-requests'
-export { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
+export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules, getCollaboratorPermission } from './tools/repository'
+export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge, updatePullRequestBranch } from './tools/pull-requests'
+export { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees, listMilestones, listSubIssues, addSubIssue } from './tools/issues'
 export { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 export { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
 export { listNotifications, markNotificationRead } from './tools/notifications'
@@ -266,7 +310,7 @@ export { searchCode, searchRepositories, searchIssues } from './tools/search'
 export { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-export { listCheckRuns, getCombinedStatus } from './tools/checks'
+export { listCheckRuns, getCombinedStatus, createCommitStatus } from './tools/checks'
 export { listCodeScanningAlerts, listDependabotAlerts, listSecretScanningAlerts } from './tools/security'
 export { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 export { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'

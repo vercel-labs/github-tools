@@ -2,9 +2,11 @@ import { connectGithubScopesForTools, connectGithubToken, resolveGithubConnector
 import { connect } from '@vercel/connect/eve'
 import {
   AUTO_APPROVAL_TOOLS,
+  autoApprovalDecision,
   evaluatePresets,
   evaluateTools,
   executeGithubEveTool,
+  githubGuardrailViolation,
   fallbackPresets,
   fallbackTools,
   formatGithubEveToolOutput,
@@ -15,16 +17,18 @@ import {
   latestUserText,
   listEveToolDescriptors,
   mapEveApprovalValue,
-  needsAutoApproval,
+  type AutoApprovalDecision,
   type EveGithubToolsOptions,
   type EveToolOverrides,
+  type GithubDryRunApproval,
   type GithubTokenCall,
   type GithubToolName,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
-import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy } from 'eve/tools/approval'
+import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy, ApprovalStatus } from 'eve/tools/approval'
 import { defineDynamic, defineTool, toolOutput, type ToolContext, type ToolDefinition } from 'eve/tools'
 import { z } from 'zod'
+import { sessionContext } from '../lib/context'
 import extension, {
   type GithubActAs,
   type GithubExtensionApprovalConfig,
@@ -36,7 +40,7 @@ import extension, {
  * Rebuild options from extension config. `connect` resolvers need the tool
  * execution context, so `execute` passes it on every call.
  */
-function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
+function buildSessionOptions(ctx?: ToolContext, auth = ctx?.session.auth.current): EveGithubToolsOptions {
   const {
     token,
     connector,
@@ -45,11 +49,13 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
     include,
     exclude,
     overrides,
-    context,
     author,
     committer,
     coAuthors,
+    guardrails,
+    dryRun,
   } = extension.config
+  const context = sessionContext(auth)
 
   const includeNames = include as GithubToolName[] | undefined
   const excludeNames = exclude as GithubToolName[] | undefined
@@ -88,6 +94,8 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
     author,
     committer,
     coAuthors,
+    guardrails,
+    dryRun,
   }
 }
 
@@ -166,6 +174,12 @@ async function githubUserAuth() {
 
 async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolContext) {
   const args = input as Record<string, unknown>
+  if (extension.config.dryRun && writeToolName(name)) {
+    const key = decisionKey(ctx.session.id, ctx.callId)
+    const dryRunApproval = dryRunApprovals.get(key)
+    dryRunApprovals.delete(key)
+    return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), dryRunApproval })
+  }
   const actAs = actAsFor(name)
   if (actAs === 'app') return executeGithubEveTool(name, args, buildSessionOptions(ctx))
 
@@ -237,19 +251,38 @@ function isPersonRequest(ctx: ApprovalContext): boolean {
 }
 
 // eve asks the request policy again once a person approves; reuse the first decision.
-const autoDecisions = new Map<string, Promise<boolean>>()
+// The approval prompt callback is synchronous, so it reads `settled`.
+type CachedDecision = { pending: Promise<AutoApprovalDecision>, settled?: AutoApprovalDecision }
+const autoDecisions = new Map<string, CachedDecision>()
 const MAX_CACHED_DECISIONS = 100
 
-function autoApprovalDecision(writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<boolean> {
-  const key = `${ctx.session.id}:${ctx.callId}`
+function decisionKey(sessionId: string, callId: string) {
+  return `${sessionId}:${callId}`
+}
+
+function cachedAutoApproval(writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<AutoApprovalDecision> {
+  const key = decisionKey(ctx.session.id, ctx.callId)
   const cached = autoDecisions.get(key)
-  if (cached) return cached
+  if (cached) return cached.pending
   const messages: ModelMessage[] = [{ role: 'user', content: request }]
-  const decision = needsAutoApproval(writeTool, ctx.toolInput, messages, extension.config.evaluation, ctx.abortSignal)
-  autoDecisions.set(key, decision)
-  decision.catch(() => autoDecisions.delete(key))
+  const entry: CachedDecision = {
+    pending: autoApprovalDecision(writeTool, ctx.toolInput, messages, extension.config.evaluation, ctx.abortSignal)
+      .then((decision) => {
+        entry.settled = decision
+        return decision
+      }),
+  }
+  autoDecisions.set(key, entry)
+  entry.pending.catch(() => autoDecisions.delete(key))
   if (autoDecisions.size > MAX_CACHED_DECISIONS) autoDecisions.delete(autoDecisions.keys().next().value!)
-  return decision
+  return entry.pending
+}
+
+// "Add labels on owner/repo#12? Hard to undo (risk 2 of 2), 100% likely you asked for it."
+// An `agent.ts` policy can still ask for a call the evaluator approved; that prompt gets no reason.
+function approvalPrompt(label: string, sessionId: string, callId: string) {
+  const decision = autoDecisions.get(decisionKey(sessionId, callId))?.settled
+  return decision?.ask ? `${label}? ${decision.reason}` : `${label}?`
 }
 
 function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalValue | undefined {
@@ -259,14 +292,34 @@ function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalV
   return approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
 }
 
-async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext) {
+// A dry run asks nobody: the approval policy keeps what it would have decided, and the write's result reports it.
+const dryRunApprovals = new Map<string, GithubDryRunApproval>()
+
+async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
+  const reason = githubGuardrailViolation(name, ctx.toolInput as Record<string, unknown>, { context: sessionContext(ctx.session.auth.current), guardrails: extension.config.guardrails })
+  if (reason) return { type: 'denied', reason }
+  if (!extension.config.dryRun) return githubApprovalStatus(name, writeTool, request, ctx)
 
+  const auto = configuredApprovalValue(name) === 'auto' && isPersonRequest(ctx) && await cachedAutoApproval(writeTool, request, ctx)
+  const status = auto ? undefined : await githubApprovalStatus(name, writeTool, request, ctx)
+  // A policy that denies the call denies it in a dry run too, as it would for real.
+  if (status === 'denied' || (typeof status === 'object' && status?.type === 'denied')) return status
+  dryRunApprovals.set(decisionKey(ctx.session.id, ctx.callId), auto
+    ? { required: auto.ask, reason: auto.reason }
+    : { required: status === true || status === 'user-approval' || (typeof status === 'object' && status?.type === 'user-approval') })
+  if (dryRunApprovals.size > MAX_CACHED_DECISIONS) dryRunApprovals.delete(dryRunApprovals.keys().next().value!)
+  return 'not-applicable'
+}
+
+async function githubApprovalStatus(name: GithubToolName, writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const value = configuredApprovalValue(name)!
   if (value === 'auto') {
     if (!isPersonRequest(ctx)) return 'user-approval'
-    return await autoApprovalDecision(writeTool, request, ctx) ? 'user-approval' : 'not-applicable'
+    // `'approved'` records `clearedBy: { policy: 'approval' }` on `call.started`, unlike a call that needed no approval.
+    const { ask, reason } = await cachedAutoApproval(writeTool, request, ctx)
+    return ask ? 'user-approval' : { type: 'approved', reason }
   }
   if (isEveApprovalDisabled(value)) return 'not-applicable'
   return mapEveApprovalValue(value)(ctx)
@@ -276,9 +329,9 @@ type ApprovalTarget = GithubExtensionContext & { discussionNumber?: number }
 
 // "Create issue on owner/repo#12": the channel label while a call runs, and the approval prompt.
 // Context defaults only count for fields the tool takes, so the prompt names the target the call acts on.
-function describeGithubCall(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>) {
+function describeGithubCall(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, sessionContext: GithubExtensionContext | undefined) {
   const fields = inputSchema instanceof z.ZodObject ? inputSchema.shape : {}
-  const context = Object.fromEntries(Object.entries(extension.config.context ?? {}).filter(([key]) => key in fields))
+  const context = Object.fromEntries(Object.entries(sessionContext ?? {}).filter(([key]) => key in fields))
   const { owner, repo, pullNumber, issueNumber, discussionNumber } = { ...context, ...input } as ApprovalTarget
   const action = name.replace(/[A-Z]/g, letter => ` ${letter.toLowerCase()}`)
   const number = pullNumber ?? issueNumber ?? discussionNumber
@@ -293,20 +346,25 @@ const PAST_TENSE: Record<string, string> = {
   resolve: 'Resolved', trigger: 'Triggered', update: 'Updated',
 }
 
-// "Created issue on owner/repo#123" once a write succeeds, with the number of what it created.
+// "Created issue on owner/repo#123" once a write succeeds, with the number of what it created,
+// or "Would create issue on owner/repo" under `dryRun`.
 // Reads return '', which keeps their start label. A failed call returns `{ error }` rather than
 // throwing, so eve runs this for it too: "Couldn't create issue on owner/repo".
-function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, output: unknown) {
+function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, output: unknown, context: GithubExtensionContext | undefined) {
   if (output !== null && typeof output === 'object' && 'error' in output) {
-    const label = describeGithubCall(name, inputSchema, input)
+    const label = describeGithubCall(name, inputSchema, input, context)
     return `Couldn't ${label[0]!.toLowerCase()}${label.slice(1)}`
   }
   if (!writeToolName(name)) return ''
+  if (output !== null && typeof output === 'object' && 'dryRun' in output) {
+    const label = describeGithubCall(name, inputSchema, input, context)
+    return `Would ${label[0]!.toLowerCase()}${label.slice(1)}`
+  }
   const created = output !== null && typeof output === 'object' && 'number' in output && typeof output.number === 'number' ? output.number : undefined
   const target = created !== undefined && input.pullNumber === undefined && input.issueNumber === undefined && input.discussionNumber === undefined
     ? { ...input, issueNumber: created }
     : input
-  const [verb, ...rest] = describeGithubCall(name, inputSchema, target).split(' ')
+  const [verb, ...rest] = describeGithubCall(name, inputSchema, target, context).split(' ')
   const past = PAST_TENSE[verb!.toLowerCase()]
   return past ? [past, ...rest].join(' ') : ''
 }
@@ -316,7 +374,8 @@ function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, inpu
 // `evaluation.selection: 'presets'`, the routed presets) are listed and every other tool
 // is deferred: the model finds it with `eve__search`.
 export default defineDynamic(async (ctx) => {
-  const sessionOptions = buildSessionOptions()
+  const sessionOptions = buildSessionOptions(undefined, ctx.session.auth.current)
+  const { context } = sessionOptions
   const { preset, evaluation } = extension.config
   const messages = await ctx.messages()
   const request = latestUserText(messages)
@@ -350,7 +409,7 @@ export default defineDynamic(async (ctx) => {
       inputSchema: entry.inputSchema,
       approval: {
         request: approvalCtx => runGithubEveApproval(name, request, approvalCtx),
-        prompt: ({ input }) => `${describeGithubCall(name, entry.inputSchema, input)}?`,
+        prompt: ({ callId, input }) => approvalPrompt(describeGithubCall(name, entry.inputSchema, input, context), ctx.session.id, callId),
         ...(configuredResponse
           ? { response: responseCtx => runConfiguredApprovalResponse(name, configuredResponse, responseCtx) }
           : extension.config.approvers === 'anyone' && {
@@ -358,8 +417,8 @@ export default defineDynamic(async (ctx) => {
           }),
       },
       label: {
-        start: input => describeGithubCall(name, entry.inputSchema, input as Record<string, unknown>),
-        complete: (input, output) => describeGithubResult(name, entry.inputSchema, input as Record<string, unknown>, output),
+        start: input => describeGithubCall(name, entry.inputSchema, input as Record<string, unknown>, context),
+        complete: (input, output) => describeGithubResult(name, entry.inputSchema, input as Record<string, unknown>, output, context),
       },
       toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
       ...(override?.outputSchema !== undefined && { outputSchema: override.outputSchema }),

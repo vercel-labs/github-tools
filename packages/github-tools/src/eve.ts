@@ -128,6 +128,13 @@ export const editFiles = factory('editFiles')
  */
 export const getBranchRules = factory('getBranchRules')
 /**
+ * Get a user's permission and role on a repository, to check whether they may trigger the bot or approve an action.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const getCollaboratorPermission = factory('getCollaboratorPermission')
+/**
  * List code scanning alerts for a repository.
  *
  * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
@@ -190,6 +197,13 @@ export const enablePullRequestAutoMerge = factory('enablePullRequestAutoMerge')
  * instead. See https://github-tools.com/integrations/eve.
  */
 export const disablePullRequestAutoMerge = factory('disablePullRequestAutoMerge')
+/**
+ * Bring a pull request branch up to date by merging its base branch into it. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const updatePullRequestBranch = factory('updatePullRequestBranch')
 /**
  * Add a comment to a pull request. Requires approval by default.
  *
@@ -274,6 +288,27 @@ export const addIssueComment = factory('addIssueComment')
  * instead. See https://github-tools.com/integrations/eve.
  */
 export const closeIssue = factory('closeIssue')
+/**
+ * List milestones in a GitHub repository with their due dates and issue counts.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const listMilestones = factory('listMilestones')
+/**
+ * List the sub-issues of an issue.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const listSubIssues = factory('listSubIssues')
+/**
+ * Add an existing issue as a sub-issue of another issue. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const addSubIssue = factory('addSubIssue')
 /**
  * List labels available in a GitHub repository.
  *
@@ -449,6 +484,13 @@ export const cancelWorkflowRun = factory('cancelWorkflowRun')
  * instead. See https://github-tools.com/integrations/eve.
  */
 export const rerunWorkflowRun = factory('rerunWorkflowRun')
+/**
+ * Report a result on a commit as a commit status. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const createCommitStatus = factory('createCommitStatus')
 /**
  * Diagnose CI failures for a ref — combined status, failing checks, and failed workflow jobs in one call.
  *

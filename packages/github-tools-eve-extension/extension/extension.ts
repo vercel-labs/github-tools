@@ -9,6 +9,7 @@ import {
   type EveApprovalValue,
   type EveToolOverrides,
   type GithubEvaluationOptions,
+  type GithubGuardrails,
   type GithubToolName,
   type GithubToolPreset,
   type GithubWriteToolName,
@@ -201,6 +202,23 @@ export interface GithubExtensionConfig {
   committer?: CommitIdentity
   /** Co-authors to attribute on commits created by tools. */
   coAuthors?: CommitIdentity[]
+  /**
+   * Repositories and branches the tools may act on, checked before each call reaches GitHub.
+   * `repositories` takes `owner/repo` or `owner/*`; `branches` takes names or patterns such as
+   * `agent/*` and covers commits, branch creation and deletion, merges into a pull request's base,
+   * and updates of a pull request's branch. A call whose input contains what looks like a
+   * credential is blocked too, unless `secrets: 'allow'`. A blocked write is denied with the reason
+   * instead of asking anyone to approve it.
+   */
+  guardrails?: GithubGuardrails
+  /**
+   * Shadow mode: run reads as usual but send no write to GitHub, and ask nobody to approve one.
+   * Each write still goes through `guardrails`, then returns a dry-run result that says whether
+   * approval would have asked a person (with the evaluation model's verdict under `'auto'`), and
+   * its label reads "Would create issue on owner/repo". Use it to try the agent on real
+   * repositories, for example a scheduled bot, before letting it write.
+   */
+  dryRun?: boolean
 }
 
 const presetNameSchema = z.enum(Object.keys(PRESET_TOOLS) as [GithubToolPreset, ...GithubToolPreset[]])
@@ -258,6 +276,12 @@ const configSchema = z.object({
   author: commitIdentitySchema.optional(),
   committer: commitIdentitySchema.optional(),
   coAuthors: z.array(commitIdentitySchema).optional(),
+  guardrails: z.object({
+    repositories: z.array(z.string()).optional(),
+    branches: z.array(z.string()).optional(),
+    secrets: z.enum(['block', 'allow']).optional(),
+  }).optional(),
+  dryRun: z.boolean().optional(),
 }).superRefine((config, ctx) => {
   const { actAs } = config
   const identities = [

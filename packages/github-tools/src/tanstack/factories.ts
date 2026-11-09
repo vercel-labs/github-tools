@@ -51,8 +51,14 @@ export const disablePullRequestAutoMerge = toolFactory('disablePullRequestAutoMe
 /** Create the TanStack `getBranchRules` server tool. */
 export const getBranchRules = toolFactory('getBranchRules')
 
+/** Create the TanStack `getCollaboratorPermission` server tool. */
+export const getCollaboratorPermission = toolFactory('getCollaboratorPermission')
+
 /** Create the TanStack `updatePullRequest` server tool. */
 export const updatePullRequest = toolFactory('updatePullRequest')
+
+/** Create the TanStack `updatePullRequestBranch` server tool. */
+export const updatePullRequestBranch = toolFactory('updatePullRequestBranch')
 
 /** Create the TanStack `addPullRequestComment` server tool. */
 export const addPullRequestComment = toolFactory('addPullRequestComment')
@@ -140,6 +146,15 @@ export const addAssignees = toolFactory('addAssignees')
 
 /** Create the TanStack `removeAssignees` server tool. */
 export const removeAssignees = toolFactory('removeAssignees')
+
+/** Create the TanStack `listMilestones` server tool. */
+export const listMilestones = toolFactory('listMilestones')
+
+/** Create the TanStack `listSubIssues` server tool. */
+export const listSubIssues = toolFactory('listSubIssues')
+
+/** Create the TanStack `addSubIssue` server tool. */
+export const addSubIssue = toolFactory('addSubIssue')
 
 /** Create the TanStack `listIssueReactions` server tool. */
 export const listIssueReactions = toolFactory('listIssueReactions')
@@ -239,6 +254,9 @@ export const listCheckRuns = toolFactory('listCheckRuns')
 
 /** Create the TanStack `getCombinedStatus` server tool. */
 export const getCombinedStatus = toolFactory('getCombinedStatus')
+
+/** Create the TanStack `createCommitStatus` server tool. */
+export const createCommitStatus = toolFactory('createCommitStatus')
 
 /** Create the TanStack `getCiFailureContext` server tool. */
 export const getCiFailureContext = toolFactory('getCiFailureContext')

@@ -14,6 +14,8 @@ import {
 } from '../core/model-output'
 import { stripRateLimit } from '../core/rate-limit'
 import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import type { GithubGuardrails } from '../core/guardrails'
+import type { GithubDryRunApproval } from '../core/dry-run'
 import type { GithubWriteToolName } from '../core/write-tools'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from '../core/tool-names'
 export type { GithubToolName } from '../core/tool-names'
@@ -25,6 +27,9 @@ export type ToolBuildContext = {
   author?: CommitIdentity
   committer?: CommitIdentity
   coAuthors?: CommitIdentity[]
+  guardrails?: GithubGuardrails
+  dryRun?: boolean
+  dryRunApproval?: GithubDryRunApproval
 }
 
 type ToolRegistryEntry = {
@@ -40,12 +45,14 @@ function withToken<T extends Record<string, unknown>>(
   core: (args: T & { token: string }) => Promise<unknown>,
   ctx: ToolBuildContext,
   extra?: Record<string, unknown>,
+  guard?: Record<string, unknown>,
 ) {
   return async (input: Record<string, unknown>) =>
     core({
       token: await resolveGithubToken(ctx.token),
       ...extra,
       ...mergeContextArgs(input, ctx.context ?? {}),
+      ...guard,
     } as T & { token: string })
 }
 
@@ -111,6 +118,12 @@ export function createToolRegistry(
     mergePullRequest: { coAuthors: ctx.coAuthors },
     enablePullRequestAutoMerge: { coAuthors: ctx.coAuthors },
   }
+  // Spread after the input, so the branches a merge or branch update may write can't come from the model.
+  const branches = ctx.guardrails?.branches
+  const guardExtras: Partial<Record<GithubToolName, Record<string, unknown>>> = {
+    ...branches && { mergePullRequest: { branches }, enablePullRequestAutoMerge: { branches } },
+    ...ctx.guardrails && { updatePullRequestBranch: { guardrails: ctx.guardrails } },
+  }
 
   const entries = names.map((name): ToolRegistryEntry => {
     const descriptor = GITHUB_TOOL_CATALOG[name]
@@ -122,7 +135,7 @@ export function createToolRegistry(
       ...(isGithubWriteToolName(name) && { writeTool: name }),
       description: descriptor.description,
       inputSchema: descriptor.inputSchema,
-      execute: withToken(core, ctx, commitExtras[name]),
+      execute: withToken(core, ctx, commitExtras[name], guardExtras[name]),
       ...(toModelOutput && { toModelOutput }),
     }
   })

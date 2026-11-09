@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
+import { stripHiddenContent } from './detail'
 import { pageSchema, pagedList } from './pagination'
 
 export const listGistsInputSchema = z.object({
@@ -70,7 +71,7 @@ export async function listGistCommentsCore({ token, gistId, perPage, page }: { t
   const { data } = await octokit.rest.gists.listComments({ gist_id: gistId, per_page: perPage, page })
   return pagedList(data.map(comment => ({
     id: comment.id,
-    body: comment.body,
+    body: stripHiddenContent(comment.body),
     author: comment.user?.login,
     url: comment.url,
     createdAt: comment.created_at,

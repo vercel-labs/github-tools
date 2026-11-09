@@ -38,5 +38,6 @@ export default githubExtension({
   preset: 'auto',
   evaluation: { model: routingModel },
   requireApproval: { createIssue: 'once' },
+  guardrails: { repositories: ['vercel-labs/*'] },
   overrides: { getRepository: { description: 'Smoke: get repository' } },
 })

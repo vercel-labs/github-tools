@@ -36,7 +36,7 @@ Tools are exposed to the model as `<namespace>__<toolName>`: `agent/extensions/g
 
 ## Config schema
 
-`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `requireApproval`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`.
+`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `dryRun`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it.
 
 `token` is `string | (() => Promise<string>)` (`GithubTokenInput`). Pass an async provider for rotating GitHub App installation tokens. Falls back to `GITHUB_TOKEN` when omitted; `connector` takes priority.
 
@@ -61,9 +61,10 @@ The tool file is a `defineDynamic` function that eve runs before every model cal
 
 - Default: write tools → `always()`
 - `'once'`, predicates, `always()` / `never()` passthrough
-- `requireApproval: 'auto'` (global or per tool): low-risk writes the user asked for run without a prompt; other writes keep `always()`. Needs `ai` >= 7.0.105
+- `requireApproval: 'auto'` (global or per tool): low-risk writes the user asked for run without a prompt; other writes keep `always()`. Needs `ai` >= 7.0.105. A prompt it asks for ends with the evaluation model's verdict ("Add labels on owner/repo#12? Hard to undo (risk 2 of 2), 100% likely you asked for it."); a call it lets through gets `clearedBy: { policy: 'approval' }` on `call.started` (eve doesn't keep the verdict)
 - `preset: 'auto'`: the evaluation model picks the tools the session's first request needs; those and the core read tools stay listed for the session so the provider's prompt cache holds (`evaluation.scope: 'turn'` picks again for each request); every other tool is deferred, reachable through `eve__search` / `eve__tool` with its approval policy intact. Tools already called in the session stay listed. `evaluation: { selection: 'presets' }` routes to at most two presets instead. Tune both with `evaluation`
 - Approval **pauses the session durably** until a human responds
+- On eve's GitHub channel, `context` fills from the thread (repository, issue or PR number); configured `context` fields win. Gate who starts a turn in `onComment` with `GET /repos/{owner}/{repo}/collaborators/{login}/permission` through `ctx.github.request`. Markdown schedules can't wait for approval, so give scheduled writes a predicate such as `({ session }) => session.schedule === undefined`
 
 ## Vercel Connect
 
