@@ -186,6 +186,10 @@ createGithubTools({
 
 The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. Even without `guardrails`, a call whose input contains what looks like a credential (a GitHub, npm, Slack, Stripe, Anthropic, OpenAI, Google or AWS key, or a private key) fails; set `guardrails: { secrets: 'allow' }` to turn that off. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/guide/approval-control#guardrails).
 
+### Text from GitHub
+
+Tool results drop HTML comments and invisible Unicode characters from issue, pull request, comment, review, release and discussion bodies, since a rendered page hides them but a model reads them. The default agent prompts tell the model to treat GitHub text as data and act only on what the user asked. See [Text from GitHub](https://github-tools.com/guide/approval-control#text-from-github).
+
 ### Tool overrides
 
 The `overrides` option lets you customize any AI SDK [`tool()`](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling) property on a per-tool basis, keyed by tool name.
