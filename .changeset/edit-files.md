@@ -13,4 +13,4 @@ editFiles({
 })
 ```
 
-`find` must match exactly once; otherwise nothing is written and the error says whether the text was missing or ambiguous. Like `createOrUpdateFile`, it takes `author`, `committer` and `coAuthors`; a custom author or committer commits through the REST API, one commit per file. It's in the `pr-author` and `maintainer` presets, requires approval by default, and its Connect scopes are `contents:write` and `pull_requests:write`.
+`find` must match exactly once; otherwise nothing is written and the error says whether the text was missing or ambiguous. To change more files later, call `editFiles` again on the same `branch`: the new commit lands on the open pull request, and passing `pullRequest` again returns that pull request (`existing: true`) instead of failing. Like `createOrUpdateFile`, it takes `author`, `committer` and `coAuthors`; a custom author or committer commits through the REST API, one commit per file. It's in the `pr-author` and `maintainer` presets, requires approval by default, and its Connect scopes are `contents:write` and `pull_requests:write`.

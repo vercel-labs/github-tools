@@ -7,7 +7,9 @@ function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 }
 
-function stubGithub({ branchExists = false }: { branchExists?: boolean } = {}) {
+const GUIDE = '# Guide\n\nSet `foo` to enable it.\n'
+
+function stubGithub({ branchExists = false, openPulls = [] }: { branchExists?: boolean, openPulls?: unknown[] } = {}) {
   const requests: Array<{ method: string, path: string, ref?: string | null, body?: unknown }> = []
   vi.stubGlobal('fetch', vi.fn<typeof globalThis.fetch>(async (input, init) => {
     const url = new URL(decodeURIComponent(String(input)))
@@ -19,6 +21,8 @@ function stubGithub({ branchExists = false }: { branchExists?: boolean } = {}) {
     if (route === 'GET /repos/vercel/ai/git/ref/heads/docs/wording') return branchExists ? json({ object: { sha: 'branch-sha' } }) : json({ message: 'Not Found' }, 404)
     if (route === 'GET /repos/vercel/ai/git/ref/heads/main') return json({ object: { sha: 'main-sha' } })
     if (route === 'GET /repos/vercel/ai/contents/README.md') return json({ type: 'file', path: 'README.md', sha: 'readme-sha', content: Buffer.from(README).toString('base64') })
+    if (route === 'GET /repos/vercel/ai/contents/docs/guide.md') return json({ type: 'file', path: 'docs/guide.md', sha: 'guide-sha', content: Buffer.from(GUIDE).toString('base64') })
+    if (route === 'GET /repos/vercel/ai/pulls') return json(openPulls)
     if (route === 'POST /repos/vercel/ai/git/refs') return json({ ref: 'refs/heads/docs/wording' }, 201)
     if (route === 'POST /graphql') return json({ data: { createCommitOnBranch: { commit: { oid: 'commit-sha', url: 'https://github.com/vercel/ai/commit/commit-sha' } } } })
     if (route === 'PUT /repos/vercel/ai/contents/README.md') return json({ content: { path: 'README.md', sha: 'new-sha' }, commit: { sha: 'rest-commit', html_url: 'https://github.com/vercel/ai/commit/rest-commit' } })
@@ -54,7 +58,7 @@ describe('editFiles', () => {
       createdBranch: true,
       files: [{ path: 'README.md', replacements: 1 }],
       commits: [{ sha: 'commit-sha', url: 'https://github.com/vercel/ai/commit/commit-sha' }],
-      pullRequest: { number: 7, title: 'docs: reword the opening paragraph', url: 'https://github.com/vercel/ai/pull/7', draft: false },
+      pullRequest: { number: 7, title: 'docs: reword the opening paragraph', url: 'https://github.com/vercel/ai/pull/7', draft: false, existing: false },
     })
     const commit = requests.find(request => request.path === '/graphql')!.body as { variables: { input: { expectedHeadOid: string, fileChanges: { additions: Array<{ contents: string }> } } } }
     expect(commit.variables.input.expectedHeadOid).toBe('main-sha')
@@ -64,6 +68,49 @@ describe('editFiles', () => {
       'POST /graphql',
       'POST /repos/vercel/ai/pulls',
     ])
+  })
+
+  it('commits edits to several files, and several edits to one file, in one commit', async () => {
+    const requests = stubGithub()
+    const result = await editFilesCore({
+      ...args,
+      edits: [
+        { path: 'README.md', find: 'A typed tool layer', replace: 'A typed toolkit' },
+        { path: 'docs/guide.md', find: 'Set `foo`', replace: 'Set `bar`' },
+        { path: 'README.md', find: 'GitHub AI agents', replace: 'GitHub agents' },
+        { path: 'docs/new.md', content: '# New\n' },
+      ],
+      pullRequest: { title: 'Rename foo', draft: false },
+    })
+    expect(result.files).toEqual([
+      { path: 'README.md', replacements: 2 },
+      { path: 'docs/guide.md', replacements: 1 },
+      { path: 'docs/new.md', replacements: 0 },
+    ])
+    const commits = requests.filter(request => request.path === '/graphql')
+    expect(commits).toHaveLength(1)
+    const additions = (commits[0]!.body as { variables: { input: { fileChanges: { additions: Array<{ path: string, contents: string }> } } } }).variables.input.fileChanges.additions
+    expect(additions.map(({ path, contents }) => [path, Buffer.from(contents, 'base64').toString()])).toEqual([
+      ['README.md', '# github-tools\n\nA typed toolkit for GitHub agents.\n'],
+      ['docs/guide.md', '# Guide\n\nSet `bar` to enable it.\n'],
+      ['docs/new.md', '# New\n'],
+    ])
+    expect(requests.filter(request => request.method === 'POST' && request.path === '/repos/vercel/ai/pulls')).toHaveLength(1)
+  })
+
+  it('returns the open pull request of an existing branch instead of opening another', async () => {
+    const requests = stubGithub({ branchExists: true, openPulls: [{ number: 3, title: 'Rename foo', html_url: 'https://github.com/vercel/ai/pull/3', draft: false }] })
+    const result = await editFilesCore({ ...args, edits: [{ path: 'README.md', find: 'A typed tool layer', replace: 'A typed toolkit' }], pullRequest: { title: 'Rename foo again', draft: false } })
+    expect(result.pullRequest).toEqual({ number: 3, title: 'Rename foo', url: 'https://github.com/vercel/ai/pull/3', draft: false, existing: true })
+    expect(requests.find(request => request.method === 'GET' && request.path === '/repos/vercel/ai/pulls')).toBeDefined()
+    expect(requests.some(request => request.method === 'POST' && request.path === '/repos/vercel/ai/pulls')).toBe(false)
+  })
+
+  it('opens a pull request for an existing branch that has none', async () => {
+    const requests = stubGithub({ branchExists: true })
+    const result = await editFilesCore({ ...args, edits: [{ path: 'README.md', find: 'A typed tool layer', replace: 'A typed toolkit' }], pullRequest: { title: 'Rename foo', draft: false } })
+    expect(result.pullRequest).toMatchObject({ number: 7, existing: false })
+    expect(requests.some(request => request.method === 'POST' && request.path === '/repos/vercel/ai/pulls')).toBe(true)
   })
 
   it.each([

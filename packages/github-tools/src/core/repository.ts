@@ -480,7 +480,7 @@ export const editFilesInputSchema = z.object({
     title: z.string().describe('Pull request title'),
     body: z.string().optional().describe('Pull request description'),
     draft: z.boolean().optional().default(false).describe('Open the pull request as a draft'),
-  }).optional().describe('Open a pull request from `branch` into `baseBranch` after the commit'),
+  }).optional().describe('Open a pull request from `branch` into `baseBranch` after the commit. When `branch` already has an open pull request, that one is returned (`existing: true`) and left as it is'),
 })
 
 export const editFilesDescription = 'Edit files and commit them in one call: replace exact text in a file without reading or resending the whole file, or write whole files, on a new or existing branch, and optionally open a pull request. Prefer this over createBranch + createOrUpdateFile + createPullRequest.'
@@ -546,7 +546,12 @@ export async function editFilesCore({
 
   if (branchSha === undefined) await octokit.rest.git.createRef({ owner, repo, ref: `refs/heads/${branch}`, sha: headSha })
   const commits = await commitFileChanges(octokit, { owner, repo, branch, headSha, message: composeCommitMessage(message, coAuthors), changes: [...files.values()], author, committer })
-  const pr = pullRequest && (await octokit.rest.pulls.create({ owner, repo, title: pullRequest.title, body: pullRequest.body, head: branch, base, draft: pullRequest.draft })).data
+  // A branch that already existed may have its pull request open: return it rather than failing
+  // with "A pull request already exists" after the commit has landed.
+  const openPr = pullRequest && branchSha !== undefined
+    ? (await octokit.rest.pulls.list({ owner, repo, head: `${owner}:${branch}`, state: 'open', per_page: 1 })).data[0]
+    : undefined
+  const pr = openPr ?? (pullRequest && (await octokit.rest.pulls.create({ owner, repo, title: pullRequest.title, body: pullRequest.body, head: branch, base, draft: pullRequest.draft })).data)
 
   return {
     branch,
@@ -554,7 +559,7 @@ export async function editFilesCore({
     createdBranch: branchSha === undefined,
     files: [...files.values()].map(({ path, replacements }) => ({ path, replacements })),
     commits,
-    ...pr ? { pullRequest: { number: pr.number, title: pr.title, url: pr.html_url, draft: pr.draft } } : {},
+    ...pr ? { pullRequest: { number: pr.number, title: pr.title, url: pr.html_url, draft: pr.draft, existing: openPr !== undefined } } : {},
   }
   })
 }
