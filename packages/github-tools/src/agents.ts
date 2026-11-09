@@ -1,11 +1,10 @@
-import { ToolLoopAgent, tool } from 'ai'
+import { ToolLoopAgent, asSchema, tool } from 'ai'
 import type { ModelMessage, ToolLoopAgentSettings, ToolSet } from 'ai'
 import { z } from 'zod'
 import { createGithubTools } from './index'
 import type { AllGithubTools, GithubToolsBaseOptions } from './core/tool-types'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
-import { assertEvaluationAvailable, evaluatePresets, evaluateTools, evaluationRequest, fallbackPresets, fallbackTools } from './core/evaluation'
-import { GITHUB_TOOL_CATALOG } from './core/catalog'
+import { assertEvaluationAvailable, evaluatePresets, evaluateTools, evaluationRequest, fallbackPresets, fallbackTools, type GithubEvaluationOptions } from './core/evaluation'
 import { githubToolsErrors } from './core/errors'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from './core/tool-names'
 import { resolveInstructions } from './core/instructions'
@@ -13,27 +12,44 @@ export { resolveInstructions } from './core/instructions'
 
 const MAX_CACHED_ROUTES = 100
 
-/** Name of the tool `selection: 'tools'` adds so the model can list more GitHub tools. */
-export const ENABLE_GITHUB_TOOLS = 'enableGithubTools'
+/** Name of the tool `preset: 'auto'` adds so the model can call GitHub tools that were not picked. */
+export const CALL_GITHUB_TOOL = 'callGithubTool'
 
-const enableGithubToolsInput = z.object({
-  names: z.array(z.enum(ALL_GITHUB_TOOL_NAMES as [GithubToolName, ...GithubToolName[]])).describe('GitHub tool names to list from the next step'),
+const callGithubToolInput = z.object({
+  name: z.enum(ALL_GITHUB_TOOL_NAMES as [GithubToolName, ...GithubToolName[]]).describe('GitHub tool to call'),
+  input: z.record(z.string(), z.unknown()).optional().describe('The tool\'s arguments. Omit to get its description and input schema without calling it.'),
 })
 
-const enableGithubToolsTool = tool({
-  description: 'List more GitHub tools for this task. Your tool list shows the GitHub tools picked for the request; call this with the names of any others you need (every GitHub tool is in the `names` enum), and they are listed from your next step.',
-  inputSchema: enableGithubToolsInput,
-  execute: async ({ names }) => ({ enabled: names.map(name => ({ name, description: GITHUB_TOOL_CATALOG[name].description })) }),
-})
-
-// Tools the model asked for with `enableGithubTools`, in this call or an earlier one. The history
-// keeps the model's raw input, so a call that fails the tool's schema enables nothing.
-function enabledTools(messages: readonly ModelMessage[]): GithubToolName[] {
-  return messages.flatMap(message => message.role === 'assistant' && Array.isArray(message.content)
-    ? message.content.flatMap(part => part.type === 'tool-call' && part.toolName === ENABLE_GITHUB_TOOLS
-      ? enableGithubToolsInput.safeParse(part.input).data?.names ?? []
-      : [])
-    : [])
+// One fixed tool reaches every GitHub tool that was not picked, so the tool list, which starts
+// the provider's cached prompt, never changes during the conversation.
+function callGithubTool(tools: AllGithubTools) {
+  const validate = async (name: GithubToolName, input: unknown) => {
+    const result = await asSchema(tools[name].inputSchema).validate?.(input)
+    return result ?? { success: true as const, value: input }
+  }
+  return tool({
+    description: 'Call a GitHub tool that is not in your tool list. Every GitHub tool is in the `name` enum. Pass its arguments as `input`; if you do not know them, omit `input` to get the tool\'s description and input schema first.',
+    inputSchema: callGithubToolInput,
+    needsApproval: async ({ name, input }, options) => {
+      if (input === undefined) return false
+      const parsed = await validate(name, input)
+      const needsApproval = tools[name].needsApproval
+      if (!parsed.success || needsApproval === undefined) return false
+      return typeof needsApproval === 'function' ? needsApproval(parsed.value, options) : needsApproval
+    },
+    execute: async ({ name, input }, options) => {
+      if (input === undefined) return { name, description: tools[name].description, inputSchema: await asSchema(tools[name].inputSchema).jsonSchema }
+      const parsed = await validate(name, input)
+      if (!parsed.success) throw new Error(`Invalid input for ${name}: ${parsed.error.message}\nInput schema: ${JSON.stringify(await asSchema(tools[name].inputSchema).jsonSchema)}`)
+      return tools[name].execute!(parsed.value, options)
+    },
+    toModelOutput: async ({ toolCallId, input: { name, input }, output }) => {
+      const toModelOutput = tools[name].toModelOutput
+      return input !== undefined && toModelOutput
+        ? toModelOutput({ toolCallId, input, output })
+        : { type: 'json', value: output }
+    },
+  })
 }
 
 type AgentOptions = Omit<ToolLoopAgentSettings<ToolSet>, 'model' | 'tools' | 'instructions'>
@@ -48,8 +64,8 @@ export type CreateGithubAgentOptions = AgentOptions & GithubToolsBaseOptions & {
    *
    * `'auto'` asks an evaluation model (Jev by default, see `evaluation`) which tools the
    * conversation's first request needs, and narrows `activeTools` to those and the core read
-   * tools for the whole conversation. An `enableGithubTools` tool lets the model list any other
-   * GitHub tool. With `evaluation.selection: 'presets'`, it routes each request to at most two
+   * tools for the whole conversation. A `callGithubTool` tool lets the model call any other
+   * GitHub tool without changing the tool list, so the provider's prompt cache holds. With `evaluation.selection: 'presets'`, it routes each request to at most two
    * presets instead and uses their system prompts. Needs `ai` 7.0.105 or later, checked when the
    * agent is created.
    *
@@ -80,17 +96,36 @@ function callMessages(call: { prompt?: unknown, messages?: unknown }): ModelMess
   return (call.prompt ?? call.messages ?? []) as ModelMessage[]
 }
 
+async function storeKey(kind: string, key: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))
+  return `github-tools:${kind}:${[...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')}`
+}
+
 /**
- * Routing for a request, cached per request so an approval continuation keeps its tools.
- * Only successful decisions are kept, so a request routed while the evaluator was down is routed again.
+ * Routing for a request, cached per request so an approval continuation keeps its tools, and in
+ * `evaluation.store` when set. Only successful decisions are kept, so a request routed while the
+ * evaluator was down is routed again.
  */
-function cachedRouting<T>(route: (messages: readonly ModelMessage[]) => Promise<T>, fallback: (error: unknown) => T) {
+function cachedRouting<T extends readonly string[]>(
+  kind: string,
+  route: (messages: readonly ModelMessage[]) => Promise<T>,
+  fallback: (error: unknown) => T,
+  store: GithubEvaluationOptions['store'],
+) {
   const routing = new Map<string, Promise<T>>()
   return async (messages: readonly ModelMessage[]): Promise<T> => {
     const key = JSON.stringify(evaluationRequest(messages))
     let routed = routing.get(key)
     if (!routed) {
-      routed = route(messages)
+      routed = store
+        ? storeKey(kind, key).then(async (stored) => {
+            const saved = await store.get(stored)
+            if (saved) return saved as T
+            const decided = await route(messages)
+            await store.set(stored, decided)
+            return decided
+          })
+        : route(messages)
       routing.set(key, routed)
       routed.catch(() => routing.delete(key))
       if (routing.size > MAX_CACHED_ROUTES) routing.delete(routing.keys().next().value!)
@@ -144,7 +179,7 @@ export function createGithubAgent({
   const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, overrides, context, author, committer, coAuthors })
   const byTool = preset === 'auto' && evaluation?.selection !== 'presets'
   // `activeTools` only names tools the agent has, so the tool set always holds every GitHub tool.
-  const agentTools: ToolSet = byTool ? { ...tools, [ENABLE_GITHUB_TOOLS]: enableGithubToolsTool } : tools
+  const agentTools: ToolSet = byTool ? { ...tools, [CALL_GITHUB_TOOL]: callGithubTool(tools as AllGithubTools) } : tools
   const settings = {
     ...agentOptions,
     tools: agentTools as typeof tools,
@@ -156,25 +191,19 @@ export function createGithubAgent({
   if (byTool) {
     assertEvaluationAvailable()
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
-    const prepareStep = agentOptions.prepareStep as typeof settings.prepareStep
-    const routed = cachedRouting(messages => evaluateTools(messages, evaluation), (error: unknown) => fallbackTools(error, evaluation))
-    const picks = (messages: readonly ModelMessage[]) => routed(evaluation?.scope === 'turn' ? messages : firstRequest(messages))
-    const activeTools = async (messages: readonly ModelMessage[]) =>
-      // `enableGithubTools` is in the tool set but not in its public type.
-      [...new Set<string>([...await picks(messages), ...enabledTools(messages), ENABLE_GITHUB_TOOLS])] as (keyof typeof tools)[]
+    const picks = cachedRouting('tools', messages => evaluateTools(messages, evaluation), (error: unknown) => fallbackTools(error, evaluation), evaluation?.store)
     settings.prepareCall = async (call) => {
-      const next = { ...call, activeTools: await activeTools(callMessages(call)) }
+      const messages = callMessages(call)
+      const picked = await picks(evaluation?.scope === 'turn' ? messages : firstRequest(messages))
+      // `callGithubTool` is in the tool set but not in its public type.
+      const next = { ...call, activeTools: [...picked, CALL_GITHUB_TOOL] as (keyof typeof tools)[] }
       return prepareCall ? prepareCall(next) : next
-    }
-    settings.prepareStep = async (step) => {
-      const own = { activeTools: await activeTools([...step.initialMessages, ...step.messages]) }
-      return { ...own, ...await prepareStep?.(step) }
     }
   }
   else if (preset === 'auto') {
     assertEvaluationAvailable()
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
-    const routes = cachedRouting(messages => evaluatePresets(messages, evaluation), (error: unknown) => fallbackPresets(error, evaluation))
+    const routes = cachedRouting('presets', messages => evaluatePresets(messages, evaluation), (error: unknown) => fallbackPresets(error, evaluation), evaluation?.store)
     settings.prepareCall = async (call) => {
       const selected = await routes(callMessages(call))
       const next = {

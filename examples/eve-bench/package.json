@@ -8,7 +8,8 @@
   "scripts": {
     "eval": "eve eval",
     "report": "node --experimental-strip-types scripts/report.ts",
-    "decisions": "node --experimental-strip-types scripts/decisions.ts"
+    "decisions": "node --experimental-strip-types scripts/decisions.ts",
+    "agent-conversation": "node --experimental-strip-types scripts/agent-conversation.ts"
   },
   "dependencies": {
     "@github-tools/eve-extension": "workspace:*",

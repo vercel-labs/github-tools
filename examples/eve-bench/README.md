@@ -31,4 +31,6 @@ pnpm report    # aggregates every run into .eve/bench/report.md
 
 `npx eve eval conversation` runs six different requests in one session instead of the 12 single-turn tasks, to measure prompt caching across turns (`npx eve eval tasks` runs only the single-turn tasks).
 
+`pnpm agent-conversation` sends the same six requests to `createGithubAgent` from `@github-tools/sdk` instead of eve, with AI Gateway's automatic prompt caching, and prints cache reads, cache writes and cost per request. `BENCH_CONFIG` is `all` (full catalog), `presets` (`selection: 'presets'`) or `tools` (the default `preset: 'auto'`).
+
 eve allows one dev server per agent, so run configurations one after another. Costs vary 2–4× between runs of the same task; compare token counts for small differences.

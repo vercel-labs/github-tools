@@ -363,59 +363,78 @@ describe("evaluation: { selection: 'tools' }, the default", () => {
     warn.mockRestore()
   })
 
-  it('lists the picked tools and adds the ones the model enables', async () => {
-    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9 }))
+  function scriptedModel(first: Record<string, unknown> | undefined) {
     const calls: LanguageModelV4CallOptions[] = []
-    const agent = createGithubAgent({
-      model: new MockLanguageModelV4({
-        doGenerate: async (options) => {
-          calls.push(options)
-          if (calls.length === 1) {
-            return {
-              content: [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'enableGithubTools', input: JSON.stringify({ names: ['mergePullRequest'] }) }],
-              finishReason: { unified: 'tool-calls', raw: 'tool_calls' },
-              usage,
-              warnings: [],
-            }
+    const model = new MockLanguageModelV4({
+      doGenerate: async (options) => {
+        calls.push(options)
+        if (calls.length === 1 && first) {
+          return {
+            content: [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'callGithubTool', input: JSON.stringify(first) }],
+            finishReason: { unified: 'tool-calls', raw: 'tool_calls' },
+            usage,
+            warnings: [],
           }
-          return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
-        },
-      }),
-      token: 'test',
-      preset: 'auto',
-      evaluation: { model: evaluation.model },
-      stopWhen: () => calls.length >= 2,
+        }
+        return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
+      },
     })
+    return { model, calls }
+  }
+  const listed = (call: LanguageModelV4CallOptions) => new Set((call.tools ?? []).map(tool => tool.name))
+
+  it('keeps the tool list when the model reaches a tool that was not picked', async () => {
+    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9 }))
+    const { model, calls } = scriptedModel({ name: 'mergePullRequest' })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model }, stopWhen: () => calls.length >= 2 })
     await agent.generate({ prompt: 'Merge vercel/ai#12 once it is green' })
-    const listed = (call: LanguageModelV4CallOptions) => new Set((call.tools ?? []).map(tool => tool.name))
-    expect(listed(calls[0]!)).toEqual(new Set([...core, 'getPullRequest', 'enableGithubTools']))
-    expect(listed(calls[1]!)).toEqual(new Set([...core, 'getPullRequest', 'enableGithubTools', 'mergePullRequest']))
+    expect(listed(calls[0]!)).toEqual(new Set([...core, 'getPullRequest', 'callGithubTool']))
+    expect(listed(calls[1]!)).toEqual(listed(calls[0]!))
+    // Without `input`, the result describes the tool instead of calling it.
+    expect(JSON.stringify(calls[1]!.prompt)).toContain('mergeMethod')
     expect(evaluation.calls).toHaveLength(1)
   })
 
-  it('ignores an enableGithubTools call with invalid input instead of failing the next step', async () => {
+  it('returns the input schema when callGithubTool gets invalid input', async () => {
     const evaluation = evaluationModel(() => ({}))
-    const calls: LanguageModelV4CallOptions[] = []
-    const agent = createGithubAgent({
-      model: new MockLanguageModelV4({
-        doGenerate: async (options) => {
-          calls.push(options)
-          return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
-        },
-      }),
-      token: 'test',
-      preset: 'auto',
-      evaluation: { model: evaluation.model, selection: 'tools' },
-    })
-    await agent.generate({
-      messages: [
-        { role: 'user', content: 'Merge vercel/ai#12' },
-        { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'enableGithubTools', input: null }] },
-        { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'call-1', toolName: 'enableGithubTools', output: { type: 'error-text', value: 'Invalid input' } }] },
-        { role: 'user', content: 'Merge vercel/ai#12' },
-      ],
-    })
-    expect(new Set((calls[0]!.tools ?? []).map(tool => tool.name))).toEqual(new Set([...core, 'enableGithubTools']))
+    const { model, calls } = scriptedModel({ name: 'getRepository', input: { owner: 1 } })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model }, stopWhen: () => calls.length >= 2 })
+    await agent.generate({ prompt: 'Describe vercel/ai' })
+    const prompt = JSON.stringify(calls[1]!.prompt)
+    expect(prompt).toContain('Invalid input for getRepository')
+    expect(prompt).toContain('Repository owner (user or organization)')
+  })
+
+  it('asks for approval before callGithubTool runs a write tool', async () => {
+    const evaluation = evaluationModel(() => ({}))
+    const { model } = scriptedModel({ name: 'mergePullRequest', input: { owner: 'vercel', repo: 'ai', pullNumber: 12 } })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model } })
+    const result = await agent.generate({ prompt: 'Merge vercel/ai#12' })
+    expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-approval-request' }))
+  })
+
+  it('runs a read tool through callGithubTool', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(JSON.stringify([{ name: 'main', commit: { sha: 'abc123' }, protected: true }]), { headers: { 'content-type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetch)
+    const evaluation = evaluationModel(() => ({}))
+    const { model, calls } = scriptedModel({ name: 'listBranches', input: { owner: 'vercel', repo: 'ai' } })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model }, stopWhen: () => calls.length >= 2 })
+    await agent.generate({ prompt: 'List the branches of vercel/ai' })
+    vi.unstubAllGlobals()
+    expect(String(fetch.mock.calls[0]![0])).toContain('/repos/vercel/ai/branches')
+    expect(listed(calls[1]!)).toEqual(listed(calls[0]!))
+  })
+
+  it('reuses a decision from evaluation.store instead of deciding again in a new agent', async () => {
+    const saved = new Map<string, readonly string[]>()
+    const store = { get: async (key: string) => saved.get(key), set: async (key: string, value: readonly string[]) => void saved.set(key, value) }
+    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9 }))
+    for (let i = 0; i < 2; i++) {
+      const { model } = scriptedModel(undefined)
+      await createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model, store } }).generate({ prompt: 'Merge vercel/ai#12' })
+    }
+    expect(evaluation.calls).toHaveLength(1)
+    expect([...saved]).toEqual([[expect.stringMatching(/^github-tools:tools:[0-9a-f]{64}$/), [...core, 'getPullRequest']]])
   })
 
   async function twoRequests(scope?: 'turn' | 'session') {
@@ -438,7 +457,6 @@ describe("evaluation: { selection: 'tools' }, the default", () => {
       { role: 'assistant', content: 'Merged.' },
       { role: 'user', content: 'Now label vercel/ai#13 as a bug' },
     ] })
-    const listed = (call: LanguageModelV4CallOptions) => new Set((call.tools ?? []).map(tool => tool.name))
     return { first: listed(calls[0]!), second: listed(calls[1]!), decisions: evaluation.calls.length }
   }
 

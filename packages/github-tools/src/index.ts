@@ -27,7 +27,7 @@ export type { ApprovalConfig, StaticApprovalConfig, ToolApprovalMode } from './c
 export type { GithubEvaluationOptions } from './core/evaluation'
 export { AUTO_APPROVAL_TOOLS, DEFAULT_EVALUATION_MODEL, selectPresets, selectTools } from './core/evaluation'
 export { CORE_READ_TOOLS } from './core/presets'
-export { ENABLE_GITHUB_TOOLS } from './agents'
+export { CALL_GITHUB_TOOL } from './agents'
 export type { GithubToolsContext } from './core/context'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
 export type { GithubToolName } from './core/tool-names'

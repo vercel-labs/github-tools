@@ -47,8 +47,8 @@ export type GithubEvaluationOptions = {
   /**
    * What `preset: 'auto'` picks. `'tools'` asks the decision model about each tool and lists only
    * the likely ones plus the core read tools (`CORE_READ_TOOLS`), so the model sees far fewer tool
-   * definitions. The rest stays reachable: eve defers it, and `createGithubAgent` adds an
-   * `enableGithubTools` tool. `'presets'` lists the tools of up to `maxPresets` presets and, on
+   * definitions. The rest stays reachable: eve defers it, and `createGithubAgent` adds a
+   * `callGithubTool` tool. `'presets'` lists the tools of up to `maxPresets` presets and, on
    * `createGithubAgent`, uses their system prompts.
    * @default 'tools'
    */
@@ -57,12 +57,23 @@ export type GithubEvaluationOptions = {
    * How long a `preset: 'auto'` decision lasts. `'session'` decides once, on the conversation's
    * first request, so the listed tools, and the provider's cached prompt prefix they start, stay
    * the same for the rest of the conversation; later needs go through deferred tools (eve) or
-   * `enableGithubTools` (`createGithubAgent`, which doesn't support it with `selection: 'presets'`).
+   * `callGithubTool` (`createGithubAgent`, which doesn't support it with `selection: 'presets'`).
    * `'turn'` decides again for each new request, which changes the tool list and makes the
    * provider write the whole conversation to its prompt cache again.
    * @default 'session', except `'turn'` for presets on `createGithubAgent`
    */
   scope?: 'turn' | 'session'
+  /**
+   * Keeps `createGithubAgent`'s `preset: 'auto'` decisions across processes, such as serverless
+   * instances, under keys derived from the request they were made for. Without it, a decision
+   * lives in this process's memory, and another process decides again: that costs a decision
+   * call, and a different pick changes the tool list and invalidates the provider's prompt cache.
+   * The eve extension keeps decisions in the session and ignores this option.
+   */
+  store?: {
+    get: (key: string) => Promise<readonly string[] | undefined>
+    set: (key: string, value: readonly string[]) => Promise<void>
+  }
   /**
    * Lowest probability for `selection: 'tools'` to list a tool beyond the core read tools.
    * @default 0.5
