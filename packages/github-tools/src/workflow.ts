@@ -1,7 +1,5 @@
 import { WorkflowAgent } from '@ai-sdk/workflow'
 import type {
-  WorkflowAgentGenerateOptions,
-  WorkflowAgentGenerateResult,
   WorkflowAgentOptions,
   WorkflowAgentStreamOptions,
   WorkflowAgentStreamResult,
@@ -20,11 +18,19 @@ import type { GithubTokenInput } from './core/token'
 import type { GithubToolsContext } from './core/context'
 import type { Context } from '@ai-sdk/provider-utils'
 
+// Read from `WorkflowAgent` instead of importing `WorkflowAgentGenerateOptions` and
+// `WorkflowAgentGenerateResult`, which `@ai-sdk/workflow` only exports from 2.0.59: importing them
+// would break type checking for `.stream()` users on older supported versions.
+type WorkflowGenerate<TTools extends ToolSet> = WorkflowAgent<TTools> extends { generate: infer Generate } ? Generate : never
+
+/** Options of {@link DurableGithubAgent.generate}: those of `WorkflowAgent.generate()`. */
+export type DurableGithubAgentGenerateOptions<TTools extends ToolSet = ToolSet> = WorkflowGenerate<TTools> extends (options: infer Options) => unknown ? Options : never
+
 /**
  * Result of {@link DurableGithubAgent.generate}: the `WorkflowAgent` generation result. Read the
  * fields you need inside the workflow and return those, since the result itself is not serializable.
  */
-export type DurableGithubAgentGenerateResult<TTools extends ToolSet = ToolSet, OUTPUT = string> = WorkflowAgentGenerateResult<TTools, Context, OUTPUT>
+export type DurableGithubAgentGenerateResult<TTools extends ToolSet = ToolSet> = WorkflowGenerate<TTools> extends (options: never) => Promise<infer Result> ? Result : never
 
 /**
  * A GitHub agent built on {@link WorkflowAgent}. Call both methods from a `"use workflow"`
@@ -59,9 +65,7 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
    * A write that needs approval ends the call with a `tool-approval-request` in
    * `responseMessages`; append the user's `tool-approval-response` and call `generate()` again.
    */
-  generate<TGenerateTools extends TTools = TTools, OUTPUT = string>(
-    options: WorkflowAgentGenerateOptions<TGenerateTools, Context, OUTPUT>,
-  ): Promise<DurableGithubAgentGenerateResult<TGenerateTools, OUTPUT>> {
+  generate(options: DurableGithubAgentGenerateOptions<TTools>): Promise<DurableGithubAgentGenerateResult<TTools>> {
     if (typeof this.agent.generate !== 'function') throw githubToolsErrors.DURABLE_GENERATE_UNAVAILABLE()
     return this.agent.generate(options)
   }
