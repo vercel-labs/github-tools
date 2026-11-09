@@ -8,17 +8,23 @@ import { mergeContextArgs, softenContextSchema, type GithubToolsContext } from '
 import { resolvePresetTools, type GithubToolPreset, type PresetToolName } from '../core/presets'
 import { githubTokenCall, withGithubGuardrails, type GithubTokenInput } from '../core/token'
 import type { GithubGuardrails } from '../core/guardrails'
-import { dryRunWrite } from '../core/dry-run'
+import { dryRunWrite, type GithubDryRunResult } from '../core/dry-run'
 import type { GithubToolName } from '../core/tool-names'
 import { ALL_GITHUB_TOOL_NAMES } from '../core/tool-names'
 import { stripRateLimit } from '../core/rate-limit'
 import type { CommitIdentity } from '../types'
+import type { GithubWriteToolName } from '../core/write-tools'
 
 type Catalog = typeof GITHUB_TOOL_CATALOG
-/** A TanStack server tool with the catalog's input schema and core return type. */
+type CoreResult<N extends GithubToolName> = Awaited<ReturnType<(typeof GITHUB_TOOL_CORES)[N]>>
+
+/**
+ * A TanStack server tool with the catalog's input schema and core return type. A write tool created
+ * with `dryRun: true` returns a `GithubDryRunResult` instead, so narrow with `'dryRun' in result`.
+ */
 export type GithubTanstackTool<N extends GithubToolName = GithubToolName> = N extends GithubToolName
   ? Omit<ServerTool<Catalog[N]['inputSchema'], undefined, N, unknown, boolean>, 'execute'> & {
-    execute: (input: z.input<Catalog[N]['inputSchema']>) => ReturnType<(typeof GITHUB_TOOL_CORES)[N]>
+    execute: (input: z.input<Catalog[N]['inputSchema']>) => Promise<N extends GithubWriteToolName ? CoreResult<N> | GithubDryRunResult : CoreResult<N>>
   }
   : never
 
