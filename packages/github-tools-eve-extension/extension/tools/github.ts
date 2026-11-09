@@ -286,6 +286,25 @@ function describeGithubCall(name: GithubToolName, inputSchema: z.ZodType, input:
   return `${action[0]!.toUpperCase()}${action.slice(1)}${target}`
 }
 
+const PAST_TENSE: Record<string, string> = {
+  add: 'Added', cancel: 'Cancelled', close: 'Closed', create: 'Created', delete: 'Deleted', fork: 'Forked',
+  mark: 'Marked', merge: 'Merged', remove: 'Removed', reply: 'Replied', request: 'Requested', rerun: 'Reran',
+  resolve: 'Resolved', trigger: 'Triggered', update: 'Updated',
+}
+
+// "Created issue on owner/repo#123" once a write succeeds, with the number of what it created.
+// Reads return '', which keeps their start label.
+function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, output: unknown) {
+  if (!writeToolName(name)) return ''
+  const created = output !== null && typeof output === 'object' && 'number' in output && typeof output.number === 'number' ? output.number : undefined
+  const target = created !== undefined && input.pullNumber === undefined && input.issueNumber === undefined && input.discussionNumber === undefined
+    ? { ...input, issueNumber: created }
+    : input
+  const [verb, ...rest] = describeGithubCall(name, inputSchema, target).split(' ')
+  const past = PAST_TENSE[verb!.toLowerCase()]
+  return past ? [past, ...rest].join(' ') : ''
+}
+
 // eve runs this before every model call; `ctx.memo` keeps the `'auto'` routing fixed
 // for the session or the turn, across processes. With `'auto'`, the picked tools (or, with
 // `evaluation.selection: 'presets'`, the routed presets) are listed and every other tool
@@ -332,7 +351,10 @@ export default defineDynamic(async (ctx) => {
             response: responseCtx => runGithubEveApprovalResponse(name, responseCtx),
           }),
       },
-      label: { start: input => describeGithubCall(name, entry.inputSchema, input as Record<string, unknown>) },
+      label: {
+        start: input => describeGithubCall(name, entry.inputSchema, input as Record<string, unknown>),
+        complete: (input, output) => describeGithubResult(name, entry.inputSchema, input as Record<string, unknown>, output),
+      },
       toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
       ...(override?.outputSchema !== undefined && { outputSchema: override.outputSchema }),
       execute: async (input, toolCtx) => runGithubEveTool(name, input, toolCtx),

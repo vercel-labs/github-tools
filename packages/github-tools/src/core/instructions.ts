@@ -6,9 +6,11 @@ Call independent read tools in the same step when you already know the arguments
 Bodies default to detail summary; patches default to includePatch false; prefer getFileContent with startLine/endLine or maxLines for large files.
 Paged lists return { items, hasMore, page, nextPage }. When hasMore, call with nextPage or raise maxPages — never the same page. Prefer path/author/since/until on listCommits instead of walking history. Prefer a path prefix on getRepositoryTree over recursive true.`
 
+const COMPOSITE_RULE = 'Prefer getPullRequestContext, getIssueContext, getReleaseContext, or getCiFailureContext for multi-part reads instead of chaining separate tools.'
+
 const DEFAULT_INSTRUCTIONS = `You are a helpful GitHub assistant. You can read and explore repositories, issues, pull requests, discussions, commits, code, gists, and workflows. You can also create issues, pull requests, comments, gists, reactions, trigger workflows, and update files when asked.
 
-Prefer getPullRequestContext, getIssueContext, getReleaseContext, or getCiFailureContext for multi-part reads instead of chaining separate tools.`
+${COMPOSITE_RULE}`
 
 // Preset bodies without SHARED_RULES, so several presets combine into one prompt.
 const PRESET_INSTRUCTIONS: Record<GithubToolPreset, string> = {
@@ -138,4 +140,23 @@ export function resolveInstructions(options: {
   const contextBlock = options.context ? formatContextInstructions(options.context) : ''
   if (contextBlock) return `${prompt}\n\n${contextBlock}`
   return prompt
+}
+
+/**
+ * Guidance for using the GitHub tools, for an agent that has its own system prompt, such as an eve
+ * agent mounting the GitHub extension. Unlike {@link resolveInstructions}, it leaves out the
+ * "You are …" opener: the preset's tool rules (or, without a preset, the rule to prefer the
+ * combined read tools), the shared rules, and the working context.
+ */
+export function resolveToolGuidance(options: {
+  preset?: GithubToolPreset | GithubToolPreset[]
+  context?: GithubToolsContext
+}): string {
+  const presets = options.preset === undefined ? [] : [options.preset].flat()
+  // Each preset prompt is an opener paragraph followed by its tool rules.
+  const body = presets.length > 0
+    ? [...new Set(presets)].map(preset => PRESET_INSTRUCTIONS[preset].split('\n\n').slice(1).join('\n\n')).join('\n\n')
+    : COMPOSITE_RULE
+  const contextBlock = options.context ? formatContextInstructions(options.context) : ''
+  return [body, SHARED_RULES, contextBlock].filter(Boolean).join('\n\n')
 }

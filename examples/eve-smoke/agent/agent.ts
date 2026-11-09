@@ -20,6 +20,8 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__createIssue', input: { ...target, title: 'smoke' } }] }
       case 'deferred read':
         return { toolCalls: [{ name: 'eve__tool', input: { name: 'github__listBranches', input: target } }] }
+      case 'instructions':
+        return messages.filter(message => message.role === 'system').map(message => message.text).join('\n')
       case 'routing':
         return String(routingCalls())
       default:
