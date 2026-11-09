@@ -6,6 +6,7 @@ import {
   evaluatePresets,
   evaluateTools,
   executeGithubEveTool,
+  githubGuardrailViolation,
   fallbackPresets,
   fallbackTools,
   formatGithubEveToolOutput,
@@ -50,6 +51,7 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
     author,
     committer,
     coAuthors,
+    guardrails,
   } = extension.config
 
   const includeNames = include as GithubToolName[] | undefined
@@ -89,6 +91,7 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
     author,
     committer,
     coAuthors,
+    guardrails,
   }
 }
 
@@ -282,6 +285,8 @@ function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalV
 async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
+  const reason = githubGuardrailViolation(name, ctx.toolInput as Record<string, unknown>, extension.config)
+  if (reason) return { type: 'denied', reason }
 
   const value = configuredApprovalValue(name)!
   if (value === 'auto') {

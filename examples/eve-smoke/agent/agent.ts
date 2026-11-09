@@ -20,6 +20,8 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__createIssue', input: { ...target, title: 'smoke' } }] }
       case 'failing write':
         return { toolCalls: [{ name: 'github__createIssue', input: { owner: 'vercel-labs', repo: 'missing', title: 'smoke' } }] }
+      case 'outside write':
+        return { toolCalls: [{ name: 'github__createIssue', input: { owner: 'vercel', repo: 'next.js', title: 'smoke' } }] }
       case 'deferred read':
         return { toolCalls: [{ name: 'eve__tool', input: { name: 'github__listBranches', input: target } }] }
       case 'instructions':

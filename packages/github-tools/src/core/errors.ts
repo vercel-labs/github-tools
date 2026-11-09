@@ -71,6 +71,13 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Upgrade `@ai-sdk/workflow` to 2.0.59 or later, or call `.stream()` instead.',
     link: 'https://github-tools.com/frameworks/vercel-workflow#non-streaming-bot-background-job',
   },
+  GUARDRAIL_BLOCKED: {
+    status: 403,
+    message: ({ reason }: { reason: string }) => `Blocked by guardrails: ${reason}`,
+    why: 'The call targets a repository or branch outside the `guardrails` these tools were created with. Guardrails apply whoever approves the call.',
+    fix: 'Act on a repository and branch the guardrails allow, such as a branch matching the allowed patterns, or ask the user to change `guardrails`.',
+    link: 'https://github-tools.com/guide/approval-control#guardrails',
+  },
   EVALUATION_UNAVAILABLE: {
     status: 500,
     message: '`requireApproval: \'auto\'` and `preset: \'auto\'` need `experimental_decide` (or `experimental_evaluate`) from `ai` 7.0.105 or later.',

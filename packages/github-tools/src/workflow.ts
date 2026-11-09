@@ -110,6 +110,11 @@ export type CreateDurableGithubAgentOptions =
      */
     overrides?: GithubToolsBaseOptions['overrides']
     /**
+     * Repositories and branches the tools may act on, checked before each call reaches GitHub,
+     * as on `createGithubTools`.
+     */
+    guardrails?: GithubToolsBaseOptions['guardrails']
+    /**
      * Fully replace the default system prompt.
      * When set, `preset` system prompts and `additionalInstructions` are ignored.
      */
@@ -191,9 +196,10 @@ export function createDurableGithubAgent({
   author,
   committer,
   coAuthors,
+  guardrails,
   ...agentOptions
 }: CreateDurableGithubAgentOptions): DurableGithubAgent<AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
-  const tools = createGithubTools({ token, requireApproval, preset, overrides, context, author, committer, coAuthors })
+  const tools = createGithubTools({ token, requireApproval, preset, overrides, context, author, committer, coAuthors, guardrails })
 
   return new DurableGithubAgent({
     ...agentOptions,

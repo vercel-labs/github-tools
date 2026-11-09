@@ -3,6 +3,8 @@ import { withOctokit } from '../client'
 import type { CommitIdentity } from '../types'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
 import { fetchAllPages, maxPagesSchema, pageSchema, pagedList } from './pagination'
+import { githubToolsErrors } from './errors'
+import { mergeGuardrailViolation } from './guardrails'
 import { composeCommitMessage } from './repository'
 
 export const listPullRequestsInputSchema = z.object({
@@ -177,6 +179,7 @@ export async function mergePullRequestCore({
   commitMessage,
   mergeMethod,
   coAuthors,
+  branches,
 }: {
   token: string
   owner: string
@@ -186,8 +189,15 @@ export async function mergePullRequestCore({
   commitMessage?: string
   mergeMethod: 'merge' | 'squash' | 'rebase'
   coAuthors?: CommitIdentity[]
+  /** `guardrails.branches`: the pull request's base branch must match. */
+  branches?: string[]
 }) {
   return withOctokit(token, async (octokit) => {
+  if (branches) {
+    const { data: pr } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
+    const reason = mergeGuardrailViolation(branches, pullNumber, pr.base.ref)
+    if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
+  }
   const finalMessage = composeCommitMessage(commitMessage ?? '', coAuthors) || undefined
   const { data } = await octokit.rest.pulls.merge({
     owner,
@@ -598,7 +608,7 @@ const ENABLE_AUTO_MERGE_MUTATION = `mutation($pullRequestId: ID!, $mergeMethod: 
 type AutoMergeResult = { pullRequest: { number: number, url: string, autoMergeRequest: { enabledAt: string, mergeMethod: string } | null } }
 
 /** Idempotent: enabling auto-merge again replaces the pending request with the same settings. */
-export async function enablePullRequestAutoMergeCore({ token, owner, repo, pullNumber, mergeMethod, commitTitle, commitMessage, coAuthors }: {
+export async function enablePullRequestAutoMergeCore({ token, owner, repo, pullNumber, mergeMethod, commitTitle, commitMessage, coAuthors, branches }: {
   token: string
   owner: string
   repo: string
@@ -607,9 +617,13 @@ export async function enablePullRequestAutoMergeCore({ token, owner, repo, pullN
   commitTitle?: string
   commitMessage?: string
   coAuthors?: CommitIdentity[]
+  /** `guardrails.branches`: the pull request's base branch must match. */
+  branches?: string[]
 }) {
   return withOctokit(token, async (octokit) => {
   const { data: pr } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
+  const reason = mergeGuardrailViolation(branches, pullNumber, pr.base.ref)
+  if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
   const { enablePullRequestAutoMerge: { pullRequest } } = await octokit.graphql<{ enablePullRequestAutoMerge: AutoMergeResult }>(ENABLE_AUTO_MERGE_MUTATION, {
     pullRequestId: pr.node_id,
     mergeMethod: AUTO_MERGE_METHODS[mergeMethod],

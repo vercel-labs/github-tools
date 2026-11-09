@@ -42,6 +42,12 @@ export default defineEval({
     t.check(failed.reply, includes('error'))
     t.eventsSatisfy('failed write label', events => JSON.stringify(events).includes("Couldn't create issue on vercel-labs/missing"))
 
+    // Guardrails deny a write outside the allowed repositories with the reason, before anyone is asked,
+    // even though `createIssue` was approved for the session.
+    const outside = await failed.session.send('outside write')
+    t.check(outside.interactions.length, satisfies(value => value === 0, 'a write the guardrails block asks no one'))
+    t.check(outside.reply, includes('`vercel/next.js` is outside the repositories these tools may act on'))
+
     // A tool that was not picked is deferred: the model can still call it through eve__tool.
     const deferred = await remembered.session.send('deferred read')
     t.check(deferred.requireToolCall('github__listBranches').status, equals('completed'))

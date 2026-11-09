@@ -36,7 +36,7 @@ Tools are exposed to the model as `<namespace>__<toolName>`: `agent/extensions/g
 
 ## Config schema
 
-`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `requireApproval`, `overrides`, `author`/`committer`/`coAuthors`, see `/frameworks/eve-extension#config-schema`.
+`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `overrides`, `author`/`committer`/`coAuthors`, see `/frameworks/eve-extension#config-schema`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it.
 
 `token` is `string | (() => Promise<string>)` (`GithubTokenInput`). Pass an async provider for rotating GitHub App installation tokens. Falls back to `GITHUB_TOKEN` when omitted; `connector` takes priority.
 

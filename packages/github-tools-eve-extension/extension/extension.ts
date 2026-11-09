@@ -9,6 +9,7 @@ import {
   type EveApprovalValue,
   type EveToolOverrides,
   type GithubEvaluationOptions,
+  type GithubGuardrails,
   type GithubToolName,
   type GithubToolPreset,
   type GithubWriteToolName,
@@ -201,6 +202,13 @@ export interface GithubExtensionConfig {
   committer?: CommitIdentity
   /** Co-authors to attribute on commits created by tools. */
   coAuthors?: CommitIdentity[]
+  /**
+   * Repositories and branches the tools may act on, checked before each call reaches GitHub.
+   * `repositories` takes `owner/repo` or `owner/*`; `branches` takes names or patterns such as
+   * `agent/*` and covers commits, branch creation and deletion, and merges into a pull request's
+   * base. A blocked write is denied with the reason instead of asking anyone to approve it.
+   */
+  guardrails?: GithubGuardrails
 }
 
 const presetNameSchema = z.enum(Object.keys(PRESET_TOOLS) as [GithubToolPreset, ...GithubToolPreset[]])
@@ -258,6 +266,10 @@ const configSchema = z.object({
   author: commitIdentitySchema.optional(),
   committer: commitIdentitySchema.optional(),
   coAuthors: z.array(commitIdentitySchema).optional(),
+  guardrails: z.object({
+    repositories: z.array(z.string()).optional(),
+    branches: z.array(z.string()).optional(),
+  }).optional(),
 }).superRefine((config, ctx) => {
   const { actAs } = config
   const identities = [

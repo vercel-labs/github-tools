@@ -58,6 +58,8 @@ import type { CommitIdentity, ToolOptions, GithubTool } from '../types'
 
 export type MergeToolOptions = ToolOptions & {
   coAuthors?: CommitIdentity[]
+  /** Base branches the pull request may be merged into, as in `guardrails.branches`. */
+  branches?: string[]
 }
 
 async function listPullRequestsStep(args: Parameters<typeof listPullRequestsCore>[0]) {
@@ -106,12 +108,12 @@ async function mergePullRequestStep(args: Parameters<typeof mergePullRequestCore
 }
 
 /** Merge a pull request. Requires approval by default. */
-export const mergePullRequest = (token: GithubTokenInput, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
+export const mergePullRequest = (token: GithubTokenInput, { needsApproval = true, coAuthors, branches }: MergeToolOptions = {}): GithubTool =>
   tool({
     description: mergePullRequestDescription,
     needsApproval,
     inputSchema: mergePullRequestInputSchema,
-    execute: async args => mergePullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('mergePullRequest', args)), coAuthors, ...args }),
+    execute: async args => mergePullRequestStep({ token: await resolveGithubToken(token, githubTokenCall('mergePullRequest', args)), coAuthors, ...args, branches }),
   })
 
 async function updatePullRequestStep(args: Parameters<typeof updatePullRequestCore>[0]) {
@@ -272,12 +274,12 @@ async function enablePullRequestAutoMergeStep(args: Parameters<typeof enablePull
 }
 
 /** Merge a pull request automatically once its required checks and reviews pass. Requires approval by default. */
-export const enablePullRequestAutoMerge = (token: GithubTokenInput, { needsApproval = true, coAuthors }: MergeToolOptions = {}): GithubTool =>
+export const enablePullRequestAutoMerge = (token: GithubTokenInput, { needsApproval = true, coAuthors, branches }: MergeToolOptions = {}): GithubTool =>
   tool({
     description: enablePullRequestAutoMergeDescription,
     needsApproval,
     inputSchema: enablePullRequestAutoMergeInputSchema,
-    execute: async args => enablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('enablePullRequestAutoMerge', args)), coAuthors, ...args }),
+    execute: async args => enablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('enablePullRequestAutoMerge', args)), coAuthors, ...args, branches }),
   })
 
 async function disablePullRequestAutoMergeStep(args: Parameters<typeof disablePullRequestAutoMergeCore>[0]) {

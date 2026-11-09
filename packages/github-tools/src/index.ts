@@ -20,7 +20,8 @@ import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset
 import type { GithubTool } from './types'
 import { type GithubToolName } from './core/tool-names'
 import { type AllGithubTools, type GithubToolsBaseOptions } from './core/tool-types'
-import { createGithubTokenResolver } from './core/token'
+import { githubTokenCall, withGithubGuardrails } from './core/token'
+import { guardrailViolation } from './core/guardrails'
 import type { GithubWriteToolName } from './core/write-tools'
 
 export type { GithubWriteToolName } from './core/write-tools'
@@ -30,6 +31,8 @@ export { AUTO_APPROVAL_TOOLS, DEFAULT_EVALUATION_MODEL, selectPresets, selectToo
 export { CORE_READ_TOOLS } from './core/presets'
 export { CALL_GITHUB_TOOL } from './agents'
 export type { GithubToolsContext } from './core/context'
+export type { GithubGuardrails } from './core/guardrails'
+export { withGithubGuardrails } from './core/token'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
 export type { GithubToolName } from './core/tool-names'
 export type { AllGithubTools, GithubToolsForPreset, PickGithubTools } from './core/tool-types'
@@ -106,6 +109,12 @@ export function createGithubTools(options?: GithubToolsOptions): AllGithubTools 
  *     addPullRequestComment: false,
  *   }
  * })
+ *
+ * // Only act on one org, and only write to agent branches
+ * createGithubTools({
+ *   token,
+ *   guardrails: { repositories: ['vercel-labs/*'], branches: ['agent/*'] },
+ * })
  * ```
  */
 export function createGithubTools({
@@ -118,9 +127,11 @@ export function createGithubTools({
   author,
   committer,
   coAuthors,
+  guardrails,
 }: GithubToolsOptions = {}): AllGithubTools | Pick<AllGithubTools, GithubToolName> {
-  const resolveToken = createGithubTokenResolver(token)
-  const approval = (name: GithubWriteToolName) => ({ needsApproval: resolveAiSdkApproval(name, requireApproval, evaluation) })
+  const resolveToken = withGithubGuardrails(token, guardrails)
+  const approval = (name: GithubWriteToolName) => ({ needsApproval: guardedApproval(name, resolveAiSdkApproval(name, requireApproval, evaluation), guardrails) })
+  const branches = guardrails?.branches
   const allowed = preset ? resolvePresetTools(preset) : null
 
   const allTools = {
@@ -150,8 +161,8 @@ export function createGithubTools({
     listDependabotAlerts: listDependabotAlerts(resolveToken),
     listSecretScanningAlerts: listSecretScanningAlerts(resolveToken),
     createPullRequest: createPullRequest(resolveToken, approval('createPullRequest')),
-    mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors }),
-    enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors }),
+    mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors, branches }),
+    enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors, branches }),
     disablePullRequestAutoMerge: disablePullRequestAutoMerge(resolveToken, approval('disablePullRequestAutoMerge')),
     updatePullRequest: updatePullRequest(resolveToken, approval('updatePullRequest')),
     addPullRequestComment: addPullRequestComment(resolveToken, approval('addPullRequestComment')),
@@ -238,6 +249,15 @@ export function createGithubTools({
   return Object.fromEntries(
     Object.entries(scoped).filter(([name]) => allowed.has(name as GithubToolName))
   ) as Pick<typeof scoped, GithubToolName>
+}
+
+// A call the guardrails block fails in `execute`, so nobody is asked to approve it first.
+function guardedApproval(name: GithubWriteToolName, needsApproval: GithubTool['needsApproval'], guardrails: GithubToolsOptions['guardrails']): GithubTool['needsApproval'] {
+  if (!guardrails) return needsApproval
+  return async (input, options) => {
+    if (guardrailViolation(githubTokenCall(name, input as Record<string, unknown>), guardrails)) return false
+    return typeof needsApproval === 'function' ? needsApproval(input, options) : needsApproval === true
+  }
 }
 
 function withStrippedRateLimit(tool: GithubTool): GithubTool {
