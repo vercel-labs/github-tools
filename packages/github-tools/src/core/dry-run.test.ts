@@ -58,6 +58,12 @@ describe('dryRun', () => {
     expect(requests).toEqual([])
   })
 
+  it('keeps approval on TanStack reads, which still call GitHub', () => {
+    const tools = tanstack.createGithubTools({ token: 'test', dryRun: true, overrides: { getFileContent: { needsApproval: true } } })
+    expect(tools.find(tool => tool.name === 'getFileContent')?.needsApproval).toBe(true)
+    expect(tools.find(tool => tool.name === 'createIssue')?.needsApproval).toBe(false)
+  })
+
   it("reports the evaluation model's verdict on createGithubAgent with 'auto', without asking", async () => {
     const requests = stubGithub()
     const usage = { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }

@@ -66,16 +66,17 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     return options.context ? mergeContextArgs(args, options.context) : args
   }
   const mode = options.needsApproval ?? (isGithubWriteToolName(name) ? true : false)
+  const dryRun = options.dryRun && isGithubWriteToolName(name)
   const core = GITHUB_TOOL_CORES[name] as (input: Record<string, unknown> & { token: string }) => Promise<unknown>
   const built = toolDefinition({
     name,
     description: options.description ?? descriptor.description,
     inputSchema,
-    // A dry run asks nobody; each result reports what approval would have decided instead.
-    needsApproval: mode !== false && !options.dryRun,
+    // A dry-run write asks nobody; its result reports what approval would have decided instead. Reads still run, so they keep their approval.
+    needsApproval: mode !== false && !dryRun,
   }).server(async (input) => {
     const resolved = resolveInput(input)
-    if (options.dryRun && isGithubWriteToolName(name)) {
+    if (dryRun) {
       // `'auto'` is decided by the approval middleware, which a dry-run write never reaches.
       return dryRunWrite(name, resolved, options.guardrails, () => mode === 'auto' ? undefined : { required: mode })
     }
@@ -85,7 +86,7 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
       : name === 'updatePullRequestBranch' ? { guardrails: options.guardrails } : {}
     return stripRateLimit(await core({ ...resolved, ...attribution, token: await resolveToken(githubTokenCall(name, resolved)) }))
   })
-  if (mode === 'auto' && !options.dryRun) autoTools.set(built, { name, resolveInput })
+  if (mode === 'auto' && !dryRun) autoTools.set(built, { name, resolveInput })
   return built as unknown as GithubTanstackTool<N>
 }
 
