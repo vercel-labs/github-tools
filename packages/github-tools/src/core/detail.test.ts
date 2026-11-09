@@ -15,6 +15,17 @@ describe('hidden content', () => {
     expect(stripHiddenContent('Café, 日本語 and emoji 👍 stay')).toBe('Café, 日本語 and emoji 👍 stay')
   })
 
+  it('keeps joiners that emoji and scripts need, and subdivision flags', () => {
+    const text = 'Family 👨\u200D👩\u200D👧, Persian می\u200Cخواهم, Scotland \u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}'
+    expect(stripHiddenContent(text)).toBe(text)
+  })
+
+  it('keeps comment markers inside code, which GitHub shows as written', () => {
+    expect(stripHiddenContent('Templates use `<!-- -->` for hints.')).toBe('Templates use `<!-- -->` for hints.')
+    expect(stripHiddenContent('Example:\n```html\n<!-- unclosed\n<p>hi</p>\n```\nAfter')).toBe('Example:\n```html\n<!-- unclosed\n<p>hi</p>\n```\nAfter')
+    expect(stripHiddenContent('Visible <!-- hidden `code` too --> end')).toBe('Visible  end')
+  })
+
   it('removes hidden content before truncating a summary', () => {
     const body = `<!-- ${'x'.repeat(600)} -->Short visible body`
     expect(applyDetailBody(body, 'summary')).toBe('Short visible body')
