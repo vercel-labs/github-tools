@@ -73,13 +73,13 @@ export function resolveGithubToken(token?: GithubTokenInput, call?: GithubTokenC
 }
 
 /**
- * Wrap a token so every call it resolves for is checked against `guardrails` first. A blocked call
+ * Wrap a token so every call it resolves for is checked against `guardrails` first, including the
+ * default check for credentials in the input. A blocked call
  * throws `github_tools.GUARDRAIL_BLOCKED` before any request reaches GitHub. Use it when you build
  * tools from individual factories; `createGithubTools({ guardrails })` applies it for you.
  */
 export function withGithubGuardrails(token: GithubTokenInput | undefined, guardrails: GithubGuardrails | undefined): GithubTokenResolver {
   const resolve = createGithubTokenResolver(token)
-  if (!guardrails) return resolve
   return async (call) => {
     const reason = call && guardrailViolation(call, guardrails)
     if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
