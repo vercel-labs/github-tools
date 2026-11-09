@@ -81,6 +81,11 @@ export type EveGithubToolsOptions = {
    */
   guardrails?: GithubGuardrails
   /**
+   * Run reads as usual but send no write to GitHub: each write returns a `GithubDryRunResult`
+   * instead, after the approval and guardrail checks.
+   */
+  dryRun?: boolean
+  /**
    * Default owner / repo / PR / issue / ref values.
    * Softens matching tool input fields and fills them when omitted.
    */

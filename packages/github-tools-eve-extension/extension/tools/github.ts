@@ -52,6 +52,7 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
     committer,
     coAuthors,
     guardrails,
+    dryRun,
   } = extension.config
 
   const includeNames = include as GithubToolName[] | undefined
@@ -92,6 +93,7 @@ function buildSessionOptions(ctx?: ToolContext): EveGithubToolsOptions {
     committer,
     coAuthors,
     guardrails,
+    dryRun,
   }
 }
 
@@ -320,7 +322,8 @@ const PAST_TENSE: Record<string, string> = {
   resolve: 'Resolved', trigger: 'Triggered', update: 'Updated',
 }
 
-// "Created issue on owner/repo#123" once a write succeeds, with the number of what it created.
+// "Created issue on owner/repo#123" once a write succeeds, with the number of what it created,
+// or "Would create issue on owner/repo" under `dryRun`.
 // Reads return '', which keeps their start label. A failed call returns `{ error }` rather than
 // throwing, so eve runs this for it too: "Couldn't create issue on owner/repo".
 function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, output: unknown) {
@@ -329,6 +332,10 @@ function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, inpu
     return `Couldn't ${label[0]!.toLowerCase()}${label.slice(1)}`
   }
   if (!writeToolName(name)) return ''
+  if (output !== null && typeof output === 'object' && 'dryRun' in output) {
+    const label = describeGithubCall(name, inputSchema, input)
+    return `Would ${label[0]!.toLowerCase()}${label.slice(1)}`
+  }
   const created = output !== null && typeof output === 'object' && 'number' in output && typeof output.number === 'number' ? output.number : undefined
   const target = created !== undefined && input.pullNumber === undefined && input.issueNumber === undefined && input.discussionNumber === undefined
     ? { ...input, issueNumber: created }

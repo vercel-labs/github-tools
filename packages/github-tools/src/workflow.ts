@@ -114,6 +114,8 @@ export type CreateDurableGithubAgentOptions =
      * as on `createGithubTools`.
      */
     guardrails?: GithubToolsBaseOptions['guardrails']
+    /** Send no write to GitHub, as on `createGithubTools`. */
+    dryRun?: boolean
     /**
      * Fully replace the default system prompt.
      * When set, `preset` system prompts and `additionalInstructions` are ignored.
@@ -197,9 +199,10 @@ export function createDurableGithubAgent({
   committer,
   coAuthors,
   guardrails,
+  dryRun,
   ...agentOptions
 }: CreateDurableGithubAgentOptions): DurableGithubAgent<AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
-  const tools = createGithubTools({ token, requireApproval, preset, overrides, context, author, committer, coAuthors, guardrails })
+  const tools = createGithubTools({ token, requireApproval, preset, overrides, context, author, committer, coAuthors, guardrails, dryRun })
 
   return new DurableGithubAgent({
     ...agentOptions,

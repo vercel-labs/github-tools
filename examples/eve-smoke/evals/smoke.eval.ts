@@ -48,6 +48,11 @@ export default defineEval({
     t.check(outside.interactions.length, satisfies(value => value === 0, 'a write the guardrails block asks no one'))
     t.check(outside.reply, includes('`vercel/next.js` is outside the repositories these tools may act on'))
 
+    // A mount with `dryRun` answers writes without reaching GitHub, and its label says what would have happened.
+    const dryRun = await outside.session.send('dry-run write')
+    t.check(dryRun.reply, includes('"dryRun":true'))
+    t.eventsSatisfy('dry-run write label', events => JSON.stringify(events).includes('Would create issue on vercel-labs/github-tools'))
+
     // A tool that was not picked is deferred: the model can still call it through eve__tool.
     const deferred = await remembered.session.send('deferred read')
     t.check(deferred.requireToolCall('github__listBranches').status, equals('completed'))

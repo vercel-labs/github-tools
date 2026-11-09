@@ -27,6 +27,7 @@ export type ToolBuildContext = {
   committer?: CommitIdentity
   coAuthors?: CommitIdentity[]
   guardrails?: GithubGuardrails
+  dryRun?: boolean
 }
 
 type ToolRegistryEntry = {

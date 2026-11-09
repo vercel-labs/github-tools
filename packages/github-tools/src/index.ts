@@ -22,6 +22,8 @@ import { type GithubToolName } from './core/tool-names'
 import { type AllGithubTools, type GithubToolsBaseOptions } from './core/tool-types'
 import { githubTokenCall, withGithubGuardrails } from './core/token'
 import { guardrailViolation } from './core/guardrails'
+import { dryRunWrite } from './core/dry-run'
+import { isGithubWriteToolName } from './core/catalog'
 import type { GithubWriteToolName } from './core/write-tools'
 
 export type { GithubWriteToolName } from './core/write-tools'
@@ -32,6 +34,7 @@ export { CORE_READ_TOOLS } from './core/presets'
 export { CALL_GITHUB_TOOL } from './agents'
 export type { GithubToolsContext } from './core/context'
 export type { GithubGuardrails } from './core/guardrails'
+export type { GithubDryRunResult } from './core/dry-run'
 export { withGithubGuardrails } from './core/token'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
 export type { GithubToolName } from './core/tool-names'
@@ -110,6 +113,9 @@ export function createGithubTools(options?: GithubToolsOptions): AllGithubTools 
  *   }
  * })
  *
+ * // Try an agent on real repositories without changing them
+ * createGithubTools({ token, dryRun: true })
+ *
  * // Only act on one org, and only write to agent branches
  * createGithubTools({
  *   token,
@@ -128,6 +134,7 @@ export function createGithubTools({
   committer,
   coAuthors,
   guardrails,
+  dryRun,
 }: GithubToolsOptions = {}): AllGithubTools | Pick<AllGithubTools, GithubToolName> {
   const resolveToken = withGithubGuardrails(token, guardrails)
   const approval = (name: GithubWriteToolName) => ({ needsApproval: guardedApproval(name, resolveAiSdkApproval(name, requireApproval, evaluation), guardrails) })
@@ -237,9 +244,12 @@ export function createGithubTools({
     }
   }
 
+  const withDryRun = (name: GithubToolName, tool: GithubTool): GithubTool => dryRun && isGithubWriteToolName(name)
+    ? { ...tool, execute: async args => dryRunWrite(name, args as Record<string, unknown>, guardrails) }
+    : tool
   const scoped = bindToolsContext(
     Object.fromEntries(
-      Object.entries(allTools).map(([name, tool]) => [name, withStrippedRateLimit(tool)]),
+      Object.entries(allTools).map(([name, tool]) => [name, withStrippedRateLimit(withDryRun(name as GithubToolName, tool))]),
     ) as typeof allTools,
     context,
   )

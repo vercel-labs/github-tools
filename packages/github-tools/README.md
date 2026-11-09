@@ -186,6 +186,10 @@ createGithubTools({
 
 The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/guide/approval-control#guardrails).
 
+### Dry run
+
+`dryRun: true` runs reads as usual but sends no write to GitHub. Each write goes through approval and `guardrails`, then returns `{ dryRun: true, tool, input, message }`, so you can try an agent on real repositories without changing them. See [Dry run](https://github-tools.com/guide/approval-control#dry-run).
+
 ### Tool overrides
 
 The `overrides` option lets you customize any AI SDK [`tool()`](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling) property on a per-tool basis, keyed by tool name.
@@ -746,6 +750,7 @@ type GithubToolsOptions = {
   preset?: GithubToolPreset | GithubToolPreset[]
   context?: GithubToolsContext // default owner / repo / PR / issue / ref
   guardrails?: { repositories?: string[], branches?: string[] } // where any call may act
+  dryRun?: boolean // reads run, writes don't reach GitHub
 }
 
 type GithubTokenInput = string | (() => Promise<string>)

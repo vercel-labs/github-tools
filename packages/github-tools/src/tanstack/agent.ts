@@ -40,7 +40,7 @@ export type GithubAgent<A extends AnyTextAdapter> = {
 
 /** Create a GitHub agent with preset instructions, tools, and automatic approval middleware. */
 export function createGithubAgent<A extends AnyTextAdapter>({
-  token, preset, requireApproval, overrides, context, author, committer, coAuthors, guardrails,
+  token, preset, requireApproval, overrides, context, author, committer, coAuthors, guardrails, dryRun,
   instructions, additionalInstructions, evaluation, middleware = [], ...settings
 }: CreateGithubAgentOptions<A>): GithubAgent<A> {
   async function prepare(call: GithubAgentCallOptions<A>) {
@@ -51,7 +51,7 @@ export function createGithubAgent<A extends AnyTextAdapter>({
     const selected = preset === 'auto'
       ? continuingAuto ? 'repo-explorer' : await selectPresets(modelMessages, evaluation, (callSettings.abortController ?? settings.abortController)?.signal)
       : preset
-    const availableTools = createGithubTools({ token, preset: continuingAuto ? undefined : selected, requireApproval, overrides, context, author, committer, coAuthors, guardrails })
+    const availableTools = createGithubTools({ token, preset: continuingAuto ? undefined : selected, requireApproval, overrides, context, author, committer, coAuthors, guardrails, dryRun })
     const completed = new Set(modelMessages.filter(message => message.role === 'tool').map(message => message.toolCallId))
     const pendingNames = new Set(modelMessages.flatMap(message => message.role === 'assistant' ? message.toolCalls ?? [] : [])
       .filter(call => !completed.has(call.id)).map(call => call.function.name))

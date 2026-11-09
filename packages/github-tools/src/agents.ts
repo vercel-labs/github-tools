@@ -239,10 +239,11 @@ export function createGithubAgent({
   committer,
   coAuthors,
   guardrails,
+  dryRun,
   ...agentOptions
 }: CreateGithubAgentOptions): ToolLoopAgent<never, AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
   const staticPreset = preset === 'auto' ? undefined : preset
-  const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, overrides, context, author, committer, coAuthors, guardrails })
+  const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, overrides, context, author, committer, coAuthors, guardrails, dryRun })
   const byTool = preset === 'auto' && evaluation?.selection !== 'presets'
   // `activeTools` only names tools the agent has, so the tool set always holds every GitHub tool.
   const agentTools: ToolSet = byTool ? { ...tools, [CALL_GITHUB_TOOL]: callGithubTool(tools as AllGithubTools) } : tools

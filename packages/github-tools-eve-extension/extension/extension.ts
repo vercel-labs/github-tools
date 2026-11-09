@@ -209,6 +209,12 @@ export interface GithubExtensionConfig {
    * base. A blocked write is denied with the reason instead of asking anyone to approve it.
    */
   guardrails?: GithubGuardrails
+  /**
+   * Run reads as usual but send no write to GitHub. Each write still goes through approval and
+   * `guardrails`, then returns a dry-run result, and its label reads "Would create issue on
+   * owner/repo". Use it to try the agent on real repositories without changing them.
+   */
+  dryRun?: boolean
 }
 
 const presetNameSchema = z.enum(Object.keys(PRESET_TOOLS) as [GithubToolPreset, ...GithubToolPreset[]])
@@ -270,6 +276,7 @@ const configSchema = z.object({
     repositories: z.array(z.string()).optional(),
     branches: z.array(z.string()).optional(),
   }).optional(),
+  dryRun: z.boolean().optional(),
 }).superRefine((config, ctx) => {
   const { actAs } = config
   const identities = [

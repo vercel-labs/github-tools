@@ -8,6 +8,7 @@ import { mergeContextArgs, softenContextSchema, type GithubToolsContext } from '
 import { resolvePresetTools, type GithubToolPreset, type PresetToolName } from '../core/presets'
 import { githubTokenCall, withGithubGuardrails, type GithubTokenInput } from '../core/token'
 import type { GithubGuardrails } from '../core/guardrails'
+import { dryRunWrite } from '../core/dry-run'
 import type { GithubToolName } from '../core/tool-names'
 import { ALL_GITHUB_TOOL_NAMES } from '../core/tool-names'
 import { stripRateLimit } from '../core/rate-limit'
@@ -36,6 +37,8 @@ export type TanstackToolOptions = Omit<TanstackToolOverrides, 'needsApproval'> &
   coAuthors?: CommitIdentity[]
   /** Repositories and branches the tool may act on, checked before each call reaches GitHub. */
   guardrails?: GithubGuardrails
+  /** Send no write to GitHub: a write returns a `GithubDryRunResult` instead, after the guardrails check. */
+  dryRun?: boolean
 }
 
 /** Configuration for a native array of GitHub server tools. */
@@ -65,6 +68,7 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     needsApproval: mode !== false,
   }).server(async (input) => {
     const resolved = resolveInput(input)
+    if (options.dryRun && isGithubWriteToolName(name)) return dryRunWrite(name, resolved, options.guardrails)
     const attribution = name === 'createOrUpdateFile' || name === 'editFiles'
       ? { author: options.author, committer: options.committer, coAuthors: options.coAuthors }
       : name === 'mergePullRequest' || name === 'enablePullRequestAutoMerge' ? { coAuthors: options.coAuthors, branches: options.guardrails?.branches } : {}
@@ -91,6 +95,7 @@ export function createGithubTools<const P extends GithubToolPreset | readonly Gi
     needsApproval: isGithubWriteToolName(name) ? resolveApprovalMode(name, options.requireApproval ?? true) : false,
     ...options.overrides?.[name],
     guardrails: options.guardrails,
+    dryRun: options.dryRun,
   }))
   return tools as ReturnType<typeof createGithubTools<P>>
 }
