@@ -8,7 +8,7 @@ import { DEFAULT_EVALUATION_MODEL } from './core/evaluation-policy'
 import { assertEvaluationAvailable, evaluatePresets, evaluateTools, evaluationRequest, fallbackPresets, fallbackTools, type GithubEvaluationOptions } from './core/evaluation'
 import { githubToolsErrors } from './core/errors'
 import { resolveAiSdkToolApproval, type GithubToolApprovalStatus } from './core/approval'
-import { isGithubWriteToolName } from './core/catalog'
+import { GITHUB_TOOL_CATALOG, isGithubWriteToolName } from './core/catalog'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from './core/tool-names'
 import { resolveInstructions } from './core/instructions'
 export { resolveInstructions } from './core/instructions'
@@ -84,7 +84,16 @@ function githubToolApproval({ tools, requireApproval, evaluation, overrides }: {
     }
     return policy
   }
-  return async ({ toolCall, messages }: { toolCall: { toolName: string, toolCallId: string, input: unknown }, messages: ModelMessage[] }) => {
+  return async ({ toolCall, messages, tools: available, toolsContext }: { toolCall: { toolName: string, toolCallId: string, input: unknown }, messages: ModelMessage[], tools?: ToolSet, toolsContext?: Record<string, unknown> }) => {
+    // A call-level policy replaces every tool-level `needsApproval`, so a tool added outside the
+    // GitHub catalog, for example by `prepareCall`, keeps its own.
+    if (toolCall.toolName !== CALL_GITHUB_TOOL && !Object.hasOwn(GITHUB_TOOL_CATALOG, toolCall.toolName)) {
+      const needsApproval = available?.[toolCall.toolName]?.needsApproval
+      const ask = typeof needsApproval === 'function'
+        ? await needsApproval(toolCall.input, { toolCallId: toolCall.toolCallId, messages, context: toolsContext?.[toolCall.toolName] })
+        : needsApproval
+      return ask ? 'user-approval' : undefined
+    }
     if (toolCall.toolName !== CALL_GITHUB_TOOL) return policyFor(toolCall.toolName as GithubToolName)(toolCall.input, { toolCallId: toolCall.toolCallId, messages })
     const { name, input } = toolCall.input as z.infer<typeof callGithubToolInput>
     if (input === undefined) return undefined
