@@ -8,6 +8,7 @@ import * as notifications from './notifications'
 import * as pullRequests from './pull-requests'
 import * as reactions from './reactions'
 import * as releases from './releases'
+import * as security from './security'
 import * as repository from './repository'
 import * as search from './search'
 import * as workflows from './workflows'
@@ -111,4 +112,7 @@ export const GITHUB_TOOL_CORES = {
   get createRelease() { return releases.createReleaseCore },
   get updateRelease() { return releases.updateReleaseCore },
   get deleteRelease() { return releases.deleteReleaseCore },
+  get listCodeScanningAlerts() { return security.listCodeScanningAlertsCore },
+  get listDependabotAlerts() { return security.listDependabotAlertsCore },
+  get listSecretScanningAlerts() { return security.listSecretScanningAlertsCore },
 } satisfies Record<GithubToolName, (args: never) => Promise<unknown>>

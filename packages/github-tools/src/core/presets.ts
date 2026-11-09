@@ -89,6 +89,7 @@ export const PRESET_TOOLS = {
    * `getBlame`, `compareCommits`), PR and CI visibility (`listPullRequests`, `getPullRequest`, `listPullRequestFiles`,
    * `getPullRequestContext`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `listWorkflows`, `listWorkflowRuns`,
    * `getWorkflowRun`, `listWorkflowJobs`, `getWorkflowJobLogs` — logs can leak secrets, so auditing them matters),
+   * the repository's alerts (`listCodeScanningAlerts`, `listDependabotAlerts`, `listSecretScanningAlerts`),
    * plus `createIssue`, `addIssueComment`, and `addLabels` to report findings.
    * No destructive writes.
    *
@@ -102,6 +103,7 @@ export const PRESET_TOOLS = {
     'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'getWorkflowJobLogs',
     'listIssues', 'getIssue', 'getIssueContext', 'createIssue', 'addIssueComment', 'addLabels',
+    'listCodeScanningAlerts', 'listDependabotAlerts', 'listSecretScanningAlerts',
   ],
   /**
    * **Release manager** — prepare and publish GitHub releases.
@@ -183,6 +185,7 @@ export const PRESET_TOOLS = {
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'getWorkflowJobLogs', 'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',
     'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'listReleases', 'getLatestRelease', 'getRelease', 'getReleaseContext', 'createRelease', 'updateRelease', 'deleteRelease',
+    'listCodeScanningAlerts', 'listDependabotAlerts', 'listSecretScanningAlerts',
   ],
 } as const satisfies Record<string, readonly GithubToolName[]>
 

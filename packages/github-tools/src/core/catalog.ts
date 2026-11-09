@@ -11,6 +11,7 @@ import * as reactions from './reactions'
 import * as releases from './releases'
 import * as repository from './repository'
 import * as search from './search'
+import * as security from './security'
 import * as workflows from './workflows'
 
 /**
@@ -36,6 +37,9 @@ export const ACTIONS_WRITE = ['contents:read', 'metadata:read', 'actions:read', 
 export const CHECKS = ['contents:read', 'metadata:read', 'checks:read', 'statuses:read'] as const
 export const CI_CONTEXT = ['contents:read', 'metadata:read', 'actions:read', 'checks:read', 'statuses:read'] as const
 export const ADMIN = ['metadata:read', 'administration:read', 'administration:write'] as const
+export const CODE_SCANNING_READ = ['contents:read', 'metadata:read', 'security_events:read'] as const
+export const DEPENDABOT_READ = ['contents:read', 'metadata:read', 'vulnerability_alerts:read'] as const
+export const SECRET_SCANNING_READ = ['contents:read', 'metadata:read', 'secret_scanning_alerts:read'] as const
 /** Merging writes the base branch, which GitHub checks as Contents (write). */
 export const PR_MERGE = ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'pull_requests:write'] as const
 /** GitHub checks a fork as Administration (write) plus Contents (read). */
@@ -638,6 +642,24 @@ export const GITHUB_TOOL_CATALOG = {
     inputSchema: releases.deleteReleaseInputSchema,
     write: true,
     connectScopes: CONTENTS_WRITE,
+  },
+  /** List code scanning alerts for a repository. */
+  listCodeScanningAlerts: {
+    description: security.listCodeScanningAlertsDescription,
+    inputSchema: security.listCodeScanningAlertsInputSchema,
+    connectScopes: CODE_SCANNING_READ,
+  },
+  /** List Dependabot alerts for vulnerable dependencies. */
+  listDependabotAlerts: {
+    description: security.listDependabotAlertsDescription,
+    inputSchema: security.listDependabotAlertsInputSchema,
+    connectScopes: DEPENDABOT_READ,
+  },
+  /** List secret scanning alerts, without the secrets. */
+  listSecretScanningAlerts: {
+    description: security.listSecretScanningAlertsDescription,
+    inputSchema: security.listSecretScanningAlertsInputSchema,
+    connectScopes: SECRET_SCANNING_READ,
   },
 } satisfies Record<string, GithubToolDescriptor>
 

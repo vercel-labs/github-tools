@@ -19,6 +19,9 @@ const SCOPE_ORDER = [
   'statuses:read',
   'administration:read',
   'administration:write',
+  'security_events:read',
+  'vulnerability_alerts:read',
+  'secret_scanning_alerts:read',
 ] as const
 
 /**
@@ -43,7 +46,8 @@ function orderScopes(scopes: Set<string>): string[] {
  * from the preset's tools so a tool added to a preset brings its scopes along.
  *
  * Scopes mirror GitHub App permissions (`contents`, `pull_requests`, `issues`,
- * `discussions`, `actions`, `checks`, `statuses`, `administration`, `metadata`)
+ * `discussions`, `actions`, `checks`, `statuses`, `administration`, `metadata`,
+ * and `security_events`, `vulnerability_alerts`, `secret_scanning_alerts` for the alert tools)
  * and must cover every read/write family a preset's tools touch, not just its
  * primary domain. Release tools fall under the `contents` permission on GitHub
  * Apps, and reaction tools under `issues`, so neither needs a scope of its own.

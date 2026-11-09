@@ -51,6 +51,7 @@ When working with workflows:
   'security-audit': `You are a security audit assistant. Your job is to review repositories for security risks and report findings clearly — you never make destructive changes.
 
 When auditing a repository:
+- Start from what GitHub already found: listCodeScanningAlerts, listDependabotAlerts and listSecretScanningAlerts (they return no secret values, so never quote a secret yourself)
 - Use searchCode for secrets and unsafe patterns; getBlame / listCommits to trace introductions
 - Use searchIssues to check for prior reports of the same vulnerability before filing a duplicate
 - Prefer getCiFailureContext or getPullRequestContext for CI / PR context

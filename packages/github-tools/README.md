@@ -34,7 +34,7 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 | Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
 | A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
 
-88 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
+91 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -107,12 +107,12 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | `issue-triage` | `listIssues`, `getIssueContext`, `listIssueComments`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `searchRepositories`, `searchIssues`, `getPullRequest` |
 | `repo-explorer` | All read-only tools including discussions, gists, workflows, checks/statuses, and releases (no write operations) |
 | `ci-ops` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `getCommit`, `getPullRequest`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getWorkflowJobLogs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
-| `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility (including `getWorkflowJobLogs`), plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
+| `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility (including `getWorkflowJobLogs`), the repository's code scanning, Dependabot and secret scanning alerts, plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
 | `release-manager` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getCommit`, `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `getCombinedStatus`, `getCiFailureContext`, `listPullRequests`, `getPullRequest` |
 | `discussion-moderator` | `listDiscussions`, `getDiscussion`, `addDiscussionComment`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `searchIssues`, `getIssueContext`, `addIssueComment` |
 | `notification-inbox` | `listNotifications`, `markNotificationRead`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getIssue`, `getIssueContext`, `getPullRequest`, `getDiscussion` (requires a Notifications PAT) |
 | `pr-author` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `createBranch`, `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`, `getCommit` |
-| `maintainer` | All 88 tools |
+| `maintainer` | All 91 tools |
 
 Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
@@ -668,6 +668,14 @@ Pull request conversations share the issue numbering, so the issue-level tools w
 | `searchRepositories` | Search repositories by keyword, topic, language, stars, … |
 | `searchIssues` | Search issues and pull requests using qualifiers like `is:open`, `type:pr`, or `label:bug` |
 
+### Security alerts
+
+| Tool | Description |
+|---|---|
+| `listCodeScanningAlerts` | List code scanning alerts with the rule, severity and location |
+| `listDependabotAlerts` | List Dependabot alerts with the advisory and first patched version (cursor pages: pass `nextCursor` as `after`) |
+| `listSecretScanningAlerts` | List secret scanning alerts; the secret itself is never returned |
+
 ## GitHub Token
 
 All tools authenticate with a GitHub personal access token (PAT).
@@ -695,6 +703,9 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | **Actions** | Read and write | `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
 | **Checks** | Read-only | `listCheckRuns`, `getCiFailureContext` |
 | **Commit statuses** | Read-only | `getCombinedStatus`, `getCiFailureContext` |
+| **Code scanning alerts** | Read-only | `listCodeScanningAlerts` |
+| **Dependabot alerts** | Read-only | `listDependabotAlerts` |
+| **Secret scanning alerts** | Read-only | `listSecretScanningAlerts` |
 
 Search tools (`searchCode`, `searchRepositories`, `searchIssues`) work with any token.
 
@@ -703,7 +714,8 @@ Search tools (`searchCode`, `searchRepositories`, `searchIssues`) work with any 
 | Scope | Required for |
 |---|---|
 | `public_repo` | All tools on public repositories |
-| `repo` | All tools on public and private repositories |
+| `repo` | All tools on public and private repositories, except the security alert tools |
+| `security_events` | `listCodeScanningAlerts`, `listDependabotAlerts`, `listSecretScanningAlerts` |
 
 ## API
 

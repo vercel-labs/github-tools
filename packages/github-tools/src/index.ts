@@ -10,6 +10,7 @@ import { listCommits, getCommit, getBlame, compareCommits } from './tools/commit
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 import { listCheckRuns, getCombinedStatus } from './tools/checks'
+import { listCodeScanningAlerts, listDependabotAlerts, listSecretScanningAlerts } from './tools/security'
 import { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 import { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
 import { resolveAiSdkApproval } from './core/approval'
@@ -145,6 +146,9 @@ export function createGithubTools({
     createOrUpdateFile: createOrUpdateFile(resolveToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
     editFiles: editFiles(resolveToken, { ...approval('editFiles'), author, committer, coAuthors }),
     getBranchRules: getBranchRules(resolveToken),
+    listCodeScanningAlerts: listCodeScanningAlerts(resolveToken),
+    listDependabotAlerts: listDependabotAlerts(resolveToken),
+    listSecretScanningAlerts: listSecretScanningAlerts(resolveToken),
     createPullRequest: createPullRequest(resolveToken, approval('createPullRequest')),
     mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors }),
     enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors }),
@@ -263,6 +267,7 @@ export { listCommits, getCommit, getBlame, compareCommits } from './tools/commit
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
 export { listCheckRuns, getCombinedStatus } from './tools/checks'
+export { listCodeScanningAlerts, listDependabotAlerts, listSecretScanningAlerts } from './tools/security'
 export { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 export { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
 export type { GithubRateLimit } from './core/rate-limit'
