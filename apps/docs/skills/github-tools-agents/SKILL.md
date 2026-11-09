@@ -78,6 +78,8 @@ export async function run(messages: ModelMessage[], token: string) {
 }
 ```
 
+For bots and background jobs, call `await agent.generate({ messages })` from the same `'use workflow'` function (needs `@ai-sdk/workflow` >= 2.0.59) and return plain fields such as `result.text` and `result.responseMessages`; each model and tool call is its own step.
+
 **Limitation:** Durable agents require `@ai-sdk/workflow` and `WorkflowChatTransport` on the client for resumable streams. For predicate/`once` approval policies, use the [eve extension](/frameworks/eve-extension).
 
 ### TanStack AI

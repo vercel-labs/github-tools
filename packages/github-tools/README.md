@@ -805,7 +805,24 @@ async function chatWorkflow(messages: ModelMessage[], token: string) {
 }
 ```
 
-#### Non-streaming (bot / background job, needs `"use step"`)
+#### Non-streaming (bot / background job)
+
+Call `.generate()` from the workflow function. Each model call and tool call is its own durable step. It needs `@ai-sdk/workflow` 2.0.59 or later. Return plain fields, since the result itself isn't serializable:
+
+```ts
+// review.workflow.ts
+import { createDurableGithubAgent } from '@github-tools/sdk/workflow'
+import type { ModelMessage } from 'ai'
+
+async function reviewWorkflow(messages: ModelMessage[], token: string) {
+  "use workflow"
+  const agent = createDurableGithubAgent({ model: 'anthropic/claude-opus-5.5', token, preset: 'code-review' })
+  const result = await agent.generate({ messages })
+  return { text: result.text, responseMessages: result.responseMessages }
+}
+```
+
+To run the whole loop as one step instead, call `createGithubAgent` inside a `"use step"` function:
 
 ```ts
 // agent-turn.step.ts

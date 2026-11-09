@@ -64,6 +64,13 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Remove `selection: \'presets\'` to pick single tools, the default, or remove `scope: \'session\'` to route presets for each request. The eve extension accepts both together, because it defers unlisted tools.',
     link: 'https://github-tools.com/guide/presets#keep-the-prompt-cache-across-requests',
   },
+  DURABLE_GENERATE_UNAVAILABLE: {
+    status: 500,
+    message: '`createDurableGithubAgent(...).generate()` needs `WorkflowAgent.generate()` from `@ai-sdk/workflow` 2.0.59 or later.',
+    why: 'The installed `@ai-sdk/workflow` has no non-streaming `WorkflowAgent.generate()`.',
+    fix: 'Upgrade `@ai-sdk/workflow` to 2.0.59 or later, or call `.stream()` instead.',
+    link: 'https://github-tools.com/frameworks/vercel-workflow#non-streaming-bot-background-job',
+  },
   EVALUATION_UNAVAILABLE: {
     status: 500,
     message: '`requireApproval: \'auto\'` and `preset: \'auto\'` need `experimental_decide` (or `experimental_evaluate`) from `ai` 7.0.105 or later.',

@@ -3,20 +3,11 @@ import type {
   WorkflowAgentOptions,
   WorkflowAgentStreamOptions,
   WorkflowAgentStreamResult,
-  TelemetryOptions,
 } from '@ai-sdk/workflow'
-import type {
-  LanguageModel,
-  ToolSet,
-  StepResult,
-  FinishReason,
-  LanguageModelUsage,
-  LanguageModelResponseMetadata,
-  ModelMessage,
-  StopCondition,
-} from 'ai'
+import type { LanguageModel, Output, ToolSet } from 'ai'
 import { createGithubTools } from './index'
 import { resolveInstructions } from './agents'
+import { githubToolsErrors } from './core/errors'
 import type { AllGithubTools } from './core/tool-types'
 import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './core/presets'
 import type { GithubToolName } from './core/tool-names'
@@ -27,40 +18,33 @@ import type { GithubTokenInput } from './core/token'
 import type { GithubToolsContext } from './core/context'
 import type { Context } from '@ai-sdk/provider-utils'
 
-/**
- * Result of {@link DurableGithubAgent.generate}.
- */
-export interface DurableGithubAgentGenerateResult<TTools extends ToolSet = ToolSet> {
-  text: string
-  finishReason: FinishReason
-  usage: LanguageModelUsage
-  steps: StepResult<TTools>[]
-  response: LanguageModelResponseMetadata & { messages: ModelMessage[] }
-}
+// Read from `WorkflowAgent` instead of importing `WorkflowAgentGenerateOptions` and
+// `WorkflowAgentGenerateResult`, which `@ai-sdk/workflow` only exports from 2.0.59: importing them
+// would break type checking for `.stream()` users on older supported versions.
+type WorkflowGenerate<TTools extends ToolSet> = WorkflowAgent<TTools> extends { generate: infer Generate } ? Generate : never
+
+/** Options of {@link DurableGithubAgent.generate}: those of `WorkflowAgent.generate()`. */
+export type DurableGithubAgentGenerateOptions<TTools extends ToolSet = ToolSet> = WorkflowGenerate<TTools> extends (options: infer Options) => unknown ? Options : never
 
 /**
- * A wrapper around {@link WorkflowAgent} that adds a non-streaming
- * `.generate()` method alongside the existing `.stream()`.
+ * Result of {@link DurableGithubAgent.generate}: the `WorkflowAgent` generation result. Read the
+ * fields you need inside the workflow and return those, since the result itself is not serializable.
+ */
+export type DurableGithubAgentGenerateResult<TTools extends ToolSet = ToolSet> = WorkflowGenerate<TTools> extends (options: never) => Promise<infer Result> ? Result : never
+
+/**
+ * A GitHub agent built on {@link WorkflowAgent}. Call both methods from a `"use workflow"`
+ * function: each model call and each tool call runs as its own retriable workflow step, and
+ * tools with `needsApproval` pause the run until the user answers.
  *
- * - `.stream()` — delegates to `WorkflowAgent.stream()`. Each tool call is
- *   an individually retriable workflow step. Supports `needsApproval` on tools.
- * - `.generate()` — uses `generateText` from the AI SDK for non-streaming
- *   execution. Must be called from within a `"use step"` function in
- *   workflow context (the Workflow runtime blocks raw I/O in workflow scope).
+ * - `.stream()` writes the response to a `writable` for chat UIs.
+ * - `.generate()` returns the finished result, for bots, webhooks, and background jobs.
  */
 export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
   private agent: WorkflowAgent<TTools>
-  private _model: LanguageModel
-  private _instructions?: string
-  private _telemetry?: TelemetryOptions
-  private _tools: TTools
 
   constructor(options: WorkflowAgentOptions<TTools>) {
     this.agent = new WorkflowAgent(options)
-    this._model = options.model
-    this._instructions = typeof options.instructions === 'string' ? options.instructions : undefined
-    this._telemetry = options.telemetry
-    this._tools = options.tools ?? {} as TTools
   }
 
   /** The tool set configured for this agent. */
@@ -68,10 +52,7 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
     return this.agent.tools
   }
 
-  /**
-   * Stream the agent's response. Delegates directly to `WorkflowAgent.stream()`.
-   * Works in workflow context — each tool call is a durable step.
-   */
+  /** Stream the agent's response. Delegates to `WorkflowAgent.stream()`. */
   stream<TStreamTools extends TTools = TTools, OUTPUT = never, PARTIAL_OUTPUT = never>(
     options: WorkflowAgentStreamOptions<TStreamTools, Context, OUTPUT, PARTIAL_OUTPUT>,
   ): Promise<WorkflowAgentStreamResult<TStreamTools, OUTPUT>> {
@@ -79,33 +60,16 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
   }
 
   /**
-   * Generate a non-streaming response using `generateText` from the AI SDK.
-   *
-   * In workflow context this **must** be called from within a `"use step"`
-   * function, because the Workflow runtime blocks direct I/O (HTTP calls)
-   * at the workflow scope level.
+   * Generate the full response without streaming. Delegates to `WorkflowAgent.generate()`, which
+   * needs `@ai-sdk/workflow` 2.0.59 or later. Stops after 20 steps unless `stopWhen` says otherwise.
+   * A write that needs approval ends the call with a `tool-approval-request` in
+   * `responseMessages`; append the user's `tool-approval-response` and call `generate()` again.
    */
-  async generate({ prompt, stopWhen }: { prompt: string, stopWhen?: StopCondition<TTools> | Array<StopCondition<TTools>> }): Promise<DurableGithubAgentGenerateResult<TTools>> {
-    const { generateText } = await import('ai')
-
-    const system = this._instructions
-
-    const result = await generateText({
-      model: this._model,
-      tools: this._tools,
-      system,
-      prompt,
-      stopWhen,
-      experimental_telemetry: this._telemetry as Parameters<typeof generateText>[0]['experimental_telemetry'],
-    })
-
-    return {
-      text: result.text,
-      finishReason: result.finishReason,
-      usage: result.usage,
-      steps: result.steps as StepResult<TTools>[],
-      response: result.response,
-    }
+  generate<OUTPUT = string>(
+    options: DurableGithubAgentGenerateOptions<TTools> & { output?: Output.Output<OUTPUT> },
+  ): Promise<Omit<DurableGithubAgentGenerateResult<TTools>, 'output'> & { readonly output: OUTPUT }> {
+    if (typeof this.agent.generate !== 'function') throw githubToolsErrors.DURABLE_GENERATE_UNAVAILABLE()
+    return this.agent.generate(options)
   }
 }
 
