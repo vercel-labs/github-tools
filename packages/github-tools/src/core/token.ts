@@ -1,5 +1,6 @@
 import { hasRepositoryTarget } from './catalog'
 import { githubToolsErrors } from './errors'
+import { guardrailViolation, type GithubGuardrails } from './guardrails'
 import type { GithubToolName } from './tool-names'
 
 /**
@@ -69,4 +70,19 @@ export function createGithubTokenResolver(token?: GithubTokenInput): GithubToken
 /** Resolves a {@link GithubTokenInput} to a token string for an optional tool call. */
 export function resolveGithubToken(token?: GithubTokenInput, call?: GithubTokenCall): Promise<string> {
   return createGithubTokenResolver(token)(call)
+}
+
+/**
+ * Wrap a token so every call it resolves for is checked against `guardrails` first. A blocked call
+ * throws `github_tools.GUARDRAIL_BLOCKED` before any request reaches GitHub. Use it when you build
+ * tools from individual factories; `createGithubTools({ guardrails })` applies it for you.
+ */
+export function withGithubGuardrails(token: GithubTokenInput | undefined, guardrails: GithubGuardrails | undefined): GithubTokenResolver {
+  const resolve = createGithubTokenResolver(token)
+  if (!guardrails) return resolve
+  return async (call) => {
+    const reason = call && guardrailViolation(call, guardrails)
+    if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
+    return resolve(call)
+  }
 }

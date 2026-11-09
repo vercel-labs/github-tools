@@ -6,7 +6,8 @@ import { GITHUB_TOOL_CORES } from '../core/cores'
 import { resolveApprovalMode, type ApprovalConfig, type ToolApprovalMode } from '../core/approval-policy'
 import { mergeContextArgs, softenContextSchema, type GithubToolsContext } from '../core/context'
 import { resolvePresetTools, type GithubToolPreset, type PresetToolName } from '../core/presets'
-import { createGithubTokenResolver, githubTokenCall, type GithubTokenInput } from '../core/token'
+import { githubTokenCall, withGithubGuardrails, type GithubTokenInput } from '../core/token'
+import type { GithubGuardrails } from '../core/guardrails'
 import type { GithubToolName } from '../core/tool-names'
 import { ALL_GITHUB_TOOL_NAMES } from '../core/tool-names'
 import { stripRateLimit } from '../core/rate-limit'
@@ -33,6 +34,8 @@ export type TanstackToolOptions = Omit<TanstackToolOverrides, 'needsApproval'> &
   author?: CommitIdentity
   committer?: CommitIdentity
   coAuthors?: CommitIdentity[]
+  /** Repositories and branches the tool may act on, checked before each call reaches GitHub. */
+  guardrails?: GithubGuardrails
 }
 
 /** Configuration for a native array of GitHub server tools. */
@@ -47,7 +50,7 @@ export const autoTools = new WeakMap<object, { name: GithubToolName, resolveInpu
 
 function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | undefined, options: TanstackToolOptions): GithubTanstackTool<N> {
   const descriptor = GITHUB_TOOL_CATALOG[name]
-  const resolveToken = createGithubTokenResolver(token)
+  const resolveToken = withGithubGuardrails(token, options.guardrails)
   const inputSchema = options.context ? softenContextSchema(descriptor.inputSchema, options.context) : descriptor.inputSchema
   const resolveInput = (input: unknown): Record<string, unknown> => {
     const args = inputSchema.parse(input) as Record<string, unknown>
@@ -64,7 +67,7 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     const resolved = resolveInput(input)
     const attribution = name === 'createOrUpdateFile' || name === 'editFiles'
       ? { author: options.author, committer: options.committer, coAuthors: options.coAuthors }
-      : name === 'mergePullRequest' || name === 'enablePullRequestAutoMerge' ? { coAuthors: options.coAuthors } : {}
+      : name === 'mergePullRequest' || name === 'enablePullRequestAutoMerge' ? { coAuthors: options.coAuthors, branches: options.guardrails?.branches } : {}
     return stripRateLimit(await core({ ...resolved, ...attribution, token: await resolveToken(githubTokenCall(name, resolved)) }))
   })
   if (mode === 'auto') autoTools.set(built, { name, resolveInput })
@@ -87,6 +90,7 @@ export function createGithubTools<const P extends GithubToolPreset | readonly Gi
     coAuthors: options.coAuthors,
     needsApproval: isGithubWriteToolName(name) ? resolveApprovalMode(name, options.requireApproval ?? true) : false,
     ...options.overrides?.[name],
+    guardrails: options.guardrails,
   }))
   return tools as ReturnType<typeof createGithubTools<P>>
 }

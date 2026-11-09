@@ -65,6 +65,7 @@ export function buildEveToolDefinition(
     author: options.author,
     committer: options.committer,
     coAuthors: options.coAuthors,
+    guardrails: options.guardrails,
   }
 
   const [entry] = createToolRegistry(ctx, ALL_GITHUB_TOOL_NAMES.filter(tool => tool === name))
@@ -97,6 +98,7 @@ export function buildEveToolMap(options: EveGithubToolsOptions = {}): EveToolMap
     author: options.author,
     committer: options.committer,
     coAuthors: options.coAuthors,
+    guardrails: options.guardrails,
   }
 
   const isAllowed = resolveAllowedToolNames(options)
@@ -152,6 +154,7 @@ export function listEveToolDescriptors(options: EveGithubToolsOptions = {}) {
     author: options.author,
     committer: options.committer,
     coAuthors: options.coAuthors,
+    guardrails: options.guardrails,
   }
 
   const names = listResolvedEveToolNames(options)
@@ -182,6 +185,7 @@ export async function executeGithubEveTool(
     author: options.author,
     committer: options.committer,
     coAuthors: options.coAuthors,
+    guardrails: options.guardrails,
   }
   return runGithubToolStep(name, input, ctx)
 }

@@ -1,6 +1,7 @@
 import type { ApprovalConfig } from './approval'
 import type { GithubToolsContext } from './context'
 import type { GithubEvaluationOptions } from './evaluation'
+import type { GithubGuardrails } from './guardrails'
 import type { CombinedPresetToolNames, GithubToolPreset, PresetToolName } from './presets'
 import type { GithubTokenInput } from './token'
 import type { GithubToolName } from './tool-names'
@@ -31,6 +32,12 @@ export type GithubToolsBaseOptions = {
   committer?: CommitIdentity
   /** Co-authors to attribute on all commits created by tools. */
   coAuthors?: CommitIdentity[]
+  /**
+   * Repositories and branches the tools may act on, checked before each call reaches GitHub.
+   * A blocked call fails with `github_tools.GUARDRAIL_BLOCKED`, whoever approves it.
+   * @see {@link GithubGuardrails}
+   */
+  guardrails?: GithubGuardrails
 }
 
 /** Tool set shape for a given preset option (single, combined, or all tools). */

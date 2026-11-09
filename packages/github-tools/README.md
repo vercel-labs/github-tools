@@ -170,6 +170,22 @@ All other tools are read-only and never require approval.
 
 With `'auto'`, a fast evaluation model checks each call to a low-risk write tool (`AUTO_APPROVAL_TOOLS`). It scores how costly the call would be if wrong, and whether the latest user message asked for it. The call runs without a prompt only when both checks pass. Other write tools keep requiring approval. Any tool can opt in per tool (`{ updateIssue: 'auto' }`). `'auto'` needs `ai` 7.0.105 or later and is not available on the durable agent. Tune it with `evaluation: { maxRisk, minIntent, model }`. The default model is TypeSafe's Jev.
 
+### Guardrails
+
+Approval decides whether a call runs. `guardrails` decide where any call may act, whoever approves it:
+
+```ts
+createGithubTools({
+  token,
+  guardrails: {
+    repositories: ['vercel-labs/*'], // 'owner/repo' or 'owner/*'; a call to any other repository fails
+    branches: ['agent/*'], // commits, branch creation and deletion, and merges must target a matching branch
+  },
+})
+```
+
+The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/guide/approval-control#guardrails).
+
 ### Tool overrides
 
 The `overrides` option lets you customize any AI SDK [`tool()`](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling) property on a per-tool basis, keyed by tool name.
@@ -729,6 +745,7 @@ type GithubToolsOptions = {
   requireApproval?: boolean | Partial<Record<GithubWriteToolName, boolean>>
   preset?: GithubToolPreset | GithubToolPreset[]
   context?: GithubToolsContext // default owner / repo / PR / issue / ref
+  guardrails?: { repositories?: string[], branches?: string[] } // where any call may act
 }
 
 type GithubTokenInput = string | (() => Promise<string>)

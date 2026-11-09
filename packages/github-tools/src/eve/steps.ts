@@ -1,5 +1,6 @@
 import { mergeContextArgs } from '../core/context'
-import { EvlogError, toModelErrorPayload } from '../core/errors'
+import { EvlogError, githubToolsErrors, toModelErrorPayload } from '../core/errors'
+import { guardrailViolation } from '../core/guardrails'
 import { githubTokenCall, resolveGithubToken } from '../core/token'
 import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
 
@@ -16,6 +17,15 @@ async function executeGithubToolStep(
   return entry.execute(input)
 }
 
+/** Why `guardrails` block a call once `context` defaults are applied, or `undefined` when they allow it. */
+export function githubGuardrailViolation(
+  name: GithubToolName,
+  input: Record<string, unknown>,
+  { context, guardrails }: Pick<ToolBuildContext, 'context' | 'guardrails'>,
+) {
+  return guardrailViolation(githubTokenCall(name, mergeContextArgs(input, context ?? {})), guardrails)
+}
+
 export async function runGithubToolStep(
   name: GithubToolName,
   input: Record<string, unknown>,
@@ -24,6 +34,8 @@ export async function runGithubToolStep(
   try {
     // Resolve the token before entering the step so only a serializable string crosses the boundary.
     const call = githubTokenCall(name, mergeContextArgs(input, ctx.context ?? {}))
+    const reason = guardrailViolation(call, ctx.guardrails)
+    if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
     const token = await resolveGithubToken(ctx.token, call)
     return await executeGithubToolStep(name, input, { ...ctx, token })
   } catch (error) {

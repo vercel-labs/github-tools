@@ -70,6 +70,14 @@ describe('TanStack tools', () => {
     expect(core).toHaveBeenCalledWith(expect.objectContaining({ owner: 'vercel', repo: 'ai' }))
   })
 
+  it('applies guardrails in the native loop', async () => {
+    const core = vi.spyOn(repository, 'listBranchesCore').mockResolvedValue({ items: [], hasMore: false, page: 1, perPage: 30 })
+    const adapter = new TestTextAdapter(messages => messages.some(message => message.role === 'tool') ? [] : [toolCall('listBranches', { owner: 'vercel', repo: 'next.js' })])
+    const agent = github.createGithubAgent({ token: 'test', adapter, preset: 'repo-explorer', guardrails: { repositories: ['vercel/ai'] } })
+    await agent.generate({ prompt: 'List branches' })
+    expect(core).not.toHaveBeenCalled()
+  })
+
   it('retains approval when middleware is missing', async () => {
     const setup = execution()
     const chunks = await collect(chat({ adapter: setup.adapter, tools: setup.tools, messages: request }))

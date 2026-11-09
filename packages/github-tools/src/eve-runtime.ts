@@ -20,6 +20,8 @@ export { resolveToolGuidance } from './core/instructions'
 export { AUTO_APPROVAL_TOOLS, autoApprovalDecision, evaluatePresets, evaluateTools, fallbackPresets, fallbackTools, latestUserText, needsAutoApproval, selectPresets, selectTools } from './core/evaluation'
 export type { AutoApprovalDecision, GithubEvaluationOptions } from './core/evaluation'
 export { resolveGithubToken } from './core/token'
+export { githubGuardrailViolation } from './eve/steps'
+export type { GithubGuardrails } from './core/guardrails'
 export type { GithubTokenCall } from './core/token'
 export { githubToolsErrors } from './core/errors'
 export type {
