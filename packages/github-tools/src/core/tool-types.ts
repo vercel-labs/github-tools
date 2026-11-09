@@ -38,6 +38,12 @@ export type GithubToolsBaseOptions = {
    * @see {@link GithubGuardrails}
    */
   guardrails?: GithubGuardrails
+  /**
+   * Run reads as usual but send no write to GitHub: each write tool returns a
+   * `GithubDryRunResult` instead, after the approval and guardrail checks. Use it to try an
+   * agent on real repositories without changing them.
+   */
+  dryRun?: boolean
 }
 
 /** Tool set shape for a given preset option (single, combined, or all tools). */

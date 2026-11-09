@@ -22,6 +22,7 @@ export type { AutoApprovalDecision, GithubEvaluationOptions } from './core/evalu
 export { resolveGithubToken } from './core/token'
 export { githubGuardrailViolation } from './eve/steps'
 export type { GithubGuardrails } from './core/guardrails'
+export type { GithubDryRunApproval, GithubDryRunResult } from './core/dry-run'
 export type { GithubTokenCall } from './core/token'
 export { githubToolsErrors } from './core/errors'
 export type {

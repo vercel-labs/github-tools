@@ -1,6 +1,8 @@
 import { mergeContextArgs } from '../core/context'
 import { EvlogError, githubToolsErrors, toModelErrorPayload } from '../core/errors'
 import { guardrailViolation } from '../core/guardrails'
+import { dryRunWrite } from '../core/dry-run'
+import { isGithubWriteToolName } from '../core/catalog'
 import { githubTokenCall, resolveGithubToken } from '../core/token'
 import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, type GithubToolName, type ToolBuildContext } from './registry'
 
@@ -36,6 +38,7 @@ export async function runGithubToolStep(
     const call = githubTokenCall(name, mergeContextArgs(input, ctx.context ?? {}))
     const reason = guardrailViolation(call, ctx.guardrails)
     if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
+    if (ctx.dryRun && isGithubWriteToolName(name)) return dryRunWrite(name, call.input as Record<string, unknown>, ctx.guardrails, () => ctx.dryRunApproval)
     const token = await resolveGithubToken(ctx.token, call)
     return await executeGithubToolStep(name, input, { ...ctx, token })
   } catch (error) {

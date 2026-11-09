@@ -211,6 +211,14 @@ export interface GithubExtensionConfig {
    * instead of asking anyone to approve it.
    */
   guardrails?: GithubGuardrails
+  /**
+   * Shadow mode: run reads as usual but send no write to GitHub, and ask nobody to approve one.
+   * Each write still goes through `guardrails`, then returns a dry-run result that says whether
+   * approval would have asked a person (with the evaluation model's verdict under `'auto'`), and
+   * its label reads "Would create issue on owner/repo". Use it to try the agent on real
+   * repositories, for example a scheduled bot, before letting it write.
+   */
+  dryRun?: boolean
 }
 
 const presetNameSchema = z.enum(Object.keys(PRESET_TOOLS) as [GithubToolPreset, ...GithubToolPreset[]])
@@ -273,6 +281,7 @@ const configSchema = z.object({
     branches: z.array(z.string()).optional(),
     secrets: z.enum(['block', 'allow']).optional(),
   }).optional(),
+  dryRun: z.boolean().optional(),
 }).superRefine((config, ctx) => {
   const { actAs } = config
   const identities = [

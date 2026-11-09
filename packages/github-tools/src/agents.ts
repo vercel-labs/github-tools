@@ -67,12 +67,13 @@ type GithubToolApprovalPolicy = (input: unknown, options: { toolCallId: string, 
  * `requireApproval: 'auto'` puts the decision model's verdict on approval requests and records the
  * calls it lets through as automatic approvals. Calls through `callGithubTool` follow the named tool.
  */
-function githubToolApproval({ tools, requireApproval, evaluation, overrides, guardrails }: {
+function githubToolApproval({ tools, requireApproval, evaluation, overrides, guardrails, dryRun }: {
   tools: AllGithubTools
   requireApproval: CreateGithubAgentOptions['requireApproval']
   evaluation: CreateGithubAgentOptions['evaluation']
   overrides: CreateGithubAgentOptions['overrides']
   guardrails: GithubGuardrails | undefined
+  dryRun: boolean | undefined
 }) {
   const policies = new Map<GithubToolName, GithubToolApprovalPolicy>()
   const policyFor = (name: GithubToolName): GithubToolApprovalPolicy => {
@@ -90,7 +91,9 @@ function githubToolApproval({ tools, requireApproval, evaluation, overrides, gua
   // A call the guardrails block is denied with the reason instead of reaching a person or the evaluator.
   const decide = (name: GithubToolName, input: unknown, options: { toolCallId: string, messages: ModelMessage[] }) => {
     const reason = guardrailViolation(githubTokenCall(name, input as Record<string, unknown>), guardrails)
-    return reason ? { type: 'denied' as const, reason } : policyFor(name)(input, options)
+    if (reason) return { type: 'denied' as const, reason }
+    // A dry run asks nobody: the write's result reports what approval would have decided.
+    return dryRun && isGithubWriteToolName(name) ? undefined : policyFor(name)(input, options)
   }
   return async ({ toolCall, messages, tools: available, toolsContext }: { toolCall: { toolName: string, toolCallId: string, input: unknown }, messages: ModelMessage[], tools?: ToolSet, toolsContext?: Record<string, unknown> }) => {
     // A call-level policy replaces every tool-level `needsApproval`, so a tool added outside the
@@ -239,16 +242,17 @@ export function createGithubAgent({
   committer,
   coAuthors,
   guardrails,
+  dryRun,
   ...agentOptions
 }: CreateGithubAgentOptions): ToolLoopAgent<never, AllGithubTools | Pick<AllGithubTools, GithubToolName>> {
   const staticPreset = preset === 'auto' ? undefined : preset
-  const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, overrides, context, author, committer, coAuthors, guardrails })
+  const tools = createGithubTools({ token, requireApproval, evaluation, preset: staticPreset, overrides, context, author, committer, coAuthors, guardrails, dryRun })
   const byTool = preset === 'auto' && evaluation?.selection !== 'presets'
   // `activeTools` only names tools the agent has, so the tool set always holds every GitHub tool.
   const agentTools: ToolSet = byTool ? { ...tools, [CALL_GITHUB_TOOL]: callGithubTool(tools as AllGithubTools) } : tools
   const settings = {
     // Your own `toolApproval` replaces the GitHub policy, as it would any tool-level `needsApproval`.
-    toolApproval: githubToolApproval({ tools: tools as AllGithubTools, requireApproval, evaluation, overrides, guardrails }),
+    toolApproval: githubToolApproval({ tools: tools as AllGithubTools, requireApproval, evaluation, overrides, guardrails, dryRun }),
     ...agentOptions,
     tools: agentTools as typeof tools,
     instructions: resolveInstructions({ preset: staticPreset, instructions, additionalInstructions, context }),

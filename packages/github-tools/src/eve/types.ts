@@ -3,6 +3,7 @@ import type { Approval } from 'eve/tools/approval'
 import type { z } from 'zod'
 import type { GithubToolsContext } from '../core/context'
 import type { GithubGuardrails } from '../core/guardrails'
+import type { GithubDryRunApproval } from '../core/dry-run'
 import type { GithubToolPreset } from '../core/presets'
 import type { GithubTokenInput } from '../core/token'
 import type { GithubToolName } from '../core/tool-names'
@@ -80,6 +81,13 @@ export type EveGithubToolsOptions = {
    * A blocked call returns a `github_tools.GUARDRAIL_BLOCKED` error, whoever approved it.
    */
   guardrails?: GithubGuardrails
+  /**
+   * Run reads as usual but send no write to GitHub: each write returns a `GithubDryRunResult`
+   * instead, after the approval and guardrail checks.
+   */
+  dryRun?: boolean
+  /** What approval would have decided for this call, reported in its dry-run result. Set per call by the eve extension. */
+  dryRunApproval?: GithubDryRunApproval
   /**
    * Default owner / repo / PR / issue / ref values.
    * Softens matching tool input fields and fills them when omitted.

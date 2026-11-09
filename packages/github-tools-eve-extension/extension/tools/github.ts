@@ -20,6 +20,7 @@ import {
   type AutoApprovalDecision,
   type EveGithubToolsOptions,
   type EveToolOverrides,
+  type GithubDryRunApproval,
   type GithubTokenCall,
   type GithubToolName,
   type GithubWriteToolName,
@@ -52,6 +53,7 @@ function buildSessionOptions(ctx?: ToolContext, auth = ctx?.session.auth.current
     committer,
     coAuthors,
     guardrails,
+    dryRun,
   } = extension.config
   const context = sessionContext(auth)
 
@@ -93,6 +95,7 @@ function buildSessionOptions(ctx?: ToolContext, auth = ctx?.session.auth.current
     committer,
     coAuthors,
     guardrails,
+    dryRun,
   }
 }
 
@@ -171,6 +174,12 @@ async function githubUserAuth() {
 
 async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolContext) {
   const args = input as Record<string, unknown>
+  if (extension.config.dryRun && writeToolName(name)) {
+    const key = decisionKey(ctx.session.id, ctx.callId)
+    const dryRunApproval = dryRunApprovals.get(key)
+    dryRunApprovals.delete(key)
+    return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), dryRunApproval })
+  }
   const actAs = actAsFor(name)
   if (actAs === 'app') return executeGithubEveTool(name, args, buildSessionOptions(ctx))
 
@@ -283,12 +292,28 @@ function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalV
   return approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
 }
 
+// A dry run asks nobody: the approval policy keeps what it would have decided, and the write's result reports it.
+const dryRunApprovals = new Map<string, GithubDryRunApproval>()
+
 async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
   const reason = githubGuardrailViolation(name, ctx.toolInput as Record<string, unknown>, { context: sessionContext(ctx.session.auth.current), guardrails: extension.config.guardrails })
   if (reason) return { type: 'denied', reason }
+  if (!extension.config.dryRun) return githubApprovalStatus(name, writeTool, request, ctx)
 
+  const auto = configuredApprovalValue(name) === 'auto' && isPersonRequest(ctx) && await cachedAutoApproval(writeTool, request, ctx)
+  const status = auto ? undefined : await githubApprovalStatus(name, writeTool, request, ctx)
+  // A policy that denies the call denies it in a dry run too, as it would for real.
+  if (status === 'denied' || (typeof status === 'object' && status?.type === 'denied')) return status
+  dryRunApprovals.set(decisionKey(ctx.session.id, ctx.callId), auto
+    ? { required: auto.ask, reason: auto.reason }
+    : { required: status === true || status === 'user-approval' || (typeof status === 'object' && status?.type === 'user-approval') })
+  if (dryRunApprovals.size > MAX_CACHED_DECISIONS) dryRunApprovals.delete(dryRunApprovals.keys().next().value!)
+  return 'not-applicable'
+}
+
+async function githubApprovalStatus(name: GithubToolName, writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const value = configuredApprovalValue(name)!
   if (value === 'auto') {
     if (!isPersonRequest(ctx)) return 'user-approval'
@@ -321,7 +346,8 @@ const PAST_TENSE: Record<string, string> = {
   resolve: 'Resolved', trigger: 'Triggered', update: 'Updated',
 }
 
-// "Created issue on owner/repo#123" once a write succeeds, with the number of what it created.
+// "Created issue on owner/repo#123" once a write succeeds, with the number of what it created,
+// or "Would create issue on owner/repo" under `dryRun`.
 // Reads return '', which keeps their start label. A failed call returns `{ error }` rather than
 // throwing, so eve runs this for it too: "Couldn't create issue on owner/repo".
 function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, output: unknown, context: GithubExtensionContext | undefined) {
@@ -330,6 +356,10 @@ function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, inpu
     return `Couldn't ${label[0]!.toLowerCase()}${label.slice(1)}`
   }
   if (!writeToolName(name)) return ''
+  if (output !== null && typeof output === 'object' && 'dryRun' in output) {
+    const label = describeGithubCall(name, inputSchema, input, context)
+    return `Would ${label[0]!.toLowerCase()}${label.slice(1)}`
+  }
   const created = output !== null && typeof output === 'object' && 'number' in output && typeof output.number === 'number' ? output.number : undefined
   const target = created !== undefined && input.pullNumber === undefined && input.issueNumber === undefined && input.discussionNumber === undefined
     ? { ...input, issueNumber: created }

@@ -8,16 +8,23 @@ import { mergeContextArgs, softenContextSchema, type GithubToolsContext } from '
 import { resolvePresetTools, type GithubToolPreset, type PresetToolName } from '../core/presets'
 import { githubTokenCall, withGithubGuardrails, type GithubTokenInput } from '../core/token'
 import type { GithubGuardrails } from '../core/guardrails'
+import { dryRunWrite, type GithubDryRunResult } from '../core/dry-run'
 import type { GithubToolName } from '../core/tool-names'
 import { ALL_GITHUB_TOOL_NAMES } from '../core/tool-names'
 import { stripRateLimit } from '../core/rate-limit'
 import type { CommitIdentity } from '../types'
+import type { GithubWriteToolName } from '../core/write-tools'
 
 type Catalog = typeof GITHUB_TOOL_CATALOG
-/** A TanStack server tool with the catalog's input schema and core return type. */
+type CoreResult<N extends GithubToolName> = Awaited<ReturnType<(typeof GITHUB_TOOL_CORES)[N]>>
+
+/**
+ * A TanStack server tool with the catalog's input schema and core return type. A write tool created
+ * with `dryRun: true` returns a `GithubDryRunResult` instead, so narrow with `'dryRun' in result`.
+ */
 export type GithubTanstackTool<N extends GithubToolName = GithubToolName> = N extends GithubToolName
   ? Omit<ServerTool<Catalog[N]['inputSchema'], undefined, N, unknown, boolean>, 'execute'> & {
-    execute: (input: z.input<Catalog[N]['inputSchema']>) => ReturnType<(typeof GITHUB_TOOL_CORES)[N]>
+    execute: (input: z.input<Catalog[N]['inputSchema']>) => Promise<N extends GithubWriteToolName ? CoreResult<N> | GithubDryRunResult : CoreResult<N>>
   }
   : never
 
@@ -36,6 +43,8 @@ export type TanstackToolOptions = Omit<TanstackToolOverrides, 'needsApproval'> &
   coAuthors?: CommitIdentity[]
   /** Repositories and branches the tool may act on, checked before each call reaches GitHub. */
   guardrails?: GithubGuardrails
+  /** Send no write to GitHub: a write returns a `GithubDryRunResult` instead, after the guardrails check. */
+  dryRun?: boolean
 }
 
 /** Configuration for a native array of GitHub server tools. */
@@ -57,21 +66,27 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     return options.context ? mergeContextArgs(args, options.context) : args
   }
   const mode = options.needsApproval ?? (isGithubWriteToolName(name) ? true : false)
+  const dryRun = options.dryRun && isGithubWriteToolName(name)
   const core = GITHUB_TOOL_CORES[name] as (input: Record<string, unknown> & { token: string }) => Promise<unknown>
   const built = toolDefinition({
     name,
     description: options.description ?? descriptor.description,
     inputSchema,
-    needsApproval: mode !== false,
+    // A dry-run write asks nobody; its result reports what approval would have decided instead. Reads still run, so they keep their approval.
+    needsApproval: mode !== false && !dryRun,
   }).server(async (input) => {
     const resolved = resolveInput(input)
+    if (dryRun) {
+      // `'auto'` is decided by the approval middleware, which a dry-run write never reaches.
+      return dryRunWrite(name, resolved, options.guardrails, () => mode === 'auto' ? undefined : { required: mode })
+    }
     const attribution = name === 'createOrUpdateFile' || name === 'editFiles'
       ? { author: options.author, committer: options.committer, coAuthors: options.coAuthors }
       : name === 'mergePullRequest' || name === 'enablePullRequestAutoMerge' ? { coAuthors: options.coAuthors, branches: options.guardrails?.branches }
       : name === 'updatePullRequestBranch' ? { guardrails: options.guardrails } : {}
     return stripRateLimit(await core({ ...resolved, ...attribution, token: await resolveToken(githubTokenCall(name, resolved)) }))
   })
-  if (mode === 'auto') autoTools.set(built, { name, resolveInput })
+  if (mode === 'auto' && !dryRun) autoTools.set(built, { name, resolveInput })
   return built as unknown as GithubTanstackTool<N>
 }
 
@@ -92,6 +107,7 @@ export function createGithubTools<const P extends GithubToolPreset | readonly Gi
     needsApproval: isGithubWriteToolName(name) ? resolveApprovalMode(name, options.requireApproval ?? true) : false,
     ...options.overrides?.[name],
     guardrails: options.guardrails,
+    dryRun: options.dryRun,
   }))
   return tools as ReturnType<typeof createGithubTools<P>>
 }
