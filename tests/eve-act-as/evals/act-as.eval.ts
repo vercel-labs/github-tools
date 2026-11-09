@@ -92,6 +92,20 @@ export default defineEval({
     const reconnected = await completeSignIn(t, revoked)
     t.check(reconnected.requireToolCall('strict__getRepository').status, equals('completed'))
 
+    // gated (`gated__*`): a configured response policy picks who can answer
+
+    // The policy rejects the requester's own approval, and the approver it allows runs the write as the App.
+    const gatedWrite = await t.send('gated write', as('bob'))
+    const selfApproved = await answer(gatedWrite, 'approve', 'bob')
+    const selfRefusal = selfApproved.session.events.findLast(event => event.type === 'response.settled')
+    t.check(selfRefusal?.data, satisfies(data => (data as { outcome?: string }).outcome === 'refused', 'approval rejected by the response policy is refused'))
+    t.check((await answer(gatedWrite, 'approve', 'alice')).reply, includes('4242'))
+
+    // The prompt names the issue the call updates, not the pull request in the context.
+    const gatedUpdate = await t.send('gated update', as('alice'))
+    t.check(gatedUpdate.interactions.map(interaction => interaction.request.prompt), equals(['Update issue on vercel-labs/github-tools#999?']))
+    await answer(gatedUpdate, 'deny', 'alice')
+
     const calls = await t.send('github calls', as('alice'))
     t.check(JSON.parse(calls.reply ?? '[]'), equals([
       'GET /repos/vercel-labs/github-tools ghs_app',
@@ -103,6 +117,7 @@ export default defineEval({
       'POST /repos/vercel-labs/github-tools/issues ghu_alice',
       'GET /repos/vercel-labs/github-tools ghu_revoked',
       'GET /repos/vercel-labs/github-tools ghu_dave',
+      'POST /repos/vercel-labs/github-tools/issues ghs_app',
     ]))
   },
 })
