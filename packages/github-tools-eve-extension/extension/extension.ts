@@ -169,8 +169,9 @@ export interface GithubExtensionConfig {
   connect?: GithubExtensionConnectParams | GithubExtensionConnectResolver
   /**
    * Restrict tools to a preset (or array of presets). Prefer a focused preset; omit or use `maintainer` for the full catalog.
-   * `'auto'` lists up to two presets per user message, picked with an evaluation model, and defers every other tool:
-   * the model can still find it with `eve__search`.
+   * `'auto'` lists the tools an evaluation model picks for the session's first request, plus the core read tools,
+   * and defers every other tool: the model can still find it with `eve__search`. Set `evaluation.selection: 'presets'`
+   * to list up to two routed presets instead.
    */
   preset?: GithubToolPreset | GithubToolPreset[] | 'auto'
   /**
@@ -247,6 +248,10 @@ const configSchema = z.object({
     minIntent: z.number().optional(),
     minPresetProbability: z.number().optional(),
     maxPresets: z.number().optional(),
+    selection: z.enum(['presets', 'tools']).optional(),
+    scope: z.enum(['turn', 'session']).optional(),
+    minToolProbability: z.number().optional(),
+    maxTools: z.number().optional(),
     providerOptions: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
   }).optional(),
   overrides: z.partialRecord(toolNameSchema, z.looseObject({ actAs: actAsSchema.optional() })).optional(),

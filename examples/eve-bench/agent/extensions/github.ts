@@ -6,7 +6,9 @@ import { stubGithubWrites } from '../../lib/stub-writes.ts'
 const { config, level } = benchSelection()
 stubGithubWrites({ config, level })
 
+const { evaluation, ...extensionConfig } = CONFIGS[config] as (typeof CONFIGS)[keyof typeof CONFIGS] & { evaluation?: object }
+
 export default githubExtension({
-  ...CONFIGS[config],
-  evaluation: { ...LEVELS[level], model: benchEvaluator({ config, level }) },
+  ...extensionConfig,
+  evaluation: { ...LEVELS[level], ...evaluation, model: benchEvaluator({ config, level }) },
 })

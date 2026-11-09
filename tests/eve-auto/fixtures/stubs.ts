@@ -37,6 +37,9 @@ globalThis.fetch = async (input, init) => {
       open_issues_count: 3,
     })
   }
+  if (request.method === 'GET' && url.pathname === '/repos/vercel-labs/github-tools/branches') {
+    return json([{ name: 'main', commit: { sha: 'abc123' }, protected: true }])
+  }
   if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/issues/12/labels') {
     const { labels } = await request.json() as { labels: string[] }
     return json(labels.map(name => ({ name, color: 'ededed', description: null })))

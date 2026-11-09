@@ -167,7 +167,7 @@ describe("requireApproval: 'auto'", () => {
   })
 })
 
-describe("createGithubAgent({ preset: 'auto' })", () => {
+describe("createGithubAgent({ preset: 'auto', evaluation: { selection: 'presets' } })", () => {
   async function run(probabilities: Record<string, number> | Error, prompt = 'Why is CI red on main?', options = {}) {
     const evaluation = evaluationModel(() => {
       if (probabilities instanceof Error) throw probabilities
@@ -191,7 +191,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model, ...options },
+      evaluation: { model: evaluation.model, selection: 'presets', ...options },
     })
     await agent.generate({ prompt })
     const system = calls[0]!.prompt.find(message => message.role === 'system')
@@ -216,7 +216,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model },
+      evaluation: { model: evaluation.model, selection: 'presets' },
     })
     await agent.generate({ prompt: 'Why is CI red on main?' })
     await agent.generate({ prompt: 'Why is CI red on main?' })
@@ -247,7 +247,7 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       }),
       token: 'test',
       preset: 'auto',
-      evaluation: { model: evaluation.model },
+      evaluation: { model: evaluation.model, selection: 'presets' },
     })
     await agent.generate({ prompt: 'Why is CI red on main?' })
     expect(new Set((calls[0]!.tools ?? []).map(tool => tool.name))).toEqual(new Set(PRESET_TOOLS['repo-explorer']))
@@ -335,5 +335,177 @@ describe("createGithubAgent({ preset: 'auto' })", () => {
       message: expect.stringContaining('using the repo-explorer preset: Insufficient credits'),
     }))
     warn.mockRestore()
+  })
+})
+
+describe("evaluation: { selection: 'tools' }, the default", () => {
+  const core = ['getRepository', 'getFileContent', 'getRepositoryTree', 'searchCode', 'listCommits']
+  const usage = {
+    inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
+    outputTokens: { total: 1, text: 1, reasoning: 0 },
+  }
+
+  it('lists the core read tools plus the likely ones, most likely first', async () => {
+    const { evaluateTools } = await import('./core/evaluation')
+    const { model, calls } = evaluationModel(() => ({ mergePullRequest: 0.9, getPullRequest: 0.95, addLabels: 0.4, createRelease: 0.6 }))
+    await expect(evaluateTools(messages, { model, maxTools: 2 })).resolves.toEqual([...core, 'getPullRequest', 'mergePullRequest'])
+    expect(Object.keys(calls[0]!.questions)).not.toContain('getRepository')
+    expect(Object.keys(calls[0]!.questions)).toHaveLength(84 - core.length)
+  })
+
+  it('falls back to the repo-explorer tools when the decision model fails', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { selectTools } = await import('./core/evaluation')
+    const { model } = evaluationModel(() => {
+      throw new Error('Gateway unavailable')
+    })
+    await expect(selectTools(messages, { model })).resolves.toEqual([...PRESET_TOOLS['repo-explorer']])
+    warn.mockRestore()
+  })
+
+  function scriptedModel(first: Record<string, unknown> | undefined) {
+    const calls: LanguageModelV4CallOptions[] = []
+    const model = new MockLanguageModelV4({
+      doGenerate: async (options) => {
+        calls.push(options)
+        if (calls.length === 1 && first) {
+          return {
+            content: [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'callGithubTool', input: JSON.stringify(first) }],
+            finishReason: { unified: 'tool-calls', raw: 'tool_calls' },
+            usage,
+            warnings: [],
+          }
+        }
+        return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
+      },
+    })
+    return { model, calls }
+  }
+  const listed = (call: LanguageModelV4CallOptions) => new Set((call.tools ?? []).map(tool => tool.name))
+
+  it('keeps the tool list when the model reaches a tool that was not picked', async () => {
+    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9 }))
+    const { model, calls } = scriptedModel({ name: 'mergePullRequest' })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model }, stopWhen: () => calls.length >= 2 })
+    await agent.generate({ prompt: 'Merge vercel/ai#12 once it is green' })
+    expect(listed(calls[0]!)).toEqual(new Set([...core, 'getPullRequest', 'callGithubTool']))
+    expect(listed(calls[1]!)).toEqual(listed(calls[0]!))
+    // Without `input`, the result describes the tool instead of calling it.
+    expect(JSON.stringify(calls[1]!.prompt)).toContain('mergeMethod')
+    expect(evaluation.calls).toHaveLength(1)
+  })
+
+  it('returns the input schema when callGithubTool gets invalid input', async () => {
+    const evaluation = evaluationModel(() => ({}))
+    const { model, calls } = scriptedModel({ name: 'getRepository', input: { owner: 1 } })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model }, stopWhen: () => calls.length >= 2 })
+    await agent.generate({ prompt: 'Describe vercel/ai' })
+    const prompt = JSON.stringify(calls[1]!.prompt)
+    expect(prompt).toContain('Invalid input for getRepository')
+    expect(prompt).toContain('Repository owner (user or organization)')
+  })
+
+  it('asks for approval before callGithubTool runs a write tool', async () => {
+    const evaluation = evaluationModel(() => ({}))
+    const { model } = scriptedModel({ name: 'mergePullRequest', input: { owner: 'vercel', repo: 'ai', pullNumber: 12 } })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model } })
+    const result = await agent.generate({ prompt: 'Merge vercel/ai#12' })
+    expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-approval-request' }))
+  })
+
+  it('runs a read tool through callGithubTool', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(JSON.stringify([{ name: 'main', commit: { sha: 'abc123' }, protected: true }]), { headers: { 'content-type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetch)
+    const evaluation = evaluationModel(() => ({}))
+    const { model, calls } = scriptedModel({ name: 'listBranches', input: { owner: 'vercel', repo: 'ai' } })
+    const agent = createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model }, stopWhen: () => calls.length >= 2 })
+    await agent.generate({ prompt: 'List the branches of vercel/ai' })
+    vi.unstubAllGlobals()
+    expect(String(fetch.mock.calls[0]![0])).toContain('/repos/vercel/ai/branches')
+    expect(listed(calls[1]!)).toEqual(listed(calls[0]!))
+  })
+
+  it('passes the validated input, with its defaults, to the named tool\'s toModelOutput', async () => {
+    vi.stubGlobal('fetch', vi.fn<typeof globalThis.fetch>(async () => new Response('[]', { headers: { 'content-type': 'application/json' } })))
+    const evaluation = evaluationModel(() => ({}))
+    const { model, calls } = scriptedModel({ name: 'listBranches', input: { owner: 'vercel', repo: 'ai' } })
+    const agent = createGithubAgent({
+      model,
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model },
+      overrides: { listBranches: { toModelOutput: ({ input }) => ({ type: 'json', value: input }) } },
+      stopWhen: () => calls.length >= 2,
+    })
+    await agent.generate({ prompt: 'List the branches of vercel/ai' })
+    vi.unstubAllGlobals()
+    expect(JSON.stringify(calls[1]!.prompt)).toContain('"perPage":30')
+  })
+
+  it('keeps separate stored decisions for agents with different routing settings', async () => {
+    const saved = new Map<string, readonly string[]>()
+    const store = { get: async (key: string) => saved.get(key), set: async (key: string, value: readonly string[]) => void saved.set(key, value) }
+    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9, mergePullRequest: 0.8 }))
+    for (const maxTools of [1, 2]) {
+      const { model } = scriptedModel(undefined)
+      await createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model, store, maxTools } }).generate({ prompt: 'Merge vercel/ai#12' })
+    }
+    expect(evaluation.calls).toHaveLength(2)
+    expect([...saved.values()]).toEqual([[...core, 'getPullRequest'], [...core, 'getPullRequest', 'mergePullRequest']])
+  })
+
+  it('reuses a decision from evaluation.store instead of deciding again in a new agent', async () => {
+    const saved = new Map<string, readonly string[]>()
+    const store = { get: async (key: string) => saved.get(key), set: async (key: string, value: readonly string[]) => void saved.set(key, value) }
+    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9 }))
+    for (let i = 0; i < 2; i++) {
+      const { model } = scriptedModel(undefined)
+      await createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model, store } }).generate({ prompt: 'Merge vercel/ai#12' })
+    }
+    expect(evaluation.calls).toHaveLength(1)
+    expect([...saved]).toEqual([[expect.stringMatching(/^github-tools:tools:[0-9a-f]{64}$/), [...core, 'getPullRequest']]])
+  })
+
+  async function twoRequests(scope?: 'turn' | 'session') {
+    const evaluation = evaluationModel(({ state }) => ({ [JSON.stringify(state).includes('label') ? 'addLabels' : 'mergePullRequest']: 0.9 }))
+    const calls: LanguageModelV4CallOptions[] = []
+    const agent = createGithubAgent({
+      model: new MockLanguageModelV4({
+        doGenerate: async (options) => {
+          calls.push(options)
+          return { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] }
+        },
+      }),
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model, scope },
+    })
+    await agent.generate({ prompt: 'Merge vercel/ai#12' })
+    await agent.generate({ messages: [
+      { role: 'user', content: 'Merge vercel/ai#12' },
+      { role: 'assistant', content: 'Merged.' },
+      { role: 'user', content: 'Now label vercel/ai#13 as a bug' },
+    ] })
+    return { first: listed(calls[0]!), second: listed(calls[1]!), decisions: evaluation.calls.length }
+  }
+
+  it("keeps the first request's picks for the whole conversation by default", async () => {
+    const { first, second, decisions } = await twoRequests()
+    expect(second).toEqual(first)
+    expect(second).toContain('mergePullRequest')
+    expect(decisions).toBe(1)
+  })
+
+  it("picks again for each new request with scope: 'turn'", async () => {
+    const { first, second, decisions } = await twoRequests('turn')
+    expect(first).toContain('mergePullRequest')
+    expect(second).toContain('addLabels')
+    expect(second).not.toContain('mergePullRequest')
+    expect(decisions).toBe(2)
+  })
+
+  it("rejects scope: 'session' with presets on createGithubAgent", () => {
+    expect(() => createGithubAgent({ model: 'test/model', token: 'test', preset: 'auto', evaluation: { selection: 'presets', scope: 'session' } }))
+      .toThrow(expect.objectContaining({ code: 'github_tools.SESSION_SCOPE_NEEDS_TOOL_SELECTION' }))
   })
 })

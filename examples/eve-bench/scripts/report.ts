@@ -34,7 +34,7 @@ function loadRuns(): Run[] {
     return readdirSync(dir).filter(f => f.endsWith('.json')).flatMap((file) => {
       const artifact = JSON.parse(readFileSync(join(dir, file), 'utf8')) as {
         verdict: string
-        result: { logs: string[], derived: { interactions: unknown[] } }
+        result: { logs: string[], derived?: { interactions?: unknown[] } }
       }
       const tagLine = artifact.result.logs.find(l => l.startsWith(BENCH_LOG_PREFIX))
       if (!tagLine) return []
@@ -52,7 +52,7 @@ function loadRuns(): Run[] {
         inputTokens: usages.reduce((s, u) => s + u.inputTokens, 0),
         cacheReadTokens: usages.reduce((s, u) => s + u.cacheReadTokens, 0),
         outputTokens: usages.reduce((s, u) => s + u.outputTokens, 0),
-        approvals: artifact.result.derived.interactions.length,
+        approvals: artifact.result.derived?.interactions?.length ?? 0,
         seconds: (Math.max(...times) - Math.min(...times)) / 1000,
       }]
     })
