@@ -22,8 +22,9 @@ import {
   type GithubToolName,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
-import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision } from 'eve/tools/approval'
+import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy } from 'eve/tools/approval'
 import { defineDynamic, defineTool, toolOutput, type ToolContext, type ToolDefinition } from 'eve/tools'
+import { z } from 'zod'
 import extension, {
   type GithubActAs,
   type GithubExtensionApprovalConfig,
@@ -199,6 +200,18 @@ async function runGithubEveApprovalResponse(name: GithubToolName, { request, res
   return { status: 'allowed' }
 }
 
+// A configured `response` policy decides who may answer; the extension's own checks still apply to whoever it allows.
+async function runConfiguredApprovalResponse(name: GithubToolName, policy: ApprovalResponsePolicy, ctx: ApprovalResponseContext): Promise<ApprovalResponseDecision> {
+  const decision = await policy(ctx)
+  if (decision.status !== 'allowed') return decision
+  return runGithubEveApprovalResponse(name, ctx)
+}
+
+function configuredApprovalResponse(name: GithubToolName): ApprovalResponsePolicy | undefined {
+  const value = configuredApprovalValue(name)
+  return typeof value === 'object' ? value.response : undefined
+}
+
 function isUnauthorized(result: unknown): boolean {
   if (!isErrorResult(result)) return false
   const { error } = result
@@ -239,12 +252,18 @@ function autoApprovalDecision(writeTool: GithubWriteToolName, request: string, c
   return decision
 }
 
+function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalValue | undefined {
+  const writeTool = writeToolName(name)
+  if (!writeTool) return undefined
+  const { requireApproval, overrides } = extension.config
+  return approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
+}
+
 async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext) {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
 
-  const { requireApproval, overrides } = extension.config
-  const value = approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
+  const value = configuredApprovalValue(name)!
   if (value === 'auto') {
     if (!isPersonRequest(ctx)) return 'user-approval'
     return await autoApprovalDecision(writeTool, request, ctx) ? 'user-approval' : 'not-applicable'
@@ -256,8 +275,11 @@ async function runGithubEveApproval(name: GithubToolName, request: string, ctx: 
 type ApprovalTarget = GithubExtensionContext & { discussionNumber?: number }
 
 // "Create issue on owner/repo#12": the channel label while a call runs, and the approval prompt.
-function describeGithubCall(name: GithubToolName, input: Readonly<Record<string, unknown>>) {
-  const { owner, repo, pullNumber, issueNumber, discussionNumber } = { ...extension.config.context, ...input } as ApprovalTarget
+// Context defaults only count for fields the tool takes, so the prompt names the target the call acts on.
+function describeGithubCall(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>) {
+  const fields = inputSchema instanceof z.ZodObject ? inputSchema.shape : {}
+  const context = Object.fromEntries(Object.entries(extension.config.context ?? {}).filter(([key]) => key in fields))
+  const { owner, repo, pullNumber, issueNumber, discussionNumber } = { ...context, ...input } as ApprovalTarget
   const action = name.replace(/[A-Z]/g, letter => ` ${letter.toLowerCase()}`)
   const number = pullNumber ?? issueNumber ?? discussionNumber
   const target = owner && repo ? ` on ${owner}/${repo}${number ? `#${number}` : ''}` : ''
@@ -295,6 +317,7 @@ export default defineDynamic(async (ctx) => {
   for (const entry of descriptors) {
     const name = entry.name
     const override = toolOverrides?.[name]
+    const configuredResponse = configuredApprovalResponse(name)
 
     tools[name] = defineTool({
       ...(listed && !listed.has(name) && { deferred: true }),
@@ -302,12 +325,14 @@ export default defineDynamic(async (ctx) => {
       inputSchema: entry.inputSchema,
       approval: {
         request: approvalCtx => runGithubEveApproval(name, request, approvalCtx),
-        prompt: ({ input }) => `${describeGithubCall(name, input)}?`,
-        ...(extension.config.approvers === 'anyone' && {
-          response: responseCtx => runGithubEveApprovalResponse(name, responseCtx),
-        }),
+        prompt: ({ input }) => `${describeGithubCall(name, entry.inputSchema, input)}?`,
+        ...(configuredResponse
+          ? { response: responseCtx => runConfiguredApprovalResponse(name, configuredResponse, responseCtx) }
+          : extension.config.approvers === 'anyone' && {
+            response: responseCtx => runGithubEveApprovalResponse(name, responseCtx),
+          }),
       },
-      label: { start: input => describeGithubCall(name, input as Record<string, unknown>) },
+      label: { start: input => describeGithubCall(name, entry.inputSchema, input as Record<string, unknown>) },
       toModelOutput: (output: unknown) => runGithubEveToModelOutput(name, output),
       ...(override?.outputSchema !== undefined && { outputSchema: override.outputSchema }),
       execute: async (input, toolCtx) => runGithubEveTool(name, input, toolCtx),

@@ -22,6 +22,10 @@ export default defineAgent({
         return { toolCalls: [{ name: 'strict__getRepository', input: target }] }
       case 'strict write':
         return { toolCalls: [{ name: 'strict__createIssue', input: { ...target, title: 'eval' } }] }
+      case 'gated write':
+        return { toolCalls: [{ name: 'gated__createIssue', input: { ...target, title: 'eval' } }] }
+      case 'gated update':
+        return { toolCalls: [{ name: 'gated__updateIssue', input: { ...target, issueNumber: 999, state: 'closed' } }] }
       case 'github calls':
         return JSON.stringify(githubCalls())
       default:
