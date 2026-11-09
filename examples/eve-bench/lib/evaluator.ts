@@ -11,7 +11,7 @@ type DecisionModel = Exclude<Experimental_EvaluationModel, string>
  */
 export function benchEvaluator(tags: Record<string, string>): DecisionModel {
   const jevGateway = process.env.JEV_GATEWAY_API_KEY ? createGateway({ apiKey: process.env.JEV_GATEWAY_API_KEY }) : gateway
-  const base = jevGateway.decisionModel(process.env.BENCH_DECISION_MODEL ?? 'typesafe-ai/jev')
+  const base = jevGateway.decisionModel(process.env.BENCH_DECISION_MODEL ?? 'typesafe-ai/jev-1.14.0')
   return {
     ...base,
     specificationVersion: 'v4',

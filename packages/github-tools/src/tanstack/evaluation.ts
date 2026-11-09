@@ -1,7 +1,7 @@
 import { boolean, decide, score } from '@tanstack/ai'
 import type { EvaluateAdapter, ModelMessage } from '@tanstack/ai'
 import { GITHUB_TOOL_CATALOG } from '../core/catalog'
-import { DEFAULT_EVALUATION_MODEL, INTENT_QUESTION, PRESET_PURPOSES, RISK_QUESTION, conversationState, rankPresets, requiresApproval, type RoutablePreset } from '../core/evaluation-policy'
+import { INTENT_QUESTION, PRESET_PURPOSES, RISK_QUESTION, conversationState, rankPresets, requiresApproval, type RoutablePreset } from '../core/evaluation-policy'
 import { PRESET_TOOLS } from '../core/presets'
 import { githubToolsErrors } from '../core/errors'
 import type { GithubToolName } from '../core/tool-names'
@@ -20,10 +20,13 @@ export type GithubEvaluationOptions = {
   maxPresets?: number
 }
 
+// `@tanstack/ai-vercel-gateway` 0.3 types only the `typesafe-ai/jev` alias, not pinned releases.
+const TANSTACK_DEFAULT_EVALUATION_MODEL = 'typesafe-ai/jev'
+
 async function evaluationAdapter(options: GithubEvaluationOptions) {
   if (options.adapter) return options.adapter
   const { vercelGatewayDecider } = await import('@tanstack/ai-vercel-gateway')
-  return vercelGatewayDecider(DEFAULT_EVALUATION_MODEL)
+  return vercelGatewayDecider(TANSTACK_DEFAULT_EVALUATION_MODEL)
 }
 
 export function latestUserText(messages: readonly ModelMessage[]): string {
@@ -40,7 +43,7 @@ function evaluationFailed(error: unknown, options: GithubEvaluationOptions, fall
   if (error instanceof Error && error.name === 'AbortError') throw error
   const cause = error instanceof Error ? error : new Error(String(error))
   console.warn('[github-tools]', githubToolsErrors.EVALUATION_FAILED({
-    model: options.adapter?.model ?? DEFAULT_EVALUATION_MODEL,
+    model: options.adapter?.model ?? TANSTACK_DEFAULT_EVALUATION_MODEL,
     fallback,
     detail: cause.message,
     cause,
