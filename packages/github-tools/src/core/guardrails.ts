@@ -10,13 +10,15 @@ export type GithubGuardrails = {
    * Repositories the tools may act on, as `owner/repo` or `owner/*`, matched case-insensitively.
    * A call to any other repository fails. Tools without a repository target (search, gists,
    * notifications) are not restricted. `createRepository` and `forkRepository` run only when the
-   * new repository's full name matches, so they need `org` or `organization`.
+   * new repository's full name matches, so they need `org` or `organization`. `addSubIssue` also
+   * checks the sub-issue's repository.
    */
   repositories?: string[]
   /**
    * Branches the tools may write to, as names or patterns where `*` matches any characters,
-   * such as `agent/*`. Covers creating, deleting and committing to a branch, and merging or
-   * enabling auto-merge into a pull request's base branch. A commit that doesn't name its branch fails.
+   * such as `agent/*`. Covers creating, deleting and committing to a branch, merging or enabling
+   * auto-merge into a pull request's base branch, and updating a pull request's head branch.
+   * A commit that doesn't name its branch fails.
    */
   branches?: string[]
 }
@@ -40,6 +42,12 @@ export function mergeGuardrailViolation(branches: readonly string[] | undefined,
   return `Merges are limited to base branches matching ${list(branches)}, and pull request #${pullNumber} targets \`${base}\`.`
 }
 
+/** Why `branches` block updating pull request `pullNumber`'s head branch `head`, or `undefined` when they allow it. */
+export function updateBranchGuardrailViolation(branches: readonly string[] | undefined, pullNumber: number, head: string): string | undefined {
+  if (!branches || patternsMatch(branches, head)) return undefined
+  return `Writes are limited to branches matching ${list(branches)}, and pull request #${pullNumber}'s branch is \`${head}\`.`
+}
+
 function newRepository(call: GithubTokenCall): string | null | undefined {
   const input = call.input as Record<string, unknown>
   if (call.toolName === 'createRepository') return typeof input.org === 'string' ? `${input.org}/${String(input.name)}` : null
@@ -47,16 +55,21 @@ function newRepository(call: GithubTokenCall): string | null | undefined {
   return undefined
 }
 
+function subIssueRepository(call: GithubTokenCall): string | undefined {
+  const { subIssueRepo } = call.input as Record<string, unknown>
+  return call.toolName === 'addSubIssue' && typeof subIssueRepo === 'string' ? `${call.owner}/${subIssueRepo}` : undefined
+}
+
 /**
  * Why `guardrails` block a call, or `undefined` when they allow it. Checks the target repository
- * and the branch a write names; a merge's base branch is checked when the call runs.
+ * and the branch a write names; a merge's base branch and an update's head branch are checked when the call runs.
  */
 export function guardrailViolation(call: GithubTokenCall, guardrails: GithubGuardrails | undefined): string | undefined {
   const { repositories, branches } = guardrails ?? {}
   if (repositories) {
     const created = newRepository(call)
     if (created === null) return `\`${call.toolName}\` needs \`${call.toolName === 'createRepository' ? 'org' : 'organization'}\` so the new repository can be checked against the allowed repositories: ${list(repositories)}.`
-    for (const target of [call.owner && call.repo && `${call.owner}/${call.repo}`, created]) {
+    for (const target of [call.owner && call.repo && `${call.owner}/${call.repo}`, created, subIssueRepository(call)]) {
       if (target && !patternsMatch(repositories, target, 'i')) return `\`${target}\` is outside the repositories these tools may act on: ${list(repositories)}.`
     }
   }

@@ -1,7 +1,7 @@
 import type { ToolSet } from 'ai'
-import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules } from './tools/repository'
-import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge } from './tools/pull-requests'
-import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
+import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules, getCollaboratorPermission } from './tools/repository'
+import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge, updatePullRequestBranch } from './tools/pull-requests'
+import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees, listMilestones, listSubIssues, addSubIssue } from './tools/issues'
 import { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 import { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
 import { listNotifications, markNotificationRead } from './tools/notifications'
@@ -9,7 +9,7 @@ import { searchCode, searchRepositories, searchIssues } from './tools/search'
 import { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 import { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 import { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-import { listCheckRuns, getCombinedStatus } from './tools/checks'
+import { listCheckRuns, getCombinedStatus, createCommitStatus } from './tools/checks'
 import { listCodeScanningAlerts, listDependabotAlerts, listSecretScanningAlerts } from './tools/security'
 import { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 import { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
@@ -157,6 +157,7 @@ export function createGithubTools({
     createOrUpdateFile: createOrUpdateFile(resolveToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
     editFiles: editFiles(resolveToken, { ...approval('editFiles'), author, committer, coAuthors }),
     getBranchRules: getBranchRules(resolveToken),
+    getCollaboratorPermission: getCollaboratorPermission(resolveToken),
     listCodeScanningAlerts: listCodeScanningAlerts(resolveToken),
     listDependabotAlerts: listDependabotAlerts(resolveToken),
     listSecretScanningAlerts: listSecretScanningAlerts(resolveToken),
@@ -165,6 +166,7 @@ export function createGithubTools({
     enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors, branches }),
     disablePullRequestAutoMerge: disablePullRequestAutoMerge(resolveToken, approval('disablePullRequestAutoMerge')),
     updatePullRequest: updatePullRequest(resolveToken, approval('updatePullRequest')),
+    updatePullRequestBranch: updatePullRequestBranch(resolveToken, { ...approval('updatePullRequestBranch'), branches }),
     addPullRequestComment: addPullRequestComment(resolveToken, approval('addPullRequestComment')),
     updatePullRequestComment: updatePullRequestComment(resolveToken, approval('updatePullRequestComment')),
     deletePullRequestComment: deletePullRequestComment(resolveToken, approval('deletePullRequestComment')),
@@ -192,6 +194,9 @@ export function createGithubTools({
     deleteLabel: deleteLabel(resolveToken, approval('deleteLabel')),
     addAssignees: addAssignees(resolveToken, approval('addAssignees')),
     removeAssignees: removeAssignees(resolveToken, approval('removeAssignees')),
+    listMilestones: listMilestones(resolveToken),
+    listSubIssues: listSubIssues(resolveToken),
+    addSubIssue: addSubIssue(resolveToken, approval('addSubIssue')),
     listIssueReactions: listIssueReactions(resolveToken),
     addIssueReaction: addIssueReaction(resolveToken, approval('addIssueReaction')),
     listCommentReactions: listCommentReactions(resolveToken),
@@ -218,6 +223,7 @@ export function createGithubTools({
     rerunWorkflowRun: rerunWorkflowRun(resolveToken, approval('rerunWorkflowRun')),
     listCheckRuns: listCheckRuns(resolveToken),
     getCombinedStatus: getCombinedStatus(resolveToken),
+    createCommitStatus: createCommitStatus(resolveToken, approval('createCommitStatus')),
     getCiFailureContext: getCiFailureContext(resolveToken),
     listReleases: listReleases(resolveToken),
     getLatestRelease: getLatestRelease(resolveToken),
@@ -276,9 +282,9 @@ export type GithubTools = AllGithubTools & ToolSet
 
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'
-export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules } from './tools/repository'
-export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge } from './tools/pull-requests'
-export { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
+export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules, getCollaboratorPermission } from './tools/repository'
+export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge, updatePullRequestBranch } from './tools/pull-requests'
+export { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees, listMilestones, listSubIssues, addSubIssue } from './tools/issues'
 export { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 export { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
 export { listNotifications, markNotificationRead } from './tools/notifications'
@@ -286,7 +292,7 @@ export { searchCode, searchRepositories, searchIssues } from './tools/search'
 export { listCommits, getCommit, getBlame, compareCommits } from './tools/commits'
 export { listGists, getGist, listGistComments, createGist, updateGist, deleteGist, createGistComment } from './tools/gists'
 export { listWorkflows, listWorkflowRuns, getWorkflowRun, listWorkflowJobs, getWorkflowJobLogs, triggerWorkflow, cancelWorkflowRun, rerunWorkflowRun } from './tools/workflows'
-export { listCheckRuns, getCombinedStatus } from './tools/checks'
+export { listCheckRuns, getCombinedStatus, createCommitStatus } from './tools/checks'
 export { listCodeScanningAlerts, listDependabotAlerts, listSecretScanningAlerts } from './tools/security'
 export { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 export { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'

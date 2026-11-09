@@ -17,6 +17,7 @@ const SCOPE_ORDER = [
   'actions:write',
   'checks:read',
   'statuses:read',
+  'statuses:write',
   'administration:read',
   'administration:write',
   'security_events:read',

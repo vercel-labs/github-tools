@@ -115,10 +115,10 @@ export function createToolRegistry(
     mergePullRequest: { coAuthors: ctx.coAuthors },
     enablePullRequestAutoMerge: { coAuthors: ctx.coAuthors },
   }
-  // Spread after the input, so the base branches a merge may target can't come from the model.
+  // Spread after the input, so the branches a merge or branch update may write can't come from the model.
   const branches = ctx.guardrails?.branches
   const guardExtras: Partial<Record<GithubToolName, Record<string, unknown>>> = branches
-    ? { mergePullRequest: { branches }, enablePullRequestAutoMerge: { branches } }
+    ? { mergePullRequest: { branches }, enablePullRequestAutoMerge: { branches }, updatePullRequestBranch: { branches } }
     : {}
 
   const entries = names.map((name): ToolRegistryEntry => {

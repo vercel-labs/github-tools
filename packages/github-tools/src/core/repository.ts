@@ -645,3 +645,22 @@ export async function getBranchRulesCore({ token, owner, repo, branch }: { token
   }
   })
 }
+
+export const getCollaboratorPermissionInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  username: z.string().describe('GitHub username to check'),
+})
+
+export const getCollaboratorPermissionDescription = 'Get a user\'s permission on a repository: admin, write, read, or none, plus their role (admin, maintain, write, triage, read, or a custom role). Use it to check whether a user may trigger the bot or approve an action. On a public repository, every user has at least read'
+
+export async function getCollaboratorPermissionCore({ token, owner, repo, username }: { token: string, owner: string, repo: string, username: string }) {
+  return withOctokit(token, async (octokit) => {
+  const { data } = await octokit.rest.repos.getCollaboratorPermissionLevel({ owner, repo, username })
+  return {
+    username: data.user?.login ?? username,
+    permission: data.permission,
+    roleName: data.role_name,
+  }
+  })
+}

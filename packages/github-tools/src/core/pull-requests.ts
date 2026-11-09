@@ -4,7 +4,7 @@ import type { CommitIdentity } from '../types'
 import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
 import { fetchAllPages, maxPagesSchema, pageSchema, pagedList } from './pagination'
 import { githubToolsErrors } from './errors'
-import { mergeGuardrailViolation } from './guardrails'
+import { mergeGuardrailViolation, updateBranchGuardrailViolation } from './guardrails'
 import { composeCommitMessage } from './repository'
 
 export const listPullRequestsInputSchema = z.object({
@@ -658,5 +658,35 @@ export async function disablePullRequestAutoMergeCore({ token, owner, repo, pull
   const { data: pr } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
   const { disablePullRequestAutoMerge: { pullRequest } } = await octokit.graphql<{ disablePullRequestAutoMerge: AutoMergeResult }>(DISABLE_AUTO_MERGE_MUTATION, { pullRequestId: pr.node_id })
   return { number: pullRequest.number, url: pullRequest.url, autoMerge: null }
+  })
+}
+
+export const updatePullRequestBranchInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  pullNumber: z.number().describe('Pull request number'),
+  expectedHeadSha: z.string().optional().describe('SHA the pull request branch must still point to. If someone pushed since, the update fails instead of merging into their changes'),
+})
+
+export const updatePullRequestBranchDescription = 'Bring a pull request branch up to date by merging its base branch into it, like the "Update branch" button. Use it when getPullRequest reports mergeableState behind. GitHub runs the update in the background'
+
+/** Not idempotent: each call can add a merge commit to the pull request branch. */
+export async function updatePullRequestBranchCore({ token, owner, repo, pullNumber, expectedHeadSha, branches }: {
+  token: string
+  owner: string
+  repo: string
+  pullNumber: number
+  expectedHeadSha?: string
+  /** `guardrails.branches`: the pull request's head branch must match. */
+  branches?: string[]
+}) {
+  return withOctokit(token, async (octokit) => {
+  if (branches) {
+    const { data: pr } = await octokit.rest.pulls.get({ owner, repo, pull_number: pullNumber })
+    const reason = updateBranchGuardrailViolation(branches, pullNumber, pr.head.ref)
+    if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
+  }
+  const { data } = await octokit.rest.pulls.updateBranch({ owner, repo, pull_number: pullNumber, expected_head_sha: expectedHeadSha })
+  return { message: data.message, url: data.url }
   })
 }
