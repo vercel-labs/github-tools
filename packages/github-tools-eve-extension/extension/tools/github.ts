@@ -293,8 +293,13 @@ const PAST_TENSE: Record<string, string> = {
 }
 
 // "Created issue on owner/repo#123" once a write succeeds, with the number of what it created.
-// Reads return '', which keeps their start label.
+// Reads return '', which keeps their start label. A failed call returns `{ error }` rather than
+// throwing, so eve runs this for it too: "Couldn't create issue on owner/repo".
 function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, output: unknown) {
+  if (output !== null && typeof output === 'object' && 'error' in output) {
+    const label = describeGithubCall(name, inputSchema, input)
+    return `Couldn't ${label[0]!.toLowerCase()}${label.slice(1)}`
+  }
   if (!writeToolName(name)) return ''
   const created = output !== null && typeof output === 'object' && 'number' in output && typeof output.number === 'number' ? output.number : undefined
   const target = created !== undefined && input.pullNumber === undefined && input.issueNumber === undefined && input.discussionNumber === undefined
