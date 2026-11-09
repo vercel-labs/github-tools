@@ -7,6 +7,8 @@ import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset
 import { DEFAULT_EVALUATION_MODEL } from './core/evaluation-policy'
 import { assertEvaluationAvailable, evaluatePresets, evaluateTools, evaluationRequest, fallbackPresets, fallbackTools, type GithubEvaluationOptions } from './core/evaluation'
 import { githubToolsErrors } from './core/errors'
+import { resolveAiSdkToolApproval, type GithubToolApprovalStatus } from './core/approval'
+import { isGithubWriteToolName } from './core/catalog'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from './core/tool-names'
 import { resolveInstructions } from './core/instructions'
 export { resolveInstructions } from './core/instructions'
@@ -21,13 +23,15 @@ const callGithubToolInput = z.object({
   input: z.record(z.string(), z.unknown()).optional().describe('The tool\'s arguments. Omit to get its description and input schema without calling it.'),
 })
 
+async function validateInput(tools: AllGithubTools, name: GithubToolName, input: unknown) {
+  const result = await asSchema(tools[name].inputSchema).validate?.(input)
+  return result ?? { success: true as const, value: input }
+}
+
 // One fixed tool reaches every GitHub tool that was not picked, so the tool list, which starts
 // the provider's cached prompt, never changes during the conversation.
 function callGithubTool(tools: AllGithubTools) {
-  const validate = async (name: GithubToolName, input: unknown) => {
-    const result = await asSchema(tools[name].inputSchema).validate?.(input)
-    return result ?? { success: true as const, value: input }
-  }
+  const validate = (name: GithubToolName, input: unknown) => validateInput(tools, name, input)
   return tool({
     description: 'Call a GitHub tool that is not in your tool list. Every GitHub tool is in the `name` enum. Pass its arguments as `input`; if you do not know them, omit `input` to get the tool\'s description and input schema first.',
     inputSchema: callGithubToolInput,
@@ -52,6 +56,41 @@ function callGithubTool(tools: AllGithubTools) {
       return toModelOutput({ toolCallId, input: parsed.success ? parsed.value : input, output })
     },
   })
+}
+
+type GithubToolApprovalPolicy = (input: unknown, options: { toolCallId: string, messages: ModelMessage[] }) => Promise<GithubToolApprovalStatus>
+
+/**
+ * Call-level approval for every GitHub tool, the AI SDK 7 replacement for tool-level `needsApproval`.
+ * `requireApproval: 'auto'` puts the decision model's verdict on approval requests and records the
+ * calls it lets through as automatic approvals. Calls through `callGithubTool` follow the named tool.
+ */
+function githubToolApproval({ tools, requireApproval, evaluation, overrides }: {
+  tools: AllGithubTools
+  requireApproval: CreateGithubAgentOptions['requireApproval']
+  evaluation: CreateGithubAgentOptions['evaluation']
+  overrides: CreateGithubAgentOptions['overrides']
+}) {
+  const policies = new Map<GithubToolName, GithubToolApprovalPolicy>()
+  const policyFor = (name: GithubToolName): GithubToolApprovalPolicy => {
+    let policy = policies.get(name)
+    if (!policy) {
+      const override = overrides?.[name]?.needsApproval
+      policy = override !== undefined
+        // GitHub tools take no tool context, so `context` is always undefined here.
+        ? async (input, options) => (typeof override === 'function' ? await override(input, { ...options, context: undefined }) : override) ? 'user-approval' : undefined
+        : isGithubWriteToolName(name) ? resolveAiSdkToolApproval(name, requireApproval ?? true, evaluation) : async () => undefined
+      policies.set(name, policy)
+    }
+    return policy
+  }
+  return async ({ toolCall, messages }: { toolCall: { toolName: string, toolCallId: string, input: unknown }, messages: ModelMessage[] }) => {
+    if (toolCall.toolName !== CALL_GITHUB_TOOL) return policyFor(toolCall.toolName as GithubToolName)(toolCall.input, { toolCallId: toolCall.toolCallId, messages })
+    const { name, input } = toolCall.input as z.infer<typeof callGithubToolInput>
+    if (input === undefined) return undefined
+    const parsed = await validateInput(tools, name, input)
+    return parsed.success ? policyFor(name)(parsed.value, { toolCallId: toolCall.toolCallId, messages }) : undefined
+  }
 }
 
 type AgentOptions = Omit<ToolLoopAgentSettings<ToolSet>, 'model' | 'tools' | 'instructions'>
@@ -190,6 +229,8 @@ export function createGithubAgent({
   // `activeTools` only names tools the agent has, so the tool set always holds every GitHub tool.
   const agentTools: ToolSet = byTool ? { ...tools, [CALL_GITHUB_TOOL]: callGithubTool(tools as AllGithubTools) } : tools
   const settings = {
+    // Your own `toolApproval` replaces the GitHub policy, as it would any tool-level `needsApproval`.
+    toolApproval: githubToolApproval({ tools: tools as AllGithubTools, requireApproval, evaluation, overrides }),
     ...agentOptions,
     tools: agentTools as typeof tools,
     instructions: resolveInstructions({ preset: staticPreset, instructions, additionalInstructions, context }),

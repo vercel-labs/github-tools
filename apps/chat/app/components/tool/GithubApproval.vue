@@ -35,6 +35,10 @@ const inputEntries = computed(() => {
       <span class="text-xs text-muted ml-auto">needs approval</span>
     </div>
 
+    <p v-if="invocation.approval?.requestReason" class="px-3 py-2 text-xs text-muted border-b border-default">
+      {{ invocation.approval.requestReason }}
+    </p>
+
     <div v-if="inputEntries.length" class="divide-y divide-default">
       <div
         v-for="([key, value]) in inputEntries"

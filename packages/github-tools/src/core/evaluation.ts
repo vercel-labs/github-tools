@@ -121,22 +121,25 @@ function warnEvaluationFailed(model: Experimental_EvaluationModel, fallback: str
   }))
 }
 
+/** Whether a person should approve a GitHub write, and why, as a short sentence for the approval request. */
+export type AutoApprovalDecision = { ask: boolean, reason: string }
+
+const RISK_LABELS = RISK_QUESTION.criteria.map(criterion => criterion.slice(0, criterion.indexOf(':')))
+
 /**
- * Whether an `'auto'` write tool call needs human approval: `false` only when the model
- * rates it low-risk and asked for by the latest user message. When the evaluation call
- * fails, logs `EVALUATION_FAILED` and asks for approval. An aborted `abortSignal` rejects.
- *
- * The latest user message is trusted as the person's request: pass messages a person wrote,
- * not a prompt another model generated.
+ * Asks the decision model how risky a GitHub write is and whether the user asked for it, and
+ * explains the outcome: `ask` is true when a person should approve the call. A failed or refused
+ * decision asks, since it gives no evidence that the call is safe.
  */
-export async function needsAutoApproval(
+export async function autoApprovalDecision(
   toolName: GithubWriteToolName,
   input: unknown,
   messages: readonly ModelMessage[],
   { model = DEFAULT_EVALUATION_MODEL, maxRisk = 1, minIntent = 0.6, providerOptions }: GithubEvaluationOptions = {},
   abortSignal?: AbortSignal,
-): Promise<boolean> {
+): Promise<AutoApprovalDecision> {
   const decide = loadDecide()
+  let refused = false
   const result = await decide({
     model,
     providerOptions,
@@ -155,12 +158,29 @@ export async function needsAutoApproval(
     abortSignal,
   }).catch((error: unknown) => {
     // A refusal is an answer, not an outage: it gives no evidence the call is safe, so a person decides.
-    if (!refusedQuestions(error)) warnEvaluationFailed(model, `asking approval for ${toolName}`, error, abortSignal)
+    refused = Boolean(refusedQuestions(error))
+    if (!refused) warnEvaluationFailed(model, `asking approval for ${toolName}`, error, abortSignal)
     return undefined
   })
-  if (!result) return true
-  const { answers } = result
-  return requiresApproval(answers.risk.score, answers.intent.probability, { maxRisk, minIntent })
+  if (!result) return { ask: true, reason: refused ? 'The decision model declined to rate this call.' : 'The decision model was unavailable.' }
+  const risk = result.answers.risk.score
+  const intent = result.answers.intent.probability
+  // Jev scores risk on a continuous 0–2 scale, so the label is the nearest rubric level.
+  const verdict = `${RISK_LABELS[Math.round(risk)]} (risk ${Number(risk.toFixed(1))} of 2), ${Math.round(intent * 100)}% likely you asked for it`
+  return requiresApproval(risk, intent, { maxRisk, minIntent })
+    ? { ask: true, reason: `${verdict}.` }
+    : { ask: false, reason: `Approved automatically: ${verdict.charAt(0).toLowerCase()}${verdict.slice(1)}.` }
+}
+
+/** Whether a GitHub write needs a person's approval; see {@link autoApprovalDecision}. */
+export async function needsAutoApproval(
+  toolName: GithubWriteToolName,
+  input: unknown,
+  messages: readonly ModelMessage[],
+  options: GithubEvaluationOptions = {},
+  abortSignal?: AbortSignal,
+): Promise<boolean> {
+  return (await autoApprovalDecision(toolName, input, messages, options, abortSignal)).ask
 }
 
 /**
