@@ -1,5 +1,57 @@
 # @github-tools/sdk
 
+## 1.21.0
+
+### Minor Changes
+
+- [#236](https://github.com/vercel-labs/github-tools/pull/236) [`5018863`](https://github.com/vercel-labs/github-tools/commit/501886399c5978663806d4996ed53eeaeb497e70) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Block calls whose input contains a credential, so an agent can't post one to GitHub. The check runs on every tool call by default, even without `guardrails`, and recognizes GitHub, npm, Slack, Stripe, Anthropic, OpenAI, Google and AWS keys, and private keys. A blocked call fails with `github_tools.GUARDRAIL_BLOCKED`, for example "The input contains what looks like a GitHub token. Never send credentials to GitHub; remove it and try again."
+  
+  `createGithubAgent` and the eve extension deny such a write instead of asking anyone. `createGithubTools` skips the approval request when `guardrails` are set, and otherwise asks before the call fails. Set `guardrails: { secrets: 'allow' }` when the agent has to write fake keys, for example in test fixtures.
+
+- [#237](https://github.com/vercel-labs/github-tools/pull/237) [`f13dada`](https://github.com/vercel-labs/github-tools/commit/f13dada774d5f6c1ed217fd72e85eae81ae947a8) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add six tools for production bots: checking who may trigger the bot, reporting results, keeping pull requests up to date, and planning work.
+  
+  - `getCollaboratorPermission` returns a user's permission on a repository (`admin`, `write`, `read` or `none`) and role name (`admin`, `maintain`, `write`, `triage`, `read` or a custom role), so a bot can check whether the person who asked may trigger it or approve an action. On a public repository every user has at least `read`. It needs only the Metadata permission. It's in `code-review`, `issue-triage`, `pr-author` and `maintainer`.
+  - `createCommitStatus` sets a commit status (`error`, `failure`, `pending` or `success`) with a `context`, and an optional `description` and `targetUrl`. Unlike check runs, which only a GitHub App can create, it works with a personal access token too. It needs the Commit statuses permission (write), `statuses:write` with Vercel Connect, and is in `code-review`, `ci-ops` and `maintainer`.
+  - `updatePullRequestBranch` merges a pull request's base branch into its head branch, like the "Update branch" button, with an optional `expectedHeadSha`. With `guardrails`, it checks the pull request's head branch and the head's repository, which can be a fork, and fails with `github_tools.GUARDRAIL_BLOCKED` when either doesn't match. The factory takes `guardrails`. It's in `pr-author` and `maintainer`.
+  - `listMilestones` lists milestones by `state` with their due dates and open and closed issue counts. `createIssue` now takes `milestone`.
+  - `listSubIssues` lists the sub-issues of an issue, and `addSubIssue` adds an existing issue as a sub-issue by its number, from the same repository or another one with the same owner (`subIssueRepo`), with `replaceParent` to move it from its current parent. With `guardrails.repositories`, `addSubIssue` also checks the sub-issue's repository. These three tools are in `issue-triage` and `maintainer`.
+  
+  **Vercel Connect:** a preset's token requests the scopes of every tool in the preset, so tokens for `code-review`, `ci-ops` and `maintainer` now also ask for `statuses:write`. Add the **Commit statuses** permission (read and write) to your GitHub App before upgrading. Otherwise GitHub can refuse the token, and every tool in those presets fails, not only `createCommitStatus`. To keep the App's current permissions instead, leave the tool out of the token's scopes: on the eve extension, set `exclude: ['createCommitStatus']`. With the AI SDK, `connectGithubTools` always requests the whole preset's scopes, so build the token with `connectGithubToken(connector, { preset, exclude: ['createCommitStatus'] })` and pass it to `createGithubTools`.
+  
+  The write tools (`createCommitStatus`, `updatePullRequestBranch`, `addSubIssue`) require approval by default and aren't covered by `requireApproval: 'auto'` unless you opt them in. The eve extension gets all six tools through the catalog.
+
+- [#234](https://github.com/vercel-labs/github-tools/pull/234) [`9f75c39`](https://github.com/vercel-labs/github-tools/commit/9f75c39000482159ad0753f5128d2a29245003ca) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `dryRun`, a shadow mode to see what an agent would do on real repositories before it writes. Reads go to GitHub as usual. Writes don't reach GitHub and nobody is asked to approve them: each write goes through `guardrails`, then returns what it would have done and what approval would have decided.
+  
+  ```ts
+  createGithubAgent({ model, preset: 'issue-triage', requireApproval: 'auto', dryRun: true })
+  // addLabels → { dryRun: true, tool: 'addLabels', input, approval: { required: false, reason: 'Approved automatically: …' }, message: 'Dry run: …' }
+  ```
+  
+  Use it to roll out a bot that runs on its own, to test against real data, or to compare models and prompts. It fits writes that stand on their own (labels, comments, reviews, closing issues), not chains where a later step needs an earlier write's result. The base branch of a merge isn't checked in a dry run, since that takes a request.
+  
+  Available on `createGithubTools`, `createGithubAgent`, `createDurableGithubAgent`, the eve extension config, and TanStack AI's `createGithubTools`, `createGithubAgent` and tool factories. On eve, the channel label reads "Would create issue on owner/repo". On TanStack AI, `'auto'` approval is decided by middleware a dry run never reaches, so those results have no `approval`. The `GithubDryRunResult` and `GithubDryRunApproval` types are exported from `@github-tools/sdk` and `@github-tools/sdk/eve-runtime`.
+
+- [#235](https://github.com/vercel-labs/github-tools/pull/235) [`e065fdc`](https://github.com/vercel-labs/github-tools/commit/e065fdcf2878d131f69b9e9d93180e9cb145c91d) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Keep text that GitHub hides from the model, and tell the model GitHub text is data:
+  
+  - Tool results drop HTML comments (`<!-- … -->`) outside code and invisible Unicode characters (zero-width spaces, bidirectional controls, tag characters outside flag emoji; zero-width joiners stay) from issue, pull request, review, comment, release, discussion and gist comment bodies, at every `detail` level. A rendered page hides them but a model reads them, which makes them a common place to hide instructions. File contents and logs are unchanged. An agent that reads a body and writes it back drops its HTML comments.
+  - The default system prompt of `createGithubAgent` and `createDurableGithubAgent`, and the eve extension's tool guidance, now say that text from GitHub was written by other people, and that the model treats it as data and acts only on what the user asked. Custom `instructions` replace that prompt.
+
+- [#232](https://github.com/vercel-labs/github-tools/pull/232) [`bbbc46e`](https://github.com/vercel-labs/github-tools/commit/bbbc46eed6174ae7ff135f97e93c41d734240c19) Thanks [@HugoRCD](https://github.com/HugoRCD)! - Add `guardrails` to limit where GitHub tools can act, whoever approves a call:
+  
+  ```ts
+  createGithubAgent({
+    model,
+    guardrails: { repositories: ['vercel-labs/*'], branches: ['agent/*'] },
+  })
+  ```
+  
+  - `repositories` takes `owner/repo` or `owner/*`, matched regardless of case. A call to any other repository fails, reads included. Tools without a repository target (search, gists, notifications) aren't restricted. `createRepository` and `forkRepository` run only when the new repository's full name matches.
+  - `branches` takes names or patterns where `*` matches any characters. `createBranch`, `deleteBranch`, `createOrUpdateFile` and `editFiles` must name a matching branch, and `mergePullRequest` and `enablePullRequestAutoMerge` check the pull request's base branch.
+  - The checks run before any request reaches GitHub, on the input after `context` defaults. A blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on.
+  - `createGithubAgent` and the eve extension deny a blocked write with the reason instead of asking anyone. `createGithubTools` and `createDurableGithubAgent` skip the approval request and fail. TanStack AI asks first, then fails.
+  - Available on `createGithubTools`, `createGithubAgent`, `createDurableGithubAgent`, TanStack AI's `createGithubTools`, `createGithubAgent` and tool factories, and the eve extension config.
+  - `withGithubGuardrails(token, guardrails)` wraps a token for tools built from individual factories, and the merge factories take `branches`. `@github-tools/sdk/eve-runtime` exports `githubGuardrailViolation`.
+
 ## 1.20.0
 
 ### Minor Changes
