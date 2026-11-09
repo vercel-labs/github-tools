@@ -12,6 +12,7 @@ const description = `${TOTAL} typed GitHub operations across pull requests, issu
 const ogImage = site.url ? joinURL(site.url, '/og.png') : undefined
 
 useSeo({ title, description, type: 'website', ogImage })
+useSeoMeta({ twitterTitle: title, twitterDescription: description, ogImageAlt: title, twitterImageAlt: title })
 
 const installs = [
   { value: 'agents', label: 'For agents', command: 'npx skills add https://github-tools.com' },

@@ -27,10 +27,16 @@ const sections = computed(() => docsHomeSections.map(section => ({
   })
 })))
 
-useSeoMeta({
-  title: 'Docs',
-  description
+const title = 'GitHub tools documentation'
+
+useSeo({
+  title,
+  description,
+  type: 'article',
+  breadcrumbs: [{ title: 'Docs', path: '/docs' }]
 })
+useSeoMeta({ twitterTitle: title, twitterDescription: description, ogImageAlt: title, twitterImageAlt: title })
+defineOgImage('Docs', { title, description })
 </script>
 
 <template>

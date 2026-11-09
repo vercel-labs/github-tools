@@ -62,6 +62,22 @@ useSeo({
   modifiedAt: (page.value as unknown as Record<string, unknown>).modifiedAt as string | undefined,
   breadcrumbs,
 })
+useSeoMeta({
+  twitterTitle: title,
+  twitterDescription: description,
+  ogImageAlt: title,
+  twitterImageAlt: title,
+})
+const vercel = { '@type': 'Organization', '@id': 'https://vercel.com/#organization', 'name': 'Vercel', 'url': 'https://vercel.com' }
+useSchemaOrg([
+  defineArticle({
+    author: vercel,
+    publisher: vercel,
+    inLanguage: 'en',
+    timeRequired: `PT${minutes.value}M`,
+    proficiencyLevel: level.value === 'advanced' ? 'Expert' : 'Beginner',
+  }),
+])
 watch(() => navigation?.value, () => {
   headline.value = findPageHeadline(navigation?.value, page.value?.path) || headline.value
 })

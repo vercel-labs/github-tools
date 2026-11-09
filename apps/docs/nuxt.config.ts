@@ -14,6 +14,8 @@ export default defineNuxtConfig({
       meta: [
         { name: 'twitter:card', content: 'summary_large_image' },
         { property: 'og:site_name', content: 'GitHub tools' },
+        { property: 'og:locale', content: 'en_US' },
+        { name: 'twitter:creator', content: '@hugorcd' },
       ],
     },
   },
@@ -35,6 +37,10 @@ export default defineNuxtConfig({
   site: {
     name: 'GitHub tools',
     url: docsSiteUrl,
+  },
+  // Docus lists content pages; the landing page and the /docs home are Vue pages.
+  sitemap: {
+    urls: ['/', '/docs'],
   },
   llms: {
     domain: docsSiteUrl,
