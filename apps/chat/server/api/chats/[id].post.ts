@@ -24,12 +24,14 @@ export default defineEventHandler(async (event) => {
     messages: z.array(z.custom<UIMessage>())
   }).parse)
 
-  const { githubToken: configToken } = useRuntimeConfig()
-  const token = session.secure?.githubToken ?? configToken
+  const token = session.secure?.githubToken
+  if (!token) {
+    throw createError({ statusCode: 401, statusMessage: 'Sign in with GitHub to chat' })
+  }
 
   const agent = createGithubAgent({
     model,
-    token: token || '',
+    token,
     additionalInstructions: [
       session.user?.username ? `The user's name is ${session.user.username}.` : '',
       '**FORMATTING RULES (CRITICAL):**',
@@ -38,7 +40,7 @@ export default defineEventHandler(async (event) => {
       '- Use **bold text** for emphasis and section labels instead',
       '- Start all responses with content, never with a heading'
     ].filter(Boolean).join('\n'),
-    stopWhen: stepCountIs(token ? 20 : 5),
+    stopWhen: stepCountIs(20),
     providerOptions: {
       openai: { reasoningEffort: 'low', reasoningSummary: 'detailed' },
       google: { thinkingConfig: { includeThoughts: true, thinkingBudget: 2048 } }

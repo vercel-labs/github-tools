@@ -26,8 +26,10 @@ export default defineEventHandler(async (event) => {
     messages: z.array(z.custom<UIMessage>())
   }).parse)
 
-  const { githubToken: configToken } = useRuntimeConfig()
-  const token = session.secure?.githubToken ?? configToken
+  const token = session.secure?.githubToken
+  if (!token) {
+    throw createError({ statusCode: 401, statusMessage: 'Sign in with GitHub to chat' })
+  }
 
   const chat = await db.query.chats.findFirst({
     where: () => and(
@@ -75,9 +77,7 @@ export default defineEventHandler(async (event) => {
   ].filter(Boolean).join('\n')
 
   const modelMessages = await convertToModelMessages(messages)
-  const maxSteps = token ? 20 : 5
-
-  const run = await start(durableChatWorkflow, [modelMessages, token || '', model, additionalInstructions, maxSteps])
+  const run = await start(durableChatWorkflow, [modelMessages, token, model, additionalInstructions])
 
   const stream = createUIMessageStream({
     originalMessages: messages,

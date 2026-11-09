@@ -26,10 +26,6 @@ export default defineNuxtConfig({
     }
   },
 
-  runtimeConfig: {
-    githubToken: ''
-  },
-
   experimental: {
     viewTransition: true
   },
