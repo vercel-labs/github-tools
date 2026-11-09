@@ -11,7 +11,7 @@ Compares `@github-tools/eve-extension` configurations on 12 GitHub tasks with [e
 | `auto-presets` | `auto` with `evaluation.selection: 'presets'`: routes to presets instead |
 | `auto-turn` | `auto` with `evaluation.scope: 'turn'`: picks tools again for each request |
 | `core-deferred` | `auto` with `maxTools: 0`: only the core read tools are listed, the rest is deferred |
-| `cli` | No GitHub tools: eve's bash tool runs the `gh` CLI in a [just-bash](https://eve.dev/docs/sandbox/just-bash) sandbox. Reads run the host's authenticated `gh`, so the token stays outside the sandbox; writes are stubbed by `lib/gh-command.ts` |
+| `cli` | No GitHub tools: eve's bash tool runs the `gh` CLI in a [just-bash](https://eve.dev/docs/sandbox/just-bash) sandbox. Reads on an allowlist of `gh` commands run the host's authenticated `gh`, so the token stays outside the sandbox; other commands are stubbed as writes, and `gh auth`, `gh config` and `gh api` inputs it cannot inspect (file fields, `--input`, unknown flags) are refused, see `lib/gh-command.ts` |
 
 `BENCH_LEVEL` (`conservative`, `default`, `permissive`) sets the `evaluation` thresholds, see `lib/configs.ts`.
 

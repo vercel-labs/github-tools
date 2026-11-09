@@ -8,7 +8,7 @@
 pnpm build              # Build all packages (turbo)
 pnpm lint               # Lint all packages
 pnpm typecheck          # Type-check all packages
-pnpm test               # SDK vitest + eve extension evals (examples/eve-smoke, tests/eve-act-as, tests/eve-auto)
+pnpm test               # SDK vitest + eve extension evals (examples/eve-smoke, tests/eve-act-as, tests/eve-auto) + the eve-bench gh classifier test
 pnpm dev                # Run the chat app in dev mode
 pnpm docs:dev           # Run the docs site in dev mode
 
