@@ -23,8 +23,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const username = user.username
-
   return blob.handleUpload(event, {
     formKey: 'files',
     multiple: false,
@@ -34,7 +32,7 @@ export default defineEventHandler(async (event) => {
     },
     put: {
       addRandomSuffix: true,
-      prefix: `${username}/${chatId}`
+      prefix: `${userId}/${chatId}`
     }
   })
 })
