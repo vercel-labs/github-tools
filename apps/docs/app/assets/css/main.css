@@ -182,6 +182,10 @@ aside[data-side="right"] .prose :where(table) {
   --d-fail: var(--geist-red-700);
   --d-fail-bg: var(--geist-red-100);
   --d-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Hues that tell agents apart in a trace; a label, never an accent. */
+  --d-hue-1: hsl(173 70% 40%);
+  --d-hue-2: hsl(272 55% 60%);
+  --d-hue-3: hsl(336 75% 60%);
 }
 
 /* Figures share one vocabulary: a step reveals with opacity and a 4px rise. */
@@ -230,6 +234,18 @@ aside[data-side="right"] .prose :where(table) {
   mask-image: linear-gradient(to bottom, transparent, #000 2.5rem, #000 calc(100% - 2.5rem), transparent);
 }
 
+/* A new row in a scene's log. */
+.scene-row {
+  animation: scene-row 320ms var(--d-ease) backwards;
+}
+
+@keyframes scene-row {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
 /* Draws the eye to the one button a scene is waiting on. */
 .scene-ping {
   animation: scene-ping 2.4s var(--d-ease) infinite;
@@ -268,7 +284,8 @@ aside[data-side="right"] .prose :where(table) {
     transform: none;
   }
 
-  .scene-ping {
+  .scene-ping,
+  .scene-row {
     animation: none;
   }
 }

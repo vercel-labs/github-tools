@@ -45,4 +45,7 @@ overrides:
   # just-bash's guarded-fetch pins undici 7.29.0, which has high-severity advisories fixed in 7.30.1.
   'guarded-fetch>undici': 7.30.1
   'undici@5': 6.28.0
+  # nuxtseo-layer-devtools pins @nuxt/ui 4.11.1, whose tiptap 3.22 packages then satisfy Nuxt UI 4.12's tiptap
+  # peers next to newer extensions, and Vite's dependency optimizer fails on the missing exports.
+  'nuxtseo-layer-devtools>@nuxt/ui': ^4.12.0
 

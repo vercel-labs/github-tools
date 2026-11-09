@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** An app window in a landing scene: macOS controls, the app's mark and a title or address. */
 const props = defineProps<{
-  app: 'github' | 'slack' | 'linear' | 'terminal'
+  app: 'github' | 'slack' | 'linear' | 'terminal' | 'vercel'
   title: string
 }>()
 
@@ -9,10 +9,11 @@ const MARK = {
   github: 'i-simple-icons-github',
   slack: 'i-simple-icons-slack',
   linear: 'i-simple-icons-linear',
-  terminal: 'i-lucide-terminal'
+  terminal: 'i-lucide-terminal',
+  vercel: 'i-simple-icons-vercel'
 } as const
 
-const browser = computed(() => props.app === 'github')
+const browser = computed(() => props.app === 'github' || props.app === 'vercel')
 </script>
 
 <template>

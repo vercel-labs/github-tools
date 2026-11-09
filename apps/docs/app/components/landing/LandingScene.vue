@@ -3,7 +3,9 @@ const SCENES = [
   { id: 'review', label: 'Review a PR' },
   { id: 'ask', label: 'Ask about a repo' },
   { id: 'linear', label: 'Answer in Linear' },
-  { id: 'ci', label: 'Fix failing CI' }
+  { id: 'ci', label: 'Fix failing CI' },
+  { id: 'factory', label: 'Ship from an issue' },
+  { id: 'agents', label: 'Orchestrate agents' }
 ] as const
 
 type SceneId = typeof SCENES[number]['id']
@@ -61,6 +63,16 @@ const current = ref<{ hint: string } | null>(null)
         :key="run"
       />
       <LandingSceneCi
+        v-else-if="active === 'ci'"
+        ref="current"
+        :key="run"
+      />
+      <LandingSceneFactory
+        v-else-if="active === 'factory'"
+        ref="current"
+        :key="run"
+      />
+      <LandingSceneAgents
         v-else
         ref="current"
         :key="run"

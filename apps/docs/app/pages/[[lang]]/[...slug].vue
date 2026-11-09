@@ -68,7 +68,7 @@ watch(() => navigation?.value, () => {
 
 defineOgImage('Docs', {
   headline: headline.value,
-  title: title?.slice(0, 60),
+  title: formatOgTitle(title),
   description: formatOgDescription(title, description),
 })
 
@@ -97,7 +97,6 @@ function pageLinkProps(link: NonNullable<DocsCollectionItem['links']>[number]) {
   }
 }
 
-addPrerenderPath(`/raw${route.path}.md`)
 </script>
 
 <template>

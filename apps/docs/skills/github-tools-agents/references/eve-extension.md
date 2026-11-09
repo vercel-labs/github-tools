@@ -36,7 +36,7 @@ Tools are exposed to the model as `<namespace>__<toolName>`: `agent/extensions/g
 
 ## Config schema
 
-`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `dryRun`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it.
+`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `dryRun`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it, with the reason and without asking anyone. They cover the extension's tools only: eve's git extension runs `gh` through `git__gh` without approval, so limit it with its own `github.authorize` check. `dryRun: true` sends no write to GitHub and labels each one "Would create issue on owner/repo".
 
 `token` is `string | (() => Promise<string>)` (`GithubTokenInput`). Pass an async provider for rotating GitHub App installation tokens. Falls back to `GITHUB_TOKEN` when omitted; `connector` takes priority.
 
@@ -75,7 +75,7 @@ export default githubExtension({
 })
 ```
 
-No separate `connectGithubTools` import needed. `connector` is a mount-config field.
+No separate `connectGithubTools` import needed. `connector` is a mount-config field. The token requests the scopes of every selected tool; `code-review`, `ci-ops` and `maintainer` include `createCommitStatus` (`statuses:write`), so add Commit statuses (read and write) to the GitHub App or set `exclude: ['createCommitStatus']`, which drops the tool and its scope.
 
 By default every caller shares the GitHub App installation's permissions. `actAs` picks whose GitHub access each call uses:
 

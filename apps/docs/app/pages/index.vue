@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
 import { joinURL } from 'ufo'
+import { PRESET_TOOLS, TOOL_GROUPS, WRITE_TOOLS } from '~/utils/figure-data/presets'
 
 const site = useSiteConfig()
+const TOTAL = TOOL_GROUPS.reduce((sum, group) => sum + group.tools.length, 0)
+const REVIEW = PRESET_TOOLS['code-review'].length
 
 const title = 'All of GitHub, for your AI agents'
-const description = '91 typed GitHub operations across pull requests, issues, Actions, releases and security alerts. Presets scope each agent to its job, and every write waits for a person.'
+const description = `${TOTAL} typed GitHub operations across pull requests, issues, Actions, releases and security alerts. Presets scope each agent to its job, and every write waits for a person.`
 const ogImage = site.url ? joinURL(site.url, '/og.png') : undefined
 
 useSeo({ title, description, type: 'website', ogImage })
@@ -21,9 +24,9 @@ const { copy, copied } = useClipboard()
 const comparisons = [
   {
     question: 'Tools the model reads on every request, for a code review',
-    raw: { value: 91, label: '91 tools' },
-    ours: { value: 26, label: '26 tools, the code-review preset' },
-    max: 91,
+    raw: { value: TOTAL, label: `${TOTAL} tools` },
+    ours: { value: REVIEW, label: `${REVIEW} tools, the code-review preset` },
+    max: TOTAL,
     to: '/presets',
     link: 'Presets'
   },
@@ -37,9 +40,9 @@ const comparisons = [
   },
   {
     question: 'Writes that reach GitHub without a person',
-    raw: { value: 45, label: 'all 45' },
+    raw: { value: WRITE_TOOLS.size, label: `all ${WRITE_TOOLS.size}` },
     ours: { value: 0, label: 'none: each waits for your approval' },
-    max: 45,
+    max: WRITE_TOOLS.size,
     to: '/approval',
     link: 'Approval'
   }
@@ -65,7 +68,7 @@ const snippets: { value: string, label: string, file: string, lines: Token[][] }
       [],
       [['const', 'kw'], [' agent = '], ['createGithubAgent', 'fn'], ['({']],
       [['  model', 'pr'], [': '], ['\'anthropic/claude-opus-5.5\'', 'str'], [',']],
-      [['  preset', 'pr'], [': '], ['\'code-review\'', 'str'], [', '], ['// 26 tools, not 91', 'cm']],
+      [['  preset', 'pr'], [': '], ['\'code-review\'', 'str'], [', '], [`// ${REVIEW} tools, not ${TOTAL}`, 'cm']],
       [['  requireApproval', 'pr'], [': '], ['true', 'kw'], [', '], ['// every write waits for you', 'cm']],
       [['})']]
     ]
@@ -106,7 +109,7 @@ const integrations = [
           <p
             class="mt-5 max-w-[52ch] text-lg/7 text-toned"
           >
-            91 typed operations across pull requests, issues, Actions, releases and security alerts. Presets scope each agent to its job, and every write waits for a person.
+            {{ TOTAL }} typed operations across pull requests, issues, Actions, releases and security alerts. Presets scope each agent to its job, and every write waits for a person.
           </p>
           <div
             class="mt-8 flex flex-wrap items-center gap-3"

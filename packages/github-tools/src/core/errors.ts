@@ -76,7 +76,7 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     message: ({ reason }: { reason: string }) => `Blocked by guardrails: ${reason}`,
     why: 'The call targets a repository or branch outside the `guardrails` these tools were created with. Guardrails apply whoever approves the call.',
     fix: 'Act on a repository and branch the guardrails allow, such as a branch matching the allowed patterns, or ask the user to change `guardrails`.',
-    link: 'https://github-tools.com/guide/approval-control#guardrails',
+    link: 'https://github-tools.com/approval#guardrails',
   },
   EVALUATION_UNAVAILABLE: {
     status: 500,

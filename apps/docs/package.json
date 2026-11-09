@@ -17,9 +17,9 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "better-sqlite3": "^13.0.3",
-    "docus": "^5.13.0",
-    "nuxt": "^4.5.2",
-    "satori": "^0.33.4",
+    "docus": "^5.15.0",
+    "nuxt": "^4.6.4",
+    "satori": "^0.33.5",
     "zod": "^4.5.4",
     "zod-to-json-schema": "^3.25.2"
   },

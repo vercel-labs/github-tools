@@ -57,7 +57,7 @@ const cursorNote = computed(() => {
 <template>
   <DocsFigure
     ref="root"
-    caption="A preset keeps only the tools its job needs. Each square is one of the 91 tools, filled for reads and outlined for writes."
+    :caption="`A preset keeps only the tools its job needs. Each square is one of the ${allTools.length} tools, filled for reads and outlined for writes.`"
     :finished
     :still
   >

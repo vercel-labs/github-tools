@@ -4,15 +4,15 @@ type Level = 'none' | 'read' | 'write'
 // Mirrors PRESET_CONNECT_SCOPES in packages/github-tools/src/connect/scopes.ts, in its scope order.
 const PRESET_SCOPES: Record<string, string[]> = {
   'repo-explorer': ['contents:read', 'metadata:read', 'pull_requests:read', 'issues:read', 'discussions:read', 'actions:read', 'checks:read', 'statuses:read'],
-  'code-review': ['contents:read', 'metadata:read', 'pull_requests:read', 'pull_requests:write', 'checks:read', 'statuses:read'],
+  'code-review': ['contents:read', 'metadata:read', 'pull_requests:read', 'pull_requests:write', 'checks:read', 'statuses:read', 'statuses:write'],
   'issue-triage': ['contents:read', 'metadata:read', 'pull_requests:read', 'issues:read', 'issues:write'],
-  'ci-ops': ['contents:read', 'metadata:read', 'pull_requests:read', 'actions:read', 'actions:write', 'checks:read', 'statuses:read'],
+  'ci-ops': ['contents:read', 'metadata:read', 'pull_requests:read', 'actions:read', 'actions:write', 'checks:read', 'statuses:read', 'statuses:write'],
   'security-audit': ['contents:read', 'metadata:read', 'pull_requests:read', 'issues:read', 'issues:write', 'actions:read', 'checks:read', 'statuses:read', 'security_events:read', 'vulnerability_alerts:read', 'secret_scanning_alerts:read'],
   'release-manager': ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'actions:read', 'actions:write', 'checks:read', 'statuses:read'],
   'discussion-moderator': ['contents:read', 'metadata:read', 'pull_requests:read', 'issues:read', 'issues:write', 'discussions:read', 'discussions:write'],
   'notification-inbox': ['contents:read', 'metadata:read', 'pull_requests:read', 'issues:read', 'discussions:read'],
   'pr-author': ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'pull_requests:write'],
-  'maintainer': ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'pull_requests:write', 'issues:read', 'issues:write', 'discussions:read', 'discussions:write', 'actions:read', 'actions:write', 'checks:read', 'statuses:read', 'administration:read', 'administration:write', 'security_events:read', 'vulnerability_alerts:read', 'secret_scanning_alerts:read']
+  'maintainer': ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'pull_requests:write', 'issues:read', 'issues:write', 'discussions:read', 'discussions:write', 'actions:read', 'actions:write', 'checks:read', 'statuses:read', 'statuses:write', 'administration:read', 'administration:write', 'security_events:read', 'vulnerability_alerts:read', 'secret_scanning_alerts:read']
 }
 
 const USER_TOKEN_TOOLS: Record<string, string> = {
