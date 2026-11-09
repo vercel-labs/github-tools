@@ -1,3 +1,4 @@
+import { findSecret } from './secrets'
 import type { GithubToolName } from './tool-names'
 import type { GithubTokenCall } from './token'
 
@@ -19,6 +20,12 @@ export type GithubGuardrails = {
    * enabling auto-merge into a pull request's base branch. A commit that doesn't name its branch fails.
    */
   branches?: string[]
+  /**
+   * `'block'` (default) fails any call whose input contains what looks like a credential, such as a
+   * GitHub token, a private key or a cloud API key, so the agent can't post one to GitHub. `'allow'`
+   * turns the check off, for example when a repository's fixtures contain fake keys.
+   */
+  secrets?: 'block' | 'allow'
 }
 
 const BRANCH_INPUTS = {
@@ -48,11 +55,16 @@ function newRepository(call: GithubTokenCall): string | null | undefined {
 }
 
 /**
- * Why `guardrails` block a call, or `undefined` when they allow it. Checks the target repository
- * and the branch a write names; a merge's base branch is checked when the call runs.
+ * Why `guardrails` block a call, or `undefined` when they allow it. Checks the input for credentials
+ * (even without `guardrails`), the target repository and the branch a write names; a merge's base
+ * branch is checked when the call runs.
  */
 export function guardrailViolation(call: GithubTokenCall, guardrails: GithubGuardrails | undefined): string | undefined {
-  const { repositories, branches } = guardrails ?? {}
+  const { repositories, branches, secrets = 'block' } = guardrails ?? {}
+  if (secrets === 'block') {
+    const secret = findSecret(call.input)
+    if (secret) return `The input contains what looks like ${secret}. Never send credentials to GitHub; remove it and try again.`
+  }
   if (repositories) {
     const created = newRepository(call)
     if (created === null) return `\`${call.toolName}\` needs \`${call.toolName === 'createRepository' ? 'org' : 'organization'}\` so the new repository can be checked against the allowed repositories: ${list(repositories)}.`

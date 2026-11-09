@@ -184,7 +184,7 @@ createGithubTools({
 })
 ```
 
-The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/guide/approval-control#guardrails).
+The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. Even without `guardrails`, a call whose input contains what looks like a credential (a GitHub, npm, Slack, Stripe, Anthropic, OpenAI, Google or AWS key, or a private key) fails; set `guardrails: { secrets: 'allow' }` to turn that off. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/guide/approval-control#guardrails).
 
 ### Shadow mode
 
