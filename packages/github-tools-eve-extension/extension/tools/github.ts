@@ -2,6 +2,7 @@ import { connectGithubScopesForTools, connectGithubToken, resolveGithubConnector
 import { connect } from '@vercel/connect/eve'
 import {
   AUTO_APPROVAL_TOOLS,
+  autoApprovalDecision,
   evaluatePresets,
   evaluateTools,
   executeGithubEveTool,
@@ -15,14 +16,14 @@ import {
   latestUserText,
   listEveToolDescriptors,
   mapEveApprovalValue,
-  needsAutoApproval,
+  type AutoApprovalDecision,
   type EveGithubToolsOptions,
   type EveToolOverrides,
   type GithubTokenCall,
   type GithubToolName,
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
-import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy } from 'eve/tools/approval'
+import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy, ApprovalStatus } from 'eve/tools/approval'
 import { defineDynamic, defineTool, toolOutput, type ToolContext, type ToolDefinition } from 'eve/tools'
 import { z } from 'zod'
 import extension, {
@@ -237,19 +238,38 @@ function isPersonRequest(ctx: ApprovalContext): boolean {
 }
 
 // eve asks the request policy again once a person approves; reuse the first decision.
-const autoDecisions = new Map<string, Promise<boolean>>()
+// The approval prompt callback is synchronous, so it reads `settled`.
+type CachedDecision = { pending: Promise<AutoApprovalDecision>, settled?: AutoApprovalDecision }
+const autoDecisions = new Map<string, CachedDecision>()
 const MAX_CACHED_DECISIONS = 100
 
-function autoApprovalDecision(writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<boolean> {
-  const key = `${ctx.session.id}:${ctx.callId}`
+function decisionKey(sessionId: string, callId: string) {
+  return `${sessionId}:${callId}`
+}
+
+function cachedAutoApproval(writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<AutoApprovalDecision> {
+  const key = decisionKey(ctx.session.id, ctx.callId)
   const cached = autoDecisions.get(key)
-  if (cached) return cached
+  if (cached) return cached.pending
   const messages: ModelMessage[] = [{ role: 'user', content: request }]
-  const decision = needsAutoApproval(writeTool, ctx.toolInput, messages, extension.config.evaluation, ctx.abortSignal)
-  autoDecisions.set(key, decision)
-  decision.catch(() => autoDecisions.delete(key))
+  const entry: CachedDecision = {
+    pending: autoApprovalDecision(writeTool, ctx.toolInput, messages, extension.config.evaluation, ctx.abortSignal)
+      .then((decision) => {
+        entry.settled = decision
+        return decision
+      }),
+  }
+  autoDecisions.set(key, entry)
+  entry.pending.catch(() => autoDecisions.delete(key))
   if (autoDecisions.size > MAX_CACHED_DECISIONS) autoDecisions.delete(autoDecisions.keys().next().value!)
-  return decision
+  return entry.pending
+}
+
+// "Add labels on owner/repo#12? Hard to undo (risk 2 of 2), 100% likely you asked for it."
+// An `agent.ts` policy can still ask for a call the evaluator approved; that prompt gets no reason.
+function approvalPrompt(label: string, sessionId: string, callId: string) {
+  const decision = autoDecisions.get(decisionKey(sessionId, callId))?.settled
+  return decision?.ask ? `${label}? ${decision.reason}` : `${label}?`
 }
 
 function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalValue | undefined {
@@ -259,14 +279,16 @@ function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalV
   return approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
 }
 
-async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext) {
+async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
 
   const value = configuredApprovalValue(name)!
   if (value === 'auto') {
     if (!isPersonRequest(ctx)) return 'user-approval'
-    return await autoApprovalDecision(writeTool, request, ctx) ? 'user-approval' : 'not-applicable'
+    // `'approved'` records `clearedBy: { policy: 'approval' }` on `call.started`, unlike a call that needed no approval.
+    const { ask, reason } = await cachedAutoApproval(writeTool, request, ctx)
+    return ask ? 'user-approval' : { type: 'approved', reason }
   }
   if (isEveApprovalDisabled(value)) return 'not-applicable'
   return mapEveApprovalValue(value)(ctx)
@@ -350,7 +372,7 @@ export default defineDynamic(async (ctx) => {
       inputSchema: entry.inputSchema,
       approval: {
         request: approvalCtx => runGithubEveApproval(name, request, approvalCtx),
-        prompt: ({ input }) => `${describeGithubCall(name, entry.inputSchema, input)}?`,
+        prompt: ({ callId, input }) => approvalPrompt(describeGithubCall(name, entry.inputSchema, input), ctx.session.id, callId),
         ...(configuredResponse
           ? { response: responseCtx => runConfiguredApprovalResponse(name, configuredResponse, responseCtx) }
           : extension.config.approvers === 'anyone' && {

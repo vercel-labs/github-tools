@@ -5,8 +5,9 @@ Mounts the built `@github-tools/eve-extension` with `preset: 'auto'`, `requireAp
 The eval checks that:
 
 - each Connect token covers only the tool being called
-- a low-risk write the person asked for runs without approval
+- a low-risk write the person asked for runs without approval, with `clearedBy: { policy: 'approval' }` on `call.started`
 - a service caller always gets an approval prompt
+- a risky write's approval prompt gives the evaluation model's verdict
 - approving a risky write does not call the evaluation model a second time
 
 ```bash
