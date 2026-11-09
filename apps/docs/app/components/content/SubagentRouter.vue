@@ -106,7 +106,7 @@ const tile = 'grid size-8 shrink-0 place-items-center rounded-md border border-(
     <div class="px-4 py-8 sm:px-10 sm:py-12">
       <div class="mx-auto max-w-[30rem]">
         <div
-          class="rounded-lg border bg-(--d-raised) transition-colors duration-500"
+          class="overflow-hidden rounded-lg border bg-(--d-raised) transition-colors duration-500"
           :class="approval === 'waiting' ? 'border-(--d-warn)' : 'border-(--d-line-strong)'"
         >
           <p class="flex items-center gap-2.5 p-2.5">
@@ -181,11 +181,11 @@ const tile = 'grid size-8 shrink-0 place-items-center rounded-md border border-(
             <span
               aria-hidden="true"
               class="absolute top-[27px] left-4 h-px w-6 transition-colors duration-500"
-              :class="states[i] === 'waiting' ? 'bg-(--d-warn)' : states[i] === 'idle' ? 'bg-(--d-line-strong)' : 'bg-(--d-signal)'"
+              :class="states[i] === 'waiting' ? 'bg-(--d-warn)' : states[i] === 'working' ? 'bg-(--d-signal)' : 'bg-(--d-line-strong)'"
             />
 
             <div
-              class="rounded-lg border bg-(--d-raised) transition-colors duration-500"
+              class="overflow-hidden rounded-lg border bg-(--d-raised) transition-colors duration-500"
               :class="states[i] === 'waiting' ? 'border-(--d-warn)' : states[i] === 'working' ? 'border-(--d-signal)' : 'border-(--d-line-strong)'"
             >
               <p class="flex items-center gap-2.5 p-2.5">
