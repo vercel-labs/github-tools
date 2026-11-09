@@ -34,7 +34,7 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 | Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
 | A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
 
-91 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
+97 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -103,16 +103,16 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 
 | Preset | Tools included |
 |---|---|
-| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `listPullRequestReviewThreads`, `getPullRequestContext`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `listCheckRuns`, `getCombinedStatus`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers` |
-| `issue-triage` | `listIssues`, `getIssueContext`, `listIssueComments`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `searchRepositories`, `searchIssues`, `getPullRequest` |
+| `code-review` | `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`, `listPullRequestReviewThreads`, `getPullRequestContext`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `getCollaboratorPermission`, `listCheckRuns`, `getCombinedStatus`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`, `createCommitStatus` |
+| `issue-triage` | `listIssues`, `getIssueContext`, `listIssueComments`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `listMilestones`, `listSubIssues`, `addSubIssue`, `listIssueReactions`, `addIssueReaction`, `listCommentReactions`, `addCommentReaction`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `searchRepositories`, `searchIssues`, `getPullRequest`, `getCollaboratorPermission` |
 | `repo-explorer` | All read-only tools including discussions, gists, workflows, checks/statuses, and releases (no write operations) |
-| `ci-ops` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `getCommit`, `getPullRequest`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getWorkflowJobLogs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
+| `ci-ops` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `getCommit`, `getPullRequest`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getWorkflowJobLogs`, `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createCommitStatus` |
 | `security-audit` | Read-only exploration (`getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`), PR and CI visibility (including `getWorkflowJobLogs`), the repository's code scanning, Dependabot and secret scanning alerts, plus `createIssue`, `addIssueComment`, `addLabels` to report findings (no destructive writes) |
 | `release-manager` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getCommit`, `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `getCombinedStatus`, `getCiFailureContext`, `listPullRequests`, `getPullRequest` |
 | `discussion-moderator` | `listDiscussions`, `getDiscussion`, `addDiscussionComment`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `searchIssues`, `getIssueContext`, `addIssueComment` |
 | `notification-inbox` | `listNotifications`, `markNotificationRead`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getIssue`, `getIssueContext`, `getPullRequest`, `getDiscussion` (requires a Notifications PAT) |
-| `pr-author` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `createBranch`, `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`, `getCommit` |
-| `maintainer` | All 91 tools |
+| `pr-author` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `getCollaboratorPermission`, `createBranch`, `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `updatePullRequest`, `updatePullRequestBranch`, `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`, `getCommit` |
+| `maintainer` | All 97 tools |
 
 Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
@@ -164,7 +164,7 @@ createGithubTools({
 })
 ```
 
-Write tools: `createBranch`, `deleteBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `mergePullRequest`, `enablePullRequestAutoMerge`, `disablePullRequestAutoMerge`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction`, `addDiscussionComment`, `markNotificationRead`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`, `updateRelease`, `deleteRelease`.
+Write tools: `createBranch`, `deleteBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `mergePullRequest`, `enablePullRequestAutoMerge`, `disablePullRequestAutoMerge`, `updatePullRequest`, `updatePullRequestBranch`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addSubIssue`, `addIssueReaction`, `addCommentReaction`, `addDiscussionComment`, `markNotificationRead`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createCommitStatus`, `createRelease`, `updateRelease`, `deleteRelease`.
 
 All other tools are read-only and never require approval.
 
@@ -179,7 +179,7 @@ createGithubTools({
   token,
   guardrails: {
     repositories: ['vercel-labs/*'], // 'owner/repo' or 'owner/*'; a call to any other repository fails
-    branches: ['agent/*'], // commits, branch creation and deletion, and merges must target a matching branch
+    branches: ['agent/*'], // commits, branch creation and deletion, merges, and pull request branch updates must target a matching branch
   },
 })
 ```
@@ -545,6 +545,7 @@ List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those f
 | `getRepository` | Get repository metadata (stars, language, default branch, …) |
 | `listBranches` | List branches (`hasMore` / `nextPage` when there are more) |
 | `getBranchRules` | List a branch's required checks, required reviews and other protection rules |
+| `getCollaboratorPermission` | Get a user's permission and role on a repository, to check whether they may trigger the bot or approve an action |
 | `getFileContent` | Read a file or directory listing (prefer `startLine`/`endLine` or `maxLines` for large files) |
 | `getRepositoryTree` | List the file and directory structure at a given ref (prefer a `path` prefix over `recursive: true`) |
 | `createBranch` | Create a new branch from an existing branch or commit SHA |
@@ -569,6 +570,7 @@ List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those f
 | `enablePullRequestAutoMerge` | Merge a PR automatically once its required checks and reviews pass |
 | `disablePullRequestAutoMerge` | Cancel a pending auto-merge |
 | `updatePullRequest` | Update a PR's title, body, state, base branch, or draft status |
+| `updatePullRequestBranch` | Bring a PR branch up to date by merging its base branch into it |
 | `addPullRequestComment` | Post a comment on a PR |
 | `updatePullRequestComment` | Edit the body of a PR comment |
 | `deletePullRequestComment` | Permanently delete a PR comment |
@@ -585,7 +587,7 @@ List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those f
 | `getIssue` | Get an issue's details (body truncated by default; set `detail: full` for complete text) |
 | `getIssueContext` | Fetch an issue plus label names and recent comments in one call |
 | `listIssueComments` | List comments on an issue (paginated; prefer `getIssueContext` for the first page) |
-| `createIssue` | Open a new issue |
+| `createIssue` | Open a new issue, optionally in a milestone |
 | `addIssueComment` | Post a comment on an issue |
 | `updateIssueComment` | Edit the body of an issue comment |
 | `deleteIssueComment` | Permanently delete an issue comment |
@@ -599,6 +601,9 @@ List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those f
 | `deleteLabel` | Delete a label from a repository permanently |
 | `addAssignees` | Assign users to an issue or pull request |
 | `removeAssignees` | Remove assignees from an issue or pull request |
+| `listMilestones` | List milestones with their due dates and open and closed issue counts |
+| `listSubIssues` | List the sub-issues of an issue |
+| `addSubIssue` | Add an existing issue as a sub-issue, from the same repository or another one with the same owner |
 
 ### Reactions
 
@@ -657,6 +662,7 @@ Pull request conversations share the issue numbering, so the issue-level tools w
 |---|---|
 | `listCheckRuns` | List check runs (Checks API: GitHub Actions and other CI providers) for a commit, branch, or tag |
 | `getCombinedStatus` | Get the combined commit status (Statuses API: legacy CI integrations) for a commit, branch, or tag |
+| `createCommitStatus` | Report a result on a commit as a commit status; works with a PAT or a GitHub App, unlike check runs |
 | `getCiFailureContext` | Diagnose CI failures for a ref or one workflow run: failing checks, failed jobs and steps, and the end of each failed job's log, in one call |
 
 ### Releases
@@ -706,14 +712,14 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 
 | Permission | Level | Required for |
 |---|---|---|
-| **Metadata** | Read-only | Always required (auto-included) |
+| **Metadata** | Read-only | Always required (auto-included); the only permission `getCollaboratorPermission` needs |
 | **Contents** | Read-only | `getRepository`, `listBranches`, `getBranchRules`, `getFileContent`, `getRepositoryTree`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext` |
 | **Contents** | Read and write | `createBranch`, `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createRelease`, `updateRelease`, `deleteRelease` |
 | **Administration** | Read and write | `forkRepository`, `createRepository` |
 | **Pull requests** | Read-only | `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviews`, `listPullRequestReviewThreads`, `getPullRequestContext` |
-| **Pull requests** | Read and write | `createPullRequest`, `editFiles` (with `pullRequest`), `mergePullRequest`, `enablePullRequestAutoMerge`, `disablePullRequestAutoMerge`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers` |
-| **Issues** | Read-only | `listIssues`, `getIssue`, `getIssueContext`, `listIssueComments`, `listLabels`, `listIssueReactions`, `listCommentReactions` |
-| **Issues** | Read and write | `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction` |
+| **Pull requests** | Read and write | `createPullRequest`, `editFiles` (with `pullRequest`), `mergePullRequest`, `enablePullRequestAutoMerge`, `disablePullRequestAutoMerge`, `updatePullRequest`, `updatePullRequestBranch`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers` |
+| **Issues** | Read-only | `listIssues`, `getIssue`, `getIssueContext`, `listIssueComments`, `listLabels`, `listMilestones`, `listSubIssues`, `listIssueReactions`, `listCommentReactions` |
+| **Issues** | Read and write | `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addSubIssue`, `addIssueReaction`, `addCommentReaction` |
 | **Discussions** | Read-only | `listDiscussions`, `getDiscussion` |
 | **Discussions** | Read and write | `addDiscussionComment` |
 | **Gists** | Read-only | `listGists`, `getGist`, `listGistComments` |
@@ -723,6 +729,7 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 | **Actions** | Read and write | `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun` |
 | **Checks** | Read-only | `listCheckRuns`, `getCiFailureContext` |
 | **Commit statuses** | Read-only | `getCombinedStatus`, `getCiFailureContext` |
+| **Commit statuses** | Read and write | `createCommitStatus` |
 | **Code scanning alerts** | Read-only | `listCodeScanningAlerts` |
 | **Dependabot alerts** | Read-only | `listDependabotAlerts` |
 | **Secret scanning alerts** | Read-only | `listSecretScanningAlerts` |

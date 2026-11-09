@@ -104,14 +104,15 @@ export const createIssueInputSchema = z.object({
   body: z.string().optional().describe('Issue description (supports Markdown)'),
   labels: z.array(z.string()).optional().describe('Labels to apply to the issue'),
   assignees: z.array(z.string()).optional().describe('GitHub usernames to assign to the issue'),
+  milestone: z.number().optional().describe('Milestone number to associate (from listMilestones)'),
 })
 
 export const createIssueDescription = 'Create a new issue in a GitHub repository'
 
 /** Not idempotent — each call creates a new issue. */
-export async function createIssueCore({ token, owner, repo, title, body, labels, assignees }: { token: string, owner: string, repo: string, title: string, body?: string, labels?: string[], assignees?: string[] }) {
+export async function createIssueCore({ token, owner, repo, title, body, labels, assignees, milestone }: { token: string, owner: string, repo: string, title: string, body?: string, labels?: string[], assignees?: string[], milestone?: number }) {
   return withOctokit(token, async (octokit) => {
-  const { data } = await octokit.rest.issues.create({ owner, repo, title, body, labels, assignees })
+  const { data } = await octokit.rest.issues.create({ owner, repo, title, body, labels, assignees, milestone })
   return {
     number: data.number,
     title: data.title,
@@ -429,6 +430,83 @@ export async function removeAssigneesCore({ token, owner, repo, issueNumber, ass
   return {
     number: data.number,
     assignees: data.assignees?.map(a => a.login),
+  }
+  })
+}
+
+export const listMilestonesInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  state: z.enum(['open', 'closed', 'all']).optional().default('open').describe('Filter by state'),
+  perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+  page: pageSchema,
+})
+
+export const listMilestonesDescription = 'List milestones in a GitHub repository with their due dates and open and closed issue counts. Pass a milestone number to createIssue or updateIssue. When hasMore, pass nextPage instead of repeating the same call.'
+
+export async function listMilestonesCore({ token, owner, repo, state, perPage, page }: { token: string, owner: string, repo: string, state: 'open' | 'closed' | 'all', perPage: number, page: number }) {
+  return withOctokit(token, async (octokit) => {
+  const { data } = await octokit.rest.issues.listMilestones({ owner, repo, state, per_page: perPage, page })
+  return pagedList(data.map(milestone => ({
+    number: milestone.number,
+    title: milestone.title,
+    state: milestone.state,
+    description: applyDetailBody(milestone.description, 'summary'),
+    dueOn: milestone.due_on,
+    openIssues: milestone.open_issues,
+    closedIssues: milestone.closed_issues,
+    url: milestone.html_url,
+  })), perPage, page, data.length >= perPage)
+  })
+}
+
+export const listSubIssuesInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  issueNumber: z.number().describe('Parent issue number'),
+  perPage: z.number().optional().default(30).describe('Number of results to return (max 100)'),
+  page: pageSchema,
+})
+
+export const listSubIssuesDescription = 'List the sub-issues of an issue. A sub-issue can be in another repository of the same owner; its url says which. When hasMore, pass nextPage instead of repeating the same call.'
+
+export async function listSubIssuesCore({ token, owner, repo, issueNumber, perPage, page }: { token: string, owner: string, repo: string, issueNumber: number, perPage: number, page: number }) {
+  return withOctokit(token, async (octokit) => {
+  const { data } = await octokit.rest.issues.listSubIssues({ owner, repo, issue_number: issueNumber, per_page: perPage, page })
+  return pagedList(data.map(issue => ({
+    number: issue.number,
+    title: issue.title,
+    state: issue.state,
+    url: issue.html_url,
+    assignees: issue.assignees?.map(a => a.login),
+  })), perPage, page, data.length >= perPage)
+  })
+}
+
+export const addSubIssueInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  issueNumber: z.number().describe('Parent issue number'),
+  subIssueNumber: z.number().describe('Number of the issue to add as a sub-issue'),
+  subIssueRepo: z.string().optional().describe('Repository of the sub-issue, when it is not repo. GitHub requires the same owner as the parent'),
+  replaceParent: z.boolean().optional().describe('Move the sub-issue from its current parent issue to this one'),
+})
+
+export const addSubIssueDescription = 'Add an existing issue as a sub-issue of another issue, to split work into tracked steps. An issue has at most one parent; set replaceParent to move it from its current one'
+
+/** Not idempotent: GitHub rejects an issue that already has a parent unless replaceParent is set. */
+export async function addSubIssueCore({ token, owner, repo, issueNumber, subIssueNumber, subIssueRepo, replaceParent }: { token: string, owner: string, repo: string, issueNumber: number, subIssueNumber: number, subIssueRepo?: string, replaceParent?: boolean }) {
+  return withOctokit(token, async (octokit) => {
+  const { data: subIssue } = await octokit.rest.issues.get({ owner, repo: subIssueRepo ?? repo, issue_number: subIssueNumber })
+  await octokit.rest.issues.addSubIssue({ owner, repo, issue_number: issueNumber, sub_issue_id: subIssue.id, replace_parent: replaceParent })
+  return {
+    issueNumber,
+    subIssue: {
+      number: subIssue.number,
+      title: subIssue.title,
+      state: subIssue.state,
+      url: subIssue.html_url,
+    },
   }
   })
 }

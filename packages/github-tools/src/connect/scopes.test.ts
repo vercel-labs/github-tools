@@ -32,8 +32,9 @@ describe('connectGithubScopesForPreset', () => {
       'checks:read',
       'statuses:read',
       'pull_requests:write',
+      'statuses:write',
     ]))
-    expect(scopes).toHaveLength(9)
+    expect(scopes).toHaveLength(10)
   })
 
   it('returns the union of all preset scopes when no preset is given', () => {
@@ -68,6 +69,12 @@ describe('connectGithubScopesForTools', () => {
   it('covers the GitHub permissions merge and fork check', () => {
     expect(connectGithubScopesForTools(['mergePullRequest'])).toEqual(expect.arrayContaining(['contents:write', 'pull_requests:write']))
     expect(connectGithubScopesForTools(['forkRepository'])).toEqual(expect.arrayContaining(['contents:read', 'administration:write']))
+  })
+
+  it('covers the GitHub permissions commit statuses and pull request branch updates check', () => {
+    expect(connectGithubScopesForTools(['createCommitStatus'])).toEqual(['contents:read', 'metadata:read', 'statuses:read', 'statuses:write'])
+    expect(connectGithubScopesForTools(['updatePullRequestBranch'])).toEqual(expect.arrayContaining(['contents:write', 'pull_requests:write']))
+    expect(connectGithubScopesForTools(['getCollaboratorPermission'])).toEqual(['metadata:read'])
   })
 
   it('always includes metadata:read', () => {
