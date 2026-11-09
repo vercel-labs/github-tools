@@ -88,6 +88,26 @@ describe("createGithubAgent approvals", () => {
     expect(execute).not.toHaveBeenCalled()
   })
 
+  it('passes a tool added outside the GitHub catalog its own context in needsApproval', async () => {
+    let calls = 0
+    const model = new MockLanguageModelV4({
+      doGenerate: async () => calls++ === 0
+        ? { content: [{ type: 'tool-call', toolCallId: 'call-1', toolName: 'deploy', input: JSON.stringify({ env: 'production' }) }], finishReason: { unified: 'tool-calls', raw: 'tool_calls' }, usage, warnings: [] }
+        : { content: [{ type: 'text', text: 'ok' }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] },
+    })
+    const execute = vi.fn(async () => 'deployed')
+    const deploy = tool({
+      inputSchema: z.object({ env: z.string() }),
+      contextSchema: z.object({ protectedEnv: z.string() }),
+      needsApproval: (input, { context }) => input.env === context.protectedEnv,
+      execute,
+    })
+    const agent = createGithubAgent({ model, token: 'test', prepareCall: call => ({ ...call, tools: { ...call.tools, deploy }, toolsContext: { ...call.toolsContext, deploy: { protectedEnv: 'production' } } }) })
+    const result = await agent.generate({ prompt: 'Deploy to production' })
+    expect(approvalParts(result.content)).toEqual([expect.objectContaining({ type: 'tool-approval-request' })])
+    expect(execute).not.toHaveBeenCalled()
+  })
+
   it('lets your own toolApproval replace the GitHub policy', async () => {
     const agent = createGithubAgent({ model: labelingModel(), token: 'test', toolApproval: () => ({ type: 'denied', reason: 'Read-only workspace' }) })
     const result = await agent.generate({ prompt: 'Label vercel/ai#12 as a bug' })

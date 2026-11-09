@@ -84,13 +84,13 @@ function githubToolApproval({ tools, requireApproval, evaluation, overrides }: {
     }
     return policy
   }
-  return async ({ toolCall, messages, tools: available }: { toolCall: { toolName: string, toolCallId: string, input: unknown }, messages: ModelMessage[], tools?: ToolSet }) => {
+  return async ({ toolCall, messages, tools: available, toolsContext }: { toolCall: { toolName: string, toolCallId: string, input: unknown }, messages: ModelMessage[], tools?: ToolSet, toolsContext?: Record<string, unknown> }) => {
     // A call-level policy replaces every tool-level `needsApproval`, so a tool added outside the
     // GitHub catalog, for example by `prepareCall`, keeps its own.
     if (toolCall.toolName !== CALL_GITHUB_TOOL && !Object.hasOwn(GITHUB_TOOL_CATALOG, toolCall.toolName)) {
       const needsApproval = available?.[toolCall.toolName]?.needsApproval
       const ask = typeof needsApproval === 'function'
-        ? await needsApproval(toolCall.input, { toolCallId: toolCall.toolCallId, messages, context: undefined })
+        ? await needsApproval(toolCall.input, { toolCallId: toolCall.toolCallId, messages, context: toolsContext?.[toolCall.toolName] })
         : needsApproval
       return ask ? 'user-approval' : undefined
     }
