@@ -128,6 +128,27 @@ export const editFiles = factory('editFiles')
  */
 export const getBranchRules = factory('getBranchRules')
 /**
+ * List code scanning alerts for a repository.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const listCodeScanningAlerts = factory('listCodeScanningAlerts')
+/**
+ * List Dependabot alerts for vulnerable dependencies.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const listDependabotAlerts = factory('listDependabotAlerts')
+/**
+ * List secret scanning alerts, without the secrets.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const listSecretScanningAlerts = factory('listSecretScanningAlerts')
+/**
  * List pull requests for a GitHub repository.
  *
  * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`

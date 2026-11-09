@@ -263,3 +263,12 @@ export const updateRelease = toolFactory('updateRelease')
 
 /** Create the TanStack `deleteRelease` server tool. */
 export const deleteRelease = toolFactory('deleteRelease')
+
+/** Create the TanStack `listCodeScanningAlerts` server tool. */
+export const listCodeScanningAlerts = toolFactory('listCodeScanningAlerts')
+
+/** Create the TanStack `listDependabotAlerts` server tool. */
+export const listDependabotAlerts = toolFactory('listDependabotAlerts')
+
+/** Create the TanStack `listSecretScanningAlerts` server tool. */
+export const listSecretScanningAlerts = toolFactory('listSecretScanningAlerts')
