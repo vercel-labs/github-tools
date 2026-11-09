@@ -11,7 +11,6 @@ export interface GitHubContext {
   repo: string
   issueNumber: number
   isPullRequest: boolean
-  title: string
 }
 
 export type ChatTurnPayload = { text: string }
@@ -24,18 +23,34 @@ export const agent = new Chat<typeof adapters, ThreadState>({
   state: createMemoryState(),
 }).registerSingleton()
 
+// The adapter's `raw` carries the webhook's repository and the comment, including the author's role.
+type GitHubRawMessage = {
+  comment: { author_association: string }
+  repository: { name: string, owner: { login: string } }
+  prNumber: number
+  threadType?: 'issue' | 'pr'
+}
+
+// Only people with write access can drive the agent, since it acts with the App's token.
+const TRUSTED_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR'])
+
+function isTrustedAuthor(message: Message): boolean {
+  const raw = message.raw as GitHubRawMessage
+  return TRUSTED_ASSOCIATIONS.has(raw.comment.author_association)
+}
+
 function extractGitHubContext(message: Message): GitHubContext {
-  const raw = message.raw as Record<string, any>
+  const raw = message.raw as GitHubRawMessage
   return {
-    owner: raw.repository?.owner?.login ?? 'unknown',
-    repo: raw.repository?.name ?? 'unknown',
-    issueNumber: raw.issue?.number ?? 0,
-    isPullRequest: !!raw.issue?.pull_request,
-    title: raw.issue?.title ?? '',
+    owner: raw.repository.owner.login,
+    repo: raw.repository.name,
+    issueNumber: raw.prNumber,
+    isPullRequest: raw.threadType !== 'issue',
   }
 }
 
 agent.onNewMention(async (thread: Thread<ThreadState>, message: Message) => {
+  if (!isTrustedAuthor(message)) return
   const ctx = extractGitHubContext(message)
   const sent = thread.createSentMessageFromMessage(message)
   await sent.addReaction(emoji.eyes)
@@ -46,6 +61,7 @@ agent.onNewMention(async (thread: Thread<ThreadState>, message: Message) => {
 })
 
 agent.onSubscribedMessage(async (thread: Thread<ThreadState>, message: Message) => {
+  if (!isTrustedAuthor(message)) return
   const state = await thread.state
   if (!state?.runId) return
   await resumeHook<ChatTurnPayload>(state.runId, { text: message.text })

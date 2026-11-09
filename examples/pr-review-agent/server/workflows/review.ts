@@ -17,7 +17,8 @@ async function runAgentTurn(prompt: string, instructions: string, ctx: GitHubCon
 
   const agent = createGithubAgent({
     model: ai.wrap('anthropic/claude-opus-5.5') as any,
-    token: connectGithubToken(CONNECTOR, { preset: 'code-review' }),
+    // The token only covers the repository the webhook came from, whatever repository the model targets.
+    token: connectGithubToken(CONNECTOR, { preset: 'code-review', params: { repositories: [`${ctx.owner}/${ctx.repo}`] } }),
     preset: 'code-review',
     requireApproval: false,
     context: {
@@ -44,7 +45,7 @@ function buildContextInstructions(ctx: GitHubContext): string {
 
   return `## Current context
 - Repository: ${ctx.owner}/${ctx.repo}
-- ${target}: "${ctx.title}"
+- ${target}
 - You are responding in this ${ctx.isPullRequest ? 'PR' : 'issue'} thread.
 
 ## Instructions
