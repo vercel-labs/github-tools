@@ -137,7 +137,7 @@ Each tool factory accepts a `token` string. Tools use named module-level step fu
 
 ## Approval Control
 
-Write operations (creating issues, merging PRs, pushing files, …) require user approval by default. This is designed for human-in-the-loop agent workflows.
+Write operations (creating issues, merging PRs, pushing files, …) require user approval by default. This is designed for human-in-the-loop agent workflows. When the client sends the conversation back on each request, as with `useChat`, also pass `experimental_toolApprovalSecret` so a client can't forge an approval: see [Sign approvals](https://github-tools.com/guide/approval-control#sign-approvals).
 
 ```ts
 // All writes need approval (default)
