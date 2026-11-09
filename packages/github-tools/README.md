@@ -540,7 +540,7 @@ List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those f
 | `listPullRequestFiles` | List files changed in a PR (patches omitted by default; set `includePatch` / `filenames` for diffs) |
 | `listPullRequestReviews` | List reviews on a PR (approvals, change requests, comments) |
 | `listPullRequestReviewThreads` | List review threads with comments, resolution state, and reply/resolve IDs (unresolved only by default) |
-| `getPullRequestContext` | Fetch PR details plus files, reviews, and optional CI checks in one call |
+| `getPullRequestContext` | Fetch PR details plus files, reviews, optional CI checks, and optionally the issues it closes, in one call |
 | `createPullRequest` | Open a new PR |
 | `mergePullRequest` | Merge a PR (merge, squash, or rebase) |
 | `updatePullRequest` | Update a PR's title, body, state, base branch, or draft status |
@@ -632,7 +632,7 @@ Pull request conversations share the issue numbering, so the issue-level tools w
 |---|---|
 | `listCheckRuns` | List check runs (Checks API: GitHub Actions and other CI providers) for a commit, branch, or tag |
 | `getCombinedStatus` | Get the combined commit status (Statuses API: legacy CI integrations) for a commit, branch, or tag |
-| `getCiFailureContext` | Diagnose CI failures for a ref — combined status, failing checks, and failed workflow jobs in one call |
+| `getCiFailureContext` | Diagnose CI failures for a ref or one workflow run: failing checks, failed jobs and steps, and the end of each failed job's log, in one call |
 
 ### Releases
 
@@ -640,8 +640,8 @@ Pull request conversations share the issue numbering, so the issue-level tools w
 |---|---|
 | `listReleases` | List releases, newest first (includes drafts and prereleases) |
 | `getLatestRelease` | Get the latest published release (body truncated by default; set `detail: full` for complete notes) |
-| `getRelease` | Get a specific release by ID, including its assets |
-| `getReleaseContext` | Fetch a release plus the previous release and tag comparison in one call |
+| `getRelease` | Get a specific release by ID or tag, including its assets |
+| `getReleaseContext` | Fetch a release (latest, by ID, or by tag) plus the release before it and their tag comparison in one call |
 | `createRelease` | Create a new release (and its tag if needed) |
 | `updateRelease` | Update a release's tag, target, title, notes, draft, or prerelease status |
 | `deleteRelease` | Permanently delete a release (does not delete the underlying git tag) |
