@@ -3,6 +3,7 @@ import { createGitHubAdapter } from '@chat-adapter/github'
 import { createMemoryState } from '@chat-adapter/state-memory'
 import { resumeHook, start } from 'workflow/api'
 import { reviewWorkflow } from '../workflows/review'
+import { canWrite } from './github'
 
 export interface ThreadState { runId?: string }
 
@@ -23,20 +24,17 @@ export const agent = new Chat<typeof adapters, ThreadState>({
   state: createMemoryState(),
 }).registerSingleton()
 
-// The adapter's `raw` carries the webhook's repository and the comment, including the author's role.
+// The adapter's `raw` carries the webhook's repository and the comment, including its author.
 type GitHubRawMessage = {
-  comment: { author_association: string }
+  comment: { user: { login: string } }
   repository: { name: string, owner: { login: string } }
   prNumber: number
   threadType?: 'issue' | 'pr'
 }
 
-// Only people with write access can drive the agent, since it acts with the App's token.
-const TRUSTED_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR'])
-
-function isTrustedAuthor(message: Message): boolean {
+function isTrustedAuthor(message: Message): Promise<boolean> {
   const raw = message.raw as GitHubRawMessage
-  return TRUSTED_ASSOCIATIONS.has(raw.comment.author_association)
+  return canWrite(raw.repository.owner.login, raw.repository.name, raw.comment.user.login)
 }
 
 function extractGitHubContext(message: Message): GitHubContext {
@@ -50,7 +48,7 @@ function extractGitHubContext(message: Message): GitHubContext {
 }
 
 agent.onNewMention(async (thread: Thread<ThreadState>, message: Message) => {
-  if (!isTrustedAuthor(message)) return
+  if (!await isTrustedAuthor(message)) return
   const ctx = extractGitHubContext(message)
   const sent = thread.createSentMessageFromMessage(message)
   await sent.addReaction(emoji.eyes)
@@ -61,7 +59,7 @@ agent.onNewMention(async (thread: Thread<ThreadState>, message: Message) => {
 })
 
 agent.onSubscribedMessage(async (thread: Thread<ThreadState>, message: Message) => {
-  if (!isTrustedAuthor(message)) return
+  if (!await isTrustedAuthor(message)) return
   const state = await thread.state
   if (!state?.runId) return
   await resumeHook<ChatTurnPayload>(state.runId, { text: message.text })
