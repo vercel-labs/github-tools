@@ -1,11 +1,9 @@
 import { createGithubAgent } from '@github-tools/sdk'
-import { connectGithubToken } from '@github-tools/sdk/connect'
 import { createHook, getWorkflowMetadata } from 'workflow'
 import { createLogger } from 'evlog'
 import { createAILogger, createEvlogIntegration } from 'evlog/ai'
 import type { ChatTurnPayload, GitHubContext } from '../lib/agent'
-
-const CONNECTOR = process.env.GITHUB_CONNECT_CONNECTOR || 'github/test-github-tools'
+import { repositoryToken } from '../lib/github'
 
 async function runAgentTurn(prompt: string, instructions: string, ctx: GitHubContext) {
   'use step'
@@ -17,8 +15,7 @@ async function runAgentTurn(prompt: string, instructions: string, ctx: GitHubCon
 
   const agent = createGithubAgent({
     model: ai.wrap('anthropic/claude-opus-5.5') as any,
-    // The token only covers the repository the webhook came from, whatever repository the model targets.
-    token: connectGithubToken(CONNECTOR, { preset: 'code-review', params: { repositories: [`${ctx.owner}/${ctx.repo}`] } }),
+    token: repositoryToken(ctx.owner, ctx.repo),
     preset: 'code-review',
     requireApproval: false,
     context: {

@@ -92,6 +92,7 @@ Open a PR and comment `@my-review-agent review this PR`.
 ```
 server/
   lib/agent.ts                     # Chat SDK instance + event handlers
+  lib/github.ts                    # Repository-scoped token + commenter permission check
   routes/webhooks/github.post.ts   # Webhook endpoint (5 lines)
   workflows/review.ts              # Durable agent workflow
 review-template.md                 # Review output format
