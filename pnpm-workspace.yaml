@@ -7,6 +7,7 @@ packages:
 shamefullyHoist: true
 
 allowBuilds:
+  '@mongodb-js/zstd': false
   '@nestjs/core': false
   '@parcel/watcher': false
   '@swc/core': false
@@ -14,6 +15,7 @@ allowBuilds:
   cbor-extract: false
   esbuild: false
   maplibre-gl: false
+  node-liblzma: false
   sharp: false
   unrs-resolver: false
   vue-demi: false

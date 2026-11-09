@@ -28,6 +28,11 @@ export default TASKS.map(task => defineEval({
       turn = await turn.session.respondAll('approve')
     }
     t.succeeded()
+    if (selection.config === 'cli') {
+      // No GitHub tools in this config: the agent has to reach GitHub through `gh` in bash.
+      t.eventsSatisfy('ran gh in bash', events => JSON.stringify(events).includes('"command":"gh ') || /[;&|]\s*gh /.test(JSON.stringify(events)))
+      return
+    }
     t.eventsSatisfy(`requested one of ${task.required.join(', ')}`, events =>
       requestedToolNames(events).some(name => task.required.includes(name)))
   },
