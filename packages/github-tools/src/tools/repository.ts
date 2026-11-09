@@ -27,6 +27,9 @@ import {
   createOrUpdateFileInputSchema,
   createOrUpdateFileDescription,
   createOrUpdateFileCore,
+  editFilesInputSchema,
+  editFilesDescription,
+  editFilesCore,
 } from '../core/repository'
 import { getFileContentToModelOutput, getRepositoryTreeToModelOutput } from '../core/model-output'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
@@ -158,4 +161,21 @@ export const createOrUpdateFile = (
     needsApproval,
     inputSchema: createOrUpdateFileInputSchema,
     execute: async args => createOrUpdateFileStep({ token: await resolveGithubToken(token, githubTokenCall('createOrUpdateFile', args)), author, committer, coAuthors, ...args }),
+  })
+
+async function editFilesStep(args: Parameters<typeof editFilesCore>[0]) {
+  "use step"
+  return editFilesCore(args)
+}
+
+/** Edit files in one commit, by exact text replacement or whole contents, on a new or existing branch, and optionally open a pull request. Requires approval by default. */
+export const editFiles = (
+  token: GithubTokenInput,
+  { needsApproval = true, author, committer, coAuthors }: CommitToolOptions = {},
+): GithubTool =>
+  tool({
+    description: editFilesDescription,
+    needsApproval,
+    inputSchema: editFilesInputSchema,
+    execute: async args => editFilesStep({ token: await resolveGithubToken(token, githubTokenCall('editFiles', args)), author, committer, coAuthors, ...args }),
   })

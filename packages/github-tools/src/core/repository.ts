@@ -463,3 +463,157 @@ export async function createOrUpdateFileCore({
   }
   })
 }
+
+export const editFilesInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  branch: z.string().describe('Branch to commit to. Created from `baseBranch` when it does not exist yet'),
+  baseBranch: z.string().optional().describe('Branch to start `branch` from and to open the pull request against. Defaults to the repository default branch'),
+  message: z.string().describe('Commit message'),
+  edits: z.array(z.object({
+    path: z.string().describe('Path to the file in the repository'),
+    find: z.string().optional().describe('Exact text to replace. It must appear exactly once in the file, so include enough surrounding text to make it unique'),
+    replace: z.string().optional().describe('Text that replaces `find`'),
+    content: z.string().optional().describe('Full file content, to create a file or rewrite it whole. Use instead of `find` and `replace`'),
+  })).min(1).describe('Edits, applied in order. Several edits can change the same file'),
+  pullRequest: z.object({
+    title: z.string().describe('Pull request title'),
+    body: z.string().optional().describe('Pull request description'),
+    draft: z.boolean().optional().default(false).describe('Open the pull request as a draft'),
+  }).optional().describe('Open a pull request from `branch` into `baseBranch` after the commit. When `branch` already has an open pull request, that one is returned (`existing: true`) and left as it is'),
+})
+
+export const editFilesDescription = 'Edit files and commit them in one call: replace exact text in a file without reading or resending the whole file, or write whole files, on a new or existing branch, and optionally open a pull request. Prefer this over createBranch + createOrUpdateFile + createPullRequest.'
+
+type FileChange = { path: string, content: string, sha?: string, replacements: number }
+
+/** Not idempotent: each call makes a new commit. */
+export async function editFilesCore({
+  token,
+  owner,
+  repo,
+  branch,
+  baseBranch,
+  message,
+  edits,
+  pullRequest,
+  author,
+  committer,
+  coAuthors,
+}: {
+  token: string
+  owner: string
+  repo: string
+  branch: string
+  baseBranch?: string
+  message: string
+  edits: Array<{ path: string, find?: string, replace?: string, content?: string }>
+  pullRequest?: { title: string, body?: string, draft: boolean }
+  author?: CommitIdentity
+  committer?: CommitIdentity
+  coAuthors?: CommitIdentity[]
+}) {
+  return withOctokit(token, async (octokit) => {
+  const base = baseBranch ?? (await octokit.rest.repos.get({ owner, repo })).data.default_branch
+  const branchSha = await octokit.rest.git.getRef({ owner, repo, ref: `heads/${branch}` }).then(
+    ({ data }) => data.object.sha,
+    (error: { status?: number }) => {
+      if (error.status === 404) return undefined
+      throw error
+    },
+  )
+  const headSha = branchSha ?? (await octokit.rest.git.getRef({ owner, repo, ref: `heads/${base}` })).data.object.sha
+
+  // Apply every edit before writing anything, so an edit that doesn't match leaves the repository untouched.
+  const files = new Map<string, FileChange>()
+  for (const edit of edits) {
+    const current = files.get(edit.path)
+    if (edit.content !== undefined) {
+      files.set(edit.path, { path: edit.path, content: edit.content, sha: current?.sha, replacements: current?.replacements ?? 0 })
+      continue
+    }
+    if (edit.find === undefined || edit.replace === undefined) throw new Error(`The edit to ${edit.path} needs \`find\` and \`replace\`, or \`content\`.`)
+    const file = current ?? await readFile(octokit, { owner, repo, path: edit.path, ref: headSha })
+    const matches = file.content.split(edit.find).length - 1
+    if (matches !== 1) {
+      throw new Error(matches === 0
+        ? `\`find\` text not found in ${edit.path}.`
+        : `\`find\` text appears ${matches} times in ${edit.path}. Include more surrounding text so it matches once.`)
+    }
+    const replacement = edit.replace
+    files.set(edit.path, { ...file, content: file.content.replace(edit.find, () => replacement), replacements: file.replacements + 1 })
+  }
+
+  if (branchSha === undefined) await octokit.rest.git.createRef({ owner, repo, ref: `refs/heads/${branch}`, sha: headSha })
+  const commits = await commitFileChanges(octokit, { owner, repo, branch, headSha, message: composeCommitMessage(message, coAuthors), changes: [...files.values()], author, committer })
+  // A branch that already existed may have its pull request open: return it rather than failing
+  // with "A pull request already exists" after the commit has landed.
+  const openPr = pullRequest && branchSha !== undefined
+    ? (await octokit.rest.pulls.list({ owner, repo, head: `${owner}:${branch}`, state: 'open', per_page: 1 })).data[0]
+    : undefined
+  const pr = openPr ?? (pullRequest && (await octokit.rest.pulls.create({ owner, repo, title: pullRequest.title, body: pullRequest.body, head: branch, base, draft: pullRequest.draft })).data)
+
+  return {
+    branch,
+    baseBranch: base,
+    createdBranch: branchSha === undefined,
+    files: [...files.values()].map(({ path, replacements }) => ({ path, replacements })),
+    commits,
+    ...pr ? { pullRequest: { number: pr.number, title: pr.title, url: pr.html_url, draft: pr.draft, existing: openPr !== undefined } } : {},
+  }
+  })
+}
+
+async function readFile(octokit: Octokit, { owner, repo, path, ref }: { owner: string, repo: string, path: string, ref: string }): Promise<FileChange> {
+  const { data } = await octokit.rest.repos.getContent({ owner, repo, path, ref })
+  if (Array.isArray(data) || data.type !== 'file') throw new Error(`${path} is not a file.`)
+  return { path, content: Buffer.from(data.content, 'base64').toString('utf-8'), sha: data.sha, replacements: 0 }
+}
+
+// One signed commit with every change, like createOrUpdateFile. A custom author or committer, or a
+// signed commit GitHub refuses, falls back to the REST contents API, which makes one commit per file.
+async function commitFileChanges(octokit: Octokit, { owner, repo, branch, headSha, message, changes, author, committer }: {
+  owner: string
+  repo: string
+  branch: string
+  headSha: string
+  message: string
+  changes: FileChange[]
+  author?: CommitIdentity
+  committer?: CommitIdentity
+}): Promise<Array<{ sha?: string, url?: string }>> {
+  if (!author && !committer) {
+    const [headline = message, ...rest] = message.split('\n')
+    try {
+      const result = await createCommitOnBranch(octokit, {
+        owner, repo, branch,
+        expectedHeadOid: headSha,
+        headline,
+        body: rest.join('\n').replace(/^\n+/, '') || undefined,
+        additions: changes.map(change => ({ path: change.path, contents: Buffer.from(change.content).toString('base64') })),
+      })
+      return [{ sha: result.commitSha, url: result.commitUrl }]
+    }
+    catch (error) {
+      if (error instanceof CreateCommitOnBranchError && error.reason === 'stale_data') throw error
+      console.warn(`[github-tools] Signed commit failed, using REST API: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+  const commits: Array<{ sha?: string, url?: string }> = []
+  for (const change of changes) {
+    // Read the sha at the head the edits were made against, so a concurrent change to the file fails the write instead of being overwritten.
+    const sha = change.sha ?? await octokit.rest.repos.getContent({ owner, repo, path: change.path, ref: headSha }).then(
+      ({ data }) => Array.isArray(data) ? undefined : data.sha,
+      (error: { status?: number }) => {
+        if (error.status === 404) return undefined
+        throw error
+      },
+    )
+    const { data } = await octokit.rest.repos.createOrUpdateFileContents({
+      owner, repo, path: change.path, branch, sha, author, committer, message,
+      content: Buffer.from(change.content).toString('base64'),
+    })
+    commits.push({ sha: data.commit.sha, url: data.commit.html_url })
+  }
+  return commits
+}

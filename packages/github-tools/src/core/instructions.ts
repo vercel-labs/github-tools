@@ -98,8 +98,8 @@ When clearing the inbox:
 When opening a PR:
 - Inspect the repo with getRepository / listBranches / getRepositoryTree / getFileContent before editing; use searchCode to find the files a change touches
 - Check listPullRequests for an existing PR on the same branch before opening a new one
-- createBranch from a sensible base, then createOrUpdateFile for the change set
-- createPullRequest with a clear title and body; updatePullRequest if the draft or description needs a fix
+- Make the change with editFiles: it creates the branch, replaces exact text (read only the part you change, never resend a whole file to change a few lines), commits, and opens the PR with pullRequest, in one call
+- Use createBranch / createOrUpdateFile / createPullRequest separately only when a step must happen on its own; updatePullRequest if the draft or description needs a fix
 - Use listPullRequestFiles / compareCommits / getCommit to verify what will land
 - Address review feedback: listPullRequestReviewThreads for open threads, replyToReviewComment to answer, resolveReviewThread once fixed
 - Use deleteBranch to clean up a merged or abandoned branch when asked

@@ -114,6 +114,13 @@ export const createRepository = factory('createRepository')
  */
 export const createOrUpdateFile = factory('createOrUpdateFile')
 /**
+ * Edit files in one commit, by exact text replacement or whole contents, on a new or existing branch, and optionally open a pull request. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const editFiles = factory('editFiles')
+/**
  * List pull requests for a GitHub repository.
  *
  * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`

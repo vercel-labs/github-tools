@@ -34,7 +34,7 @@ export const TASKS: Task[] = [
     prompt: `Audit packages/github-tools/src/client.ts in ${REPO} for hardcoded secrets or unsafe token handling. Report findings, do not open issues.` },
   { id: 'notifications', useCase: 'Inbox', writes: false, oracle: ['notification-inbox'], required: ['listNotifications'],
     prompt: 'List my 5 most recent GitHub notifications and say which one looks most urgent.' },
-  { id: 'pr-author', useCase: 'PR author', writes: true, oracle: ['pr-author'], required: ['createPullRequest'],
+  { id: 'pr-author', useCase: 'PR author', writes: true, oracle: ['pr-author'], required: ['createPullRequest', 'editFiles'],
     prompt: `In ${REPO}, create a branch docs/readme-wording, change "A typed tool layer" to "A typed toolkit" in the opening paragraph of packages/github-tools/README.md, and open a pull request.` },
   { id: 'multi', useCase: 'Multi-preset', writes: true, oracle: ['code-review', 'issue-triage'], required: ['addIssueComment'],
     prompt: `Look at PR #146 in ${REPO}, find the issue it fixes, and comment on that issue with a link to the PR.` },
