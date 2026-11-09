@@ -211,7 +211,7 @@ defineExpose({ hint })
                     <div class="mt-2.5 flex items-center gap-2">
                       <button
                         type="button"
-                        class="relative h-7 rounded-md bg-(--d-ok) px-3 text-[12.5px] font-medium text-white transition-transform active:scale-[0.97]"
+                        class="relative h-7 rounded-md bg-(--d-go) px-3 text-[12.5px] font-medium text-white transition-transform active:scale-[0.97]"
                         @click="decide('approved')"
                       >
                         <span

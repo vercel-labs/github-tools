@@ -4,7 +4,7 @@ const SCENES = [
   { id: 'ask', label: 'Ask about a repo' },
   { id: 'linear', label: 'Answer in Linear' },
   { id: 'ci', label: 'Fix failing CI' },
-  { id: 'factory', label: 'Ship from an issue' },
+  { id: 'factory', label: 'Build a factory' },
   { id: 'agents', label: 'Orchestrate agents' }
 ] as const
 

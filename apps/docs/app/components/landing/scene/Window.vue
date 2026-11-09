@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** An app window in a landing scene: macOS controls, the app's mark and a title or address. */
 const props = defineProps<{
-  app: 'github' | 'slack' | 'linear' | 'terminal' | 'vercel'
+  app: 'github' | 'slack' | 'linear' | 'terminal' | 'vercel' | 'editor'
   title: string
 }>()
 
@@ -10,7 +10,8 @@ const MARK = {
   slack: 'i-simple-icons-slack',
   linear: 'i-simple-icons-linear',
   terminal: 'i-lucide-terminal',
-  vercel: 'i-simple-icons-vercel'
+  vercel: 'i-simple-icons-vercel',
+  editor: 'i-lucide-code-xml'
 } as const
 
 const browser = computed(() => props.app === 'github' || props.app === 'vercel')
@@ -20,7 +21,7 @@ const browser = computed(() => props.app === 'github' || props.app === 'vercel')
   <section
     :aria-label="app"
     class="flex min-h-0 flex-col overflow-hidden rounded-lg border border-(--d-line-strong)"
-    :class="app === 'terminal' ? 'bg-(--d-raised)' : 'bg-default'"
+    :class="app === 'terminal' || app === 'editor' ? 'bg-(--d-raised)' : 'bg-default'"
   >
     <header class="relative flex h-9 shrink-0 items-center border-b border-(--d-line) px-3">
       <span
