@@ -48,9 +48,12 @@ export default defineEval({
     t.check(outside.interactions.length, satisfies(value => value === 0, 'a write the guardrails block asks no one'))
     t.check(outside.reply, includes('`vercel/next.js` is outside the repositories these tools may act on'))
 
-    // A mount with `dryRun` answers writes without reaching GitHub, and its label says what would have happened.
+    // A mount with `dryRun` answers writes without reaching GitHub or asking anyone. The result says
+    // approval would have asked, and the label says what would have happened.
     const dryRun = await outside.session.send('dry-run write')
+    t.check(dryRun.interactions.length, satisfies(value => value === 0, 'a dry-run write asks no one'))
     t.check(dryRun.reply, includes('"dryRun":true'))
+    t.check(dryRun.reply, includes('"approval":{"required":true}'))
     t.eventsSatisfy('dry-run write label', events => JSON.stringify(events).includes('Would create issue on vercel-labs/github-tools'))
 
     // A tool that was not picked is deferred: the model can still call it through eve__tool.

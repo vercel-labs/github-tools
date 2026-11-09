@@ -38,7 +38,7 @@ export async function runGithubToolStep(
     const call = githubTokenCall(name, mergeContextArgs(input, ctx.context ?? {}))
     const reason = guardrailViolation(call, ctx.guardrails)
     if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
-    if (ctx.dryRun && isGithubWriteToolName(name)) return dryRunWrite(name, call.input as Record<string, unknown>, ctx.guardrails)
+    if (ctx.dryRun && isGithubWriteToolName(name)) return dryRunWrite(name, call.input as Record<string, unknown>, ctx.guardrails, () => ctx.dryRunApproval)
     const token = await resolveGithubToken(ctx.token, call)
     return await executeGithubToolStep(name, input, { ...ctx, token })
   } catch (error) {

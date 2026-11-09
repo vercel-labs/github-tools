@@ -1,4 +1,4 @@
-import type { ToolSet } from 'ai'
+import type { ModelMessage, ToolSet } from 'ai'
 import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules } from './tools/repository'
 import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge } from './tools/pull-requests'
 import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
@@ -13,7 +13,7 @@ import { listCheckRuns, getCombinedStatus } from './tools/checks'
 import { listCodeScanningAlerts, listDependabotAlerts, listSecretScanningAlerts } from './tools/security'
 import { listReleases, getLatestRelease, getRelease, createRelease, updateRelease, deleteRelease } from './tools/releases'
 import { getPullRequestContext, getIssueContext, getReleaseContext, getCiFailureContext } from './tools/bundles'
-import { resolveAiSdkApproval } from './core/approval'
+import { resolveAiSdkApproval, resolveAiSdkToolApproval } from './core/approval'
 import { bindToolsContext } from './core/context'
 import { stripRateLimit } from './core/rate-limit'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
@@ -22,7 +22,7 @@ import { type GithubToolName } from './core/tool-names'
 import { type AllGithubTools, type GithubToolsBaseOptions } from './core/tool-types'
 import { githubTokenCall, withGithubGuardrails } from './core/token'
 import { guardrailViolation } from './core/guardrails'
-import { dryRunWrite } from './core/dry-run'
+import { dryRunWrite, type GithubDryRunApproval } from './core/dry-run'
 import { isGithubWriteToolName } from './core/catalog'
 import type { GithubWriteToolName } from './core/write-tools'
 
@@ -34,7 +34,7 @@ export { CORE_READ_TOOLS } from './core/presets'
 export { CALL_GITHUB_TOOL } from './agents'
 export type { GithubToolsContext } from './core/context'
 export type { GithubGuardrails } from './core/guardrails'
-export type { GithubDryRunResult } from './core/dry-run'
+export type { GithubDryRunApproval, GithubDryRunResult } from './core/dry-run'
 export { withGithubGuardrails } from './core/token'
 export type { GithubToolPreset, PresetToolName, CombinedPresetToolNames } from './core/presets'
 export type { GithubToolName } from './core/tool-names'
@@ -244,8 +244,16 @@ export function createGithubTools({
     }
   }
 
+  // A dry run asks nobody; each result reports what approval would have decided instead.
+  const wouldApprove = async (name: GithubWriteToolName, input: unknown, options: { toolCallId: string, messages: ModelMessage[] }): Promise<GithubDryRunApproval> => {
+    const override = overrides?.[name]?.needsApproval
+    if (override !== undefined) return { required: (typeof override === 'function' ? await override(input, { ...options, context: undefined }) : override) === true }
+    const status = await resolveAiSdkToolApproval(name, requireApproval, evaluation)(input, options)
+    if (status === undefined || status === 'user-approval') return { required: status === 'user-approval' }
+    return { required: status.type === 'user-approval', reason: status.reason }
+  }
   const withDryRun = (name: GithubToolName, tool: GithubTool): GithubTool => dryRun && isGithubWriteToolName(name)
-    ? { ...tool, execute: async args => dryRunWrite(name, args as Record<string, unknown>, guardrails) }
+    ? { ...tool, needsApproval: false, execute: async (args, { toolCallId, messages }) => dryRunWrite(name, args as Record<string, unknown>, guardrails, () => wouldApprove(name, args, { toolCallId, messages })) }
     : tool
   const scoped = bindToolsContext(
     Object.fromEntries(

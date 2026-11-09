@@ -71,16 +71,20 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     name,
     description: options.description ?? descriptor.description,
     inputSchema,
-    needsApproval: mode !== false,
+    // A dry run asks nobody; each result reports what approval would have decided instead.
+    needsApproval: mode !== false && !options.dryRun,
   }).server(async (input) => {
     const resolved = resolveInput(input)
-    if (options.dryRun && isGithubWriteToolName(name)) return dryRunWrite(name, resolved, options.guardrails)
+    if (options.dryRun && isGithubWriteToolName(name)) {
+      // `'auto'` is decided by the approval middleware, which a dry-run write never reaches.
+      return dryRunWrite(name, resolved, options.guardrails, () => mode === 'auto' ? undefined : { required: mode })
+    }
     const attribution = name === 'createOrUpdateFile' || name === 'editFiles'
       ? { author: options.author, committer: options.committer, coAuthors: options.coAuthors }
       : name === 'mergePullRequest' || name === 'enablePullRequestAutoMerge' ? { coAuthors: options.coAuthors, branches: options.guardrails?.branches } : {}
     return stripRateLimit(await core({ ...resolved, ...attribution, token: await resolveToken(githubTokenCall(name, resolved)) }))
   })
-  if (mode === 'auto') autoTools.set(built, { name, resolveInput })
+  if (mode === 'auto' && !options.dryRun) autoTools.set(built, { name, resolveInput })
   return built as unknown as GithubTanstackTool<N>
 }
 

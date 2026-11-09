@@ -210,9 +210,11 @@ export interface GithubExtensionConfig {
    */
   guardrails?: GithubGuardrails
   /**
-   * Run reads as usual but send no write to GitHub. Each write still goes through approval and
-   * `guardrails`, then returns a dry-run result, and its label reads "Would create issue on
-   * owner/repo". Use it to try the agent on real repositories without changing them.
+   * Shadow mode: run reads as usual but send no write to GitHub, and ask nobody to approve one.
+   * Each write still goes through `guardrails`, then returns a dry-run result that says whether
+   * approval would have asked a person (with the evaluation model's verdict under `'auto'`), and
+   * its label reads "Would create issue on owner/repo". Use it to try the agent on real
+   * repositories, for example a scheduled bot, before letting it write.
    */
   dryRun?: boolean
 }

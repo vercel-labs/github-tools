@@ -20,6 +20,7 @@ import {
   type AutoApprovalDecision,
   type EveGithubToolsOptions,
   type EveToolOverrides,
+  type GithubDryRunApproval,
   type GithubTokenCall,
   type GithubToolName,
   type GithubWriteToolName,
@@ -172,6 +173,12 @@ async function githubUserAuth() {
 
 async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolContext) {
   const args = input as Record<string, unknown>
+  if (extension.config.dryRun && writeToolName(name)) {
+    const key = decisionKey(ctx.session.id, ctx.callId)
+    const dryRunApproval = dryRunApprovals.get(key)
+    dryRunApprovals.delete(key)
+    return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), dryRunApproval })
+  }
   const actAs = actAsFor(name)
   if (actAs === 'app') return executeGithubEveTool(name, args, buildSessionOptions(ctx))
 
@@ -284,12 +291,26 @@ function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalV
   return approvalValue(writeTool, requireApproval, overrides?.[name]?.approval)
 }
 
+// A dry run asks nobody: the approval policy keeps what it would have decided, and the write's result reports it.
+const dryRunApprovals = new Map<string, GithubDryRunApproval>()
+
 async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
   const reason = githubGuardrailViolation(name, ctx.toolInput as Record<string, unknown>, extension.config)
   if (reason) return { type: 'denied', reason }
+  if (!extension.config.dryRun) return githubApprovalStatus(name, writeTool, request, ctx)
 
+  const auto = configuredApprovalValue(name) === 'auto' && isPersonRequest(ctx) && await cachedAutoApproval(writeTool, request, ctx)
+  const status = auto ? undefined : await githubApprovalStatus(name, writeTool, request, ctx)
+  dryRunApprovals.set(decisionKey(ctx.session.id, ctx.callId), auto
+    ? { required: auto.ask, reason: auto.reason }
+    : { required: status === true || status === 'user-approval' || (typeof status === 'object' && status?.type === 'user-approval') })
+  if (dryRunApprovals.size > MAX_CACHED_DECISIONS) dryRunApprovals.delete(dryRunApprovals.keys().next().value!)
+  return 'not-applicable'
+}
+
+async function githubApprovalStatus(name: GithubToolName, writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const value = configuredApprovalValue(name)!
   if (value === 'auto') {
     if (!isPersonRequest(ctx)) return 'user-approval'

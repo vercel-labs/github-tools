@@ -15,6 +15,7 @@ import {
 import { stripRateLimit } from '../core/rate-limit'
 import { resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { GithubGuardrails } from '../core/guardrails'
+import type { GithubDryRunApproval } from '../core/dry-run'
 import type { GithubWriteToolName } from '../core/write-tools'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from '../core/tool-names'
 export type { GithubToolName } from '../core/tool-names'
@@ -28,6 +29,7 @@ export type ToolBuildContext = {
   coAuthors?: CommitIdentity[]
   guardrails?: GithubGuardrails
   dryRun?: boolean
+  dryRunApproval?: GithubDryRunApproval
 }
 
 type ToolRegistryEntry = {

@@ -186,9 +186,9 @@ createGithubTools({
 
 The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/guide/approval-control#guardrails).
 
-### Dry run
+### Shadow mode
 
-`dryRun: true` runs reads as usual but sends no write to GitHub. Each write goes through approval and `guardrails`, then returns `{ dryRun: true, tool, input, message }`, so you can try an agent on real repositories without changing them. See [Dry run](https://github-tools.com/guide/approval-control#dry-run).
+`dryRun: true` runs reads as usual, but no write reaches GitHub and nobody is asked to approve one. Each write goes through `guardrails`, then returns `{ dryRun: true, tool, input, approval, message }`, where `approval` says whether a person would have been asked. Use it to roll out a bot that runs on its own, test against real data, or compare models, before letting it write. It fits writes that stand on their own (labels, comments, reviews), not chains where a later step needs an earlier write's result. See [Shadow mode](https://github-tools.com/guide/approval-control#shadow-mode).
 
 ### Tool overrides
 
@@ -750,7 +750,7 @@ type GithubToolsOptions = {
   preset?: GithubToolPreset | GithubToolPreset[]
   context?: GithubToolsContext // default owner / repo / PR / issue / ref
   guardrails?: { repositories?: string[], branches?: string[] } // where any call may act
-  dryRun?: boolean // reads run, writes don't reach GitHub
+  dryRun?: boolean // shadow mode: reads run, writes don't reach GitHub or ask anyone
 }
 
 type GithubTokenInput = string | (() => Promise<string>)
