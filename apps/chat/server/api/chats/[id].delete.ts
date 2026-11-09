@@ -17,8 +17,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const username = session.user?.username || session.id
-  const chatFolder = `${username}/${id}`
+  const chatFolder = `${session.user?.id || session.id}/${id}`
 
   try {
     const { blobs } = await blob.list({

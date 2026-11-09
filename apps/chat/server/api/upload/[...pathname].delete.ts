@@ -3,13 +3,12 @@ import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
-  const { username } = user
 
   const { pathname } = await getValidatedRouterParams(event, z.object({
     pathname: z.string().min(1)
   }).parse)
 
-  if (!pathname.startsWith(`${username}/`)) {
+  if (!pathname.startsWith(`${user.id}/`)) {
     throw createError({
       statusCode: 403,
       statusMessage: 'You do not have permission to delete this file'
