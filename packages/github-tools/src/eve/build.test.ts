@@ -42,25 +42,21 @@ describe('createGithubTools eve integration', () => {
     expect(defineTool(tool)).toBe(tool)
   })
 
-  it('passes commit attribution into createOrUpdateFile core args', async () => {
+  it.each([
+    ['createOrUpdateFile', 'createOrUpdateFileCore', { path: 'README.md', message: 'update', content: 'hello' }],
+    ['editFiles', 'editFilesCore', { branch: 'docs/wording', message: 'update', edits: [{ path: 'README.md', content: 'hello' }] }],
+  ] as const)('passes commit attribution into %s core args', async (name, coreName, input) => {
     const coAuthors = [{ name: 'bot[bot]', email: '1+bot@users.noreply.github.com' }]
-    const coreSpy = vi.spyOn(repositoryCore, 'createOrUpdateFileCore')
-      .mockResolvedValue({ path: 'README.md', sha: 'abc', commitSha: 'def', commitUrl: 'https://example.com' })
+    const coreSpy = vi.spyOn(repositoryCore, coreName).mockResolvedValue({} as never)
 
-    const tool = buildEveToolDefinition('createOrUpdateFile', {
+    const tool = buildEveToolDefinition(name, {
       token: 'ghp_test',
       author: { name: 'Author', email: 'author@example.com' },
       committer: { name: 'Committer', email: 'committer@example.com' },
       coAuthors,
     })
 
-    await tool.execute({
-      owner: 'vercel-labs',
-      repo: 'github-tools',
-      path: 'README.md',
-      message: 'update',
-      content: 'hello',
-    }, {} as never)
+    await tool.execute({ owner: 'vercel-labs', repo: 'github-tools', ...input }, {} as never)
 
     expect(coreSpy).toHaveBeenCalledWith(expect.objectContaining({
       token: 'ghp_test',

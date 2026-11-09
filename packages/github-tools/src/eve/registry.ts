@@ -107,6 +107,7 @@ export function createToolRegistry(
   // alongside the token instead of living in the tool's input schema.
   const commitExtras: Partial<Record<GithubToolName, Record<string, unknown>>> = {
     createOrUpdateFile: { author: ctx.author, committer: ctx.committer, coAuthors: ctx.coAuthors },
+    editFiles: { author: ctx.author, committer: ctx.committer, coAuthors: ctx.coAuthors },
     mergePullRequest: { coAuthors: ctx.coAuthors },
   }
 

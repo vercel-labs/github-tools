@@ -596,7 +596,8 @@ async function commitFileChanges(octokit: Octokit, { owner, repo, branch, headSh
   }
   const commits: Array<{ sha?: string, url?: string }> = []
   for (const change of changes) {
-    const sha = change.sha ?? await octokit.rest.repos.getContent({ owner, repo, path: change.path, ref: branch }).then(
+    // Read the sha at the head the edits were made against, so a concurrent change to the file fails the write instead of being overwritten.
+    const sha = change.sha ?? await octokit.rest.repos.getContent({ owner, repo, path: change.path, ref: headSha }).then(
       ({ data }) => Array.isArray(data) ? undefined : data.sha,
       (error: { status?: number }) => {
         if (error.status === 404) return undefined
