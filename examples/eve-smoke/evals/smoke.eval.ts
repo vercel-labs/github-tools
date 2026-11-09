@@ -30,6 +30,9 @@ export default defineEval({
     const afterApprove = await approved.session.respondAll('approve')
     t.check(afterApprove.reply, includes('4242'))
 
+    // A successful write's label names what it created.
+    t.eventsSatisfy('completed write label', events => JSON.stringify(events).includes('Created issue on vercel-labs/github-tools#4242'))
+
     const remembered = await afterApprove.session.send('write')
     t.check(remembered.interactions.length, satisfies(value => value === 0, "'once' approval is remembered for the session"))
     t.check(remembered.reply, includes('4242'))
@@ -39,10 +42,15 @@ export default defineEval({
     t.check(deferred.requireToolCall('github__listBranches').status, equals('completed'))
     t.check(deferred.reply, includes('abc123'))
 
+    // The extension adds its tool guidance to the system prompt.
+    const instructions = await deferred.session.send('instructions')
+    t.check(instructions.reply, includes('getCiFailureContext'))
+    t.check(instructions.reply, includes('eve__search'))
+
     const later = await deferred.session.send('tools')
     t.check(listedTools(later.reply).has('github__addLabels'), satisfies(value => value === true, 'routing holds on later turns'))
 
-    // Eight turns including this one, and the read and write turns make a second model call after
+    // Nine turns including this one, and the read and write turns make a second model call after
     // their tool result. All of them reuse the session's first routing.
     const routing = await later.session.send('routing')
     t.check(Number(routing.reply), satisfies(value => value === 1, 'routing runs once per session, not once per turn or model call'))
