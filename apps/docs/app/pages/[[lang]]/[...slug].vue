@@ -31,7 +31,29 @@ const title = page.value.seo?.title || page.value.title
 const description = page.value.seo?.description || page.value.description
 
 const headline = ref(findPageHeadline(navigation?.value, page.value?.path))
-const breadcrumbs = computed(() => findPageBreadcrumbs(navigation?.value, page.value?.path || ''))
+const breadcrumbs = computed(() => docsBreadcrumbs(page.value?.path || '', page.value?.title || ''))
+
+const body = computed(() => page.value?.body as Parameters<typeof faqFromBody>[0])
+const faq = computed(() => faqFromBody(body.value))
+const minutes = computed(() => readingMinutes(body.value))
+const level = computed(() => (page.value?.meta as { level?: 'beginner' | 'advanced' } | undefined)?.level)
+
+useHead({
+  script: computed(() => faq.value.length
+    ? [{
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          'mainEntity': faq.value.map(entry => ({
+            '@type': 'Question',
+            'name': entry.question,
+            'acceptedAnswer': { '@type': 'Answer', 'text': entry.answer }
+          }))
+        })
+      }]
+    : [])
+})
 
 useSeo({
   title,
@@ -40,13 +62,29 @@ useSeo({
   modifiedAt: (page.value as unknown as Record<string, unknown>).modifiedAt as string | undefined,
   breadcrumbs,
 })
+useSeoMeta({
+  twitterTitle: title,
+  twitterDescription: description,
+  ogImageAlt: title,
+  twitterImageAlt: title,
+})
+const vercel = { '@type': 'Organization', '@id': 'https://vercel.com/#organization', 'name': 'Vercel', 'url': 'https://vercel.com' }
+useSchemaOrg([
+  defineArticle({
+    author: vercel,
+    publisher: vercel,
+    inLanguage: 'en',
+    timeRequired: `PT${minutes.value}M`,
+    proficiencyLevel: level.value === 'advanced' ? 'Expert' : 'Beginner',
+  }),
+])
 watch(() => navigation?.value, () => {
   headline.value = findPageHeadline(navigation?.value, page.value?.path) || headline.value
 })
 
 defineOgImage('Docs', {
   headline: headline.value,
-  title: title?.slice(0, 60),
+  title: formatOgTitle(title),
   description: formatOgDescription(title, description),
 })
 
@@ -75,7 +113,6 @@ function pageLinkProps(link: NonNullable<DocsCollectionItem['links']>[number]) {
   }
 }
 
-addPrerenderPath(`/raw${route.path}.md`)
 </script>
 
 <template>
@@ -104,6 +141,20 @@ addPrerenderPath(`/raw${route.path}.md`)
     </UPageHeader>
 
     <UPageBody>
+      <p class="not-prose -mt-4 mb-8 flex items-center gap-3 text-[13px] text-muted">
+        <span
+          v-if="level"
+          class="inline-flex items-center gap-1.5"
+        >
+          <span
+            class="size-1.5 rounded-full"
+            :class="level === 'beginner' ? 'bg-(--d-signal)' : 'bg-(--d-warn)'"
+          />
+          {{ level === 'beginner' ? 'Beginner' : 'Advanced' }}
+        </span>
+        <span>{{ minutes }} min read</span>
+      </p>
+
       <ContentRenderer
         v-if="page"
         :value="page"

@@ -1,9 +1,13 @@
 <script setup lang="ts">
+const route = useRoute()
 const appConfig = useAppConfig()
 </script>
 
 <template>
-  <div class="border-t border-default">
+  <div
+    v-if="route.meta.layout !== 'docs'"
+    class="border-t border-default"
+  >
     <UContainer>
       <footer class="py-12 sm:py-16">
         <div class="mb-10 max-w-sm">
@@ -13,7 +17,7 @@ const appConfig = useAppConfig()
           </p>
         </div>
 
-        <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:grid-cols-5">
           <div
             v-for="section in appConfig.footer?.sections"
             :key="section.title"

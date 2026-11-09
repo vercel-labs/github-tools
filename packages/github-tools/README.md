@@ -32,9 +32,9 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 | Scripts, chat backends, or an existing AI SDK app | Quick Start below |
 | A TanStack AI app | [TanStack AI](#tanstack-ai) |
 | Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
-| A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
+| A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/integrations/chat-sdk) |
 
-97 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
+97 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/reference/tools). Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -114,7 +114,7 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | `pr-author` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `getCollaboratorPermission`, `createBranch`, `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `updatePullRequest`, `updatePullRequestBranch`, `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`, `getCommit` |
 | `maintainer` | All 97 tools |
 
-Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
+Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/reference/tools).
 
 For an agent that handles open-ended requests, `createGithubAgent({ model, preset: 'auto' })` asks a fast evaluation model which tools the conversation's first request needs. It lists those and the core read tools for the whole conversation, and adds a `callGithubTool` tool the model can use to call any other GitHub tool without changing the tool list, so the provider's prompt cache holds. `evaluation: { selection: 'presets' }` routes each request to at most two presets instead and uses their system prompts. This needs `ai` 7.0.105 or later.
 
@@ -137,7 +137,7 @@ Each tool factory accepts a `token` string. Tools use named module-level step fu
 
 ## Approval Control
 
-Write operations (creating issues, merging PRs, pushing files, …) require user approval by default. This is designed for human-in-the-loop agent workflows. When the client sends the conversation back on each request, as with `useChat`, also pass `experimental_toolApprovalSecret` so a client can't forge an approval: see [Sign approvals](https://github-tools.com/guide/approval-control#sign-approvals).
+Write operations (creating issues, merging PRs, pushing files, …) require user approval by default. This is designed for human-in-the-loop agent workflows. When the client sends the conversation back on each request, as with `useChat`, also pass `experimental_toolApprovalSecret` so a client can't forge an approval: see [Sign approvals](https://github-tools.com/approval#sign-approvals).
 
 ```ts
 // All writes need approval (default)
@@ -184,15 +184,15 @@ createGithubTools({
 })
 ```
 
-The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. Even without `guardrails`, a call whose input contains what looks like a credential (a GitHub, npm, Slack, Stripe, Anthropic, OpenAI, Google or AWS key, or a private key) fails; set `guardrails: { secrets: 'allow' }` to turn that off. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/guide/approval-control#guardrails).
+The checks run before any request reaches GitHub, and a blocked call fails with `github_tools.GUARDRAIL_BLOCKED` and a reason the model can act on. Even without `guardrails`, a call whose input contains what looks like a credential (a GitHub, npm, Slack, Stripe, Anthropic, OpenAI, Google or AWS key, or a private key) fails; set `guardrails: { secrets: 'allow' }` to turn that off. `createGithubAgent` denies a blocked write instead of asking for approval. Tools without a repository target (search, gists, notifications) aren't restricted. For tools built from individual factories, wrap the token with `withGithubGuardrails(token, guardrails)`. See [Guardrails](https://github-tools.com/approval#guardrails).
 
 ### Shadow mode
 
-`dryRun: true` runs reads as usual, but no write reaches GitHub and nobody is asked to approve one. Each write goes through `guardrails`, then returns `{ dryRun: true, tool, input, approval, message }`, where `approval` says whether a person would have been asked. Use it to roll out a bot that runs on its own, test against real data, or compare models, before letting it write. It fits writes that stand on their own (labels, comments, reviews), not chains where a later step needs an earlier write's result. See [Shadow mode](https://github-tools.com/guide/approval-control#shadow-mode).
+`dryRun: true` runs reads as usual, but no write reaches GitHub and nobody is asked to approve one. Each write goes through `guardrails`, then returns `{ dryRun: true, tool, input, approval, message }`, where `approval` says whether a person would have been asked. Use it to roll out a bot that runs on its own, test against real data, or compare models, before letting it write. It fits writes that stand on their own (labels, comments, reviews), not chains where a later step needs an earlier write's result. See [Shadow mode](https://github-tools.com/approval#shadow-mode).
 
 ### Text from GitHub
 
-Tool results drop HTML comments and invisible Unicode characters from issue, pull request, comment, review, release and discussion bodies, since a rendered page hides them but a model reads them. The default agent prompts tell the model to treat GitHub text as data and act only on what the user asked. See [Text from GitHub](https://github-tools.com/guide/approval-control#text-from-github).
+Tool results drop HTML comments and invisible Unicode characters from issue, pull request, comment, review, release and discussion bodies, since a rendered page hides them but a model reads them. The default agent prompts tell the model to treat GitHub text as data and act only on what the user asked. See [Text from GitHub](https://github-tools.com/approval#text-from-github).
 
 ### Tool overrides
 
@@ -236,7 +236,7 @@ Classifiable failures become structured [evlog](https://evlog.dev) catalog error
 
 Codes: `TOKEN_REQUIRED`, `OIDC_TOKEN_EXPIRED`, `CONNECT_NOT_AUTHORIZED`, `CONNECT_USER_NOT_CONNECTED`, `CONNECT_INSTALLATION_REQUIRED`, `SUBJECT_CONTEXT_REQUIRED`, `UNAUTHORIZED` (401), `FORBIDDEN` (403), `RATE_LIMITED` (403/429), `NOT_FOUND` (404), `VALIDATION_FAILED` (422). Unmapped statuses pass through unchanged; the original Octokit error stays reachable as `cause`.
 
-In the eve extension, a failing tool returns `{ error: { code, message, why, fix, link } }` to the model. With `generateText`/`streamText`, the framework forwards `error.message` (self-sufficient by design); use evlog's `parseError(error)` when you need the full structure. The catalog is exported as `githubToolsErrors`. See the [errors guide](https://github-tools.com/guide/errors).
+In the eve extension, a failing tool returns `{ error: { code, message, why, fix, link } }` to the model. With `generateText`/`streamText`, the framework forwards `error.message` (self-sufficient by design); use evlog's `parseError(error)` when you need the full structure. The catalog is exported as `githubToolsErrors`. See the [errors guide](https://github-tools.com/errors).
 
 ## Commit Attribution
 
@@ -403,7 +403,7 @@ const text = await agent.generate({ prompt: 'Summarize the open pull requests.' 
 
 Set `GITHUB_TOKEN` and Gateway authentication on the server. `generate()` returns a string and throws on approval interrupts; `stream()` returns TanStack's native event stream. Auto modes use TanStack `decide()` with Gateway Jev and the same approval and routing thresholds as the AI SDK integration. Supply `evaluation.adapter` to use another evaluator. Auto-preset continuations skip routing and expose `repo-explorer` plus pending GitHub tools.
 
-`createGithubTools()` returns an array for TanStack `chat({ tools })`. Direct tools with auto approval also need `createGithubApprovalMiddleware({ tools })` and the shared `githubToolApproval` interrupt from `@github-tools/sdk/tanstack/interrupts`. Register that definition on the client to handle human review. See the [TanStack AI guide](https://github-tools.com/frameworks/tanstack-ai) for tools, streaming, and approval continuation.
+`createGithubTools()` returns an array for TanStack `chat({ tools })`. Direct tools with auto approval also need `createGithubApprovalMiddleware({ tools })` and the shared `githubToolApproval` interrupt from `@github-tools/sdk/tanstack/interrupts`. Register that definition on the client to handle human review. See the [TanStack AI guide](https://github-tools.com/integrations/tanstack-ai) for tools, streaming, and approval continuation.
 
 ## eve
 

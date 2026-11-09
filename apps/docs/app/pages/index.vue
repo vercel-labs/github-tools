@@ -1,281 +1,384 @@
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
 import { joinURL } from 'ufo'
+import { PRESET_TOOLS, TOOL_GROUPS, WRITE_TOOLS } from '~/utils/figure-data/presets'
 
-const { seo } = useAppConfig()
 const site = useSiteConfig()
+const TOTAL = TOOL_GROUPS.reduce((sum, group) => sum + group.tools.length, 0)
+const REVIEW = PRESET_TOOLS['code-review'].length
 
-const title = 'Give any agent GitHub access'
-const description = seo.description
+const title = 'All of GitHub, for your AI agents'
+const description = `${TOTAL} typed GitHub operations across pull requests, issues, Actions, releases and security alerts. Presets scope each agent to its job, and every write waits for a person.`
 const ogImage = site.url ? joinURL(site.url, '/og.png') : undefined
 
 useSeo({ title, description, type: 'website', ogImage })
+useSeoMeta({ twitterTitle: title, twitterDescription: description, ogImageAlt: title, twitterImageAlt: title })
 
-const installCmd = 'pnpm add @github-tools/sdk'
+const installs = [
+  { value: 'agents', label: 'For agents', command: 'npx skills add https://github-tools.com' },
+  { value: 'humans', label: 'For humans', command: 'pnpm add @github-tools/sdk ai zod' }
+] as const
+const audience = ref<(typeof installs)[number]['value']>('agents')
+const command = computed(() => installs.find(install => install.value === audience.value)!.command)
 const { copy, copied } = useClipboard()
 
-const frameworks = [
+const comparisons = [
   {
-    title: 'AI SDK',
-    description: 'Already have an AI SDK app? Drop the tools into generateText, streamText, or a ToolLoopAgent.',
-    to: '/frameworks/ai-sdk',
-    icon: 'i-lucide-sparkles',
+    question: 'Tools the model reads on every request, for a code review',
+    raw: { value: TOTAL, label: `${TOTAL} tools` },
+    ours: { value: REVIEW, label: `${REVIEW} tools, the code-review preset` },
+    max: TOTAL,
+    to: '/presets',
+    link: 'Presets'
   },
   {
-    title: 'Vercel Workflow',
-    description: 'Need agents that survive restarts and long approvals? Every tool call is a durable, retryable step.',
-    to: '/frameworks/vercel-workflow',
-    icon: 'i-lucide-refresh-cw',
+    question: 'Tokens the model reads for one issue',
+    raw: { value: 1130, label: 'about 1,130 tokens' },
+    ours: { value: 90, label: 'about 90 tokens' },
+    max: 1130,
+    to: '/tools',
+    link: 'Tools'
   },
   {
-    title: 'Chat SDK',
-    description: 'Building a GitHub, Slack, or Discord bot? Durable multi-turn sessions in ~60 lines.',
-    to: '/frameworks/chat-sdk',
-    icon: 'i-lucide-message-square',
-  },
+    question: 'Writes that reach GitHub without a person',
+    raw: { value: WRITE_TOOLS.size, label: `all ${WRITE_TOOLS.size}` },
+    ours: { value: 0, label: 'none: each waits for your approval' },
+    max: WRITE_TOOLS.size,
+    to: '/approval',
+    link: 'Approval'
+  }
 ]
 
-const pillars = [
-  {
-    title: 'Agent-ready',
-    description: 'Mount as an eve extension in one file: a complete, durable GitHub agent in 3.',
-    to: '/frameworks/eve-extension',
-    icon: 'i-custom:eve',
-    featured: true,
-  },
-  {
-    title: 'Scoped by task',
-    description: 'Presets hand an agent exactly what a job needs (code review, issue triage, security audits, releases), nothing more.',
-    to: '/guide/presets',
-    icon: 'i-lucide-layers',
-  },
-  {
-    title: 'Safe by default',
-    description: 'Every write pauses for human approval unless you opt out. Approve once per session, or gate on a predicate.',
-    to: '/guide/approval-control',
-    icon: 'i-lucide-shield-check',
-  },
-  {
-    title: 'Durable by design',
-    description: 'Every tool call is a "use step" boundary, so agents survive restarts, retries, and long-running approvals.',
-    to: '/frameworks/vercel-workflow',
-    icon: 'i-lucide-refresh-cw',
-  },
-  {
-    title: 'Token-efficient',
-    description: 'Shaped outputs, truncated patches, paginated list tools, and toolpick integration keep token usage down.',
-    to: '/api/tools-catalog',
-    icon: 'i-lucide-gauge',
-  },
+const jobs = [
+  { title: 'Review pull requests', detail: 'Read the diff and the checks, then post a review once you approve it.', preset: 'code-review', to: '/guides/review-pull-requests' },
+  { title: 'Triage issues', detail: 'Label and comment on inactive issues, and ask before closing any.', preset: 'issue-triage', to: '/guides/triage-issues' },
+  { title: 'Fix failing CI', detail: 'Explain why a GitHub Actions run failed, and ask before rerunning it.', preset: 'ci-ops', to: '/guides/fix-failing-ci' },
+  { title: 'Write release notes', detail: 'Group what changed since the last release into a draft.', preset: 'release-manager', to: '/guides/release-notes' },
+  { title: 'Answer in a chat thread', detail: 'A bot that triages an issue when someone mentions it on GitHub or Slack.', preset: 'issue-triage', to: '/guides/chat-bot' },
+  { title: 'Split work across agents', detail: 'A manager hands each request to a subagent with its own preset.', preset: 'eve subagents', to: '/guides/multi-agent' }
 ]
 
-const comparisonRows = [
-  { label: 'Integration', githubTools: 'Native AI SDK tool() objects', mcp: 'MCP wire protocol via a separate process', cli: 'Shell-out from the agent', octokit: 'Hand-written per call' },
-  { label: 'Human approval', githubTools: 'Built in, on by default', mcp: 'Host-dependent, inconsistent', cli: 'None', octokit: 'You build it' },
-  { label: 'Durable / retryable', githubTools: 'Every call is a "use step"', mcp: 'No', cli: 'No', octokit: 'No' },
-  { label: 'Scoped by task', githubTools: 'Presets (7 built-in)', mcp: 'Full server surface, or manual filtering', cli: 'Full CLI surface', octokit: 'You build it' },
-  { label: 'Token-efficient output', githubTools: 'Shaped and truncated by design', mcp: 'Raw API responses', cli: 'Raw text, needs parsing', octokit: 'Raw API responses' },
-  { label: 'Native eve / Workflow / Chat SDK', githubTools: 'Yes', mcp: 'No', cli: 'No', octokit: 'No' },
-]
-
-const integrationStack = [
-  { label: 'TypeScript', icon: 'i-simple-icons-typescript' },
-  { label: 'Node.js', icon: 'i-simple-icons-nodedotjs' },
-  { label: 'Bun', icon: 'i-simple-icons-bun' },
-]
-
-const eveFiles = [
+type Token = [text: string, kind?: 'kw' | 'str' | 'fn' | 'cm' | 'pr']
+const snippets: { value: string, label: string, file: string, lines: Token[][] }[] = [
   {
-    name: 'instructions.md',
-    code: 'You are a GitHub code-review assistant.',
+    value: 'ai-sdk',
+    label: 'AI SDK',
+    file: 'agent.ts',
+    lines: [
+      [['import', 'kw'], [' { createGithubAgent } '], ['from', 'kw'], [' '], ['\'@github-tools/sdk\'', 'str']],
+      [],
+      [['const', 'kw'], [' agent = '], ['createGithubAgent', 'fn'], ['({']],
+      [['  model', 'pr'], [': '], ['\'anthropic/claude-opus-5.5\'', 'str'], [',']],
+      [['  preset', 'pr'], [': '], ['\'code-review\'', 'str'], [', '], [`// ${REVIEW} tools, not ${TOTAL}`, 'cm']],
+      [['  requireApproval', 'pr'], [': '], ['true', 'kw'], [', '], ['// every write waits for you', 'cm']],
+      [['})']]
+    ]
   },
   {
-    name: 'agent.ts',
-    code: `import { defineAgent } from 'eve'
-
-export default defineAgent({
-  model: 'anthropic/claude-opus-5.5',
-})`,
-  },
-  {
-    name: 'extensions/github.ts',
-    code: `import githubExtension from '@github-tools/eve-extension'
-
-export default githubExtension({
-  preset: 'maintainer',
-})`,
-  },
+    value: 'eve',
+    label: 'eve',
+    file: 'agent/extensions/github.ts',
+    lines: [
+      [['import', 'kw'], [' githubExtension '], ['from', 'kw'], [' '], ['\'@github-tools/eve-extension\'', 'str']],
+      [],
+      [['export default', 'kw'], [' '], ['githubExtension', 'fn'], ['({']],
+      [['  preset', 'pr'], [': '], ['\'code-review\'', 'str'], [',']],
+      [['  requireApproval', 'pr'], [': { '], ['addPullRequestComment', 'pr'], [': '], ['\'once\'', 'str'], [' },']],
+      [['})']]
+    ]
+  }
 ]
-const activeEveFile = ref(0)
+const snippet = ref(snippets[0]!.value)
+
+const integrations = [
+  { title: 'eve', description: 'Mount the tools in an eve agent from one file.', to: '/integrations/eve', icon: 'i-custom:eve' },
+  { title: 'AI SDK', description: 'generateText, streamText and a reusable agent.', to: '/integrations/ai-sdk', icon: 'i-custom:ai' },
+  { title: 'TanStack AI', description: 'Native server tools and approval interrupts.', to: '/integrations/tanstack-ai', icon: 'i-nucleo-cube' },
+  { title: 'Vercel Workflow', description: 'Runs that resume after a crash and wait for approval.', to: '/integrations/workflow', icon: 'i-simple-icons-vercel' },
+  { title: 'Chat SDK', description: 'A bot that answers mentions on GitHub or Slack.', to: '/integrations/chat-sdk', icon: 'i-nucleo-chat-bubble' }
+]
 </script>
 
 <template>
   <NuxtLayout name="default">
-    <UContainer class="py-6 sm:py-8 [--ui-container:72rem]">
-      <section class="min-w-0 max-w-full space-y-16 pb-16 pt-10 sm:pt-14">
-        <header class="space-y-6">
-          <h1 class="max-w-3xl text-4xl font-light tracking-tighter text-highlighted text-balance sm:text-5xl/[1.15]">
-            Give any agent GitHub access
+    <UContainer>
+      <section class="grid gap-12 pt-16 pb-20 sm:pt-24 lg:grid-cols-12 lg:items-center lg:gap-10">
+        <div class="min-w-0 lg:col-span-5">
+          <h1 class="text-[2.5rem]/12 font-[450] tracking-[-0.04em] text-balance text-highlighted sm:text-5xl/[56px]">
+            All of GitHub, for your AI agents
           </h1>
-          <p class="max-w-2xl text-lg/8 text-toned">
-            A typed tool layer for GitHub AI agents, with presets, human approval, and durable execution. Works with eve, the AI SDK, Vercel Workflow, and Chat SDK.
+          <p
+            class="mt-5 max-w-[52ch] text-lg/7 text-toned"
+          >
+            {{ TOTAL }} typed operations across pull requests, issues, Actions, releases and security alerts. Presets scope each agent to its job, and every write waits for a person.
           </p>
-          <div class="flex flex-wrap items-center gap-3">
+          <div
+            class="mt-8 flex flex-wrap items-center gap-3"
+          >
             <UButton
-              to="/frameworks/eve-extension"
+              to="/start/quick-start"
+              label="Quick start"
               color="neutral"
-              variant="solid"
-              size="md"
-            >
-              Build a GitHub agent
-            </UButton>
+              size="lg"
+            />
             <UButton
-              to="/getting-started/quick-start"
+              to="/docs"
+              label="Read the docs"
               color="neutral"
               variant="outline"
-              size="md"
-            >
-              Quick Start
-            </UButton>
-          </div>
-        </header>
-
-        <div class="vercel-command-bar max-w-xl">
-          <span class="select-all truncate">{{ installCmd }}</span>
-          <UButton
-            :icon="copied ? 'i-lucide-check' : 'i-lucide-copy'"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            square
-            class="ms-auto shrink-0 text-highlighted"
-            aria-label="Copy install command"
-            @click="copy(installCmd)"
-          />
-        </div>
-
-        <section class="space-y-4">
-          <p class="vercel-section-label">
-            Pick your path
-          </p>
-          <div class="grid min-w-0 gap-4 lg:grid-cols-2">
-          <div class="flex min-w-0 flex-col overflow-hidden rounded-xl border border-default bg-elevated">
-            <div class="border-b border-default px-4 py-3.5">
-              <p class="text-sm/6 text-toned">
-                <span class="font-semibold text-highlighted">Build a standalone agent in 3 files.</span>
-                With the eve extension, one file registers every tool your agent needs, durable approval included.
-              </p>
-            </div>
-            <div class="flex items-center gap-1 overflow-x-auto border-b border-default px-2 pt-2">
-              <button
-                v-for="(file, index) in eveFiles"
-                :key="file.name"
-                type="button"
-                class="shrink-0 rounded-t-md border-b-2 px-3 py-2 font-mono text-xs transition"
-                :class="index === activeEveFile ? 'border-highlighted text-highlighted' : 'border-transparent text-muted hover:text-toned'"
-                @click="activeEveFile = index"
-              >
-                {{ file.name }}
-              </button>
-            </div>
-            <pre class="min-h-32 min-w-0 flex-1 overflow-x-auto whitespace-pre px-4 py-4 font-mono text-xs leading-relaxed text-toned sm:text-sm"><code>{{ eveFiles[activeEveFile]!.code }}</code></pre>
-            <div class="flex items-center justify-end border-t border-default px-4 py-3.5">
-              <UButton
-                to="/frameworks/eve-extension"
-                variant="link"
-                color="neutral"
-                size="sm"
-                trailing-icon="i-lucide-arrow-right"
-                class="shrink-0 px-0 text-highlighted"
-              >
-                Guide
-              </UButton>
-            </div>
-          </div>
-            <div class="grid min-w-0 gap-4">
-              <NuxtLink
-                v-for="framework in frameworks"
-                :key="framework.title"
-                :to="framework.to"
-                class="vercel-card group flex min-h-28 flex-col gap-3"
-              >
-                <div class="flex items-center gap-2.5">
-                  <UIcon :name="framework.icon" class="size-4.5 shrink-0 text-toned transition group-hover:text-highlighted" />
-                  <p class="text-base font-semibold text-highlighted">{{ framework.title }}</p>
-                </div>
-                <p class="text-sm/6 text-toned">{{ framework.description }}</p>
-              </NuxtLink>
-            </div>
-          </div>
-          <div class="flex flex-wrap items-center gap-2 pt-2">
-            <span class="text-xs text-muted">Works in any TypeScript app:</span>
-            <UBadge
-              v-for="target in integrationStack"
-              :key="target.label"
-              color="neutral"
-              variant="outline"
-              size="md"
-              :icon="target.icon"
-              :label="target.label"
+              size="lg"
             />
           </div>
-        </section>
 
-        <section class="space-y-4">
-          <p class="vercel-section-label">
-            Why github-tools
-          </p>
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <NuxtLink
-              v-for="item in pillars"
-              :key="item.title"
-              :to="item.to"
-              class="vercel-card group flex flex-col gap-3"
-              :class="item.featured ? 'lg:row-span-2 min-h-64' : 'min-h-36'"
+          <div
+            class="mt-6 max-w-md overflow-hidden rounded-lg border border-default"
+          >
+            <div
+              role="tablist"
+              aria-label="Install"
+              class="flex border-b border-default px-1.5"
             >
-              <div class="flex items-center gap-2.5">
-                <UIcon :name="item.icon" class="size-5 shrink-0 text-toned transition group-hover:text-highlighted" />
-                <p class="text-lg font-semibold text-highlighted">{{ item.title }}</p>
-              </div>
-              <p class="text-sm/6 text-toned">{{ item.description }}</p>
-            </NuxtLink>
+              <button
+                v-for="install in installs"
+                :key="install.value"
+                type="button"
+                role="tab"
+                :aria-selected="audience === install.value"
+                class="-mb-px border-b px-2.5 py-2 text-[13px] transition-colors duration-150"
+                :class="audience === install.value ? 'border-(--ui-text-highlighted) text-highlighted' : 'border-transparent text-muted hover:text-highlighted'"
+                @click="audience = install.value"
+              >
+                {{ install.label }}
+              </button>
+            </div>
+            <div class="flex items-center gap-2 bg-muted py-1.5 ps-3.5 pe-1.5">
+              <span class="text-dimmed select-none">$</span>
+              <code class="min-w-0 flex-1 truncate font-mono text-[13px] text-highlighted select-all">{{ command }}</code>
+              <UButton
+                :icon="copied ? 'i-lucide-check' : 'i-lucide-copy'"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                square
+                aria-label="Copy install command"
+                @click="copy(command)"
+              />
+            </div>
           </div>
-        </section>
+        </div>
 
-        <section class="space-y-4">
-          <p class="vercel-section-label">
-            github-tools vs the alternatives
+        <div
+          class="min-w-0 lg:col-span-7"
+        >
+          <LandingScene />
+        </div>
+      </section>
+
+      <section class="border-t border-default py-16">
+        <h2 class="max-w-[24ch] text-[2rem]/10 font-[450] tracking-[-0.035em] text-balance text-highlighted">
+          Less to read, nothing written behind your back
+        </h2>
+        <p class="mt-4 max-w-[60ch] text-base/6 text-toned">
+          Handed the raw GitHub API, a model reads every operation and every field GitHub returns, and its writes go straight through. Here is the same agent going through GitHub tools.
+        </p>
+        <div class="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted">
+          <span class="inline-flex items-center gap-2"><span class="h-2 w-4 rounded-full bg-(--d-line-strong)" />Raw GitHub API</span>
+          <span class="inline-flex items-center gap-2"><span class="h-2 w-4 rounded-full bg-(--d-signal)" />GitHub tools</span>
+        </div>
+        <ul class="mt-6 divide-y divide-default border-t border-default">
+          <li
+            v-for="row in comparisons"
+            :key="row.question"
+            class="grid gap-x-10 gap-y-4 py-6 lg:grid-cols-12"
+          >
+            <div class="lg:col-span-4">
+              <p class="text-base/6 text-highlighted">
+                {{ row.question }}
+              </p>
+              <NuxtLink
+                :to="row.to"
+                class="group mt-2 inline-flex items-center gap-1 text-sm text-muted hover:text-highlighted"
+              >
+                {{ row.link }}
+                <UIcon
+                  name="i-lucide-arrow-right"
+                  class="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                />
+              </NuxtLink>
+            </div>
+            <div class="flex flex-col gap-3 lg:col-span-8">
+              <div class="grid grid-cols-[minmax(0,1fr)] gap-1.5">
+                <span class="h-2.5 w-full rounded-full bg-(--d-raised-strong)">
+                  <span
+                    class="block h-full rounded-full bg-(--d-line-strong)"
+                    :style="{ width: `${(row.raw.value / row.max) * 100}%` }"
+                  />
+                </span>
+                <span class="text-[13px] text-muted tabular-nums">Raw API: {{ row.raw.label }}</span>
+              </div>
+              <div class="grid grid-cols-[minmax(0,1fr)] gap-1.5">
+                <span class="h-2.5 w-full rounded-full bg-(--d-raised-strong)">
+                  <span
+                    class="block h-full min-w-0 rounded-full bg-(--d-signal)"
+                    :style="{ width: `${(row.ours.value / row.max) * 100}%` }"
+                  />
+                </span>
+                <span class="text-[13px] text-highlighted tabular-nums">GitHub tools: {{ row.ours.label }}</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="border-t border-default py-16">
+        <h2 class="text-2xl/8 font-[450] tracking-[-0.025em] text-highlighted">
+          Built for the jobs agents do on GitHub
+        </h2>
+        <p class="mt-3 max-w-[60ch] text-base/6 text-toned">
+          Each guide pairs a preset with an integration and the code to run it.
+        </p>
+        <ul class="mt-8 grid gap-px bg-(--ui-border) p-px sm:grid-cols-2 lg:grid-cols-3">
+          <li
+            v-for="job in jobs"
+            :key="job.to"
+            class="bg-default"
+          >
+            <NuxtLink
+              :to="job.to"
+              class="group flex h-full flex-col gap-2 p-5 transition-colors hover:bg-muted"
+            >
+              <span class="flex items-center justify-between gap-3">
+                <span class="text-base/6 font-medium text-highlighted">{{ job.title }}</span>
+                <UIcon
+                  name="i-lucide-arrow-right"
+                  class="size-4 shrink-0 text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-highlighted"
+                />
+              </span>
+              <span class="text-sm/5 text-toned">{{ job.detail }}</span>
+              <span class="mt-auto pt-2 font-mono text-[12px] text-muted">{{ job.preset }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
+      </section>
+
+      <section class="grid gap-10 border-t border-default py-16 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <h2 class="text-2xl/8 font-[450] tracking-[-0.025em] text-highlighted">
+            Narrow by default
+          </h2>
+          <p class="mt-3 max-w-[52ch] text-base/6 text-toned">
+            Pick the preset for the job, and keep approval on. The model then sees only that job's tools, and nothing it writes reaches GitHub until you say yes.
           </p>
-          <p class="max-w-2xl text-sm/6 text-toned">
-            The GitHub MCP server, the <code class="rounded bg-accented px-1 py-0.5 font-mono text-highlighted">gh</code> CLI, and raw Octokit calls all reach the GitHub API, but none of them were built as an agent's tool layer.
-          </p>
-          <div class="overflow-x-auto rounded-xl border border-default">
-            <table class="w-full min-w-180 border-collapse text-left text-sm">
-              <thead>
-                <tr class="border-b border-default bg-muted">
-                  <th class="px-4 py-3 font-medium text-muted" />
-                  <th class="px-4 py-3 font-semibold text-highlighted">github-tools</th>
-                  <th class="px-4 py-3 font-medium text-toned">GitHub MCP server</th>
-                  <th class="px-4 py-3 font-medium text-toned">gh CLI</th>
-                  <th class="px-4 py-3 font-medium text-toned">Raw Octokit</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="row in comparisonRows"
-                  :key="row.label"
-                  class="border-b border-default last:border-b-0"
-                >
-                  <td class="px-4 py-3 font-medium text-highlighted">{{ row.label }}</td>
-                  <td class="px-4 py-3 text-toned">{{ row.githubTools }}</td>
-                  <td class="px-4 py-3 text-muted">{{ row.mcp }}</td>
-                  <td class="px-4 py-3 text-muted">{{ row.cli }}</td>
-                  <td class="px-4 py-3 text-muted">{{ row.octokit }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <UButton
+            to="/start/quick-start"
+            label="Quick start"
+            trailing-icon="i-lucide-arrow-right"
+            color="neutral"
+            variant="link"
+            class="mt-4 px-0"
+          />
+        </div>
+        <div class="min-w-0 overflow-hidden rounded-lg border border-default bg-muted lg:col-span-7">
+          <div class="flex items-center justify-between gap-3 border-b border-default ps-1.5 pe-3.5">
+            <div
+              role="tablist"
+              aria-label="Integration"
+              class="flex"
+            >
+              <button
+                v-for="entry in snippets"
+                :key="entry.value"
+                type="button"
+                role="tab"
+                :aria-selected="snippet === entry.value"
+                class="-mb-px border-b px-2.5 py-2.5 text-[13px] transition-colors duration-150"
+                :class="snippet === entry.value ? 'border-(--ui-text-highlighted) text-highlighted' : 'border-transparent text-muted hover:text-highlighted'"
+                @click="snippet = entry.value"
+              >
+                {{ entry.label }}
+              </button>
+            </div>
+            <span class="truncate font-mono text-[12px] text-muted">{{ snippets.find(entry => entry.value === snippet)!.file }}</span>
           </div>
-        </section>
+          <div class="d-stack">
+            <pre
+              v-for="entry in snippets"
+              :key="entry.value"
+              :aria-hidden="snippet !== entry.value"
+              class="overflow-x-auto p-4 font-mono text-[13px]/6 text-highlighted"
+              :class="snippet === entry.value ? '' : 'invisible'"
+            ><code><span
+              v-for="(line, index) in entry.lines"
+              :key="index"
+              class="block min-h-6"
+            ><span
+              v-for="(token, tokenIndex) in line"
+              :key="tokenIndex"
+              :class="token[1] ? `code-${token[1]}` : ''"
+            >{{ token[0] }}</span></span></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="border-t border-default py-16">
+        <div class="flex flex-wrap items-baseline justify-between gap-4">
+          <h2 class="text-2xl/8 font-[450] tracking-[-0.025em] text-highlighted">
+            Works where your agent runs
+          </h2>
+          <NuxtLink
+            to="/integrations"
+            class="text-sm text-toned hover:text-highlighted"
+          >
+            Compare integrations
+          </NuxtLink>
+        </div>
+        <ul class="mt-8 grid gap-px bg-(--ui-border) p-px sm:grid-cols-2 lg:grid-cols-5">
+          <li
+            v-for="integration in integrations"
+            :key="integration.title"
+            class="bg-default"
+          >
+            <NuxtLink
+              :to="integration.to"
+              class="flex h-full flex-col gap-3 p-5 transition-colors hover:bg-muted"
+            >
+              <UIcon
+                :name="integration.icon"
+                class="size-5 text-highlighted"
+              />
+              <span class="text-base/6 font-medium text-highlighted">{{ integration.title }}</span>
+              <span class="text-sm/5 text-toned">{{ integration.description }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
+      </section>
+
+      <section class="grid gap-10 border-t border-default py-16 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <h2 class="text-2xl/8 font-[450] tracking-[-0.025em] text-highlighted">
+            Already using something else?
+          </h2>
+          <p class="mt-3 max-w-[52ch] text-base/6 text-toned">
+            How GitHub tools differs from the GitHub MCP server, Octokit and the gh CLI, and when to use each.
+          </p>
+        </div>
+        <ul class="divide-y divide-default border-y border-default lg:col-span-7">
+          <li
+            v-for="link in [{ to: '/compare/github-mcp-server', label: 'GitHub tools and the GitHub MCP server' }, { to: '/compare/octokit-and-gh-cli', label: 'GitHub tools, Octokit and the gh CLI' }]"
+            :key="link.to"
+          >
+            <NuxtLink
+              :to="link.to"
+              class="group flex items-center justify-between py-3.5 text-base/6 text-highlighted"
+            >
+              {{ link.label }}
+              <UIcon
+                name="i-lucide-arrow-right"
+                class="size-4 text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-highlighted"
+              />
+            </NuxtLink>
+          </li>
+        </ul>
       </section>
     </UContainer>
   </NuxtLayout>

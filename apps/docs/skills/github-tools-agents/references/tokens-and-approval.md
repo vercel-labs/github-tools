@@ -18,9 +18,11 @@ The docs site lists each tool and whether it writes:
 - **Contents**: files, branches, repos (read/write as needed).
 - **Issues** / **Pull requests**: read vs read-write for create/comment/close/merge.
 - **Actions**: workflow runs, dispatch, cancel, rerun.
+- **Commit statuses** (write): `createCommitStatus`, in `code-review`, `ci-ops` and `maintainer`. With Vercel Connect the preset's token requests `statuses:write`, so the GitHub App needs it, or leave the tool out with `exclude` (see `/auth#leave-a-tool-out-of-the-token`).
+- **Metadata**: enough for `getCollaboratorPermission`.
 - **Gists**: read vs write/delete.
 
-See `/api/tools-catalog` and `/guide/tokens-and-auth`.
+See `/reference/tools` and `/auth`.
 
 ## `requireApproval` (non-durable)
 
@@ -30,11 +32,17 @@ With `createGithubTools` / `createGithubAgent`:
 - `requireApproval: false` disables all write approvals.
 - Partial object: `{ mergePullRequest: true, createIssue: false, … }`.
 
-## Durable agent caveat
+## Guardrails and shadow mode
 
-`createDurableGithubAgent` **accepts** `requireApproval` but does **not** enforce interactive approval today. Treat durable paths as **high-trust** or avoid passing destructive tools until Workflow supports the same pattern.
+- `guardrails: { repositories: ['owner/*'], branches: ['agent/*'] }` limits where any call may act, whoever approves it. A blocked call fails with `github_tools.GUARDRAIL_BLOCKED` before reaching GitHub. Credentials in a call's input are blocked by default (`secrets: 'allow'` turns that off). With factories, wrap the token with `withGithubGuardrails`. See `/approval#guardrails`.
+- `dryRun: true` runs reads, and each write returns what it would have done instead of reaching GitHub. See `/approval#shadow-mode`.
+
+## Durable agent
+
+`createDurableGithubAgent` pauses the workflow on a write that needs approval until someone answers, and resumes after a restart. It takes `true`, `false` or per-tool booleans; `'auto'` isn't available inside a workflow. See `/integrations/workflow#approval`.
 
 ## Doc paths (site)
 
-- `/guide/approval-control`
-- `/guide/tokens-and-auth`
+- `/approval`
+- `/auth`
+- `/reference/tools`

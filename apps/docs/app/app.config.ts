@@ -89,20 +89,47 @@ export default defineAppConfig({
       primary: 'neutral',
       neutral: 'neutral',
     },
+    container: {
+      base: 'w-full max-w-(--ui-container) mx-auto px-6',
+    },
     header: {
       slots: {
-        root: 'bg-default border-b border-default/50 h-(--ui-header-height) sticky top-0 z-50',
+        root: 'bg-default/80 backdrop-blur border-b border-default h-(--ui-header-height) sticky top-0 z-50',
+        right: 'flex items-center justify-end lg:flex-1 gap-1 md:gap-1.5',
       },
     },
     pageHeader: {
       slots: {
         root: 'relative py-10 sm:py-12',
-        title: 'text-4xl sm:text-5xl font-normal tracking-tight text-pretty text-highlighted',
-        description: 'text-lg font-normal text-toned mt-4',
-        headline: 'text-sm text-muted font-normal mb-3',
+        title: 'text-[2rem]/10 sm:text-[2.5rem]/12 font-[450] tracking-[-0.035em] text-pretty text-highlighted',
+        description: 'text-lg/7 font-normal text-toned mt-3',
+        headline: 'hidden',
+      },
+    },
+    contentSearch: {
+      slots: {
+        modal: 'rounded-xl border border-default bg-default shadow-2xl ring-0',
+      },
+      variants: {
+        fullscreen: {
+          false: {
+            modal: 'sm:max-w-2xl h-full sm:h-[26rem]',
+          },
+        },
+      },
+    },
+    commandPalette: {
+      slots: {
+        input: '[&>input]:text-[15px]',
+        label: 'px-2.5 pt-2.5 pb-1 text-xs font-normal text-muted',
+        item: 'px-2.5 py-2 text-sm before:rounded-md',
+        itemLeadingIcon: 'size-4 text-muted group-data-highlighted:text-highlighted',
       },
     },
     contentToc: {
+      defaultVariants: {
+        highlightVariant: 'circuit',
+      },
       slots: {
         trigger: 'text-sm font-normal text-highlighted',
         link: 'text-sm font-normal py-1',
@@ -159,22 +186,22 @@ export default defineAppConfig({
     prose: {
       h1: {
         slots: {
-          base: 'font-normal',
+          base: 'text-[2rem]/10 font-[450] tracking-[-0.035em]',
         },
       },
       h2: {
         slots: {
-          base: 'font-normal',
+          base: 'text-2xl/8 font-[450] tracking-[-0.025em]',
         },
       },
       h3: {
         slots: {
-          base: 'font-normal',
+          base: 'text-xl/[26px] font-[450] tracking-[-0.015em]',
         },
       },
       h4: {
         slots: {
-          base: 'font-normal',
+          base: 'text-base/6 font-medium',
         },
       },
       a: {
@@ -184,7 +211,7 @@ export default defineAppConfig({
         base: 'font-normal',
       },
       th: {
-        base: 'font-normal',
+        base: 'text-[13px] font-medium text-highlighted',
       },
       prompt: {
         slots: {
@@ -194,9 +221,7 @@ export default defineAppConfig({
         },
       },
       p: {
-        slots: {
-          root: 'text-base/7 font-normal text-toned',
-        },
+        base: 'my-4 text-base/6 font-normal text-toned text-pretty',
       },
     },
     pageFeature: {
@@ -216,7 +241,7 @@ export default defineAppConfig({
     pageLinks: {
       slots: {
         root: 'flex flex-col gap-1.5',
-        title: 'text-[11px] font-medium uppercase tracking-wider text-muted',
+        title: 'text-[12px] font-medium uppercase tracking-wider text-muted',
         list: 'flex flex-col gap-px',
         link: 'w-full min-w-0 items-start text-left rounded-md px-2 py-1.5 transition-colors',
         linkLabel: 'min-w-0 flex-1 whitespace-normal text-left text-[13px]/5 text-pretty',
@@ -233,49 +258,43 @@ export default defineAppConfig({
   footer: {
     sections: [
       {
-        title: 'Getting Started',
+        title: 'Start',
         links: [
-          { label: 'Introduction', to: '/getting-started/introduction' },
-          { label: 'Installation', to: '/getting-started/installation' },
-          { label: 'Quick Start', to: '/getting-started/quick-start' },
-          { label: 'Agent Skills', to: '/getting-started/agent-skills' },
+          { label: 'Introduction', to: '/start/introduction' },
+          { label: 'Installation', to: '/start/installation' },
+          { label: 'Quick start', to: '/start/quick-start' },
+          { label: 'Agent skills', to: '/start/agent-skills' },
         ],
       },
       {
-        title: 'Frameworks',
+        title: 'Core',
         links: [
-          { label: 'eve extension', to: '/frameworks/eve-extension' },
-          { label: 'AI SDK', to: '/frameworks/ai-sdk' },
-          { label: 'Vercel Workflow', to: '/frameworks/vercel-workflow' },
-          { label: 'Chat SDK', to: '/frameworks/chat-sdk' },
+          { label: 'Tools', to: '/tools' },
+          { label: 'Presets', to: '/presets' },
+          { label: 'Approval', to: '/approval' },
+          { label: 'Auth', to: '/auth' },
+          { label: 'Context', to: '/context' },
+          { label: 'Commits', to: '/commits' },
+          { label: 'Errors', to: '/errors' },
         ],
       },
       {
-        title: 'Examples',
+        title: 'Integrations',
         links: [
-          { label: 'Overview', to: '/examples/overview' },
-          { label: 'eve Stale Issue Triager', to: '/examples/eve-stale-issue-triager' },
-          { label: 'Manager & Sub-agents', to: '/examples/manager-agent-with-subagents' },
-          { label: 'Recipes', to: '/examples/recipes' },
+          { label: 'eve', to: '/integrations/eve' },
+          { label: 'AI SDK', to: '/integrations/ai-sdk' },
+          { label: 'TanStack AI', to: '/integrations/tanstack-ai' },
+          { label: 'Vercel Workflow', to: '/integrations/workflow' },
+          { label: 'Chat SDK', to: '/integrations/chat-sdk' },
         ],
       },
       {
-        title: 'Guides',
+        title: 'Reference',
         links: [
-          { label: 'Presets', to: '/guide/presets' },
-          { label: 'Approval Control', to: '/guide/approval-control' },
-          { label: 'Commit Attribution', to: '/guide/commit-attribution' },
-          { label: 'Tokens & Auth', to: '/guide/tokens-and-auth' },
-          { label: 'Vercel Connect', to: '/guide/vercel-connect' },
-          { label: 'Working Context', to: '/guide/working-context' },
-          { label: 'Errors', to: '/guide/errors' },
-        ],
-      },
-      {
-        title: 'API',
-        links: [
-          { label: 'Tools Catalog', to: '/api/tools-catalog' },
-          { label: 'API Reference', to: '/api/reference' },
+          { label: 'API', to: '/reference/api' },
+          { label: 'Tool catalog', to: '/reference/tools' },
+          { label: 'Glossary', to: '/reference/glossary' },
+          { label: 'Guides', to: '/guides' },
         ],
       },
       {
@@ -283,7 +302,6 @@ export default defineAppConfig({
         links: [
           { label: 'GitHub', to: 'https://github.com/vercel-labs/github-tools' },
           { label: 'npm', to: 'https://www.npmjs.com/package/@github-tools/sdk' },
-          { label: 'Agent Skills', to: '/getting-started/agent-skills' },
         ],
       },
     ],

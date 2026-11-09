@@ -14,6 +14,8 @@ export default defineNuxtConfig({
       meta: [
         { name: 'twitter:card', content: 'summary_large_image' },
         { property: 'og:site_name', content: 'GitHub tools' },
+        { property: 'og:locale', content: 'en_US' },
+        { name: 'twitter:creator', content: '@hugorcd' },
       ],
     },
   },
@@ -36,6 +38,10 @@ export default defineNuxtConfig({
     name: 'GitHub tools',
     url: docsSiteUrl,
   },
+  // Docus lists content pages; the landing page and the /docs home are Vue pages.
+  sitemap: {
+    urls: ['/', '/docs'],
+  },
   llms: {
     domain: docsSiteUrl,
     title: 'GitHub tools',
@@ -45,28 +51,84 @@ export default defineNuxtConfig({
       description: siteDescription,
     },
   },
-  routeRules: {
-    '/guide/quick-start': { redirect: { to: '/getting-started/quick-start', statusCode: 301 } },
-    '/guide/eve-agents': { redirect: { to: '/frameworks/eve-extension', statusCode: 301 } },
-    '/guide/durable-workflows': { redirect: { to: '/frameworks/vercel-workflow', statusCode: 301 } },
-    '/guide/token-permissions': { redirect: { to: '/guide/tokens-and-auth', statusCode: 301 } },
-    '/guide/examples': { redirect: { to: '/examples/overview', statusCode: 301 } },
-    '/guide/jev-tyesafe-ai': { redirect: { to: '/guide/jev-typesafe-ai', statusCode: 301 } },
-    '/frameworks/eve': { redirect: { to: '/deprecated/eve', statusCode: 301 } },
-  },
+  // A redirect target without a fragment keeps the one the reader came with, so old anchors such as
+  // `/guide/vercel-connect#per-user-tokens` still land on the matching heading of the merged page.
+  routeRules: Object.fromEntries(Object.entries({
+    '/getting-started/introduction': '/start/introduction',
+    '/getting-started/installation': '/start/installation',
+    '/getting-started/quick-start': '/start/quick-start',
+    '/getting-started/agent-skills': '/start/agent-skills',
+    '/guide/quick-start': '/start/quick-start',
+    '/guide/presets': '/presets',
+    '/guide/approval-control': '/approval',
+    '/guide/jev-typesafe-ai': '/approval',
+    '/guide/jev-tyesafe-ai': '/approval',
+    '/guide/commit-attribution': '/commits',
+    '/guide/tokens-and-auth': '/auth',
+    '/guide/token-permissions': '/auth',
+    '/guide/vercel-connect': '/auth',
+    '/guide/working-context': '/context',
+    '/guide/errors': '/errors',
+    '/frameworks/eve-extension': '/integrations/eve',
+    '/guide/eve-agents': '/integrations/eve',
+    '/frameworks/ai-sdk': '/integrations/ai-sdk',
+    '/frameworks/tanstack-ai': '/integrations/tanstack-ai',
+    '/frameworks/vercel-workflow': '/integrations/workflow',
+    '/guide/durable-workflows': '/integrations/workflow',
+    '/frameworks/chat-sdk': '/integrations/chat-sdk',
+    '/frameworks/eve': '/reference/upgrade',
+    '/deprecated/eve': '/reference/upgrade',
+    '/examples': '/guides',
+    '/examples/overview': '/guides',
+    '/examples/recipes': '/guides',
+    '/guide/examples': '/guides',
+    '/examples/eve-stale-issue-triager': '/guides/triage-issues',
+    '/examples/ai-sdk-release-notes-generator': '/guides/release-notes',
+    '/examples/vercel-workflow-ci-failure-bot': '/guides/fix-failing-ci',
+    '/examples/chat-sdk-issue-triage-bot': '/guides/chat-bot',
+    '/examples/manager-agent-with-subagents': '/guides/multi-agent',
+    '/api/tools-catalog': '/reference/tools',
+    '/api/reference': '/reference/api',
+    '/getting-started': '/start/introduction',
+    '/guide': '/docs',
+    '/frameworks': '/integrations',
+    '/deprecated': '/reference/upgrade',
+  }).flatMap(([from, to]) => [
+    [from, { redirect: { to, statusCode: 301 } }],
+    // The markdown copies that llms.txt and agents link to moved with their pages.
+    [`/raw${from}.md`, { redirect: { to: `/raw${to === '/docs' ? '/index' : to}.md`, statusCode: 301 } }],
+  ])),
   content: {
     experimental: {
       sqliteConnector: 'native'
+    },
+    build: {
+      markdown: {
+        highlight: {
+          // Docus loads a short list; the docs also show TSX and TOML.
+          langs: ['bash', 'diff', 'json', 'js', 'ts', 'tsx', 'jsx', 'html', 'css', 'vue', 'shell', 'mdc', 'md', 'yaml', 'toml']
+        }
+      }
     }
   },
   mcp: {
     name: 'GitHub tools MCP',
   },
   icon: {
+    // Figures swap icons with their state; bundling them avoids a blank icon while one loads.
+    clientBundle: {
+      scan: true,
+      includeCustomCollections: true,
+      icons: ['lucide:alert-circle', 'lucide:arrow-right', 'lucide:check', 'lucide:check-circle', 'lucide:chevron-down', 'lucide:circle-check', 'lucide:circle-dot', 'lucide:circle-x', 'lucide:clock', 'lucide:copy', 'lucide:cpu', 'lucide:eye', 'lucide:file-code', 'lucide:git-merge', 'lucide:git-pull-request', 'lucide:hand', 'lucide:key-round', 'lucide:link', 'lucide:menu', 'lucide:message-square', 'lucide:pen', 'lucide:pencil', 'lucide:plug', 'lucide:rocket', 'lucide:server', 'lucide:tag', 'lucide:terminal', 'lucide:wrench', 'lucide:x', 'lucide:rotate-ccw', 'lucide:loader-circle', 'lucide:arrow-up', 'lucide:send-horizontal', 'simple-icons:github', 'simple-icons:slack', 'simple-icons:linear', 'simple-icons:vercel', 'lucide:chevron-right', 'lucide:shield', 'lucide:circle-dashed'],
+    },
     customCollections: [
       {
         prefix: 'custom',
         dir: './app/assets/icons',
+      },
+      {
+        prefix: 'nucleo',
+        dir: './app/assets/icons/nucleo',
       },
     ],
   },

@@ -14,7 +14,7 @@ describe('runGithubToolStep error payloads', () => {
         message: expect.stringContaining('GitHub token is required'),
         why: expect.any(String),
         fix: expect.any(String),
-        link: expect.stringContaining('tokens-and-auth'),
+        link: 'https://github-tools.com/auth',
       },
     })
   })

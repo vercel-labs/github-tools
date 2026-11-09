@@ -35,7 +35,7 @@ pnpm add workflow @ai-sdk/workflow
 
 - Start with a **preset** to limit reachable GitHub APIs (`code-review`, `issue-triage`, `discussion-moderator`, `pr-author`, …).
 - Use `maintainer` or omit preset when the app needs the full catalog.
-- Multi-role products: manager + sub-agents each with one preset (`/examples/manager-agent-with-subagents`).
+- Multi-role products: manager + sub-agents each with one preset (`/guides/multi-agent`).
 
 ## 5. Token permissions
 
@@ -51,7 +51,7 @@ Align the PAT with the preset:
 
 ## Doc paths (site)
 
-- `/getting-started/installation`
-- `/getting-started/quick-start`
-- `/guide/presets`
-- `/guide/tokens-and-auth`
+- `/start/installation`
+- `/start/quick-start`
+- `/presets`
+- `/auth`

@@ -35,7 +35,7 @@ pnpm workspaces + Turborepo, with published packages, apps, and examples:
 - **`examples/*`** — consumer integrations used for development, smoke tests (`examples/eve-smoke`), and canary checks.
 - **`tests/*`** — eval-only agents that are not usable examples: `tests/eve-act-as` covers the eve extension's `actAs` and `approvers`, and `tests/eve-auto` covers `preset: 'auto'` and `requireApproval: 'auto'`, both with stubbed Vercel Connect and GitHub.
 - **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
-- **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.getting-started/4.agent-skills.md`).
+- **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.start/4.agent-skills.md`).
 
 Turbo task dependencies: `lint`, `lint:fix`, `typecheck`, and `test` all depend on `^build` (upstream packages must build first).
 
@@ -158,7 +158,7 @@ PR titles and commits follow [Conventional Commits](https://conventionalcommits.
 
 ### Docs site: package manager tabs
 
-Any install or CLI command in `apps/docs/content/**/*.md` that a reader would run in their own project must show all four package managers, wrapped in a `:::code-group` (see `apps/docs/content/docs/1.getting-started/2.installation.md` for the canonical pattern):
+Any install or CLI command in `apps/docs/content/**/*.md` that a reader would run in their own project must show all four package managers, wrapped in a `:::code-group` (see `apps/docs/content/docs/1.start/2.installation.md` for the canonical pattern):
 
 ````md
 :::code-group
