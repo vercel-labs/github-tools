@@ -140,11 +140,11 @@ See `./references/eve-agents.md` and `/deprecated/eve`.
 | `issue-triage` | Issues via getIssueContext, comments, reactions, create/close, assignees |
 | `repo-explorer` | Read-only + search + discussions/gists/workflows reads |
 | `ci-ops` | Actions workflows, runs, job logs, trigger/cancel/rerun |
-| `security-audit` | Vulnerability scanning, risk reporting |
+| `security-audit` | Code scanning, Dependabot and secret scanning alerts, code and CI review, reporting findings as issues |
 | `release-manager` | Changelog generation, release cutting |
 | `discussion-moderator` | Discussions list/get/comment plus light issue context |
 | `notification-inbox` | User notification triage (needs Notifications PAT) |
-| `pr-author` | Branches (create/delete), file edits (`editFiles` changes text in place across any number of files in one commit and can open the PR in the same call; a later call on the same branch adds a commit to that PR), open/update PRs, respond to review threads |
+| `pr-author` | Branches (create/delete, `getBranchRules` for required checks and reviews), file edits (`editFiles` changes text in place across any number of files in one commit and can open the PR in the same call; a later call on the same branch adds a commit to that PR), open/update PRs, respond to review threads |
 | `maintainer` | All 91 tools |
 
 Array presets merge: `preset: ['code-review', 'issue-triage']`. Start with the smallest preset that fits; use `maintainer` when you need the full catalog. Multi-role: manager + sub-agents each with one preset.
