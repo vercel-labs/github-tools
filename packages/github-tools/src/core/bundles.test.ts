@@ -66,6 +66,30 @@ describe('releases by tag', () => {
     expect(result.release.tagName).toBe('v2.0.0')
     expect(result.previousRelease?.tagName).toBe('v1.0.0')
   })
+
+  it('finds the previous release on a later page', async () => {
+    const newer = Array.from({ length: 99 }, (_, i) => release(1000 - i, `v9.${i}.0`))
+    stubGithub((url) => {
+      if (url.pathname === '/repos/vercel/ai/releases/tags/v2.0.0') return json(release(20, 'v2.0.0'))
+      if (url.pathname === '/repos/vercel/ai/releases') {
+        return json(url.searchParams.get('page') === '1' ? [...newer, release(20, 'v2.0.0')] : [release(15, 'v1.5.0-draft', true), release(10, 'v1.0.0')])
+      }
+    })
+    const result = await getReleaseContextCore({ token: 'test', owner: 'vercel', repo: 'ai', tag: 'v2.0.0', includePrevious: true, includeCompare: false })
+    expect(result.previousRelease?.tagName).toBe('v1.0.0')
+  })
+
+  it('finds a release beyond the first page', async () => {
+    const newer = Array.from({ length: 100 }, (_, i) => release(1000 - i, `v9.${i}.0`))
+    stubGithub((url) => {
+      if (url.pathname === '/repos/vercel/ai/releases/tags/v2.0.0') return json(release(20, 'v2.0.0'))
+      if (url.pathname === '/repos/vercel/ai/releases') {
+        return json(url.searchParams.get('page') === '1' ? newer : [release(20, 'v2.0.0'), release(10, 'v1.0.0')])
+      }
+    })
+    const result = await getReleaseContextCore({ token: 'test', owner: 'vercel', repo: 'ai', tag: 'v2.0.0', includePrevious: true, includeCompare: false })
+    expect(result.previousRelease?.tagName).toBe('v1.0.0')
+  })
 })
 
 describe('getReleaseContext with previousTag', () => {

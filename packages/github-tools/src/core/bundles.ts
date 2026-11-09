@@ -196,6 +196,9 @@ export const getReleaseContextInputSchema = z.object({
 
 export const getReleaseContextDescription = 'Fetch a release (latest, by ID, or by tag) plus the release before it and the comparison between their tags in one call — prefer this when preparing or reviewing a release'
 
+// Stops looking for the previous release after 1,000 releases; pass `previousTag` for an older one.
+const MAX_RELEASE_PAGES = 10
+
 export async function getReleaseContextCore({
   token,
   owner,
@@ -226,17 +229,15 @@ export async function getReleaseContextCore({
     previous = await getReleaseCore({ token, owner, repo, tag: previousTag, detail })
   }
   else if (includePrevious || includeCompare) {
-    const releases = await listReleasesCore({
-      token,
-      owner,
-      repo,
-      perPage: 30,
-      maxPages: 1,
-      detail,
-    })
     // Releases come newest first, so the previous one is the next published release after this one.
-    const index = releases.items.findIndex(r => r.id === release.id)
-    previous = index === -1 ? undefined : releases.items.slice(index + 1).find(r => !r.draft)
+    let seen = false
+    for (let page = 1; page <= MAX_RELEASE_PAGES && previous === undefined; page++) {
+      const releases = await listReleasesCore({ token, owner, repo, perPage: 100, page, detail })
+      const index: number = seen ? -1 : releases.items.findIndex(r => r.id === release.id)
+      seen ||= index !== -1
+      if (seen) previous = releases.items.slice(index + 1).find(r => !r.draft)
+      if (!releases.hasMore) break
+    }
   }
 
   let comparison: Awaited<ReturnType<typeof compareCommitsCore>> | undefined
