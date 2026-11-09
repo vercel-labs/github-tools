@@ -15,15 +15,26 @@ export const detailSchema = z
 
 export type DetailLevel = 'summary' | 'full'
 
+// A rendered page hides both, but a model reads them, so they are a common place to hide instructions.
+const HTML_COMMENT = /<!--[\s\S]*?(?:-->|$)/g
+const INVISIBLE_CHARACTERS = /[\u200B-\u200D\u2060-\u2064\uFEFF\u202A-\u202E\u2066-\u2069\u{E0000}-\u{E007F}]/gu
+
+/** Remove HTML comments and invisible Unicode characters (zero-width, bidirectional controls, tags) from Markdown text. */
+export function stripHiddenContent(text: string): string {
+  return text.replace(HTML_COMMENT, '').replace(INVISIBLE_CHARACTERS, '')
+}
+
 /**
- * Truncate a body/notes string when `detail` is `summary`.
- * Returns the original value when `full`, null/undefined, or already short.
+ * Remove hidden content from a body/notes string, then truncate it when `detail` is `summary`.
+ * Returns null/undefined unchanged.
  */
 export function applyDetailBody(
   body: string | null | undefined,
   detail: DetailLevel,
   maxLength = SUMMARY_BODY_LENGTH,
 ): string | null | undefined {
-  if (detail === 'full' || body == null || body.length <= maxLength) return body
-  return `${body.slice(0, maxLength)}\n\n[truncated: ${body.length - maxLength} more characters]`
+  if (body == null) return body
+  const visible = stripHiddenContent(body)
+  if (detail === 'full' || visible.length <= maxLength) return visible
+  return `${visible.slice(0, maxLength)}\n\n[truncated: ${visible.length - maxLength} more characters]`
 }

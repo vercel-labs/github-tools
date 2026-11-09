@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { withOctokit } from '../client'
 import type { CommitIdentity } from '../types'
-import { applyDetailBody, detailSchema, type DetailLevel } from './detail'
+import { applyDetailBody, detailSchema, stripHiddenContent, type DetailLevel } from './detail'
 import { fetchAllPages, maxPagesSchema, pageSchema, pagedList } from './pagination'
 import { githubToolsErrors } from './errors'
 import { mergeGuardrailViolation } from './guardrails'
@@ -321,7 +321,7 @@ export async function listPullRequestReviewsCore({ token, owner, repo, pullNumbe
   return pagedList(data.map(review => ({
     id: review.id,
     state: review.state,
-    body: review.body,
+    body: stripHiddenContent(review.body),
     author: review.user?.login,
     url: review.html_url,
     submittedAt: review.submitted_at,
