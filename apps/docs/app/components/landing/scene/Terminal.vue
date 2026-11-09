@@ -88,7 +88,7 @@ function ask(question: string) {
   }
   later(at, () => {
     running.value = false
-    const next = ANSWERS.find(entry => !turns.value.some(done => done.answer === entry))
+    const next = ANSWERS.find(entry => !turns.value.some(done => done.answer?.question === entry.question))
     if (!answer.write) prompt.value = next?.question ?? ''
   })
 }
@@ -97,7 +97,7 @@ function decide(decision: 'y' | 'n') {
   if (!pending.value) return
   pending.value.decision = decision
   choice.value = 0
-  const next = ANSWERS.find(entry => !turns.value.some(done => done.answer === entry))
+  const next = ANSWERS.find(entry => !turns.value.some(done => done.answer?.question === entry.question))
   prompt.value = next?.question ?? ''
   nextTick(() => input.value?.focus({ preventScroll: true }))
 }
