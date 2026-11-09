@@ -1,5 +1,7 @@
 import { WorkflowAgent } from '@ai-sdk/workflow'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Output } from 'ai'
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
+import { z } from 'zod'
 import { createDurableGithubAgent } from './workflow'
 
 describe('createDurableGithubAgent().generate()', () => {
@@ -13,6 +15,16 @@ describe('createDurableGithubAgent().generate()', () => {
     const result = await createDurableGithubAgent({ model: 'test/model', token: 'test', preset: 'code-review' }).generate({ messages })
     expect(generate).toHaveBeenCalledWith({ messages })
     expect(result.text).toBe('Reviewed.')
+  })
+
+  it('types result.output from the output specification, and as text without one', async () => {
+    vi.spyOn(WorkflowAgent.prototype, 'generate').mockResolvedValue({ output: { title: 'Fix retries' } } as never)
+    const agent = createDurableGithubAgent({ model: 'test/model', token: 'test' })
+    const structured = await agent.generate({ prompt: 'Name the PR', output: Output.object({ schema: z.object({ title: z.string() }) }) })
+    expectTypeOf(structured.output).toEqualTypeOf<{ title: string }>()
+    expect(structured.output).toEqual({ title: 'Fix retries' })
+    const text = await agent.generate({ prompt: 'Review it' })
+    expectTypeOf(text.output).toEqualTypeOf<string>()
   })
 
   it('explains the required @ai-sdk/workflow version when WorkflowAgent has no generate()', () => {

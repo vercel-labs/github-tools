@@ -4,7 +4,7 @@ import type {
   WorkflowAgentStreamOptions,
   WorkflowAgentStreamResult,
 } from '@ai-sdk/workflow'
-import type { LanguageModel, ToolSet } from 'ai'
+import type { LanguageModel, Output, ToolSet } from 'ai'
 import { createGithubTools } from './index'
 import { resolveInstructions } from './agents'
 import { githubToolsErrors } from './core/errors'
@@ -65,7 +65,9 @@ export class DurableGithubAgent<TTools extends ToolSet = ToolSet> {
    * A write that needs approval ends the call with a `tool-approval-request` in
    * `responseMessages`; append the user's `tool-approval-response` and call `generate()` again.
    */
-  generate(options: DurableGithubAgentGenerateOptions<TTools>): Promise<DurableGithubAgentGenerateResult<TTools>> {
+  generate<OUTPUT = string>(
+    options: DurableGithubAgentGenerateOptions<TTools> & { output?: Output.Output<OUTPUT> },
+  ): Promise<Omit<DurableGithubAgentGenerateResult<TTools>, 'output'> & { readonly output: OUTPUT }> {
     if (typeof this.agent.generate !== 'function') throw githubToolsErrors.DURABLE_GENERATE_UNAVAILABLE()
     return this.agent.generate(options)
   }
