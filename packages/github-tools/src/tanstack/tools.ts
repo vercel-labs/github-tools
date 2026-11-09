@@ -81,7 +81,8 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     }
     const attribution = name === 'createOrUpdateFile' || name === 'editFiles'
       ? { author: options.author, committer: options.committer, coAuthors: options.coAuthors }
-      : name === 'mergePullRequest' || name === 'enablePullRequestAutoMerge' ? { coAuthors: options.coAuthors, branches: options.guardrails?.branches } : {}
+      : name === 'mergePullRequest' || name === 'enablePullRequestAutoMerge' ? { coAuthors: options.coAuthors, branches: options.guardrails?.branches }
+      : name === 'updatePullRequestBranch' ? { guardrails: options.guardrails } : {}
     return stripRateLimit(await core({ ...resolved, ...attribution, token: await resolveToken(githubTokenCall(name, resolved)) }))
   })
   if (mode === 'auto' && !options.dryRun) autoTools.set(built, { name, resolveInput })

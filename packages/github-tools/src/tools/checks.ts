@@ -6,9 +6,12 @@ import {
   getCombinedStatusInputSchema,
   getCombinedStatusDescription,
   getCombinedStatusCore,
+  createCommitStatusInputSchema,
+  createCommitStatusDescription,
+  createCommitStatusCore,
 } from '../core/checks'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
-import type { GithubTool } from '../types'
+import type { GithubTool, ToolOptions } from '../types'
 
 async function listCheckRunsStep(args: Parameters<typeof listCheckRunsCore>[0]) {
   "use step"
@@ -34,4 +37,18 @@ export const getCombinedStatus = (token: GithubTokenInput): GithubTool =>
     description: getCombinedStatusDescription,
     inputSchema: getCombinedStatusInputSchema,
     execute: async args => getCombinedStatusStep({ token: await resolveGithubToken(token, githubTokenCall('getCombinedStatus', args)), ...args }),
+  })
+
+async function createCommitStatusStep(args: Parameters<typeof createCommitStatusCore>[0]) {
+  "use step"
+  return createCommitStatusCore(args)
+}
+
+/** Report a result on a commit as a commit status. Requires approval by default. */
+export const createCommitStatus = (token: GithubTokenInput, { needsApproval = true }: ToolOptions = {}): GithubTool =>
+  tool({
+    description: createCommitStatusDescription,
+    needsApproval,
+    inputSchema: createCommitStatusInputSchema,
+    execute: async args => createCommitStatusStep({ token: await resolveGithubToken(token, githubTokenCall('createCommitStatus', args)), ...args }),
   })

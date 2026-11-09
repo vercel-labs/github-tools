@@ -67,6 +67,7 @@ describe('connectGithubToken', () => {
         'pull_requests:write',
         'checks:read',
         'statuses:read',
+        'statuses:write',
       ],
     }, undefined)
   })

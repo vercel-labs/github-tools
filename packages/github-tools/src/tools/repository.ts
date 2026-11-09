@@ -33,6 +33,9 @@ import {
   getBranchRulesInputSchema,
   getBranchRulesDescription,
   getBranchRulesCore,
+  getCollaboratorPermissionInputSchema,
+  getCollaboratorPermissionDescription,
+  getCollaboratorPermissionCore,
 } from '../core/repository'
 import { getFileContentToModelOutput, getRepositoryTreeToModelOutput } from '../core/model-output'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
@@ -194,4 +197,17 @@ export const getBranchRules = (token: GithubTokenInput): GithubTool =>
     description: getBranchRulesDescription,
     inputSchema: getBranchRulesInputSchema,
     execute: async args => getBranchRulesStep({ token: await resolveGithubToken(token, githubTokenCall('getBranchRules', args)), ...args }),
+  })
+
+async function getCollaboratorPermissionStep(args: Parameters<typeof getCollaboratorPermissionCore>[0]) {
+  "use step"
+  return getCollaboratorPermissionCore(args)
+}
+
+/** Get a user's permission and role on a repository. */
+export const getCollaboratorPermission = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: getCollaboratorPermissionDescription,
+    inputSchema: getCollaboratorPermissionInputSchema,
+    execute: async args => getCollaboratorPermissionStep({ token: await resolveGithubToken(token, githubTokenCall('getCollaboratorPermission', args)), ...args }),
   })

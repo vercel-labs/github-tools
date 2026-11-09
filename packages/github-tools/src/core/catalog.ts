@@ -35,16 +35,19 @@ export const DISCUSSIONS_WRITE = ['contents:read', 'metadata:read', 'discussions
 export const ACTIONS_READ = ['contents:read', 'metadata:read', 'actions:read'] as const
 export const ACTIONS_WRITE = ['contents:read', 'metadata:read', 'actions:read', 'actions:write'] as const
 export const CHECKS = ['contents:read', 'metadata:read', 'checks:read', 'statuses:read'] as const
+export const STATUSES_WRITE = ['contents:read', 'metadata:read', 'statuses:read', 'statuses:write'] as const
 export const CI_CONTEXT = ['contents:read', 'metadata:read', 'actions:read', 'checks:read', 'statuses:read'] as const
 export const ADMIN = ['metadata:read', 'administration:read', 'administration:write'] as const
 export const CODE_SCANNING_READ = ['contents:read', 'metadata:read', 'security_events:read'] as const
 export const DEPENDABOT_READ = ['contents:read', 'metadata:read', 'vulnerability_alerts:read'] as const
 export const SECRET_SCANNING_READ = ['contents:read', 'metadata:read', 'secret_scanning_alerts:read'] as const
-/** Merging writes the base branch, which GitHub checks as Contents (write). */
+/** Merging writes the base branch, and updating a pull request branch writes its head branch: GitHub checks both as Contents (write). */
 export const PR_MERGE = ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'pull_requests:write'] as const
 /** GitHub checks a fork as Administration (write) plus Contents (read). */
 export const FORK = ['contents:read', 'metadata:read', 'administration:read', 'administration:write'] as const
 export const SEARCH_REPOS = ['metadata:read'] as const
+/** A user's permission on a repository is repository metadata. */
+export const METADATA_READ = ['metadata:read'] as const
 export const SEARCH_ISSUES = ['metadata:read', 'issues:read', 'pull_requests:read'] as const
 export const UNSCOPED = [] as const
 
@@ -135,6 +138,12 @@ export const GITHUB_TOOL_CATALOG = {
     inputSchema: repository.getBranchRulesInputSchema,
     connectScopes: CONTENTS_READ,
   },
+  /** Get a user's permission and role on a repository, to check whether they may trigger the bot or approve an action. */
+  getCollaboratorPermission: {
+    description: repository.getCollaboratorPermissionDescription,
+    inputSchema: repository.getCollaboratorPermissionInputSchema,
+    connectScopes: METADATA_READ,
+  },
   /** Edit files in one commit on a new or existing branch, and optionally open a pull request. Requires approval by default. */
   editFiles: {
     description: repository.editFilesDescription,
@@ -188,6 +197,13 @@ export const GITHUB_TOOL_CATALOG = {
     inputSchema: pullRequests.updatePullRequestInputSchema,
     write: true,
     connectScopes: PR_WRITE,
+  },
+  /** Bring a pull request branch up to date by merging its base branch into it. Requires approval by default. */
+  updatePullRequestBranch: {
+    description: pullRequests.updatePullRequestBranchDescription,
+    inputSchema: pullRequests.updatePullRequestBranchInputSchema,
+    write: true,
+    connectScopes: PR_MERGE,
   },
   /** Add a comment to a pull request. Requires approval by default. */
   addPullRequestComment: {
@@ -380,6 +396,25 @@ export const GITHUB_TOOL_CATALOG = {
   removeAssignees: {
     description: issues.removeAssigneesDescription,
     inputSchema: issues.removeAssigneesInputSchema,
+    write: true,
+    connectScopes: ISSUES_WRITE,
+  },
+  /** List milestones in a GitHub repository with their due dates and issue counts. */
+  listMilestones: {
+    description: issues.listMilestonesDescription,
+    inputSchema: issues.listMilestonesInputSchema,
+    connectScopes: ISSUES_READ,
+  },
+  /** List the sub-issues of an issue. */
+  listSubIssues: {
+    description: issues.listSubIssuesDescription,
+    inputSchema: issues.listSubIssuesInputSchema,
+    connectScopes: ISSUES_READ,
+  },
+  /** Add an existing issue as a sub-issue of another issue. Requires approval by default. */
+  addSubIssue: {
+    description: issues.addSubIssueDescription,
+    inputSchema: issues.addSubIssueInputSchema,
     write: true,
     connectScopes: ISSUES_WRITE,
   },
@@ -591,6 +626,13 @@ export const GITHUB_TOOL_CATALOG = {
     description: checks.getCombinedStatusDescription,
     inputSchema: checks.getCombinedStatusInputSchema,
     connectScopes: CHECKS,
+  },
+  /** Report a result on a commit as a commit status. Works with personal access tokens and GitHub Apps. Requires approval by default. */
+  createCommitStatus: {
+    description: checks.createCommitStatusDescription,
+    inputSchema: checks.createCommitStatusInputSchema,
+    write: true,
+    connectScopes: STATUSES_WRITE,
   },
   /** Diagnose CI failures for a ref — combined status, failing checks, and failed workflow jobs in one call. */
   getCiFailureContext: {

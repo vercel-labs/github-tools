@@ -205,9 +205,10 @@ export interface GithubExtensionConfig {
   /**
    * Repositories and branches the tools may act on, checked before each call reaches GitHub.
    * `repositories` takes `owner/repo` or `owner/*`; `branches` takes names or patterns such as
-   * `agent/*` and covers commits, branch creation and deletion, and merges into a pull request's
-   * base. A call whose input contains what looks like a credential is blocked too, unless
-   * `secrets: 'allow'`. A blocked write is denied with the reason instead of asking anyone to approve it.
+   * `agent/*` and covers commits, branch creation and deletion, merges into a pull request's base,
+   * and updates of a pull request's branch. A call whose input contains what looks like a
+   * credential is blocked too, unless `secrets: 'allow'`. A blocked write is denied with the reason
+   * instead of asking anyone to approve it.
    */
   guardrails?: GithubGuardrails
   /**

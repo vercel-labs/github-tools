@@ -51,15 +51,24 @@ import {
   requestReviewersInputSchema,
   requestReviewersDescription,
   requestReviewersCore,
+  updatePullRequestBranchInputSchema,
+  updatePullRequestBranchDescription,
+  updatePullRequestBranchCore,
 } from '../core/pull-requests'
 import { listPullRequestFilesToModelOutput } from '../core/model-output'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
 import type { CommitIdentity, ToolOptions, GithubTool } from '../types'
+import type { GithubGuardrails } from '../core/guardrails'
 
 export type MergeToolOptions = ToolOptions & {
   coAuthors?: CommitIdentity[]
   /** Base branches the pull request may be merged into, as in `guardrails.branches`. */
   branches?: string[]
+}
+
+export type UpdateBranchToolOptions = ToolOptions & {
+  /** Repositories and branches the pull request's head must match, as in `guardrails`. */
+  guardrails?: Pick<GithubGuardrails, 'repositories' | 'branches'>
 }
 
 async function listPullRequestsStep(args: Parameters<typeof listPullRequestsCore>[0]) {
@@ -294,4 +303,18 @@ export const disablePullRequestAutoMerge = (token: GithubTokenInput, { needsAppr
     needsApproval,
     inputSchema: disablePullRequestAutoMergeInputSchema,
     execute: async args => disablePullRequestAutoMergeStep({ token: await resolveGithubToken(token, githubTokenCall('disablePullRequestAutoMerge', args)), ...args }),
+  })
+
+async function updatePullRequestBranchStep(args: Parameters<typeof updatePullRequestBranchCore>[0]) {
+  "use step"
+  return updatePullRequestBranchCore(args)
+}
+
+/** Merge a pull request's base branch into its head branch. Requires approval by default. */
+export const updatePullRequestBranch = (token: GithubTokenInput, { needsApproval = true, guardrails }: UpdateBranchToolOptions = {}): GithubTool =>
+  tool({
+    description: updatePullRequestBranchDescription,
+    needsApproval,
+    inputSchema: updatePullRequestBranchInputSchema,
+    execute: async args => updatePullRequestBranchStep({ token: await resolveGithubToken(token, githubTokenCall('updatePullRequestBranch', args)), ...args, guardrails }),
   })
