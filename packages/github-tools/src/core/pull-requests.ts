@@ -324,16 +324,18 @@ export const createPullRequestReviewInputSchema = z.object({
   event: z.enum(['APPROVE', 'REQUEST_CHANGES', 'COMMENT']).describe('Review action: approve, request changes, or comment'),
   comments: z.array(z.object({
     path: z.string().describe('File path relative to the repository root'),
-    body: z.string().describe('Inline comment text'),
-    line: z.number().optional().describe('Line number in the file to comment on'),
+    body: z.string().describe('Inline comment text. A ```suggestion block replaces the commented lines with its content when the author applies it'),
+    line: z.number().optional().describe('Line number in the file to comment on, or the last line of a multi-line comment'),
     side: z.enum(['LEFT', 'RIGHT']).optional().describe('Which side of the diff to comment on (LEFT = base, RIGHT = head)'),
+    startLine: z.number().optional().describe('First line of a multi-line comment, with `line` as the last. A suggestion then replaces every line in the range'),
+    startSide: z.enum(['LEFT', 'RIGHT']).optional().describe('Side of the diff `startLine` is on, when it differs from `side`'),
   })).optional().describe('Inline review comments on specific files and lines'),
 })
 
-export const createPullRequestReviewDescription = 'Submit a pull request review — approve, request changes, or comment with optional inline comments on specific lines'
+export const createPullRequestReviewDescription = 'Submit a pull request review — approve, request changes, or comment with optional inline comments on a line or a range of lines, including suggested changes the author can apply'
 
 /** Not idempotent — each call submits a new review. */
-export async function createPullRequestReviewCore({ token, owner, repo, pullNumber, body, event, comments }: { token: string, owner: string, repo: string, pullNumber: number, body?: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT', comments?: Array<{ path: string, body: string, line?: number, side?: 'LEFT' | 'RIGHT' }> }) {
+export async function createPullRequestReviewCore({ token, owner, repo, pullNumber, body, event, comments }: { token: string, owner: string, repo: string, pullNumber: number, body?: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT', comments?: Array<{ path: string, body: string, line?: number, side?: 'LEFT' | 'RIGHT', startLine?: number, startSide?: 'LEFT' | 'RIGHT' }> }) {
   return withOctokit(token, async (octokit) => {
   const { data } = await octokit.rest.pulls.createReview({
     owner,
@@ -341,7 +343,7 @@ export async function createPullRequestReviewCore({ token, owner, repo, pullNumb
     pull_number: pullNumber,
     body,
     event,
-    comments,
+    comments: comments?.map(({ startLine, startSide, ...comment }) => ({ ...comment, start_line: startLine, start_side: startSide })),
   })
   return {
     id: data.id,
