@@ -30,6 +30,9 @@ import {
   editFilesInputSchema,
   editFilesDescription,
   editFilesCore,
+  getBranchRulesInputSchema,
+  getBranchRulesDescription,
+  getBranchRulesCore,
 } from '../core/repository'
 import { getFileContentToModelOutput, getRepositoryTreeToModelOutput } from '../core/model-output'
 import { githubTokenCall, resolveGithubToken, type GithubTokenInput } from '../core/token'
@@ -178,4 +181,17 @@ export const editFiles = (
     needsApproval,
     inputSchema: editFilesInputSchema,
     execute: async args => editFilesStep({ token: await resolveGithubToken(token, githubTokenCall('editFiles', args)), author, committer, coAuthors, ...args }),
+  })
+
+async function getBranchRulesStep(args: Parameters<typeof getBranchRulesCore>[0]) {
+  "use step"
+  return getBranchRulesCore(args)
+}
+
+/** List the required checks, required reviews and other rules that protect a branch. */
+export const getBranchRules = (token: GithubTokenInput): GithubTool =>
+  tool({
+    description: getBranchRulesDescription,
+    inputSchema: getBranchRulesInputSchema,
+    execute: async args => getBranchRulesStep({ token: await resolveGithubToken(token, githubTokenCall('getBranchRules', args)), ...args }),
   })

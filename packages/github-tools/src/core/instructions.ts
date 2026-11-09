@@ -23,6 +23,7 @@ When reviewing a PR:
 - Check for bugs, logic errors, and edge cases; be constructive
 - Use createPullRequestReview for formal reviews when asked
 - Use listPullRequestReviewThreads (unresolved by default) to see open feedback; replyToReviewComment to answer in a thread and resolveReviewThread once it is addressed
+- Use getBranchRules on the base branch to tell which checks and reviews block the merge
 - Use updatePullRequest to change title, body, base branch, or draft status; addPullRequestComment / updatePullRequestComment / deletePullRequestComment to manage comments`,
 
   'issue-triage': `You are an issue triage assistant. Your job is to help manage and organize GitHub issues.
@@ -113,7 +114,8 @@ When maintaining repos:
 - Keep issues, PRs, and commits clear and well-structured
 - Use listNotifications to find what needs attention, then markNotificationRead once a thread is handled
 - Acknowledge a thread with addIssueReaction / addCommentReaction instead of a comment that adds nothing
-- Answer questions in discussions with addDiscussionComment`
+- Answer questions in discussions with addDiscussionComment
+- When a pull request is waiting on checks or reviews, enablePullRequestAutoMerge merges it once they pass; getBranchRules says what the base branch requires`
 }
 
 /**

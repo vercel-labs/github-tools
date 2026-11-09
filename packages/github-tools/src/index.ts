@@ -1,6 +1,6 @@
 import type { ToolSet } from 'ai'
-import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles } from './tools/repository'
-import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers } from './tools/pull-requests'
+import { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules } from './tools/repository'
+import { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge } from './tools/pull-requests'
 import { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
 import { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 import { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'
@@ -144,8 +144,11 @@ export function createGithubTools({
     createRepository: createRepository(resolveToken, approval('createRepository')),
     createOrUpdateFile: createOrUpdateFile(resolveToken, { ...approval('createOrUpdateFile'), author, committer, coAuthors }),
     editFiles: editFiles(resolveToken, { ...approval('editFiles'), author, committer, coAuthors }),
+    getBranchRules: getBranchRules(resolveToken),
     createPullRequest: createPullRequest(resolveToken, approval('createPullRequest')),
     mergePullRequest: mergePullRequest(resolveToken, { ...approval('mergePullRequest'), coAuthors }),
+    enablePullRequestAutoMerge: enablePullRequestAutoMerge(resolveToken, { ...approval('enablePullRequestAutoMerge'), coAuthors }),
+    disablePullRequestAutoMerge: disablePullRequestAutoMerge(resolveToken, approval('disablePullRequestAutoMerge')),
     updatePullRequest: updatePullRequest(resolveToken, approval('updatePullRequest')),
     addPullRequestComment: addPullRequestComment(resolveToken, approval('addPullRequestComment')),
     updatePullRequestComment: updatePullRequestComment(resolveToken, approval('updatePullRequestComment')),
@@ -249,8 +252,8 @@ export type GithubTools = AllGithubTools & ToolSet
 
 // Re-export individual tool factories for cherry-picking
 export { createOctokit } from './client'
-export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles } from './tools/repository'
-export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers } from './tools/pull-requests'
+export { getRepository, listBranches, getFileContent, getRepositoryTree, createBranch, deleteBranch, forkRepository, createRepository, createOrUpdateFile, editFiles, getBranchRules } from './tools/repository'
+export { listPullRequests, getPullRequest, createPullRequest, mergePullRequest, updatePullRequest, addPullRequestComment, updatePullRequestComment, deletePullRequestComment, listPullRequestFiles, listPullRequestReviews, listPullRequestReviewThreads, createPullRequestReview, replyToReviewComment, resolveReviewThread, requestReviewers, enablePullRequestAutoMerge, disablePullRequestAutoMerge } from './tools/pull-requests'
 export { listIssues, getIssue, listIssueComments, createIssue, addIssueComment, updateIssueComment, deleteIssueComment, closeIssue, updateIssue, listLabels, addLabels, removeLabel, createLabel, updateLabel, deleteLabel, addAssignees, removeAssignees } from './tools/issues'
 export { listIssueReactions, addIssueReaction, listCommentReactions, addCommentReaction } from './tools/reactions'
 export { listDiscussions, getDiscussion, addDiscussionComment } from './tools/discussions'

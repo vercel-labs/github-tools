@@ -42,6 +42,15 @@ export const createPullRequest = toolFactory('createPullRequest')
 /** Create the TanStack `mergePullRequest` server tool. */
 export const mergePullRequest = toolFactory('mergePullRequest')
 
+/** Create the TanStack `enablePullRequestAutoMerge` server tool. */
+export const enablePullRequestAutoMerge = toolFactory('enablePullRequestAutoMerge')
+
+/** Create the TanStack `disablePullRequestAutoMerge` server tool. */
+export const disablePullRequestAutoMerge = toolFactory('disablePullRequestAutoMerge')
+
+/** Create the TanStack `getBranchRules` server tool. */
+export const getBranchRules = toolFactory('getBranchRules')
+
 /** Create the TanStack `updatePullRequest` server tool. */
 export const updatePullRequest = toolFactory('updatePullRequest')
 

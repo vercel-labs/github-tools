@@ -617,3 +617,31 @@ async function commitFileChanges(octokit: Octokit, { owner, repo, branch, headSh
   }
   return commits
 }
+
+export const getBranchRulesInputSchema = z.object({
+  owner: z.string().describe('Repository owner'),
+  repo: z.string().describe('Repository name'),
+  branch: z.string().describe('Branch name, such as the base branch of a pull request'),
+})
+
+export const getBranchRulesDescription = 'List what protects a branch: required status checks, required reviews, and the other ruleset and branch-protection rules. Use it to explain why a pull request cannot merge yet'
+
+export async function getBranchRulesCore({ token, owner, repo, branch }: { token: string, owner: string, repo: string, branch: string }) {
+  return withOctokit(token, async (octokit) => {
+  const [{ data: rules }, { data: branchData }] = await Promise.all([
+    octokit.rest.repos.getBranchRules({ owner, repo, branch, per_page: 100 }),
+    octokit.rest.repos.getBranch({ owner, repo, branch }),
+  ])
+  return {
+    branch,
+    protected: branchData.protected,
+    // Classic branch protection; rulesets come back in `rules`.
+    requiredStatusChecks: branchData.protection?.required_status_checks?.contexts ?? [],
+    rules: rules.map(rule => ({
+      type: rule.type,
+      ...'parameters' in rule && rule.parameters ? { parameters: rule.parameters } : {},
+      ...rule.ruleset_source ? { source: rule.ruleset_source } : {},
+    })),
+  }
+  })
+}

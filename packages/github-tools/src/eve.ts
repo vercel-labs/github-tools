@@ -121,6 +121,13 @@ export const createOrUpdateFile = factory('createOrUpdateFile')
  */
 export const editFiles = factory('editFiles')
 /**
+ * List the required checks, required reviews and other rules that protect a branch.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const getBranchRules = factory('getBranchRules')
+/**
  * List pull requests for a GitHub repository.
  *
  * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
@@ -148,6 +155,20 @@ export const createPullRequest = factory('createPullRequest')
  * instead. See https://github-tools.com/frameworks/eve-extension.
  */
 export const mergePullRequest = factory('mergePullRequest')
+/**
+ * Merge a pull request once its required checks and reviews pass. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const enablePullRequestAutoMerge = factory('enablePullRequestAutoMerge')
+/**
+ * Cancel a pending auto-merge. Requires approval by default.
+ *
+ * @deprecated Cherry-picking eve tool factories directly is deprecated — mount `@github-tools/eve-extension`
+ * instead. See https://github-tools.com/frameworks/eve-extension.
+ */
+export const disablePullRequestAutoMerge = factory('disablePullRequestAutoMerge')
 /**
  * Add a comment to a pull request. Requires approval by default.
  *

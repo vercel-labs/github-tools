@@ -14,7 +14,7 @@ export const PRESET_TOOLS = {
    *
    * Tools: `getPullRequest`, `listPullRequests`, `listPullRequestFiles`, `listPullRequestReviews`,
    * `listPullRequestReviewThreads`, `getPullRequestContext`, `getCommit`, `getBlame`, `compareCommits`, `getRepository`,
-   * `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `listCheckRuns`, `getCombinedStatus`,
+   * `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `listCheckRuns`, `getCombinedStatus`,
    * `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`,
    * `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`.
    *
@@ -22,7 +22,7 @@ export const PRESET_TOOLS = {
    */
   'code-review': [
     'getPullRequest', 'listPullRequests', 'listPullRequestFiles', 'listPullRequestReviews', 'listPullRequestReviewThreads', 'getPullRequestContext', 'getCommit', 'getBlame', 'compareCommits',
-    ...CORE_READ_TOOLS, 'listBranches', 'listCheckRuns', 'getCombinedStatus',
+    ...CORE_READ_TOOLS, 'listBranches', 'getBranchRules', 'listCheckRuns', 'getCombinedStatus',
     'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'replyToReviewComment', 'resolveReviewThread', 'requestReviewers',
   ],
   /**
@@ -49,7 +49,7 @@ export const PRESET_TOOLS = {
   /**
    * **CI operations** — monitor and manage GitHub Actions workflows.
    *
-   * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getCommit`,
+   * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `getCommit`,
    * `getPullRequest`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `getWorkflowJobLogs`,
    * `listCheckRuns`, `getCombinedStatus`, `getCiFailureContext`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`.
    *
@@ -57,7 +57,7 @@ export const PRESET_TOOLS = {
    * Agent prompt: optimized for diagnosing CI failures and managing workflow runs.
    */
   'ci-ops': [
-    ...CORE_READ_TOOLS, 'listBranches',
+    ...CORE_READ_TOOLS, 'listBranches', 'getBranchRules',
     'getCommit', 'getPullRequest',
     'listWorkflows', 'listWorkflowRuns', 'getWorkflowRun', 'listWorkflowJobs', 'getWorkflowJobLogs', 'listCheckRuns', 'getCombinedStatus', 'getCiFailureContext',
     'triggerWorkflow', 'cancelWorkflowRun', 'rerunWorkflowRun',
@@ -148,7 +148,7 @@ export const PRESET_TOOLS = {
   /**
    * **PR author** — open pull requests without the full write surface.
    *
-   * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `createBranch`,
+   * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getBranchRules`, `createBranch`,
    * `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`,
    * `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`,
    * `getCommit`.
@@ -157,7 +157,7 @@ export const PRESET_TOOLS = {
    * Agent prompt: optimized for branching, editing files, and opening focused PRs.
    */
   'pr-author': [
-    ...CORE_READ_TOOLS, 'listBranches', 'createBranch', 'deleteBranch', 'createOrUpdateFile', 'editFiles',
+    ...CORE_READ_TOOLS, 'listBranches', 'getBranchRules', 'createBranch', 'deleteBranch', 'createOrUpdateFile', 'editFiles',
     'createPullRequest', 'updatePullRequest', 'listPullRequests', 'getPullRequest', 'listPullRequestFiles',
     'listPullRequestReviewThreads', 'replyToReviewComment', 'resolveReviewThread',
     'compareCommits', 'getCommit',
@@ -170,8 +170,8 @@ export const PRESET_TOOLS = {
    * Agent prompt: optimized for day-to-day repo maintenance with careful write operations.
    */
   'maintainer': [
-    'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree', 'createBranch', 'deleteBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile', 'editFiles',
-    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'listPullRequestReviewThreads', 'getPullRequestContext', 'createPullRequest', 'mergePullRequest', 'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'replyToReviewComment', 'resolveReviewThread', 'requestReviewers',
+    'getRepository', 'listBranches', 'getBranchRules', 'getFileContent', 'getRepositoryTree', 'createBranch', 'deleteBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile', 'editFiles',
+    'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'listPullRequestReviewThreads', 'getPullRequestContext', 'createPullRequest', 'mergePullRequest', 'enablePullRequestAutoMerge', 'disablePullRequestAutoMerge', 'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'replyToReviewComment', 'resolveReviewThread', 'requestReviewers',
     'listIssues', 'getIssue', 'getIssueContext', 'listIssueComments', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'listLabels', 'addLabels', 'removeLabel', 'createLabel', 'updateLabel', 'deleteLabel', 'addAssignees', 'removeAssignees',
     'listIssueReactions', 'addIssueReaction', 'listCommentReactions', 'addCommentReaction',
