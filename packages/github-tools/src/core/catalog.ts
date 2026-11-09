@@ -23,6 +23,8 @@ export const CONTENTS_READ = ['contents:read', 'metadata:read'] as const
 export const CONTENTS_WRITE = ['contents:read', 'contents:write', 'metadata:read'] as const
 export const PR_READ = ['contents:read', 'metadata:read', 'pull_requests:read'] as const
 export const PR_WRITE = ['contents:read', 'metadata:read', 'pull_requests:read', 'pull_requests:write'] as const
+/** `editFiles` commits files and can open the pull request. */
+export const CONTENTS_AND_PR_WRITE = ['contents:read', 'contents:write', 'metadata:read', 'pull_requests:read', 'pull_requests:write'] as const
 /** Read-only PR context (details, files, reviews) plus optional CI checks. */
 export const PR_CONTEXT = ['contents:read', 'metadata:read', 'pull_requests:read', 'checks:read', 'statuses:read'] as const
 export const ISSUES_READ = ['contents:read', 'metadata:read', 'issues:read'] as const
@@ -122,6 +124,13 @@ export const GITHUB_TOOL_CATALOG = {
     inputSchema: repository.createOrUpdateFileInputSchema,
     write: true,
     connectScopes: CONTENTS_WRITE,
+  },
+  /** Edit files in one commit on a new or existing branch, and optionally open a pull request. Requires approval by default. */
+  editFiles: {
+    description: repository.editFilesDescription,
+    inputSchema: repository.editFilesInputSchema,
+    write: true,
+    connectScopes: CONTENTS_AND_PR_WRITE,
   },
   /** List pull requests for a GitHub repository. */
   listPullRequests: {

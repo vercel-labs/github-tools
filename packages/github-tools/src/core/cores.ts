@@ -32,6 +32,7 @@ export const GITHUB_TOOL_CORES = {
   get forkRepository() { return repository.forkRepositoryCore },
   get createRepository() { return repository.createRepositoryCore },
   get createOrUpdateFile() { return repository.createOrUpdateFileCore },
+  get editFiles() { return repository.editFilesCore },
   get listPullRequests() { return pullRequests.listPullRequestsCore },
   get getPullRequest() { return pullRequests.getPullRequestCore },
   get createPullRequest() { return pullRequests.createPullRequestCore },

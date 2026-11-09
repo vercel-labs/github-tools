@@ -27,6 +27,9 @@ export const createRepository = toolFactory('createRepository')
 /** Create the TanStack `createOrUpdateFile` server tool. */
 export const createOrUpdateFile = toolFactory('createOrUpdateFile')
 
+/** Create the TanStack `editFiles` server tool. */
+export const editFiles = toolFactory('editFiles')
+
 /** Create the TanStack `listPullRequests` server tool. */
 export const listPullRequests = toolFactory('listPullRequests')
 

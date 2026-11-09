@@ -62,7 +62,7 @@ function buildTool<N extends GithubToolName>(name: N, token: GithubTokenInput | 
     needsApproval: mode !== false,
   }).server(async (input) => {
     const resolved = resolveInput(input)
-    const attribution = name === 'createOrUpdateFile'
+    const attribution = name === 'createOrUpdateFile' || name === 'editFiles'
       ? { author: options.author, committer: options.committer, coAuthors: options.coAuthors }
       : name === 'mergePullRequest' ? { coAuthors: options.coAuthors } : {}
     return stripRateLimit(await core({ ...resolved, ...attribution, token: await resolveToken(githubTokenCall(name, resolved)) }))

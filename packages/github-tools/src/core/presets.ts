@@ -149,7 +149,7 @@ export const PRESET_TOOLS = {
    * **PR author** — open pull requests without the full write surface.
    *
    * Tools: `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `createBranch`,
-   * `deleteBranch`, `createOrUpdateFile`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`,
+   * `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`,
    * `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`,
    * `getCommit`.
    *
@@ -157,7 +157,7 @@ export const PRESET_TOOLS = {
    * Agent prompt: optimized for branching, editing files, and opening focused PRs.
    */
   'pr-author': [
-    ...CORE_READ_TOOLS, 'listBranches', 'createBranch', 'deleteBranch', 'createOrUpdateFile',
+    ...CORE_READ_TOOLS, 'listBranches', 'createBranch', 'deleteBranch', 'createOrUpdateFile', 'editFiles',
     'createPullRequest', 'updatePullRequest', 'listPullRequests', 'getPullRequest', 'listPullRequestFiles',
     'listPullRequestReviewThreads', 'replyToReviewComment', 'resolveReviewThread',
     'compareCommits', 'getCommit',
@@ -170,7 +170,7 @@ export const PRESET_TOOLS = {
    * Agent prompt: optimized for day-to-day repo maintenance with careful write operations.
    */
   'maintainer': [
-    'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree', 'createBranch', 'deleteBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile',
+    'getRepository', 'listBranches', 'getFileContent', 'getRepositoryTree', 'createBranch', 'deleteBranch', 'forkRepository', 'createRepository', 'createOrUpdateFile', 'editFiles',
     'listPullRequests', 'getPullRequest', 'listPullRequestFiles', 'listPullRequestReviews', 'listPullRequestReviewThreads', 'getPullRequestContext', 'createPullRequest', 'mergePullRequest', 'updatePullRequest', 'addPullRequestComment', 'updatePullRequestComment', 'deletePullRequestComment', 'createPullRequestReview', 'replyToReviewComment', 'resolveReviewThread', 'requestReviewers',
     'listIssues', 'getIssue', 'getIssueContext', 'listIssueComments', 'createIssue', 'addIssueComment', 'updateIssueComment', 'deleteIssueComment', 'closeIssue', 'updateIssue',
     'listLabels', 'addLabels', 'removeLabel', 'createLabel', 'updateLabel', 'deleteLabel', 'addAssignees', 'removeAssignees',

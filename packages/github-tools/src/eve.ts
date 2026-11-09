@@ -113,6 +113,7 @@ export const createRepository = factory('createRepository')
  * instead. See https://github-tools.com/frameworks/eve-extension.
  */
 export const createOrUpdateFile = factory('createOrUpdateFile')
+export const editFiles = factory('editFiles')
 /**
  * List pull requests for a GitHub repository.
  *

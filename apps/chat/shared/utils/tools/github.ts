@@ -20,6 +20,7 @@ export const GITHUB_TOOL_META: Record<GithubToolName, GithubToolMeta> = {
   forkRepository: { title: 'Fork Repository', label: 'Repository forked', labelActive: 'Forking repository', icon: 'i-lucide-git-fork' },
   createRepository: { title: 'Create Repository', label: 'Repository created', labelActive: 'Creating repository', icon: 'i-lucide-plus' },
   createOrUpdateFile: { title: 'Create / Update File', label: 'File updated', labelActive: 'Updating file', icon: 'i-lucide-file-pen' },
+  editFiles: { title: 'Edit Files', label: 'Files edited', labelActive: 'Editing files', icon: 'i-lucide-file-diff' },
   listPullRequests: { title: 'List Pull Requests', label: 'Pull requests listed', labelActive: 'Listing pull requests', icon: 'i-lucide-git-pull-request' },
   getPullRequest: { title: 'Get Pull Request', label: 'Pull request fetched', labelActive: 'Fetching pull request', icon: 'i-lucide-git-pull-request' },
   createPullRequest: { title: 'Create Pull Request', label: 'Pull request created', labelActive: 'Creating pull request', icon: 'i-lucide-git-pull-request-arrow' },

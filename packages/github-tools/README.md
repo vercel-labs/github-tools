@@ -34,7 +34,7 @@ They all reach the GitHub API, but none of them were built as an agent's tool la
 | Production agents that must survive restarts and timeouts | [Durable Agents](#durable-agents-vercel-workflow-sdk) |
 | A GitHub, Slack, or Discord bot | [Chat SDK docs](https://github-tools.com/frameworks/chat-sdk) |
 
-84 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
+85 tools cover repositories, branches, pull requests, issues, reactions, discussions, notifications, commits, releases, checks and statuses, search, gists, and workflows. See the full [Tools Catalog](https://github-tools.com/api/tools-catalog). Write operations support granular approval control out of the box.
 
 ## Installation
 
@@ -111,8 +111,8 @@ createGithubTools({ token, preset: ['code-review', 'issue-triage'] })
 | `release-manager` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `getCommit`, `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext`, `createRelease`, `updateRelease`, `deleteRelease`, `listWorkflows`, `listWorkflowRuns`, `getWorkflowRun`, `listWorkflowJobs`, `triggerWorkflow`, `getCombinedStatus`, `getCiFailureContext`, `listPullRequests`, `getPullRequest` |
 | `discussion-moderator` | `listDiscussions`, `getDiscussion`, `addDiscussionComment`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `searchIssues`, `getIssueContext`, `addIssueComment` |
 | `notification-inbox` | `listNotifications`, `markNotificationRead`, `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `getIssue`, `getIssueContext`, `getPullRequest`, `getDiscussion` (requires a Notifications PAT) |
-| `pr-author` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `createBranch`, `deleteBranch`, `createOrUpdateFile`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`, `getCommit` |
-| `maintainer` | All 84 tools |
+| `pr-author` | `getRepository`, `getFileContent`, `getRepositoryTree`, `searchCode`, `listCommits`, `listBranches`, `createBranch`, `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `updatePullRequest`, `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviewThreads`, `replyToReviewComment`, `resolveReviewThread`, `compareCommits`, `getCommit` |
+| `maintainer` | All 85 tools |
 
 Start with the smallest preset that fits. Use `maintainer` or omit `preset` when you need the full catalog. Full breakdown: [Tools Catalog](https://github-tools.com/api/tools-catalog).
 
@@ -164,7 +164,7 @@ createGithubTools({
 })
 ```
 
-Write tools: `createBranch`, `deleteBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction`, `addDiscussionComment`, `markNotificationRead`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`, `updateRelease`, `deleteRelease`.
+Write tools: `createBranch`, `deleteBranch`, `forkRepository`, `createRepository`, `createOrUpdateFile`, `editFiles`, `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers`, `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction`, `addDiscussionComment`, `markNotificationRead`, `createGist`, `updateGist`, `deleteGist`, `createGistComment`, `triggerWorkflow`, `cancelWorkflowRun`, `rerunWorkflowRun`, `createRelease`, `updateRelease`, `deleteRelease`.
 
 All other tools are read-only and never require approval.
 
@@ -216,7 +216,7 @@ In the eve extension, a failing tool returns `{ error: { code, message, why, fix
 
 ## Commit Attribution
 
-Control how commits are attributed when using `createOrUpdateFile` or `mergePullRequest`:
+Control how commits are attributed when using `createOrUpdateFile`, `editFiles` or `mergePullRequest`:
 
 ```ts
 import { createGithubTools } from '@github-tools/sdk'
@@ -483,6 +483,7 @@ eve replays completed steps but re-runs steps interrupted mid-execution. Write t
 | Tool | Idempotency |
 |---|---|
 | `createOrUpdateFile` | Natural when content + `sha` unchanged (skips no-op updates) |
+| `editFiles` | Not idempotent: a re-run whose `find` text was already replaced fails with "not found" instead of committing twice |
 | `closeIssue` | Natural when already closed |
 | `createBranch` | Natural when branch exists at same SHA |
 | `removeAssignees` | Natural: removing an assignee that isn't assigned is a no-op on GitHub |
@@ -530,6 +531,7 @@ List tools return `{ items, hasMore, page, perPage, nextPage? }` (or add those f
 | `forkRepository` | Fork a repository to a user or organization |
 | `createRepository` | Create a new repository for a user or organization |
 | `createOrUpdateFile` | Create or update a file and commit it |
+| `editFiles` | Edit files in one commit by exact text replacement or whole contents, create the branch if needed, and optionally open a pull request |
 
 ### Pull Requests
 
@@ -675,10 +677,10 @@ Create one at **GitHub → Settings → Developer settings → Personal access t
 |---|---|---|
 | **Metadata** | Read-only | Always required (auto-included) |
 | **Contents** | Read-only | `getRepository`, `listBranches`, `getFileContent`, `getRepositoryTree`, `listCommits`, `getCommit`, `getBlame`, `compareCommits`, `listReleases`, `getLatestRelease`, `getRelease`, `getReleaseContext` |
-| **Contents** | Read and write | `createBranch`, `deleteBranch`, `createOrUpdateFile`, `createRelease`, `updateRelease`, `deleteRelease` |
+| **Contents** | Read and write | `createBranch`, `deleteBranch`, `createOrUpdateFile`, `editFiles`, `createRelease`, `updateRelease`, `deleteRelease` |
 | **Administration** | Read and write | `forkRepository`, `createRepository` |
 | **Pull requests** | Read-only | `listPullRequests`, `getPullRequest`, `listPullRequestFiles`, `listPullRequestReviews`, `listPullRequestReviewThreads`, `getPullRequestContext` |
-| **Pull requests** | Read and write | `createPullRequest`, `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers` |
+| **Pull requests** | Read and write | `createPullRequest`, `editFiles` (with `pullRequest`), `mergePullRequest`, `updatePullRequest`, `addPullRequestComment`, `updatePullRequestComment`, `deletePullRequestComment`, `createPullRequestReview`, `replyToReviewComment`, `resolveReviewThread`, `requestReviewers` |
 | **Issues** | Read-only | `listIssues`, `getIssue`, `getIssueContext`, `listIssueComments`, `listLabels`, `listIssueReactions`, `listCommentReactions` |
 | **Issues** | Read and write | `createIssue`, `addIssueComment`, `updateIssueComment`, `deleteIssueComment`, `closeIssue`, `updateIssue`, `addLabels`, `removeLabel`, `createLabel`, `updateLabel`, `deleteLabel`, `addAssignees`, `removeAssignees`, `addIssueReaction`, `addCommentReaction` |
 | **Discussions** | Read-only | `listDiscussions`, `getDiscussion` |
