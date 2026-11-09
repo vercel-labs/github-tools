@@ -89,7 +89,15 @@ export default defineNuxtConfig({
     '/examples/manager-agent-with-subagents': '/guides/multi-agent',
     '/api/tools-catalog': '/reference/tools',
     '/api/reference': '/reference/api',
-  }).map(([from, to]) => [from, { redirect: { to, statusCode: 301 } }])),
+    '/getting-started': '/start/introduction',
+    '/guide': '/docs',
+    '/frameworks': '/integrations',
+    '/deprecated': '/reference/upgrade',
+  }).flatMap(([from, to]) => [
+    [from, { redirect: { to, statusCode: 301 } }],
+    // The markdown copies that llms.txt and agents link to moved with their pages.
+    [`/raw${from}.md`, { redirect: { to: `/raw${to === '/docs' ? '/index' : to}.md`, statusCode: 301 } }],
+  ])),
   content: {
     experimental: {
       sqliteConnector: 'native'
