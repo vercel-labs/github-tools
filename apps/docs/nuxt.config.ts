@@ -105,7 +105,7 @@ export default defineNuxtConfig({
     clientBundle: {
       scan: true,
       includeCustomCollections: true,
-      icons: ['lucide:alert-circle', 'lucide:arrow-right', 'lucide:check', 'lucide:check-circle', 'lucide:chevron-down', 'lucide:circle-check', 'lucide:circle-dot', 'lucide:circle-x', 'lucide:clock', 'lucide:copy', 'lucide:cpu', 'lucide:eye', 'lucide:file-code', 'lucide:git-merge', 'lucide:git-pull-request', 'lucide:hand', 'lucide:key-round', 'lucide:link', 'lucide:menu', 'lucide:message-square', 'lucide:pen', 'lucide:pencil', 'lucide:plug', 'lucide:rocket', 'lucide:server', 'lucide:tag', 'lucide:terminal', 'lucide:wrench', 'lucide:x', 'lucide:rotate-ccw', 'lucide:loader-circle', 'lucide:arrow-up', 'lucide:send-horizontal', 'simple-icons:github', 'simple-icons:slack', 'simple-icons:linear', 'simple-icons:vercel', 'lucide:chevron-right', 'lucide:shield', 'lucide:code-xml', 'lucide:play'],
+      icons: ['lucide:alert-circle', 'lucide:arrow-right', 'lucide:check', 'lucide:check-circle', 'lucide:chevron-down', 'lucide:circle-check', 'lucide:circle-dot', 'lucide:circle-x', 'lucide:clock', 'lucide:copy', 'lucide:cpu', 'lucide:eye', 'lucide:file-code', 'lucide:git-merge', 'lucide:git-pull-request', 'lucide:hand', 'lucide:key-round', 'lucide:link', 'lucide:menu', 'lucide:message-square', 'lucide:pen', 'lucide:pencil', 'lucide:plug', 'lucide:rocket', 'lucide:server', 'lucide:tag', 'lucide:terminal', 'lucide:wrench', 'lucide:x', 'lucide:rotate-ccw', 'lucide:loader-circle', 'lucide:arrow-up', 'lucide:send-horizontal', 'simple-icons:github', 'simple-icons:slack', 'simple-icons:linear', 'simple-icons:vercel', 'lucide:chevron-right', 'lucide:shield', 'lucide:circle-dashed'],
     },
     customCollections: [
       {

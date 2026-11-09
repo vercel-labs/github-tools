@@ -45,7 +45,25 @@ overrides:
   # just-bash's guarded-fetch pins undici 7.29.0, which has high-severity advisories fixed in 7.30.1.
   'guarded-fetch>undici': 7.30.1
   'undici@5': 6.28.0
-  # nuxtseo-layer-devtools pins @nuxt/ui 4.11.1, whose tiptap 3.22 packages then satisfy Nuxt UI 4.12's tiptap
-  # peers next to newer extensions, and Vite's dependency optimizer fails on the missing exports.
-  'nuxtseo-layer-devtools>@nuxt/ui': ^4.12.0
+  # Nuxt UI's editor needs every tiptap package on one version. Without this, extensions resolve
+  # newer than @tiptap/core and Vite's dependency optimizer fails on the missing exports.
+  '@tiptap/core': 3.33.0
+  '@tiptap/pm': 3.33.0
+  '@tiptap/vue-3': 3.33.0
+  '@tiptap/starter-kit': 3.33.0
+  '@tiptap/markdown': 3.33.0
+  '@tiptap/suggestion': 3.33.0
+  '@tiptap/extensions': 3.33.0
+  '@tiptap/extension-list': 3.33.0
+  '@tiptap/extension-bubble-menu': 3.33.0
+  '@tiptap/extension-code': 3.33.0
+  '@tiptap/extension-collaboration': 3.33.0
+  '@tiptap/extension-drag-handle': 3.33.0
+  '@tiptap/extension-drag-handle-vue-3': 3.33.0
+  '@tiptap/extension-floating-menu': 3.33.0
+  '@tiptap/extension-horizontal-rule': 3.33.0
+  '@tiptap/extension-image': 3.33.0
+  '@tiptap/extension-mention': 3.33.0
+  '@tiptap/extension-node-range': 3.33.0
+  '@tiptap/extension-placeholder': 3.33.0
 

@@ -182,11 +182,6 @@ aside[data-side="right"] .prose :where(table) {
   --d-fail: var(--geist-red-700);
   --d-fail-bg: var(--geist-red-100);
   --d-ease: cubic-bezier(0.23, 1, 0.32, 1);
-  /* Hues that tell agents apart in a trace; a label, never an accent. */
-  --d-hue-1: hsl(173 30% 42%);
-  --d-hue-2: hsl(262 25% 58%);
-  --d-hue-3: hsl(340 28% 56%);
-  --d-hue-4: hsl(36 32% 52%);
   /* A confirm button in a familiar app: GitHub's muted green, not the status green. */
   --d-go: hsl(137 45% 30%);
 }
