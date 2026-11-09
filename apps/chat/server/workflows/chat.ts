@@ -18,6 +18,8 @@ export async function durableChatWorkflow(
     model,
     token,
     requireApproval: true,
+    // Read only inside the signing and verification steps, so the secret never enters the workflow log.
+    experimental_toolApprovalSecret: { environmentVariable: 'TOOL_APPROVAL_SECRET' },
     additionalInstructions,
     stopWhen: stepCountIs(20),
     providerOptions: {

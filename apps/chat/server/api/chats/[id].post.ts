@@ -29,9 +29,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Sign in with GitHub to chat' })
   }
 
+  const approvalSecret = process.env.TOOL_APPROVAL_SECRET
+  if (!approvalSecret) {
+    throw createError({ statusCode: 500, statusMessage: 'Set TOOL_APPROVAL_SECRET to sign tool approvals' })
+  }
+
   const agent = createGithubAgent({
     model,
     token,
+    // The client sends the message history, so approvals are signed to stop it from forging one.
+    experimental_toolApprovalSecret: approvalSecret,
     additionalInstructions: [
       session.user?.username ? `The user's name is ${session.user.username}.` : '',
       '**FORMATTING RULES (CRITICAL):**',
