@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { createGithubTools } from './index'
 import type { AllGithubTools, GithubToolsBaseOptions } from './core/tool-types'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from './core/presets'
+import { DEFAULT_EVALUATION_MODEL } from './core/evaluation-policy'
 import { assertEvaluationAvailable, evaluatePresets, evaluateTools, evaluationRequest, fallbackPresets, fallbackTools, type GithubEvaluationOptions } from './core/evaluation'
 import { githubToolsErrors } from './core/errors'
 import { ALL_GITHUB_TOOL_NAMES, type GithubToolName } from './core/tool-names'
@@ -45,9 +46,10 @@ function callGithubTool(tools: AllGithubTools) {
     },
     toModelOutput: async ({ toolCallId, input: { name, input }, output }) => {
       const toModelOutput = tools[name].toModelOutput
-      return input !== undefined && toModelOutput
-        ? toModelOutput({ toolCallId, input, output })
-        : { type: 'json', value: output }
+      if (input === undefined || !toModelOutput) return { type: 'json', value: output }
+      // `execute` ran with the validated input, so the named tool sees its defaults here too.
+      const parsed = await validate(name, input)
+      return toModelOutput({ toolCallId, input: parsed.success ? parsed.value : input, output })
     },
   })
 }
@@ -96,8 +98,14 @@ function callMessages(call: { prompt?: unknown, messages?: unknown }): ModelMess
   return (call.prompt ?? call.messages ?? []) as ModelMessage[]
 }
 
-async function storeKey(kind: string, key: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))
+function decisionModelId({ model = DEFAULT_EVALUATION_MODEL }: GithubEvaluationOptions = {}): string {
+  return typeof model === 'string' ? model : `${model.provider}/${model.modelId}`
+}
+
+// `settings` holds what the decision depends on besides the request, so agents with different
+// thresholds or decision models sharing a store don't reuse each other's decisions.
+async function storeKey(kind: string, settings: unknown, key: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([settings, key])))
   return `github-tools:${kind}:${[...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')}`
 }
 
@@ -108,6 +116,7 @@ async function storeKey(kind: string, key: string): Promise<string> {
  */
 function cachedRouting<T extends readonly string[]>(
   kind: string,
+  settings: unknown,
   route: (messages: readonly ModelMessage[]) => Promise<T>,
   fallback: (error: unknown) => T,
   store: GithubEvaluationOptions['store'],
@@ -118,7 +127,7 @@ function cachedRouting<T extends readonly string[]>(
     let routed = routing.get(key)
     if (!routed) {
       routed = store
-        ? storeKey(kind, key).then(async (stored) => {
+        ? storeKey(kind, settings, key).then(async (stored) => {
             const saved = await store.get(stored)
             if (saved) return saved as T
             const decided = await route(messages)
@@ -191,7 +200,7 @@ export function createGithubAgent({
   if (byTool) {
     assertEvaluationAvailable()
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
-    const picks = cachedRouting('tools', messages => evaluateTools(messages, evaluation), (error: unknown) => fallbackTools(error, evaluation), evaluation?.store)
+    const picks = cachedRouting('tools', [decisionModelId(evaluation), evaluation?.minToolProbability, evaluation?.maxTools], messages => evaluateTools(messages, evaluation), (error: unknown) => fallbackTools(error, evaluation), evaluation?.store)
     settings.prepareCall = async (call) => {
       const messages = callMessages(call)
       const picked = await picks(evaluation?.scope === 'turn' ? messages : firstRequest(messages))
@@ -203,7 +212,7 @@ export function createGithubAgent({
   else if (preset === 'auto') {
     assertEvaluationAvailable()
     const prepareCall = agentOptions.prepareCall as typeof settings.prepareCall
-    const routes = cachedRouting('presets', messages => evaluatePresets(messages, evaluation), (error: unknown) => fallbackPresets(error, evaluation), evaluation?.store)
+    const routes = cachedRouting('presets', [decisionModelId(evaluation), evaluation?.minPresetProbability, evaluation?.maxPresets], messages => evaluatePresets(messages, evaluation), (error: unknown) => fallbackPresets(error, evaluation), evaluation?.store)
     settings.prepareCall = async (call) => {
       const selected = await routes(callMessages(call))
       const next = {

@@ -65,7 +65,8 @@ export type GithubEvaluationOptions = {
   scope?: 'turn' | 'session'
   /**
    * Keeps `createGithubAgent`'s `preset: 'auto'` decisions across processes, such as serverless
-   * instances, under keys derived from the request they were made for. Without it, a decision
+   * instances, under keys derived from the request and the routing settings (decision model,
+   * thresholds and caps), so agents configured differently don't share decisions. Without it, a decision
    * lives in this process's memory, and another process decides again: that costs a decision
    * call, and a different pick changes the tool list and invalidates the provider's prompt cache.
    * The eve extension keeps decisions in the session and ignores this option.

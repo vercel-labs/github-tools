@@ -425,6 +425,35 @@ describe("evaluation: { selection: 'tools' }, the default", () => {
     expect(listed(calls[1]!)).toEqual(listed(calls[0]!))
   })
 
+  it('passes the validated input, with its defaults, to the named tool\'s toModelOutput', async () => {
+    vi.stubGlobal('fetch', vi.fn<typeof globalThis.fetch>(async () => new Response('[]', { headers: { 'content-type': 'application/json' } })))
+    const evaluation = evaluationModel(() => ({}))
+    const { model, calls } = scriptedModel({ name: 'listBranches', input: { owner: 'vercel', repo: 'ai' } })
+    const agent = createGithubAgent({
+      model,
+      token: 'test',
+      preset: 'auto',
+      evaluation: { model: evaluation.model },
+      overrides: { listBranches: { toModelOutput: ({ input }) => ({ type: 'json', value: input }) } },
+      stopWhen: () => calls.length >= 2,
+    })
+    await agent.generate({ prompt: 'List the branches of vercel/ai' })
+    vi.unstubAllGlobals()
+    expect(JSON.stringify(calls[1]!.prompt)).toContain('"perPage":30')
+  })
+
+  it('keeps separate stored decisions for agents with different routing settings', async () => {
+    const saved = new Map<string, readonly string[]>()
+    const store = { get: async (key: string) => saved.get(key), set: async (key: string, value: readonly string[]) => void saved.set(key, value) }
+    const evaluation = evaluationModel(() => ({ getPullRequest: 0.9, mergePullRequest: 0.8 }))
+    for (const maxTools of [1, 2]) {
+      const { model } = scriptedModel(undefined)
+      await createGithubAgent({ model, token: 'test', preset: 'auto', evaluation: { model: evaluation.model, store, maxTools } }).generate({ prompt: 'Merge vercel/ai#12' })
+    }
+    expect(evaluation.calls).toHaveLength(2)
+    expect([...saved.values()]).toEqual([[...core, 'getPullRequest'], [...core, 'getPullRequest', 'mergePullRequest']])
+  })
+
   it('reuses a decision from evaluation.store instead of deciding again in a new agent', async () => {
     const saved = new Map<string, readonly string[]>()
     const store = { get: async (key: string) => saved.get(key), set: async (key: string, value: readonly string[]) => void saved.set(key, value) }
