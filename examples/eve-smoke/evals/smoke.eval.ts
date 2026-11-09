@@ -54,6 +54,10 @@ export default defineEval({
     t.check(dryRun.interactions.length, satisfies(value => value === 0, 'a dry-run write asks no one'))
     t.check(dryRun.reply, includes('"dryRun":true'))
     t.check(dryRun.reply, includes('"approval":{"required":true}'))
+    const dryRunDenied = await dryRun.session.send('dry-run denied write')
+    t.check(dryRunDenied.interactions.length, satisfies(value => value === 0, 'a denied dry-run write asks no one'))
+    t.check(dryRunDenied.reply, includes('Labels are managed by hand.'))
+    t.check(dryRunDenied.reply?.includes('"dryRun":true'), satisfies(value => value === false, 'a denied dry-run write returns no dry-run result'))
     t.eventsSatisfy('dry-run write label', events => JSON.stringify(events).includes('Would create issue on vercel-labs/github-tools'))
 
     // A tool that was not picked is deferred: the model can still call it through eve__tool.

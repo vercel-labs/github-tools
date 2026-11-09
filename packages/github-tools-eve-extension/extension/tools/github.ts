@@ -304,6 +304,8 @@ async function runGithubEveApproval(name: GithubToolName, request: string, ctx: 
 
   const auto = configuredApprovalValue(name) === 'auto' && isPersonRequest(ctx) && await cachedAutoApproval(writeTool, request, ctx)
   const status = auto ? undefined : await githubApprovalStatus(name, writeTool, request, ctx)
+  // A policy that denies the call denies it in a dry run too, as it would for real.
+  if (status === 'denied' || (typeof status === 'object' && status?.type === 'denied')) return status
   dryRunApprovals.set(decisionKey(ctx.session.id, ctx.callId), auto
     ? { required: auto.ask, reason: auto.reason }
     : { required: status === true || status === 'user-approval' || (typeof status === 'object' && status?.type === 'user-approval') })
