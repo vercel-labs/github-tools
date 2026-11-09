@@ -61,11 +61,11 @@ AI_GATEWAY_API_KEY=<your-vercel-ai-gateway-api-key>
 > [!TIP]
 > With Vercel AI Gateway, you don't need individual API keys for OpenAI, Anthropic, etc. The AI Gateway provides a unified API to access hundreds of models through a single endpoint with automatic load balancing, fallbacks, and spend monitoring.
 
-### Authentication (Optional)
+### Authentication
 
-This template uses [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) for authentication with GitHub OAuth.
+This template uses [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) for authentication with GitHub OAuth. The agent runs with the signed-in user's GitHub token, so visitors must sign in before they can chat.
 
-To enable authentication, [create a GitHub OAuth application](https://github.com/settings/applications/new) and set:
+[Create a GitHub OAuth application](https://github.com/settings/applications/new) and set:
 
 ```bash
 NUXT_OAUTH_GITHUB_CLIENT_ID=<your-github-oauth-app-client-id>

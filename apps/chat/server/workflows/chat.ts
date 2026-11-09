@@ -8,8 +8,7 @@ export async function durableChatWorkflow(
   messages: ModelMessage[],
   token: string,
   model: string,
-  additionalInstructions: string,
-  maxSteps: number
+  additionalInstructions: string
 ) {
   'use workflow'
 
@@ -20,7 +19,7 @@ export async function durableChatWorkflow(
     token,
     requireApproval: true,
     additionalInstructions,
-    stopWhen: stepCountIs(maxSteps),
+    stopWhen: stepCountIs(20),
     providerOptions: {
       openai: { reasoningEffort: 'low', reasoningSummary: 'detailed' },
       google: { thinkingConfig: { includeThoughts: true, thinkingBudget: 2048 } }

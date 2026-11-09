@@ -3,6 +3,7 @@ const input = ref('')
 const loading = ref(false)
 const chatId = crypto.randomUUID()
 const { durable } = useModels()
+const { loggedIn, openInPopup } = useUserSession()
 
 const {
   dropzoneRef,
@@ -17,6 +18,10 @@ const {
 
 async function createChat(prompt: string) {
   input.value = prompt
+  if (!loggedIn.value) {
+    openInPopup('/auth/github')
+    return
+  }
   loading.value = true
 
   const parts: Array<{ type: string, text?: string, mediaType?: string, url?: string }> = [{ type: 'text', text: prompt }]
