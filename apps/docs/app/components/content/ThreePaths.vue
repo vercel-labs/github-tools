@@ -1,281 +1,213 @@
 <script setup lang="ts">
-type Level = 'yes' | 'partial' | 'no'
+type RouteId = 'octokit' | 'gh' | 'tools'
+
+interface Step {
+  /** Tag on the connector into this node. */
+  tag?: string
+  icon: string
+  title: string
+  sub: string
+  tone?: 'warn' | 'ok'
+}
 
 interface Route {
+  id: RouteId
   name: string
-  picks: string
-  writer: string
-  text: string
-  stages: string[]
-  output: string
-  /** Typed input, approval and output, worded as in the comparison table on the page. */
-  props: [Level, string, string?][]
+  steps: Step[]
+  result: { tag: string, label: string, code?: string }
 }
+
+const API: Step = { icon: 'i-simple-icons-github', title: 'GitHub API', sub: 'POST /issues/42/labels', tone: 'ok' }
 
 // Octokit's addLabels response and the shaped result of addLabelsCore in packages/github-tools/src/core/issues.ts.
 const ROUTES: Route[] = [
   {
+    id: 'octokit',
     name: 'Octokit',
-    picks: 'Your code',
-    writer: 'Your code writes',
-    text: 'await octokit.rest.issues.addLabels({ owner: \'acme\', repo: \'app\', issue_number: 42, labels: [\'bug\'] })',
-    stages: ['Your code', 'Octokit', 'GitHub API'],
-    output: '{ status: 200, headers: {…}, data: [{ id, node_id, url, name: \'bug\', color, default, description }] }',
-    props: [
-      ['yes', 'TypeScript types at build time'],
-      ['no', 'None: your code runs what it calls'],
-      ['no', 'GitHub\'s full response']
-    ]
+    steps: [
+      { icon: 'i-lucide-file-code', title: 'Your code', sub: 'octokit.rest.issues.addLabels(…)' },
+      { ...API, tag: 'typescript types' }
+    ],
+    result: { tag: 'full response', label: 'GitHub\'s full response, headers included' }
   },
   {
+    id: 'gh',
     name: 'gh CLI',
-    picks: 'The model, as a command string',
-    writer: 'The model writes',
-    text: 'gh issue edit 42 --add-label bug -R acme/app',
-    stages: ['Model', 'Shell tool', 'gh', 'GitHub API'],
-    output: 'https://github.com/acme/app/issues/42',
-    props: [
-      ['partial', 'The CLI\'s flag parsing at run time'],
-      ['partial', 'Whatever your shell tool asks, per command string'],
-      ['partial', 'Text, or the fields the model lists in', '--json']
-    ]
+    steps: [
+      { icon: 'i-lucide-cpu', title: 'Model', sub: 'gh issue edit 42 --add-label bug' },
+      { tag: 'command string', icon: 'i-lucide-terminal', title: 'Shell tool', sub: 'asks per command, if you set it' },
+      { ...API, tag: 'flag parsing' }
+    ],
+    result: { tag: 'stdout', label: 'Text, or the fields the model lists in --json', code: 'https://github.com/acme/app/issues/42' }
   },
   {
+    id: 'tools',
     name: 'GitHub tools',
-    picks: 'The model, from tool descriptions',
-    writer: 'The model fills',
-    text: 'addLabels({ owner: \'acme\', repo: \'app\', issueNumber: 42, labels: [\'bug\'] })',
-    stages: ['Model', 'Zod schema', 'Approval', 'Octokit', 'GitHub API'],
-    output: '[{ name: \'bug\', color: \'d73a4a\', description: "Something isn\'t working" }]',
-    props: [
-      ['yes', 'A Zod schema per tool, checked before the call'],
-      ['yes', 'Per write tool, on by default'],
-      ['yes', 'Shaped results with paging, bodies cut to about 500 characters']
-    ]
+    steps: [
+      { icon: 'i-lucide-cpu', title: 'Model', sub: 'addLabels({ issueNumber: 42, … })' },
+      { tag: 'zod schema', icon: 'i-lucide-hand', title: 'Approval', sub: 'a write waits for a person', tone: 'warn' },
+      { ...API, tag: 'approved' }
+    ],
+    result: { tag: 'shaped', label: 'Shaped result', code: '[{ name: \'bug\', color: \'d73a4a\', description: "Something isn\'t working" }]' }
   }
 ]
 
-const PROPS = ['Input checking', 'Approval', 'Output']
-const ICONS: Record<Level, string> = { yes: 'i-lucide-check', partial: 'i-lucide-circle-dashed', no: 'i-lucide-minus' }
+const OPTIONS = ROUTES.map(r => ({ value: r.id, label: r.name }))
+const SKELETON = ['92%', '64%', '80%', '48%']
 
-const TYPE_MS = 16
-const STAGE_MS = 380
+const route = ref<RouteId>('tools')
 
-const focus = ref(-1)
-const typed = ref(ROUTES.map(() => 0))
-const stage = ref(ROUTES.map(() => 0))
-const out = ref(ROUTES.map(() => false))
-const lit = ref(ROUTES.map(() => 0))
-
-function setAt<T>(r: Ref<T[]>, i: number, v: T) {
-  r.value = r.value.map((x, j) => (j === i ? v : x))
-}
-
-function clear(i: number) {
-  setAt(typed, i, 0)
-  setAt(stage, i, 0)
-  setAt(out, i, false)
-  setAt(lit, i, 0)
-}
-
-function routeSteps(i: number) {
-  const r = ROUTES[i]!
-  const s: { at: number, run: () => void }[] = [{ at: 0, run: () => {
-    focus.value = i
-    clear(i)
-  } }]
-  let t = 250
-  for (let c = 1; c <= r.text.length; c++) s.push({ at: t + c * TYPE_MS, run: () => setAt(typed, i, c) })
-  t += r.text.length * TYPE_MS + 300
-  r.stages.forEach((name, k) => {
-    s.push({ at: t, run: () => setAt(stage, i, k + 1) })
-    t += STAGE_MS + (name === 'Approval' ? 900 : 0)
-  })
-  s.push({ at: t, run: () => setAt(out, i, true) })
-  t += 350
-  PROPS.forEach((_, k) => s.push({ at: t + k * 260, run: () => setAt(lit, i, k + 1) }))
-  return { steps: s, length: t + PROPS.length * 260 + 500 }
-}
-
-const all: { at: number, run: () => void }[] = []
-let offset = 200
-ROUTES.forEach((_, i) => {
-  const { steps, length } = routeSteps(i)
-  all.push(...steps.map(e => ({ at: e.at + offset, run: e.run })))
-  offset += length
-})
-
-let timers: ReturnType<typeof setTimeout>[] = []
-function stopTimers() {
-  timers.forEach(clearTimeout)
-  timers = []
-}
-onBeforeUnmount(stopTimers)
-
-const { root, finished, still, replay } = useFigure({
-  steps: all,
-  reset: () => {
-    stopTimers()
-    focus.value = -1
-    ROUTES.forEach((_, i) => clear(i))
-  },
-  settle: () => {
-    focus.value = ROUTES.length - 1
-    typed.value = ROUTES.map(r => r.text.length)
-    stage.value = ROUTES.map(r => r.stages.length)
-    out.value = ROUTES.map(() => true)
-    lit.value = ROUTES.map(() => PROPS.length)
-  }
-})
-
-function show(i: number) {
-  stopTimers()
-  routeSteps(i).steps.forEach(e => timers.push(setTimeout(e.run, e.at)))
-}
-
-function started(i: number) {
-  return typed.value[i]! > 0 || stage.value[i]! > 0
-}
+const { root, still } = useFigure({ steps: [], reset: () => {}, settle: () => {}, autoplay: false })
 </script>
 
 <template>
   <DocsFigure
     ref="root"
-    caption="The same label reaches GitHub three ways, and only the GitHub tools route checks a typed input, asks before the write, and returns a shaped result."
-    :finished
+    caption="Three ways to label an issue. Only the GitHub tools route checks a typed input, asks a person before the write, and returns a shaped result."
+    finished
     :still
-    @replay="replay"
   >
-    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-(--d-line) px-4 py-2.5 sm:px-6">
-      <p class="text-[12.5px] text-muted">
-        Intent: <span class="text-highlighted">label issue 42 as bug</span>
-      </p>
-      <div
-        class="flex gap-1 transition-opacity duration-300"
-        :class="finished ? 'opacity-100' : 'pointer-events-none opacity-0'"
-      >
-        <button
-          v-for="(r, i) in ROUTES"
-          :key="r.name"
-          type="button"
-          :tabindex="finished ? 0 : -1"
-          :aria-pressed="focus === i"
-          class="rounded-md px-2 py-0.5 text-[12px] ring-1 transition-[color,background-color,box-shadow,transform] duration-150 ring-inset focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--d-signal) active:scale-[0.97]"
-          :class="focus === i ? 'bg-(--d-raised-strong) text-highlighted ring-(--d-line-strong)' : 'text-muted ring-transparent hover:text-highlighted'"
-          @click="show(i)"
+    <template #controls>
+      <FigureTabs
+        v-model="route"
+        label="Route"
+        :options="OPTIONS"
+        show-label
+      />
+    </template>
+
+    <div class="px-4 py-8 sm:px-8 sm:py-10">
+      <div class="d-stack mx-auto max-w-sm">
+        <div
+          v-for="r in ROUTES"
+          :key="r.id"
+          class="flex flex-col items-center"
+          :class="route === r.id ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0'"
+          :aria-hidden="route !== r.id"
         >
-          {{ r.name }}
-        </button>
-      </div>
-    </div>
+          <span class="rounded-full border border-(--d-line-strong) bg-(--d-raised) px-3 py-1 text-[13px] text-highlighted">
+            Label issue 42 as bug
+          </span>
 
-    <ol class="flex flex-col">
-      <li
-        v-for="(r, i) in ROUTES"
-        :key="r.name"
-        class="flex flex-col gap-2.5 px-4 py-4 transition-opacity duration-300 sm:px-6"
-        :class="[
-          i > 0 ? 'border-t border-(--d-line)' : '',
-          !finished && focus !== i && started(i) ? 'opacity-60' : 'opacity-100'
-        ]"
-      >
-        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-          <h4 class="text-[13px] text-highlighted">
-            {{ r.name }}
-          </h4>
-          <span class="text-[12px] text-dimmed">Who picks the call: <span class="text-muted">{{ r.picks }}</span></span>
-        </div>
-
-        <div class="rounded-lg border border-(--d-line) bg-(--d-raised-strong) px-3 py-2">
-          <p class="mb-0.5 text-[11px] text-dimmed">
-            {{ r.writer }}
-          </p>
-          <code class="block min-h-5 font-mono text-[12px]/5 [overflow-wrap:anywhere] text-highlighted">{{ r.text.slice(0, typed[i]) }}<span
-            v-if="focus === i && typed[i]! < r.text.length"
-            class="caret"
-          /></code>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-x-1 gap-y-1.5 text-[12px]">
           <template
-            v-for="(s, k) in r.stages"
-            :key="s"
+            v-for="s in r.steps"
+            :key="s.title"
           >
-            <UIcon
-              v-if="k > 0"
-              name="i-lucide-arrow-right"
-              class="size-3.5 transition-colors duration-300"
-              :class="stage[i]! > k ? 'text-highlighted' : 'text-dimmed'"
-            />
-            <span
-              class="relative inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 transition-[border-color,color,background-color] duration-300"
-              :class="[
-                stage[i]! > k ? 'border-(--d-line-strong) text-highlighted' : 'border-(--d-line) text-dimmed',
-                stage[i] === k + 1 && !out[i] ? 'border-(--d-signal)' : '',
-                s === 'Approval' && stage[i] === k + 1 && !out[i] ? 'border-(--d-warn)/60' : ''
-              ]"
+            <div class="wire">
+              <span
+                v-if="s.tag"
+                class="tag"
+              >{{ s.tag }}</span>
+            </div>
+            <div
+              class="node"
+              :class="s.tone === 'warn' ? 'node-warn' : ''"
+            >
+              <span class="tile">
+                <UIcon
+                  :name="s.icon"
+                  class="size-4"
+                  :class="s.tone === 'warn' ? 'text-(--d-warn)' : 'text-toned'"
+                />
+              </span>
+              <span class="flex min-w-0 flex-col">
+                <span class="flex items-center gap-2 text-[13px]/5 font-medium text-highlighted">
+                  {{ s.title }}
+                  <span
+                    v-if="s.tone === 'ok'"
+                    class="font-mono text-[12px] font-normal text-(--d-ok)"
+                  >200</span>
+                </span>
+                <span
+                  class="font-mono text-[12px]/4 [overflow-wrap:anywhere]"
+                  :class="s.tone === 'warn' ? 'text-(--d-warn)' : 'text-muted'"
+                >{{ s.sub }}</span>
+              </span>
+            </div>
+          </template>
+
+          <div class="wire">
+            <span class="tag">{{ r.result.tag }}</span>
+          </div>
+          <div class="w-full rounded-lg border border-(--d-line) bg-(--d-raised) px-3 py-2.5">
+            <p class="mb-2 text-[12px]/4 text-muted">
+              {{ r.result.label }}
+            </p>
+            <code
+              v-if="r.result.code"
+              class="d-code block text-[12px]!"
+            >{{ r.result.code }}</code>
+            <div
+              v-else
+              class="flex flex-col gap-2 py-1"
             >
               <span
-                v-if="stage[i] === k + 1 && !out[i]"
-                class="size-1.5 rounded-full"
-                :class="s === 'Approval' ? 'animate-pulse bg-(--d-warn)' : 'bg-(--d-signal)'"
+                v-for="(w, k) in SKELETON"
+                :key="k"
+                class="h-1.5 rounded-full bg-(--d-raised-strong)"
+                :style="{ width: w }"
               />
-              {{ s }}
-            </span>
-          </template>
+            </div>
+          </div>
         </div>
-
-        <p
-          class="d-step flex gap-1.5 font-mono text-[11.5px]/5 text-muted"
-          :data-on="out[i]"
-        >
-          <span class="shrink-0 text-dimmed">→</span>
-          <span class="min-w-0 [overflow-wrap:anywhere]">{{ r.output }}</span>
-        </p>
-
-        <ul class="grid gap-1.5 sm:grid-cols-3">
-          <li
-            v-for="(p, k) in r.props"
-            :key="k"
-            class="flex items-start gap-2 rounded-md border px-2.5 py-1.5 text-[12px]/4 transition-[border-color,opacity] duration-300"
-            :class="lit[i]! > k ? 'border-(--d-line-strong) opacity-100' : 'border-(--d-line) opacity-40'"
-          >
-            <span
-              class="mt-px inline-flex size-4 shrink-0 items-center justify-center rounded-full transition-colors duration-300"
-              :class="lit[i]! > k && p[0] === 'yes' ? 'bg-(--d-signal) text-(--d-signal-fg)' : 'border border-(--d-line-strong) text-muted'"
-            >
-              <UIcon
-                :name="ICONS[p[0]]"
-                class="size-3"
-              />
-            </span>
-            <span class="min-w-0">
-              <span class="block text-dimmed">{{ PROPS[k] }}</span>
-              <span :class="lit[i]! > k ? 'text-highlighted' : 'text-muted'">{{ p[2] ? `${p[1]} ` : p[1] }}<code
-                v-if="p[2]"
-                class="font-mono whitespace-nowrap"
-              >{{ p[2] }}</code></span>
-            </span>
-          </li>
-        </ul>
-      </li>
-    </ol>
+      </div>
+    </div>
   </DocsFigure>
 </template>
 
 <style scoped>
-.caret {
-  display: inline-block;
-  width: 0.55em;
-  height: 1.1em;
-  vertical-align: text-bottom;
-  background: var(--d-signal);
-  animation: caret-blink 1s steps(1) infinite;
+.wire {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 2.75rem;
+  width: 100%;
 }
 
-@keyframes caret-blink {
-  50% {
-    opacity: 0;
-  }
+.wire::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  border-left: 1px dashed var(--d-line-strong);
+}
+
+.tag {
+  position: relative;
+  border-radius: 4px;
+  padding: 0 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ui-text-toned);
+  background: var(--ui-bg);
+  box-shadow: inset 0 0 0 1px var(--d-line-strong);
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--d-line-strong);
+  background: var(--d-raised);
+  padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+}
+
+.node-warn {
+  border-color: color-mix(in oklab, var(--d-warn) 50%, transparent);
+  background: var(--d-warn-bg);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--d-line);
+  background: var(--ui-bg);
 }
 </style>

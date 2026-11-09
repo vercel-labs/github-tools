@@ -37,6 +37,7 @@ const links = computed(() => appConfig.github && appConfig.github.url
         label="Docs"
         color="neutral"
         variant="ghost"
+        class="hidden md:inline-flex"
       />
 
       <AppHeaderCTA />

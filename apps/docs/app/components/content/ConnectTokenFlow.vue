@@ -6,176 +6,147 @@ const PRESET_SCOPES = ['contents:read', 'metadata:read', 'pull_requests:read', '
 const LIST_ISSUES_SCOPES = ['contents:read', 'metadata:read', 'issues:read']
 const ADD_LABELS_SCOPES = ['contents:read', 'metadata:read', 'issues:read', 'issues:write']
 
-const MODES: { value: Mode, label: string }[] = [
-  { value: 'preset', label: 'preset: \'issue-triage\'' },
-  { value: 'auto', label: 'eve, preset: \'auto\'' }
+const modes: { value: Mode, label: string }[] = [
+  { value: 'preset', label: 'issue-triage' },
+  { value: 'auto', label: 'auto (eve)' }
 ]
-
 const mode = ref<Mode>('preset')
-const shown = ref(0)
-const expired = ref(false)
-const userPicked = ref(false)
 
-const firstScopes = computed(() => (mode.value === 'preset' ? PRESET_SCOPES : LIST_ISSUES_SCOPES))
-const secondScopes = computed(() => (mode.value === 'preset' ? PRESET_SCOPES : ADD_LABELS_SCOPES))
-const reuses = computed(() => mode.value === 'preset')
+type Source = 'agent' | 'sdk' | 'connect' | 'github'
+interface Line {
+  key: string
+  time: string
+  source: Source
+  text: string
+  scopes?: string[]
+  /** Scopes the previous request did not have. */
+  added?: string[]
+  status?: { label: string, tone: 'ok' | 'muted' }
+  note?: string
+  /** The row that differs between the two modes. */
+  focus?: boolean
+}
 
-const STEP = 700
-const PHASE = 10 * STEP + 3200
-
-function phase(start: number, phaseMode: Mode, auto: boolean) {
-  const guard = (run: () => void) => () => {
-    if (auto && userPicked.value) return
-    run()
-  }
+function lines(m: Mode): Line[] {
+  const preset = m === 'preset'
   return [
-    { at: start, run: guard(() => {
-      if (!userPicked.value) mode.value = phaseMode
-      shown.value = 0
-      expired.value = false
-    }) },
-    ...Array.from({ length: 8 }, (_, i) => ({ at: start + 300 + i * STEP, run: guard(() => { shown.value = i + 1 }) })),
-    { at: start + 300 + 8 * STEP + 600, run: guard(() => { shown.value = 9 }) },
-    { at: start + 300 + 8 * STEP + 900, run: guard(() => { expired.value = true }) }
+    { key: 'call1', time: '12:04:01.120', source: 'agent', text: 'listIssues({ owner: \'vercel\', repo: \'ai\' })' },
+    { key: `scopes1-${m}`, time: '12:04:01.122', source: 'sdk', text: 'Token request for vercel/ai', scopes: preset ? PRESET_SCOPES : LIST_ISSUES_SCOPES },
+    { key: 'token1', time: '12:04:01.304', source: 'connect', text: 'Minted token A', note: 'vercel installation, repository ai', status: { label: 'new', tone: 'ok' } },
+    { key: 'http1', time: '12:04:01.588', source: 'github', text: 'GET /repos/vercel/ai/issues', status: { label: '200', tone: 'ok' } },
+    { key: 'call2', time: '12:04:06.410', source: 'agent', text: 'addLabels({ issueNumber: 42, labels: [\'bug\'] })', note: 'write, approved' },
+    { key: `scopes2-${m}`, time: '12:04:06.412', source: 'sdk', text: preset ? 'Token request for vercel/ai, same preset scopes' : 'Token request for vercel/ai, scopes of addLabels', scopes: preset ? PRESET_SCOPES : ADD_LABELS_SCOPES, added: preset ? [] : ['issues:write'] },
+    { key: `token2-${m}`, time: '12:04:06.415', source: 'connect', text: preset ? 'Reused token A' : 'Minted token B', note: preset ? 'same connector and parameters' : 'new scopes, so a new token', status: preset ? { label: 'cached', tone: 'muted' } : { label: 'new', tone: 'ok' }, focus: true },
+    { key: 'http2', time: '12:04:06.702', source: 'github', text: 'POST /repos/vercel/ai/issues/42/labels', status: { label: '200', tone: 'ok' } }
   ]
 }
 
-const { root, finished, still, replay } = useFigure({
-  steps: [
-    ...phase(0, 'preset', false),
-    ...phase(PHASE, 'auto', true)
-  ],
-  reset: () => {
-    shown.value = 0
-    expired.value = false
-  },
-  settle: () => {
-    shown.value = 9
-    expired.value = true
-  }
-})
+const views = { preset: lines('preset'), auto: lines('auto') }
+const rows = views.preset.map((line, i) => ({ preset: line, auto: views.auto[i]!, varies: line.key !== views.auto[i]!.key }))
 
-function pick(value: Mode) {
-  userPicked.value = true
-  mode.value = value
-  if (still.value) return
-  replay()
-}
+const sourceLabel: Record<Source, string> = { agent: 'Agent', sdk: 'SDK', connect: 'Connect', github: 'GitHub' }
 
-const rows = computed(() => [
-  { key: 'call1', at: 0, actor: 'Agent', kind: 'call', text: 'listIssues({ owner: \'vercel\', repo: \'ai\' })' },
-  { key: 'scopes1', at: 1, actor: 'SDK', kind: 'scopes', text: 'Asks Connect for a token on', scopes: firstScopes.value },
-  { key: 'token1', at: 2, actor: 'Connect', kind: 'token', text: 'Mints', token: 'token A', note: 'from the vercel installation, for repository ai' },
-  { key: 'http1', at: 3, actor: 'GitHub', kind: 'http', text: 'GET /repos/vercel/ai/issues' },
-  { key: 'call2', at: 4, actor: 'Agent', kind: 'call', text: 'addLabels({ issueNumber: 42, labels: [\'bug\'] })', note: 'write, approved' },
-  { key: 'scopes2', at: 5, actor: 'SDK', kind: 'scopes', text: reuses.value ? 'Same preset scopes, same repository' : 'Scopes of addLabels, same repository', scopes: secondScopes.value, previous: firstScopes.value },
-  { key: 'token2', at: 6, actor: 'Connect', kind: 'token', text: reuses.value ? 'Same parameters, reuses' : 'New scopes, mints', token: reuses.value ? 'token A' : 'token B' },
-  { key: 'http2', at: 7, actor: 'GitHub', kind: 'http', text: 'POST /repos/vercel/ai/issues/42/labels' },
-  { key: 'expiry', at: 8, actor: '', kind: 'note', text: `${reuses.value ? 'Token A is short-lived and expires on its own.' : 'Both tokens are short-lived and expire on their own.'} A later call gets a new one.` }
-])
+const { root, finished, still } = useFigure({ steps: [], reset: () => {}, settle: () => {}, autoplay: false })
+
 </script>
 
 <template>
   <DocsFigure
     ref="root"
-    caption="Each tool call asks Connect for a token on the repository it targets, scoped to the preset, or to the one tool under eve's auto preset."
+    caption="Every call gets a short-lived token. Each tool call asks Connect for a token on the repository it targets, scoped to the preset, or to the one tool under eve's auto preset."
     :finished
     :still
-    @replay="replay"
   >
-    <div class="flex flex-wrap items-center gap-1.5 border-b border-(--d-line) px-4 py-2.5 sm:px-6">
-      <span class="mr-1 text-[12px] text-dimmed">Scopes from</span>
-      <button
-        v-for="option in MODES"
-        :key="option.value"
-        type="button"
-        class="rounded-md px-2 py-0.5 font-mono text-[12px] ring-1 transition-colors duration-200 ring-inset outline-none focus-visible:ring-2 focus-visible:ring-(--d-signal)"
-        :class="mode === option.value ? 'bg-(--d-raised-strong) text-highlighted ring-(--d-line-strong)' : 'text-muted ring-transparent hover:text-highlighted'"
-        :aria-pressed="mode === option.value"
-        @click="pick(option.value)"
-      >
-        {{ option.label }}
-      </button>
-    </div>
+    <template #controls>
+      <FigureTabs
+        v-model="mode"
+        label="preset"
+        :options="modes"
+        show-label
+        mono
+      />
+    </template>
 
-    <ol class="flex flex-col gap-3 p-4 text-[13px]/6 sm:p-6">
-      <li
-        v-for="row in rows"
-        :key="row.key"
-        class="d-step grid grid-cols-[3.75rem_minmax(0,1fr)] items-baseline gap-x-3 sm:grid-cols-[4.5rem_minmax(0,1fr)] sm:gap-x-4"
-        :class="row.key === 'call2' ? 'mt-2 border-t border-(--d-line) pt-4' : ''"
-        :data-on="shown > row.at"
-      >
-        <span class="text-dimmed">{{ row.actor }}</span>
-
+    <div class="flex justify-center px-4 py-8 sm:px-10 sm:py-10">
+      <section class="@container w-full max-w-[40rem] rounded-lg border border-(--d-line) bg-(--d-raised) py-2">
         <div
-          v-if="row.kind === 'call'"
-          class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"
+          class="flex items-center gap-3 px-3 py-2"
+          aria-hidden="true"
         >
-          <code class="rounded-md border border-(--d-line) bg-(--d-raised-strong) px-2 py-0.5 font-mono text-[12px] [overflow-wrap:anywhere] text-highlighted">{{ row.text }}</code>
-          <span
-            v-if="row.note"
-            class="text-[12.5px] text-dimmed"
-          >{{ row.note }}</span>
+          <span class="size-1.5 shrink-0 rounded-full bg-(--d-line-strong)" />
+          <span class="hidden h-1.5 w-16 rounded-full bg-(--d-raised-strong) @min-[34rem]:block" />
+          <span class="h-1.5 w-12 rounded-full bg-(--d-raised-strong)" />
+          <span class="h-1.5 w-2/5 rounded-full bg-(--d-raised-strong)" />
         </div>
 
-        <div
-          v-else-if="row.kind === 'scopes'"
-          class="min-w-0"
-        >
-          <p class="text-muted">
-            {{ row.text }} <span class="font-mono text-[12px] text-highlighted">vercel/ai</span>
-          </p>
-          <ul class="mt-1.5 flex flex-wrap gap-1">
-            <li
-              v-for="scope in row.scopes"
-              :key="scope"
-              class="rounded border px-1.5 font-mono text-[11.5px]/5"
-              :class="row.previous && !row.previous.includes(scope) ? 'border-(--d-signal)/50 text-(--d-signal-text)' : 'border-(--d-line) text-muted'"
-            >
-              {{ scope }}
-            </li>
-          </ul>
-        </div>
-
-        <div
-          v-else-if="row.kind === 'token'"
-          class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1"
-        >
-          <span class="text-muted">{{ row.text }}</span>
-          <span
-            class="inline-flex flex-col rounded-md border border-(--d-line) bg-(--d-raised-strong) px-2 pt-0.5 pb-1 font-mono text-[12px]/5 transition-colors duration-300"
-            :class="expired ? 'text-dimmed line-through' : 'text-highlighted'"
+        <ol>
+          <li
+            v-for="(row, i) in rows"
+            :key="i"
+            class="d-stack"
+            :class="i === 4 ? 'mt-2 border-t border-(--d-line) pt-2' : ''"
           >
-            {{ row.token }}
-            <span class="mt-0.5 h-0.5 w-full rounded-full bg-(--d-line)">
+            <div
+              v-for="m in (row.varies ? (['preset', 'auto'] as const) : (['preset'] as const))"
+              :key="m"
+              class="mx-1.5 grid grid-cols-[0.375rem_3.75rem_minmax(0,1fr)] gap-x-3 rounded-md px-1.5 py-1.5 @min-[34rem]:grid-cols-[0.375rem_6.5rem_3.75rem_minmax(0,1fr)]"
+              :class="[
+                row.varies ? [mode === m ? '' : 'invisible opacity-0'] : '',
+                row[m].focus ? (row[m].status?.tone === 'ok' ? 'bg-(--d-ok-bg)' : 'bg-(--d-raised-strong)') : ''
+              ]"
+              :aria-hidden="row.varies && mode !== m"
+            >
               <span
-                class="block h-full rounded-full bg-(--d-signal) transition-[width] duration-[1600ms] ease-linear"
-                :style="{ width: expired ? '0%' : '100%' }"
+                class="mt-1.75 size-1.5 rounded-full"
+                :class="row[m].status?.tone === 'ok' ? 'bg-(--d-ok)' : 'bg-(--d-line-strong)'"
               />
-            </span>
-          </span>
-          <span
-            v-if="row.note"
-            class="text-[12.5px] text-dimmed"
-          >{{ row.note }}</span>
-        </div>
+              <span class="hidden font-mono text-[12px]/5 text-dimmed tabular-nums @min-[34rem]:block">{{ row[m].time }}</span>
+              <span class="font-mono text-[12px]/5 text-muted">{{ sourceLabel[row[m].source] }}</span>
+              <div class="min-w-0">
+                <p class="flex flex-wrap items-baseline justify-between gap-x-3">
+                  <span
+                    class="font-mono text-[12px]/5 [overflow-wrap:anywhere]"
+                    :class="row[m].focus ? (row[m].status?.tone === 'ok' ? 'text-(--d-ok)' : 'text-highlighted') : 'text-highlighted'"
+                  >{{ row[m].source === 'github' ? row[m].text.replaceAll('/', '/\u200B') : row[m].text }}</span>
+                  <span
+                    v-if="row[m].status"
+                    class="font-mono text-[12px]/5"
+                    :class="row[m].status!.tone === 'ok' ? 'text-(--d-ok)' : 'text-muted'"
+                  >{{ row[m].status!.label }}</span>
+                </p>
+                <p
+                  v-if="row[m].note"
+                  class="text-[12px]/5 text-muted"
+                >
+                  {{ row[m].note }}
+                </p>
+                <p
+                  v-if="row[m].scopes"
+                  class="flex flex-wrap gap-x-3"
+                >
+                  <span
+                    v-for="scope in row[m].scopes"
+                    :key="scope"
+                    class="font-mono text-[12px]/5"
+                    :class="row[m].added?.includes(scope) ? 'text-(--d-ok)' : 'text-muted'"
+                  >{{ row[m].added?.includes(scope) ? '+ ' : '' }}{{ scope }}</span>
+                </p>
+              </div>
+            </div>
+          </li>
+        </ol>
 
-        <div
-          v-else-if="row.kind === 'http'"
-          class="flex min-w-0 flex-wrap items-center gap-x-3"
-        >
-          <code class="font-mono text-[12px] [overflow-wrap:anywhere] text-muted">{{ row.text }}</code>
-          <span class="font-mono text-[12px] text-(--d-signal-text)">200</span>
+        <div class="d-stack mx-3 mt-2 border-t border-(--d-line) pt-2.5 pb-1 text-[12.5px]/5 text-muted">
+          <p
+            v-for="m in (['preset', 'auto'] as const)"
+            :key="m"
+            :class="[mode === m ? '' : 'invisible opacity-0']"
+            :aria-hidden="mode !== m"
+          >
+            {{ m === 'preset' ? 'Token A is short-lived and expires on its own.' : 'Both tokens are short-lived and expire on their own.' }} A later call gets a new one.
+          </p>
         </div>
-
-        <p
-          v-else
-          class="text-[12.5px] text-dimmed"
-        >
-          {{ row.text }}
-        </p>
-      </li>
-    </ol>
+      </section>
+    </div>
   </DocsFigure>
 </template>

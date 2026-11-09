@@ -1,407 +1,218 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
+type Entry
+  = | { id: string, kind: 'comment', author: 'ana' | 'bot', body: string, reaction?: boolean }
+    | { id: string, kind: 'event', text: string, run: string }
 
-type Turn = 1 | 2
+const RUN = 'wrun_01JF3K8Q2M'
 
-const RUN_ID = 'wrun_01JF3K8Q2M'
-
-// Handlers and tools from examples/pr-review-agent and the code-review preset.
-const TURNS = {
-  1: {
-    label: 'Mention',
-    chat: 'onNewMention',
-    chatNote: 'eyes reaction, thread.subscribe()',
-    run: 'start(reviewWorkflow)',
-    runNote: 'new run, runId saved on the thread',
-    tools: ['getPullRequestContext', 'listPullRequestFiles', 'addPullRequestComment']
-  },
-  2: {
-    label: 'Reply',
-    chat: 'onSubscribedMessage',
-    chatNote: 'reads runId from thread.state',
-    run: 'resumeHook(runId)',
-    runNote: 'same run, next turn',
-    tools: ['getFileContent', 'addPullRequestComment']
-  }
-} as const
-
-const REVIEW = 'Checked src/upload.ts and its test. withRetry retries every failed request, including 4xx responses, so an invalid upload is sent three times. Retry only on 5xx and network errors.'
-const ANSWER = 'Mostly. Backoff stops after 3 attempts, but putObject is not idempotent: a timeout after the server stored the file uploads it twice. Send an idempotency key with each attempt.'
-
-const NODES = [
-  { icon: 'i-lucide-webhook', name: 'Webhook route' },
-  { icon: 'i-lucide-message-square', name: 'Chat SDK' },
-  { icon: 'i-lucide-workflow', name: 'Workflow' },
-  { icon: 'i-lucide-bot', name: 'Step runAgentTurn' }
+const drafts = [
+  '@my-review-agent review this PR',
+  'is the retry logic safe?'
 ]
 
-const shown = ref(0)
-const reacted = ref(false)
-const turn = ref<Turn>(1)
-const rail = ref(0)
-const tools = ref(0)
-const runSeen = ref(false)
-const typedReview = ref(0)
-const typedAnswer = ref(0)
-const picked = ref(false)
+const entries = ref<Entry[]>([])
+const turn = ref(0)
+const busy = ref(false)
+let timers: ReturnType<typeof setTimeout>[] = []
 
-const current = computed(() => TURNS[turn.value])
+const draft = computed(() => drafts[turn.value] ?? '')
+const done = computed(() => turn.value >= drafts.length && !busy.value)
 
-function typing(text: string, start: number, target: Ref<number>) {
-  const CHUNK = 4
-  const out = []
-  for (let i = CHUNK; i < text.length + CHUNK; i += CHUNK) {
-    const n = Math.min(i, text.length)
-    out.push({ at: start + (i / CHUNK) * 32, run: () => { target.value = n } })
+function later(ms: number, run: () => void) {
+  timers.push(setTimeout(run, ms))
+}
+
+function post() {
+  if (busy.value || !draft.value) return
+  busy.value = true
+  const index = turn.value
+  const comment: Entry = { id: `ana-${index}`, kind: 'comment', author: 'ana', body: draft.value }
+  entries.value.push(comment)
+  turn.value++
+
+  if (index === 0) {
+    later(700, () => {
+      comment.reaction = true
+      entries.value = [...entries.value]
+    })
+    later(1500, () => entries.value.push({ id: 'start', kind: 'event', text: 'started reviewWorkflow', run: RUN }))
+    later(3000, () => {
+      entries.value.push({
+        id: 'review',
+        kind: 'comment',
+        author: 'bot',
+        body: 'Reviewed 4 files. withRetry retries 5xx and network errors with backoff, which looks right. One risk: putObject is not idempotent, so a timeout after the server stored the file uploads it twice. Consider an idempotency key.'
+      })
+      busy.value = false
+    })
   }
-  return out
-}
-
-const REVIEW_AT = 3900
-const ANSWER_AT = 10400
-const reviewEnd = REVIEW_AT + Math.ceil(REVIEW.length / 4) * 32
-const answerEnd = ANSWER_AT + Math.ceil(ANSWER.length / 4) * 32
-
-const { root, finished, still, replay } = useFigure({
-  steps: [
-    { at: 200, run: () => { shown.value = 1 } },
-    { at: 800, run: () => { rail.value = 1 } },
-    { at: 1400, run: () => { rail.value = 2 } },
-    { at: 1800, run: () => { reacted.value = true } },
-    { at: 2200, run: () => { rail.value = 3 } },
-    { at: 2500, run: () => { runSeen.value = true } },
-    { at: 2900, run: () => { rail.value = 4 } },
-    { at: 3100, run: () => { tools.value = 1 } },
-    { at: 3500, run: () => { tools.value = 2 } },
-    { at: 3800, run: () => {
-      tools.value = 3
-      shown.value = 2
-    } },
-    ...typing(REVIEW, REVIEW_AT, typedReview),
-    { at: reviewEnd + 200, run: () => { rail.value = 5 } },
-    { at: reviewEnd + 1200, run: () => {
-      shown.value = 3
-      turn.value = 2
-      rail.value = 0
-      tools.value = 0
-    } },
-    { at: reviewEnd + 1700, run: () => { rail.value = 1 } },
-    { at: reviewEnd + 2300, run: () => { rail.value = 2 } },
-    { at: reviewEnd + 2900, run: () => { rail.value = 3 } },
-    { at: reviewEnd + 3600, run: () => { rail.value = 4 } },
-    { at: reviewEnd + 3800, run: () => { tools.value = 1 } },
-    { at: ANSWER_AT - 100, run: () => {
-      tools.value = 2
-      shown.value = 4
-    } },
-    ...typing(ANSWER, ANSWER_AT, typedAnswer),
-    { at: answerEnd + 200, run: () => { rail.value = 5 } }
-  ],
-  reset: () => {
-    shown.value = 0
-    reacted.value = false
-    turn.value = 1
-    rail.value = 0
-    tools.value = 0
-    runSeen.value = false
-    typedReview.value = 0
-    typedAnswer.value = 0
-    picked.value = false
-  },
-  settle: () => {
-    shown.value = 4
-    reacted.value = true
-    turn.value = 2
-    rail.value = 5
-    tools.value = TURNS[2].tools.length
-    runSeen.value = true
-    typedReview.value = REVIEW.length
-    typedAnswer.value = ANSWER.length
+  else {
+    later(1200, () => entries.value.push({ id: 'resume', kind: 'event', text: 'resumed the same run for turn 2', run: RUN }))
+    later(2700, () => {
+      entries.value.push({
+        id: 'answer',
+        kind: 'comment',
+        author: 'bot',
+        body: 'Mostly. Backoff stops after 3 attempts, but the retry wraps putObject, which is not idempotent: a timeout after the write still uploads twice. Pass an idempotency key and retry only on 5xx and network errors.'
+      })
+      busy.value = false
+    })
   }
-})
-
-function pick(next: Turn) {
-  picked.value = true
-  turn.value = next
-  rail.value = 5
-  tools.value = TURNS[next].tools.length
 }
 
-function nodeState(i: number) {
-  if (rail.value > i + 1) return 'done'
-  if (rail.value === i + 1) return 'active'
-  return 'idle'
+function reset() {
+  timers.forEach(clearTimeout)
+  timers = []
+  entries.value = []
+  turn.value = 0
+  busy.value = false
 }
 
-function dimmed(t: Turn) {
-  return picked.value && turn.value !== t
-}
-
-const sameRun = computed(() => turn.value === 2 && rail.value >= 3)
+onBeforeUnmount(() => timers.forEach(clearTimeout))
 </script>
 
 <template>
   <DocsFigure
-    ref="root"
-    caption="A mention starts a workflow run that reviews the pull request, and a reply in the same thread resumes that run for the next turn."
-    :finished
-    :still
-    @replay="replay"
-  >
-    <div class="grid text-[13px]/6 md:grid-cols-[minmax(0,1fr)_17rem]">
-      <section class="min-w-0 p-4 sm:p-5">
-        <header class="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-(--d-line) pb-3">
-          <span class="inline-flex items-center gap-1 rounded-full border border-(--d-line-strong) px-2 py-0.5 text-[11.5px] text-toned">
+    still
+    caption="Try it: post the comment. The mention starts one workflow run that reviews the pull request, and your reply resumes that same run instead of starting over.">
+    <template #controls>
+      <p class="text-[13px] text-muted">
+        {{ done ? 'That is the whole loop.' : turn === 0 ? 'Post the comment to mention the bot.' : 'Reply in the same thread.' }}
+      </p>
+      <button
+        type="button"
+        class="ms-auto h-7 rounded-md px-2.5 text-[13px] text-muted transition-colors hover:bg-(--d-raised) hover:text-highlighted disabled:opacity-40"
+        :disabled="!entries.length"
+        @click="reset"
+      >
+        Start over
+      </button>
+    </template>
+
+    <div class="flex h-[30rem] flex-col">
+      <header class="border-b border-(--d-line) px-4 py-3.5 sm:px-5">
+        <p class="text-[15px]/6 text-highlighted">
+          Retry failed uploads <span class="text-dimmed">#128</span>
+        </p>
+        <p class="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
+          <span class="inline-flex items-center gap-1 rounded-full bg-(--d-raised-strong) px-2 py-0.5 text-[12px] text-highlighted">
             <UIcon
               name="i-lucide-git-pull-request"
-              class="size-3"
+              class="size-3.5"
             />
             Open
           </span>
-          <span class="text-highlighted">Retry failed uploads</span>
-          <span class="text-dimmed">#128</span>
-        </header>
+          <span><span class="text-highlighted">ana</span> wants to merge 3 commits into <code class="font-mono text-[12px] text-toned">main</code></span>
+        </p>
+      </header>
 
-        <ol class="relative mt-4 flex flex-col gap-4 before:absolute before:inset-y-2 before:left-3 before:w-px before:bg-(--d-line)">
+      <div class="relative min-h-0 flex-1 overflow-hidden">
+        <div class="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-linear-to-b from-(--ui-bg) to-transparent" />
+        <TransitionGroup
+          tag="ol"
+          name="thread"
+          class="absolute inset-x-0 bottom-0 flex flex-col gap-3 px-4 pt-4 pb-3 sm:px-5"
+        >
           <li
-            class="d-step relative flex gap-3 transition-opacity duration-300"
-            :class="dimmed(1) ? 'opacity-40' : ''"
-            :data-on="shown > 0"
+            v-if="!entries.length"
+            key="empty"
+            class="py-6 text-center text-[13px] text-dimmed"
           >
-            <span class="relative grid size-6 shrink-0 place-items-center rounded-full border border-(--d-line-strong) bg-(--d-raised-strong) text-[11px] text-toned">A</span>
-            <div class="min-w-0 flex-1 rounded-lg border border-(--d-line) bg-default">
-              <p class="border-b border-(--d-line) px-3 py-1.5 text-[12px] text-muted">
-                <span class="text-highlighted">ana</span> commented
-              </p>
-              <p class="px-3 py-2 text-highlighted">
-                <span class="font-semibold">@my-review-agent</span> review this PR
-              </p>
-              <div class="px-3 pb-2">
-                <span
-                  class="d-step inline-flex items-center gap-1 rounded-full border border-(--d-line-strong) px-2 py-px text-[11.5px] text-toned"
-                  :data-on="reacted"
+            No comments yet.
+          </li>
+          <li
+            v-for="entry in entries"
+            :key="entry.id"
+          >
+            <div
+              v-if="entry.kind === 'comment'"
+              class="flex gap-3"
+            >
+              <LandingSceneAvatar
+                :name="entry.author === 'bot' ? 'my-review-agent' : 'ana'"
+                :bot="entry.author === 'bot'"
+              />
+              <div class="min-w-0 flex-1 overflow-hidden rounded-md border border-(--d-line)">
+                <p class="flex items-center gap-1.5 border-b border-(--d-line) bg-(--d-raised) px-3 py-1.5 text-[12.5px] text-muted">
+                  <span class="font-medium text-highlighted">{{ entry.author === 'bot' ? 'my-review-agent' : 'ana' }}</span>
+                  <span
+                    v-if="entry.author === 'bot'"
+                    class="rounded-full border border-(--d-line-strong) px-1.5 text-[12px]/4"
+                  >bot</span>
+                  <span>commented just now</span>
+                </p>
+                <p class="px-3 py-2.5 text-[13.5px]/5.5 text-highlighted">
+                  {{ entry.body }}
+                </p>
+                <p
+                  v-if="entry.author === 'ana'"
+                  class="px-3 pb-2.5"
                 >
-                  <UIcon
-                    name="i-lucide-eye"
-                    class="size-3"
-                  />
-                  eyes 1
-                </span>
+                  <span
+                    class="inline-flex h-6 items-center gap-1 rounded-full border border-(--d-line) px-2 text-[12px] text-toned transition-[opacity,transform] duration-300"
+                    :class="entry.reaction ? 'scale-100 opacity-100' : 'scale-90 opacity-0'"
+                  >👀 <span class="tabular-nums">1</span></span>
+                </p>
               </div>
             </div>
+            <p
+              v-else
+              class="flex flex-wrap items-center gap-x-2 gap-y-1 ps-10 text-[12.5px] text-muted"
+            >
+              <span class="size-1.5 rounded-full bg-(--ui-text-muted)" />
+              <span class="font-medium text-highlighted">my-review-agent</span>
+              {{ entry.text }}
+              <code class="font-mono text-[12px] text-toned">{{ entry.run }}</code>
+            </p>
           </li>
+        </TransitionGroup>
+      </div>
 
-          <li
-            class="d-step relative flex gap-3 transition-opacity duration-300"
-            :class="dimmed(1) ? 'opacity-40' : ''"
-            :data-on="shown > 1"
-          >
-            <span class="relative grid size-6 shrink-0 place-items-center rounded-full bg-(--d-signal) text-(--d-signal-fg)">
-              <UIcon
-                name="i-lucide-bot"
-                class="size-3.5"
-              />
-            </span>
-            <div class="min-w-0 flex-1 rounded-lg border border-(--d-line) bg-default">
-              <p class="border-b border-(--d-line) px-3 py-1.5 text-[12px] text-muted">
-                <span class="text-highlighted">my-review-agent</span> commented
-              </p>
-              <p class="px-3 py-2 text-default">
-                {{ REVIEW.slice(0, typedReview) }}<span
-                  v-if="typedReview > 0 && typedReview < REVIEW.length"
-                  class="d-caret"
-                />
-              </p>
-            </div>
-          </li>
-
-          <li
-            class="d-step relative flex gap-3 transition-opacity duration-300"
-            :class="dimmed(2) ? 'opacity-40' : ''"
-            :data-on="shown > 2"
-          >
-            <span class="relative grid size-6 shrink-0 place-items-center rounded-full border border-(--d-line-strong) bg-(--d-raised-strong) text-[11px] text-toned">A</span>
-            <div class="min-w-0 flex-1 rounded-lg border border-(--d-line) bg-default">
-              <p class="border-b border-(--d-line) px-3 py-1.5 text-[12px] text-muted">
-                <span class="text-highlighted">ana</span> commented
-              </p>
-              <p class="px-3 py-2 text-highlighted">
-                is the retry logic safe?
-              </p>
-            </div>
-          </li>
-
-          <li
-            class="d-step relative flex gap-3 transition-opacity duration-300"
-            :class="dimmed(2) ? 'opacity-40' : ''"
-            :data-on="shown > 3"
-          >
-            <span class="relative grid size-6 shrink-0 place-items-center rounded-full bg-(--d-signal) text-(--d-signal-fg)">
-              <UIcon
-                name="i-lucide-bot"
-                class="size-3.5"
-              />
-            </span>
-            <div class="min-w-0 flex-1 rounded-lg border border-(--d-line) bg-default">
-              <p class="border-b border-(--d-line) px-3 py-1.5 text-[12px] text-muted">
-                <span class="text-highlighted">my-review-agent</span> commented
-              </p>
-              <p class="px-3 py-2 text-default">
-                {{ ANSWER.slice(0, typedAnswer) }}<span
-                  v-if="typedAnswer > 0 && typedAnswer < ANSWER.length"
-                  class="d-caret"
-                />
-              </p>
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      <aside class="flex min-w-0 flex-col border-t border-(--d-line) p-4 sm:p-5 md:border-t-0 md:border-l">
-        <div
-          role="group"
-          aria-label="Show the path for one turn"
-          class="inline-flex w-fit rounded-lg border border-(--d-line) bg-(--d-raised-strong) p-0.5 text-[12px]"
-        >
+      <form
+        class="border-t border-(--d-line) p-3 sm:px-5"
+        @submit.prevent="post"
+      >
+        <div class="flex items-center gap-2 rounded-md border border-(--d-line-strong) bg-(--d-raised) py-1.5 ps-3 pe-1.5">
+          <span
+            class="min-w-0 flex-1 truncate text-[13.5px]"
+            :class="draft ? 'text-highlighted' : 'text-dimmed'"
+          >{{ draft || 'Conversation complete' }}</span>
           <button
-            v-for="t in ([1, 2] as const)"
-            :key="t"
-            type="button"
-            :aria-pressed="turn === t"
-            :disabled="!finished"
-            class="rounded-md px-2.5 py-1 transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--d-signal) disabled:cursor-default"
-            :class="turn === t ? 'bg-default text-highlighted shadow-xs ring-1 ring-(--d-line-strong)' : 'text-muted enabled:hover:text-highlighted'"
-            @click="pick(t)"
+            type="submit"
+            class="h-7 shrink-0 rounded-md bg-(--d-signal) px-3 text-[13px] font-medium text-(--d-signal-fg) transition-[opacity,transform] duration-150 active:scale-[0.97] disabled:opacity-40"
+            :disabled="busy || !draft"
           >
-            Turn {{ t }}: {{ TURNS[t].label }}
+            Comment
           </button>
         </div>
-
-        <ol class="mt-4 flex flex-col">
-          <template
-            v-for="(node, i) in NODES"
-            :key="node.name"
-          >
-            <li
-              class="flex gap-3 transition-opacity duration-300"
-              :class="nodeState(i) === 'idle' ? 'opacity-45' : ''"
-            >
-              <span
-                class="grid size-7 shrink-0 place-items-center rounded-md border transition-colors duration-300"
-                :class="{
-                  'border-(--d-line) text-dimmed': nodeState(i) === 'idle',
-                  'border-(--d-signal) text-highlighted': nodeState(i) === 'active',
-                  'border-(--d-signal) bg-(--d-signal) text-(--d-signal-fg)': nodeState(i) === 'done'
-                }"
-              >
-                <UIcon
-                  :name="nodeState(i) === 'done' ? 'i-lucide-check' : node.icon"
-                  class="size-3.5"
-                />
-              </span>
-              <div class="min-w-0 flex-1 pb-1">
-                <p class="text-[12px] text-dimmed">
-                  {{ node.name }}
-                </p>
-
-                <template v-if="i === 0">
-                  <code class="font-mono text-[12px] text-highlighted">POST /webhooks/github</code>
-                </template>
-
-                <template v-else-if="i === 1">
-                  <code class="font-mono text-[12px] text-highlighted">{{ current.chat }}</code>
-                  <p class="text-[11.5px]/5 text-muted">
-                    {{ current.chatNote }}
-                  </p>
-                </template>
-
-                <template v-else-if="i === 2">
-                  <code class="font-mono text-[12px] [overflow-wrap:anywhere] text-highlighted">{{ current.run }}</code>
-                  <p
-                    class="d-step mt-1 flex flex-wrap items-center gap-1.5"
-                    :data-on="runSeen"
-                  >
-                    <span
-                      class="rounded border px-1.5 font-mono text-[11px]/5 transition-colors duration-300"
-                      :class="sameRun ? 'border-(--d-signal) bg-(--d-signal) text-(--d-signal-fg)' : 'border-(--d-line-strong) text-toned'"
-                    >{{ RUN_ID }}</span>
-                    <span class="text-[11.5px]/5 text-muted">{{ current.runNote }}</span>
-                  </p>
-                </template>
-
-                <template v-else>
-                  <span class="font-mono text-[12px] text-highlighted">turn {{ turn }}</span>
-                  <span class="ml-1.5 text-[11.5px] text-muted">preset code-review</span>
-                  <ul class="mt-1.5 flex flex-col gap-1">
-                    <li
-                      v-for="(tool, j) in current.tools"
-                      :key="`${turn}-${tool}`"
-                      class="d-step flex items-center gap-1.5"
-                      :data-on="tools > j"
-                    >
-                      <UIcon
-                        :name="tools > j + 1 || rail > 4 ? 'i-lucide-check' : 'i-lucide-loader'"
-                        class="size-3 shrink-0 text-muted"
-                        :class="tools === j + 1 && rail === 4 ? 'animate-spin' : ''"
-                      />
-                      <code class="min-w-0 truncate font-mono text-[11.5px] text-toned">{{ tool }}</code>
-                    </li>
-                  </ul>
-                </template>
-              </div>
-            </li>
-
-            <li
-              v-if="i < NODES.length - 1"
-              aria-hidden="true"
-              class="relative ml-3.5 h-5 w-px overflow-visible bg-(--d-line)"
-            >
-              <span
-                class="absolute inset-0 origin-top bg-(--d-signal) transition-transform duration-300 ease-(--d-ease)"
-                :class="rail > i + 1 ? 'scale-y-100' : 'scale-y-0'"
-              />
-              <span
-                v-if="rail === i + 2"
-                class="d-pulse absolute -left-[2.5px] top-0 size-1.5 rounded-full bg-(--d-signal)"
-              />
-            </li>
-          </template>
-        </ol>
-      </aside>
+      </form>
     </div>
   </DocsFigure>
 </template>
 
 <style scoped>
-.d-caret {
-  display: inline-block;
-  width: 1px;
-  height: 1em;
-  margin-left: 1px;
-  vertical-align: -0.15em;
-  background: currentColor;
-  animation: d-blink 900ms steps(2, start) infinite;
+.thread-enter-active,
+.thread-move {
+  transition: opacity 320ms var(--d-ease), transform 320ms var(--d-ease);
 }
 
-.d-pulse {
-  animation: d-travel 520ms var(--d-ease) both;
+.thread-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
-@keyframes d-blink {
-  to {
-    visibility: hidden;
-  }
+.thread-leave-active {
+  display: none;
 }
 
-@keyframes d-travel {
-  from {
-    transform: translateY(0);
-    opacity: 1;
+@media (prefers-reduced-motion: reduce) {
+  .thread-enter-active,
+  .thread-move {
+    transition: opacity 150ms ease;
   }
 
-  to {
-    transform: translateY(20px);
-    opacity: 0;
+  .thread-enter-from {
+    transform: none;
   }
 }
 </style>

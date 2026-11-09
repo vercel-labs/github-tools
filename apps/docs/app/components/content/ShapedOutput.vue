@@ -80,21 +80,6 @@ const shaped = {
   closedAt: raw.closed_at
 }
 
-// Where each shaped field comes from in the raw response.
-const SOURCES: Record<string, keyof typeof shaped> = {
-  'number': 'number',
-  'title': 'title',
-  'body': 'body',
-  'state': 'state',
-  'html_url': 'url',
-  'user.login': 'author',
-  'assignees.*.login': 'assignees',
-  'labels.*.name': 'labels',
-  'comments': 'comments',
-  'created_at': 'createdAt',
-  'updated_at': 'updatedAt',
-  'closed_at': 'closedAt'
-}
 const FIELDS = Object.keys(shaped) as (keyof typeof shaped)[]
 
 interface JsonLine {
@@ -129,20 +114,51 @@ function leaves(value: unknown): number {
   return Object.values(value).reduce<number>((sum, child) => sum + leaves(child), 0)
 }
 
+/** Splits a JSON line into a key and a value, so each can take its own color. */
+function tokenize(text: string) {
+  const match = /^\s*("(?:[^"\\]|\\.)*":\s)?(.*)$/.exec(text)!
+  const value = match[2]!
+  return { key: match[1] ?? '', value, string: value.startsWith('"') }
+}
+
 // About four characters per token, on the compact JSON the model is sent.
 const tokens = (value: unknown) => Math.round(JSON.stringify(value).length / 4 / 10) * 10
 
-// Each line carries the index of the shaped field it feeds, or -1.
-const rawLines = jsonLines(raw).map(line => ({ ...line, field: SOURCES[line.path] ? FIELDS.indexOf(SOURCES[line.path]!) : -1 }))
-const shapedLines = jsonLines(shaped).map(line => ({ ...line, field: line.depth === 0 ? -1 : FIELDS.indexOf(line.path.split('.')[0] as keyof typeof shaped) }))
+const rawLines = jsonLines(raw)
+// A few real lines of the raw response, in its field order; skeleton rows stand in for the rest.
+const RAW_ROWS: ({ skeleton: string } | ReturnType<typeof rawRow>)[] = [
+  rawRow(''),
+  { skeleton: '84%' },
+  { skeleton: '62%' },
+  rawRow('id'),
+  rawRow('node_id'),
+  rawRow('number'),
+  rawRow('title'),
+  ...['78%', '52%', '86%', '40%', '70%', '58%', '82%', '46%', '66%'].map(skeleton => ({ skeleton }))
+]
+
+function rawRow(path: string) {
+  const line = rawLines.find(l => l.path === path)!
+  return { ...line, ...tokenize(line.text) }
+}
+const shapedLines = jsonLines(shaped).map(line => ({
+  ...line,
+  ...tokenize(line.text),
+  field: line.depth === 0 ? -1 : FIELDS.indexOf(line.path.split('.')[0] as keyof typeof shaped)
+}))
 const rawStats = { fields: leaves(raw), tokens: tokens(raw) }
 
-const shown = ref(0)
-const picked = ref(0)
-const tracing = ref(false)
+// The shaped fields appear in four groups of three, in the order getIssueCore builds them.
+const GROUP = 3
+const GROUPS = Math.ceil(FIELDS.length / GROUP)
+const groupOf = (field: number) => Math.floor(field / GROUP)
+
+const shown = ref(false)
+const groups = ref(0)
 const rawCount = ref(0)
 const shapedCount = ref(0)
 
+const picked = computed(() => Math.min(FIELDS.length, groups.value * GROUP))
 const partial = computed(() => Object.fromEntries(FIELDS.slice(0, picked.value).map(key => [key, shaped[key]])))
 const shapedFields = computed(() => leaves(partial.value))
 
@@ -160,55 +176,34 @@ function countTo(target: Ref<number>, to: number, ms: number) {
   requestAnimationFrame(frame)
 }
 
-const pane = useTemplateRef<HTMLElement>('pane')
-
-function pick(count: number) {
-  picked.value = count
-  countTo(shapedCount, tokens(partial.value), 360)
-  const line = pane.value?.querySelector<HTMLElement>(`[data-field="${count - 1}"]`)
-  if (line) pane.value!.scrollTo({ top: line.offsetTop - 56, behavior: 'smooth' })
-}
-
-const PICK = 420
+const DURATIONS = [1500, ...Array.from({ length: GROUPS }, () => 1300)]
+const AT = timeline(DURATIONS)
 
 const { root, finished, still, replay } = useFigure({
   steps: [
-    { at: 200, run: () => {
-      shown.value = 1
-      countTo(rawCount, rawStats.tokens, 1100)
+    { at: AT[0]!, run: () => {
+      shown.value = true
+      countTo(rawCount, rawStats.tokens, 1200)
     } },
-    { at: 1500, run: () => {
-      shown.value = 2
-      tracing.value = true
-    } },
-    ...FIELDS.map((_, i) => ({ at: 1900 + i * PICK, run: () => pick(i + 1) })),
-    { at: 1900 + FIELDS.length * PICK + 300, run: () => {
-      tracing.value = false
-    } }
+    ...Array.from({ length: GROUPS }, (_, g) => ({ at: AT[g + 1]!, run: () => {
+      groups.value = g + 1
+      countTo(shapedCount, tokens(partial.value), 600)
+    } }))
   ],
   reset: () => {
     run++
-    shown.value = 0
-    picked.value = 0
-    tracing.value = false
+    shown.value = false
+    groups.value = 0
     rawCount.value = 0
     shapedCount.value = 0
-    pane.value?.scrollTo({ top: 0 })
   },
   settle: () => {
-    shown.value = 2
-    picked.value = FIELDS.length
+    shown.value = true
+    groups.value = GROUPS
     rawCount.value = rawStats.tokens
     shapedCount.value = tokens(shaped)
   }
 })
-
-function rawClass(field: number) {
-  if (shown.value < 2) return 'text-muted'
-  if (field === -1 || field >= picked.value) return 'text-dimmed'
-  if (tracing.value && field === picked.value - 1) return 'bg-(--d-line) font-medium text-highlighted'
-  return 'font-medium text-highlighted'
-}
 
 const format = (n: number) => n.toLocaleString('en-US')
 </script>
@@ -216,67 +211,127 @@ const format = (n: number) => n.toLocaleString('en-US')
 <template>
   <DocsFigure
     ref="root"
-    caption="The same issue twice: the REST response GitHub sends, and the getIssue result the SDK builds from it, field by field. The model only ever reads the right side."
+    caption="The model only reads the right side. GitHub's REST response for an issue carries over a hundred fields, and getIssue returns the few the model needs."
     :finished
     :still
     @replay="replay"
   >
-    <div class="grid sm:grid-cols-2">
-      <section
-        class="d-step flex min-w-0 flex-col border-b border-(--d-line) sm:border-r sm:border-b-0"
-        :data-on="shown > 0"
-        aria-label="GitHub REST response"
-      >
-        <header class="flex items-baseline justify-between gap-3 border-b border-(--d-line) px-4 py-2.5 text-[12.5px]">
-          <span class="text-highlighted">GitHub REST response</span>
-          <code class="truncate font-mono text-dimmed">GET /repos/…/issues/1347</code>
-        </header>
-        <div class="relative h-72 sm:h-auto sm:flex-1">
-          <pre
-            ref="pane"
-            class="d-fade absolute inset-0 overflow-auto py-3 pb-14 font-mono text-[12px]/[1.7]"
-            tabindex="0"
-            aria-label="Raw issue JSON, scrollable"
-          ><span
-            v-for="(line, i) in rawLines"
-            :key="i"
-            class="block w-max min-w-full px-4 transition-[color,background-color] duration-300"
-            :class="rawClass(line.field)"
-            :data-field="line.field === -1 ? undefined : line.field"
-          >{{ line.text }}</span></pre>
-        </div>
-        <footer class="mt-auto border-t border-(--d-line) px-4 py-2.5 text-[12.5px] text-muted tabular-nums">
-          {{ rawStats.fields }} fields, about {{ format(rawCount) }} tokens
-        </footer>
-      </section>
+    <div class="@container px-4 py-8 sm:px-8 sm:py-10">
+      <div class="mx-auto grid max-w-3xl gap-4 @2xl:grid-cols-2">
+        <section
+          class="panel"
+          aria-label="GitHub REST response"
+        >
+          <header class="panel-head">
+            <span class="font-mono text-[12px]/5 text-highlighted">GET /issues/1347</span>
+            <span class="flex items-center gap-2.5 text-[12px]/5 text-muted tabular-nums">
+              <span>{{ rawStats.fields }} fields</span>
+              <span class="font-mono text-toned">{{ format(rawCount) }} tokens</span>
+            </span>
+          </header>
+          <div
+            class="d-step code"
+            :data-on="shown"
+          >
+            <template
+              v-for="(row, i) in RAW_ROWS"
+              :key="i"
+            >
+              <div
+                v-if="'skeleton' in row"
+                class="flex h-5 items-center ps-[2ch]"
+                aria-hidden="true"
+              >
+                <span
+                  class="h-1.5 rounded-full bg-(--d-raised-strong)"
+                  :style="{ width: row.skeleton }"
+                />
+              </div>
+              <div
+                v-else
+                class="line"
+                :style="{ paddingLeft: `${row.depth * 2}ch` }"
+              >
+                <span
+                  v-if="row.key"
+                  class="key"
+                >{{ row.key }}</span><span :class="row.string ? 'text-(--d-ok)' : 'text-highlighted'">{{ row.value }}</span>
+              </div>
+            </template>
+            <div class="line text-highlighted">
+              }
+            </div>
+          </div>
+        </section>
 
-      <section
-        class="d-step flex min-w-0 flex-col"
-        :data-on="shown > 1"
-        aria-label="getIssue result"
-      >
-        <header class="flex items-baseline justify-between gap-3 border-b border-(--d-line) px-4 py-2.5 text-[12.5px]">
-          <span class="text-highlighted">getIssue result</span>
-          <span class="text-dimmed">what the model reads</span>
-        </header>
-        <pre class="py-3 font-mono text-[12px]/[1.7] [overflow-wrap:anywhere] whitespace-pre-wrap text-highlighted"><span
-          v-for="(line, i) in shapedLines"
-          :key="i"
-          class="d-step block px-4"
-          :class="tracing && line.field !== -1 && line.field === picked - 1 ? 'bg-(--d-line)' : ''"
-          :data-on="line.field < picked"
-          :style="{ paddingLeft: `calc(1rem + ${line.depth * 2 + 2}ch)`, textIndent: '-2ch' }"
-        >{{ line.text.trimStart() }}</span></pre>
-        <footer class="mt-auto border-t border-(--d-line) px-4 py-2.5 pr-20 text-[12.5px] text-muted tabular-nums">
-          {{ shapedFields }} fields, about {{ format(shapedCount) }} tokens
-        </footer>
-      </section>
+        <section
+          class="panel"
+          aria-label="getIssue result"
+        >
+          <header class="panel-head">
+            <span class="font-mono text-[12px]/5 text-highlighted">getIssue</span>
+            <span class="flex items-center gap-2.5 text-[12px]/5 text-muted tabular-nums">
+              <span>{{ shapedFields }} fields</span>
+              <span class="font-mono text-(--d-ok)">{{ format(shapedCount) }} tokens</span>
+            </span>
+          </header>
+          <div class="code">
+            <div
+              v-for="(line, i) in shapedLines"
+              :key="i"
+              class="d-step line"
+              :data-on="line.field === -1 ? groups > 0 : groupOf(line.field) < groups"
+              :style="{ paddingLeft: `${line.depth * 2}ch` }"
+            >
+              <span
+                v-if="line.key"
+                class="key"
+              >{{ line.key }}</span><span :class="line.string ? 'text-(--d-ok)' : 'text-highlighted'">{{ line.value }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   </DocsFigure>
 </template>
 
 <style scoped>
-.d-fade {
-  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+.panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--d-line-strong);
+  background: var(--d-raised);
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--d-line);
+  padding: 0.5rem 0.75rem;
+}
+
+.code {
+  padding: 0.625rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 20px;
+}
+
+/* A long value wraps in its own column, next to its key. */
+.line {
+  display: flex;
+  overflow-wrap: anywhere;
+}
+
+.key {
+  flex-shrink: 0;
+  white-space: pre;
+  color: var(--ui-text-muted);
 }
 </style>

@@ -2,317 +2,271 @@
 type Mode = 'write' | 'read'
 
 interface Node {
+  icon: string
   title: string
-  sub: string
-  /** Dashed box the node sits in: a process boundary. */
+  sub: Record<Mode, string>
+  /** Waiting on a person in this mode. */
+  warn?: Record<Mode, boolean>
+  ok?: boolean
+}
+
+interface Block {
+  /** The process the nodes run in, drawn as a dashed box. */
   group?: string
-  approval?: boolean
+  nodes: Node[]
+  /** Tags on the connectors between the nodes of a group. */
+  inner?: string[]
 }
 
 interface Lane {
   name: string
-  nodes: Node[]
-  /** Label of the connector after each node but the last. */
+  hops: number
+  blocks: Block[]
+  /** Tags on the connectors between blocks. */
   edges: string[]
 }
+
+function both(v: string): Record<Mode, string> {
+  return { write: v, read: v }
+}
+
+const API: Node = { icon: 'i-simple-icons-github', title: 'GitHub API', sub: both('api.github.com'), ok: true }
 
 const LANES: Lane[] = [
   {
     name: 'GitHub tools',
-    nodes: [
-      { title: 'Model', sub: 'calls a tool by name' },
-      { title: 'Your agent code', sub: 'AI SDK, eve, TanStack AI, Workflow', group: 'Your process', approval: true },
-      { title: 'GitHub tools', sub: 'typed tool, Zod input', group: 'Your process' },
-      { title: 'GitHub API', sub: 'api.github.com' }
+    hops: 3,
+    blocks: [
+      { nodes: [{ icon: 'i-lucide-cpu', title: 'Model', sub: { write: 'addLabels({ issueNumber: 12, … })', read: 'getIssue({ issueNumber: 12 })' } }] },
+      {
+        group: 'your process',
+        nodes: [
+          { icon: 'i-lucide-hand', title: 'Your agent code', sub: { write: 'asks a person first', read: 'a read runs at once' }, warn: { write: true, read: false } },
+          { icon: 'i-lucide-wrench', title: 'GitHub tools', sub: both('typed tool, Zod input') }
+        ],
+        inner: ['function call']
+      },
+      { nodes: [API] }
     ],
-    edges: ['tool call', 'function call', 'HTTPS, with your token']
+    edges: ['tool call', 'HTTPS']
   },
   {
     name: 'GitHub MCP server',
-    nodes: [
-      { title: 'Model', sub: 'calls a tool by name' },
-      { title: 'MCP host', sub: 'VS Code, Cursor, Claude Desktop', group: 'Host process', approval: true },
-      { title: 'MCP client', sub: 'lists and calls the server\'s tools', group: 'Host process' },
-      { title: 'GitHub MCP server', sub: 'remote, or Docker or a Go binary', group: 'Separate process or remote' },
-      { title: 'GitHub API', sub: 'api.github.com' }
+    hops: 4,
+    blocks: [
+      { nodes: [{ icon: 'i-lucide-cpu', title: 'Model', sub: both('a tool from the issues toolset') }] },
+      {
+        group: 'host process',
+        nodes: [
+          { icon: 'i-lucide-hand', title: 'MCP host', sub: both('its settings decide'), warn: { write: true, read: true } },
+          { icon: 'i-lucide-plug', title: 'MCP client', sub: both('lists and calls tools') }
+        ],
+        inner: ['inside the host']
+      },
+      { group: 'separate process or remote', nodes: [{ icon: 'i-lucide-server', title: 'GitHub MCP server', sub: both('remote, Docker or Go binary') }] },
+      { nodes: [API] }
     ],
-    edges: ['tool call', 'inside the host', 'MCP, over HTTP or stdio', 'HTTPS']
+    edges: ['tool call', 'MCP, HTTP or stdio', 'HTTPS']
   }
 ]
 
-const CALLS: Record<Mode, string> = {
-  write: 'addLabels({ issueNumber: 12, labels: [\'bug\'] })',
-  read: 'getIssue({ issueNumber: 12 })'
+const PROMPTS: Record<Mode, string> = {
+  write: 'Add the bug label to issue 12.',
+  read: 'What is issue 12 about?'
 }
+
+const MODES = ['write', 'read'] as const
+const OPTIONS = [{ value: 'write' as const, label: 'A write' }, { value: 'read' as const, label: 'A read' }]
 
 const mode = ref<Mode>('write')
-// Per lane: nodes reached, the edge being travelled (-1 for none), and whether approval is settled.
-const reached = ref([0, 0])
-const moving = ref([-1, -1])
-const runs = ref([0, 0])
-const decided = ref([false, false])
-const hops = ref([0, 0])
 
-function patch(r: Ref<number[]>, lane: number, value: number) {
-  r.value = r.value.map((v, i) => (i === lane ? value : v))
-}
+const { root, still } = useFigure({ steps: [], reset: () => {}, settle: () => {}, autoplay: false })
 
-const EDGE_MS = 650
-
-function laneSteps(lane: number, only?: Mode) {
-  const l = LANES[lane]!
-  const guard = (fn: () => void) => () => {
-    if (!only || mode.value === only) fn()
-  }
-  const out: { at: number, run: () => void }[] = [{ at: 300, run: guard(() => patch(reached, lane, 1)) }]
-  let t = 600
-  l.nodes.slice(1).forEach((node, i) => {
-    out.push({ at: t, run: guard(() => {
-      patch(moving, lane, i)
-      patch(runs, lane, runs.value[lane]! + 1)
-    }) })
-    t += EDGE_MS
-    out.push({ at: t, run: guard(() => {
-      patch(moving, lane, -1)
-      patch(reached, lane, i + 2)
-      patch(hops, lane, i + 1)
-    }) })
-    if (node.approval) {
-      // In your code a write waits for a person and a read runs; in the MCP lane the host's setting decides.
-      t += lane === 1 ? 900 : only === 'write' ? 1900 : 350
-      out.push({ at: t, run: guard(() => {
-        decided.value = decided.value.map((d, j) => (j === lane ? true : d))
-      }) })
-    }
-    t += 150
-  })
-  return out
-}
-
-const { root, finished, still, replay } = useFigure({
-  steps: [...laneSteps(0, 'write'), ...laneSteps(0, 'read'), ...laneSteps(1)],
-  reset: () => {
-    reached.value = [0, 0]
-    moving.value = [-1, -1]
-    decided.value = [false, false]
-    hops.value = [0, 0]
-  },
-  settle: () => {
-    reached.value = LANES.map(l => l.nodes.length)
-    moving.value = [-1, -1]
-    decided.value = [true, true]
-    hops.value = LANES.map(l => l.edges.length)
-  }
-})
-
-function pick(m: Mode) {
-  mode.value = m
-  replay()
-}
-
-function approvalText(lane: number) {
-  if (lane === 1) return decided.value[1] ? 'Decided by the host' : 'Approval: the host decides'
-  if (mode.value === 'read') return 'Read, runs without asking'
-  return decided.value[0] ? 'Approved by a person' : 'Write, waiting for a person'
-}
-
-function waiting(lane: number) {
-  return lane === 0 && mode.value === 'write' && reached.value[0]! >= 2 && !decided.value[0]
-}
-
-type Box = 'none' | 'start' | 'mid' | 'end' | 'only'
-
-/** Nodes and connectors in order; a connector between two nodes of one group sits inside its box. */
-function rows(lane: Lane) {
-  const out: { kind: 'node' | 'edge', i: number, box: Box }[] = []
-  lane.nodes.forEach((node, i) => {
-    out.push({ kind: 'node', i, box: groupPos(lane, i) })
-    if (i < lane.edges.length) {
-      const inside = node.group !== undefined && lane.nodes[i + 1]?.group === node.group
-      out.push({ kind: 'edge', i, box: inside ? 'mid' : 'none' })
-    }
-  })
-  return out
-}
-
-function groupPos(lane: Lane, i: number): Box {
-  const g = lane.nodes[i]!.group
-  if (!g) return 'none'
-  const prev = lane.nodes[i - 1]?.group === g
-  const next = lane.nodes[i + 1]?.group === g
-  if (prev && next) return 'mid'
-  if (prev) return 'end'
-  if (next) return 'start'
-  return 'only'
+function swap(m: Mode) {
+  return mode.value === m ? 'visible opacity-100' : 'invisible opacity-0'
 }
 </script>
 
 <template>
   <DocsFigure
     ref="root"
-    caption="With GitHub tools, the call stays in your process and your code decides approval; with the MCP server, it crosses to a separate server and the MCP host decides."
-    :finished
+    caption="Who decides approval. With GitHub tools the call stays in your process and your code asks a person; with the MCP server it crosses to a separate server and the MCP host decides."
+    finished
     :still
-    @replay="replay"
   >
-    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-(--d-line) px-4 py-2.5 sm:px-6">
-      <p class="text-[12.5px] text-muted">
-        You: <span class="text-highlighted">{{ mode === 'write' ? 'Add the bug label to issue 12.' : 'What is issue 12 about?' }}</span>
+    <template #controls>
+      <FigureTabs
+        v-model="mode"
+        label="Call"
+        :options="OPTIONS"
+        show-label
+      />
+      <p class="flex min-w-0 items-baseline gap-2.5 text-[13px]/5">
+        <span class="d-label shrink-0">You</span>
+        <span class="d-stack">
+          <span
+            v-for="m in MODES"
+            :key="m"
+            class="text-highlighted"
+            :class="swap(m)"
+            :aria-hidden="mode !== m"
+          >{{ PROMPTS[m] }}</span>
+        </span>
       </p>
-      <div
-        class="flex gap-1 transition-opacity duration-300"
-        :class="finished ? 'opacity-100' : 'pointer-events-none opacity-0'"
-      >
-        <button
-          v-for="m in (['write', 'read'] as const)"
-          :key="m"
-          type="button"
-          :tabindex="finished ? 0 : -1"
-          :aria-pressed="mode === m"
-          class="rounded-md px-2 py-0.5 text-[12px] ring-1 transition-[color,background-color,box-shadow,transform] duration-150 ring-inset focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--d-signal) active:scale-[0.97]"
-          :class="mode === m ? 'bg-(--d-raised-strong) text-highlighted ring-(--d-line-strong)' : 'text-muted ring-transparent hover:text-highlighted'"
-          @click="pick(m)"
+    </template>
+
+    <div class="@container px-4 py-8 sm:px-8 sm:py-10">
+      <div class="mx-auto grid max-w-3xl items-start gap-x-8 gap-y-10 @lg:grid-cols-2">
+        <section
+          v-for="lane in LANES"
+          :key="lane.name"
+          class="flex min-w-0 flex-col items-center"
+          :aria-label="lane.name"
         >
-          {{ m === 'write' ? 'A write' : 'A read' }}
-        </button>
-      </div>
-    </div>
+          <p class="mb-3 flex w-full items-baseline justify-between gap-3">
+            <span class="text-[13px] font-medium text-highlighted">{{ lane.name }}</span>
+            <span class="text-[12px] text-muted tabular-nums">{{ lane.hops }} hops</span>
+          </p>
 
-    <div class="grid sm:grid-cols-2">
-      <section
-        v-for="(lane, li) in LANES"
-        :key="lane.name"
-        class="flex flex-col p-4 sm:p-5"
-        :class="li === 0 ? 'border-b border-(--d-line) sm:border-r sm:border-b-0' : ''"
-      >
-        <header class="mb-3 flex items-baseline justify-between gap-3">
-          <h4 class="text-[13px] text-highlighted">
-            {{ lane.name }}
-          </h4>
-          <span class="inline-flex items-baseline gap-1.5 text-[12px] text-dimmed">
-            Hops
-            <span class="font-mono text-[15px] text-highlighted tabular-nums">{{ hops[li] }}</span>
-          </span>
-        </header>
-
-        <ol class="flex flex-col">
-          <li
-            v-for="row in rows(lane)"
-            :key="`${row.kind}-${row.i}`"
-            class="relative border-dashed border-(--d-line-strong)"
-            :class="{
-              'mt-1 rounded-t-lg border-x border-t px-2 pt-6': row.box === 'start',
-              'border-x px-2': row.box === 'mid',
-              'mb-1 rounded-b-lg border-x border-b px-2 pb-2': row.box === 'end',
-              'my-1 rounded-lg border px-2 pt-6 pb-2': row.box === 'only'
-            }"
+          <template
+            v-for="(block, bi) in lane.blocks"
+            :key="bi"
           >
-            <template v-if="row.kind === 'node'">
-              <span
-                v-if="row.box === 'start' || row.box === 'only'"
-                class="absolute top-1.5 left-2.5 text-[11px] text-dimmed"
-              >{{ lane.nodes[row.i]!.group }}</span>
-              <div
-                class="d-step flex flex-col gap-1 rounded-lg border bg-(--d-raised) px-3 py-2 transition-[border-color,box-shadow] duration-300"
-                :data-on="reached[li]! > row.i"
-                :class="waiting(li) && lane.nodes[row.i]!.approval ? 'border-(--d-warn)/60' : reached[li] === row.i + 1 && moving[li] === -1 && !finished ? 'border-(--d-signal)' : 'border-(--d-line-strong)'"
-              >
-                <div class="flex items-baseline justify-between gap-2">
-                  <span class="text-[12.5px] text-highlighted">{{ lane.nodes[row.i]!.title }}</span>
-                  <span
-                    v-if="row.i === lane.nodes.length - 1 && reached[li] === lane.nodes.length"
-                    class="font-mono text-[11.5px] text-muted"
-                  >200</span>
-                </div>
-                <span class="text-[11.5px]/4 text-dimmed">{{ lane.nodes[row.i]!.sub }}</span>
-                <code
-                  v-if="row.i === 0 && li === 0"
-                  class="mt-0.5 font-mono text-[11.5px]/4 [overflow-wrap:anywhere] text-muted"
-                >{{ CALLS[mode] }}</code>
-                <span
-                  v-else-if="row.i === 0"
-                  class="mt-0.5 text-[11.5px]/4 text-muted"
-                >From the issues toolset</span>
-                <span
-                  v-if="lane.nodes[row.i]!.approval"
-                  class="mt-1 inline-flex items-center gap-1.5 self-start rounded-md border px-1.5 py-0.5 text-[11.5px] transition-colors duration-300"
-                  :class="waiting(li) ? 'border-(--d-warn)/50 text-toned' : 'border-(--d-line-strong) text-muted'"
-                >
-                  <UIcon
-                    :name="waiting(li) ? 'i-lucide-hand' : 'i-lucide-shield-check'"
-                    class="size-3.5"
-                    :class="waiting(li) ? 'text-(--d-warn)' : 'text-highlighted'"
-                  />
-                  {{ approvalText(li) }}
-                </span>
-              </div>
-            </template>
+            <div
+              v-if="bi > 0"
+              class="wire"
+            >
+              <span class="tag">{{ lane.edges[bi - 1] }}</span>
+            </div>
 
             <div
-              v-else
-              class="relative flex h-9 items-center ps-4"
-              :class="row.box === 'mid' ? 'ms-3' : 'ms-5'"
+              class="flex w-full flex-col items-center"
+              :class="block.group ? 'group-box' : ''"
             >
               <span
-                class="absolute inset-y-0 left-0 w-px transition-colors duration-300"
-                :class="moving[li] === row.i ? 'bg-(--d-signal)' : 'bg-(--d-line-strong)'"
-              />
-              <span
-                v-if="moving[li] === row.i"
-                :key="runs[li]"
-                class="hop-dot"
-                aria-hidden="true"
-              />
-              <span
-                class="text-[11.5px] transition-colors duration-300"
-                :class="moving[li] === row.i ? 'text-highlighted' : 'text-dimmed'"
-              >{{ lane.edges[row.i] }}</span>
+                v-if="block.group"
+                class="group-label"
+              >{{ block.group }}</span>
+              <template
+                v-for="(node, ni) in block.nodes"
+                :key="node.title"
+              >
+                <div
+                  v-if="ni > 0"
+                  class="wire"
+                >
+                  <span class="tag">{{ block.inner?.[ni - 1] }}</span>
+                </div>
+                <div
+                  class="node"
+                  :class="node.warn?.[mode] ? 'node-warn' : ''"
+                >
+                  <span class="tile">
+                    <UIcon
+                      :name="node.icon"
+                      class="size-4"
+                      :class="node.warn?.[mode] ? 'text-(--d-warn)' : 'text-toned'"
+                    />
+                  </span>
+                  <span class="flex min-w-0 flex-col">
+                    <span class="flex items-center gap-2 text-[13px]/5 font-medium text-highlighted">
+                      {{ node.title }}
+                      <span
+                        v-if="node.ok"
+                        class="font-mono text-[12px] font-normal text-(--d-ok)"
+                      >200</span>
+                    </span>
+                    <span class="d-stack">
+                      <span
+                        v-for="m in MODES"
+                        :key="m"
+                        class="font-mono text-[12px]/4 [overflow-wrap:anywhere]"
+                        :class="[swap(m), node.warn?.[m] ? 'text-(--d-warn)' : 'text-muted']"
+                        :aria-hidden="mode !== m"
+                      >{{ node.sub[m] }}</span>
+                    </span>
+                  </span>
+                </div>
+              </template>
             </div>
-          </li>
-        </ol>
-      </section>
+          </template>
+        </section>
+      </div>
     </div>
   </DocsFigure>
 </template>
 
 <style scoped>
-.hop-dot {
-  position: absolute;
-  inset-block: 0;
-  left: 0;
-  width: 0;
-  animation: hop-run 650ms cubic-bezier(0.45, 0, 0.55, 1) forwards;
+.wire {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 2.5rem;
+  width: 100%;
 }
 
-.hop-dot::after {
+.wire::before {
   content: '';
   position: absolute;
-  bottom: -3.5px;
-  left: -3px;
-  width: 7px;
-  height: 7px;
-  border-radius: 9999px;
-  background: var(--d-signal);
-  box-shadow: 0 0 0 3px var(--d-raised);
+  inset-block: 0;
+  left: 50%;
+  border-left: 1px dashed var(--d-line-strong);
 }
 
-@keyframes hop-run {
-  from {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
+.tag {
+  position: relative;
+  border-radius: 4px;
+  padding: 0 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  color: var(--ui-text-toned);
+  background: var(--ui-bg);
+  box-shadow: inset 0 0 0 1px var(--d-line-strong);
+}
 
-  15% {
-    opacity: 1;
-  }
+.group-box {
+  position: relative;
+  border-radius: 10px;
+  border: 1px dashed var(--d-line-strong);
+  padding: 1.5rem 0.5rem 0.5rem;
+}
 
-  85% {
-    opacity: 1;
-  }
+.group-label {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.625rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ui-text-dimmed);
+}
 
-  to {
-    transform: translateY(0);
-    opacity: 0;
-  }
+.node {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--d-line-strong);
+  background: var(--d-raised);
+  padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+}
+
+.node-warn {
+  border-color: color-mix(in oklab, var(--d-warn) 50%, transparent);
+  background: var(--d-warn-bg);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--d-line);
+  background: var(--ui-bg);
 }
 </style>

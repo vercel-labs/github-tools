@@ -14,8 +14,8 @@ function tag(node: MinimarkNode) {
 }
 
 /**
- * Questions and answers from a page's `## FAQ` section: each `###` heading is a question,
- * and the paragraphs and lists under it, up to the next heading, are its answer.
+ * Questions and answers from a page's `## FAQ` section: each `accordion-item` is a question
+ * (its `label`), and the text inside it is the answer.
  */
 export function faqFromBody(body: MinimarkBody | undefined) {
   const nodes = body?.value ?? []
@@ -24,18 +24,17 @@ export function faqFromBody(body: MinimarkBody | undefined) {
 
   const faq: { question: string, answer: string }[] = []
   for (const node of nodes.slice(start + 1)) {
-    const name = tag(node)
-    if (name === 'h2') break
-    if (name === 'h3') {
-      faq.push({ question: text(node).trim(), answer: '' })
-      continue
-    }
-    const current = faq.at(-1)
-    if (current && (name === 'p' || name === 'ul' || name === 'ol')) {
-      current.answer = [current.answer, text(node).trim()].filter(Boolean).join(' ')
+    if (tag(node) === 'h2') break
+    if (typeof node === 'string' || node[0] !== 'accordion') continue
+    const [, , ...items] = node
+    for (const item of items) {
+      if (typeof item === 'string' || item[0] !== 'accordion-item') continue
+      const [, props, ...children] = item
+      const answer = children.map(child => text(child).trim()).filter(Boolean).join(' ')
+      if (typeof props.label === 'string' && answer) faq.push({ question: props.label, answer })
     }
   }
-  return faq.filter(entry => entry.answer)
+  return faq
 }
 
 /** Minutes to read the page's prose at 220 words a minute, code included. */

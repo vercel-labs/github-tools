@@ -89,10 +89,13 @@ export default defineAppConfig({
       primary: 'neutral',
       neutral: 'neutral',
     },
+    container: {
+      base: 'w-full max-w-(--ui-container) mx-auto px-6',
+    },
     header: {
       slots: {
         root: 'bg-default/80 backdrop-blur border-b border-default h-(--ui-header-height) sticky top-0 z-50',
-        container: 'max-w-[72rem]',
+        right: 'flex items-center justify-end lg:flex-1 gap-1 md:gap-1.5',
       },
     },
     pageHeader: {
@@ -101,6 +104,26 @@ export default defineAppConfig({
         title: 'text-[2rem]/10 sm:text-[2.5rem]/12 font-[450] tracking-[-0.035em] text-pretty text-highlighted',
         description: 'text-lg/7 font-normal text-toned mt-3',
         headline: 'hidden',
+      },
+    },
+    contentSearch: {
+      slots: {
+        modal: 'rounded-xl border border-default bg-default shadow-2xl ring-0',
+      },
+      variants: {
+        fullscreen: {
+          false: {
+            modal: 'sm:max-w-2xl h-full sm:h-[26rem]',
+          },
+        },
+      },
+    },
+    commandPalette: {
+      slots: {
+        input: '[&>input]:text-[15px]',
+        label: 'px-2.5 pt-2.5 pb-1 text-xs font-normal text-muted',
+        item: 'px-2.5 py-2 text-sm before:rounded-md',
+        itemLeadingIcon: 'size-4 text-muted group-data-highlighted:text-highlighted',
       },
     },
     contentToc: {
@@ -218,7 +241,7 @@ export default defineAppConfig({
     pageLinks: {
       slots: {
         root: 'flex flex-col gap-1.5',
-        title: 'text-[11px] font-medium uppercase tracking-wider text-muted',
+        title: 'text-[12px] font-medium uppercase tracking-wider text-muted',
         list: 'flex flex-col gap-px',
         link: 'w-full min-w-0 items-start text-left rounded-md px-2 py-1.5 transition-colors',
         linkLabel: 'min-w-0 flex-1 whitespace-normal text-left text-[13px]/5 text-pretty',

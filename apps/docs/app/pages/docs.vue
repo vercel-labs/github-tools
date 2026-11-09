@@ -35,18 +35,17 @@ useSeoMeta({
 
 <template>
   <div class="mx-auto max-w-5xl py-14 sm:py-20">
-    <h1 class="home-rise text-[2.5rem]/12 font-[450] tracking-[-0.04em] text-highlighted sm:text-5xl/[56px]">
+    <h1 class="text-[2.5rem]/12 font-[450] tracking-[-0.04em] text-highlighted sm:text-5xl/[56px]">
       GitHub tools docs
     </h1>
     <p
-      class="home-rise mt-4 max-w-[68ch] text-lg/7 text-toned"
-      style="--i: 1"
+      class="mt-4 max-w-[68ch] text-lg/7 text-toned"
     >
       {{ description }}
     </p>
 
     <section
-      v-for="(section, sectionIndex) in sections"
+      v-for="section in sections"
       :key="section.label"
       class="mt-14"
     >
@@ -55,11 +54,10 @@ useSeoMeta({
       </h2>
       <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <NuxtLink
-          v-for="(card, index) in section.cards"
+          v-for="card in section.cards"
           :key="card.to"
           :to="card.to"
-          class="home-card group flex flex-col overflow-hidden rounded-lg border border-default bg-muted transition-[background-color,border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-accented hover:bg-elevated"
-          :style="{ '--i': sectionIndex * 4 + index }"
+          class="group flex flex-col overflow-hidden rounded-lg border border-default bg-muted transition-[background-color,border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-accented hover:bg-elevated"
         >
           <div class="h-32 p-5">
             <UIcon
@@ -81,25 +79,3 @@ useSeoMeta({
     </section>
   </div>
 </template>
-
-<style>
-.home-card,
-.home-rise {
-  animation: home-rise 600ms cubic-bezier(0.23, 1, 0.32, 1) backwards;
-  animation-delay: calc(var(--i, 0) * 45ms);
-}
-
-@keyframes home-rise {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-card,
-  .home-rise {
-    animation: none;
-  }
-}
-</style>

@@ -26,10 +26,7 @@ watch(() => route.path, () => {
     <DocsTopBar @open-menu="menuOpen = true" />
 
     <UMain>
-      <UContainer
-        :key="route.path"
-        class="docs-page-enter max-w-6xl"
-      >
+      <UContainer class="max-w-6xl">
         <slot />
       </UContainer>
     </UMain>
@@ -39,22 +36,5 @@ watch(() => route.path, () => {
 <style>
 .docs-shell {
   --ui-header-height: 3.5rem;
-}
-
-.docs-page-enter {
-  animation: docs-page-enter 320ms cubic-bezier(0.23, 1, 0.32, 1) backwards;
-}
-
-@keyframes docs-page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .docs-page-enter {
-    animation: none;
-  }
 }
 </style>

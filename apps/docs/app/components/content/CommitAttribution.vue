@@ -1,240 +1,194 @@
 <script setup lang="ts">
 type TokenKind = 'app' | 'user'
-type Option = 'author' | 'committer' | 'coAuthors'
+type Option = 'coAuthors' | 'author' | 'committer'
 
-const owners: Record<TokenKind, { label: string, name: string, bot: boolean }> = {
-  app: { label: 'GitHub App', name: 'acme-agent[bot]', bot: true },
-  user: { label: 'User token', name: 'ada', bot: false }
-}
-const author = { name: 'Docs Team', email: 'docs@acme.dev' }
-const committer = { name: 'Release Bot', email: 'release@acme.dev' }
+const owners: Record<TokenKind, string> = { app: 'acme-agent[bot]', user: 'ada' }
+const author = 'Docs Team'
+const committer = 'Release Bot'
 const coAuthor = { name: 'my-bot[bot]', email: '12345+my-bot[bot]@users.noreply.github.com' }
 
-const options: Option[] = ['author', 'committer', 'coAuthors']
+const tokenOptions = [
+  { value: 'app' as const, label: 'GitHub App' },
+  { value: 'user' as const, label: 'User token' }
+]
+const optionOptions = (['coAuthors', 'author', 'committer'] as const).map(value => ({ value, label: value }))
 
 const tokenKind = ref<TokenKind>('app')
-const set = ref<Record<Option, boolean>>({ author: false, committer: false, coAuthors: false })
-const shown = ref(0)
-const pressing = ref('')
-const touched = ref(false)
+const option = ref<Option>('coAuthors')
 
-const owner = computed(() => owners[tokenKind.value])
-const authorName = computed(() => set.value.author ? author.name : owner.value.name)
-const committerName = computed(() => set.value.committer ? committer.name : owner.value.name)
-const custom = computed(() => set.value.author || set.value.committer)
-const verified = computed(() => tokenKind.value === 'app' && !custom.value)
-
-const byline = computed(() => {
-  const names = set.value.coAuthors ? `${authorName.value} and ${coAuthor.name}` : authorName.value
-  return authorName.value === committerName.value
-    ? { lead: names, rest: 'committed' }
-    : { lead: names, rest: `authored and ${committerName.value} committed` }
-})
-
-const reason = computed(() => {
-  if (custom.value) return 'Not signed. A custom author or committer skips the signed path, so the REST contents API makes the commit.'
-  if (tokenKind.value === 'user') return 'Not signed. The createCommitOnBranch mutation ran, but GitHub only signs commits for Apps.'
-  return 'Signed by GitHub. An App token went through the createCommitOnBranch mutation.'
-})
-
-const sha = computed(() => {
-  const key = `${tokenKind.value}${set.value.author}${set.value.committer}${set.value.coAuthors}`
-  let h = 2166136261
-  for (const c of key) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
-  return (h >>> 0).toString(16).padStart(8, '0').slice(0, 7)
-})
-
-function press(key: string, apply: () => void) {
-  if (touched.value) return
-  pressing.value = key
-  setTimeout(() => {
-    pressing.value = ''
-    if (!touched.value) apply()
-  }, 160)
+interface View {
+  key: string
+  people: string[]
+  byline: { lead: string, rest: string }
+  verified: boolean
+  reason: string
+  sha: string
 }
 
-function chooseToken(kind: TokenKind) {
-  touched.value = true
-  shown.value = 3
-  tokenKind.value = kind
-}
+const SHAS: Record<string, string> = { 'app-coAuthors': '3f2a91c', 'app-author': 'b81d04e', 'app-committer': '9c47e2a', 'user-coAuthors': '5e0a7d3', 'user-author': 'd2f96b1', 'user-committer': '71c3a8f' }
 
-function toggle(option: Option) {
-  touched.value = true
-  shown.value = 3
-  set.value = { ...set.value, [option]: !set.value[option] }
-}
-
-const { root, finished, still, replay } = useFigure({
-  steps: [
-    { at: 200, run: () => { shown.value = 1 } },
-    { at: 700, run: () => { shown.value = 2 } },
-    { at: 1200, run: () => { shown.value = 3 } },
-    { at: 3200, run: () => press('coAuthors', () => { set.value = { ...set.value, coAuthors: true } }) },
-    { at: 5600, run: () => press('author', () => { set.value = { ...set.value, author: true } }) }
-  ],
-  reset: () => {
-    shown.value = 0
-    pressing.value = ''
-    touched.value = false
-    tokenKind.value = 'app'
-    set.value = { author: false, committer: false, coAuthors: false }
-  },
-  settle: () => {
-    shown.value = 3
-    set.value = { author: true, committer: false, coAuthors: true }
+function view(kind: TokenKind, opt: Option): View {
+  const owner = owners[kind]
+  const authorName = opt === 'author' ? author : owner
+  const committerName = opt === 'committer' ? committer : owner
+  return {
+    key: `${kind}-${opt}`,
+    people: opt === 'coAuthors' ? [owner, coAuthor.name] : [authorName],
+    byline: opt === 'coAuthors'
+      ? { lead: `${owner} and ${coAuthor.name}`, rest: 'committed' }
+      : { lead: authorName, rest: `authored and ${committerName} committed` },
+    verified: kind === 'app' && opt === 'coAuthors',
+    reason: opt !== 'coAuthors'
+      ? `Not signed. A custom ${opt} skips the signed path, so the REST contents API made the commit.`
+      : kind === 'user'
+        ? 'Not signed. The mutation ran, but GitHub signs commits only for Apps.'
+        : 'Verified. GitHub signed the commit because an App token made it.',
+    sha: SHAS[`${kind}-${opt}`]!
   }
-})
+}
 
-const control = 'rounded-md px-2 py-1 transition-[background-color,color,box-shadow,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--d-signal) sm:px-2.5'
-const controlOn = 'bg-default text-highlighted shadow-xs ring-1 ring-(--d-line-strong)'
-const controlOff = 'text-muted hover:text-highlighted'
+const views = (['app', 'user'] as const).flatMap(kind => optionOptions.map(o => view(kind, o.value)))
+const current = computed(() => `${tokenKind.value}-${option.value}`)
+const signedPath = computed(() => option.value === 'coAuthors')
+
+const { root, finished, still } = useFigure({ steps: [], reset: () => {}, settle: () => {}, autoplay: false })
+
+function layer(on: boolean) {
+  return on ? '' : 'invisible opacity-0'
+}
+const tagClass = 'absolute top-1/2 left-1/2 -translate-1/2 rounded-sm border border-(--d-line) bg-default px-1.5 font-mono text-[12px]/4 whitespace-nowrap text-muted'
 </script>
 
 <template>
   <DocsFigure
     ref="root"
-    caption="Commits carry the token owner unless you set an author or committer, and only an App token with neither set gets a Verified commit."
+    caption="Only an App token gets a Verified commit. Commits carry the token owner unless you set an author or committer, and setting either one skips the signed path."
     :finished
     :still
-    @replay="replay"
   >
-    <div class="flex flex-col gap-3 border-b border-(--d-line) px-4 py-3 text-[12.5px] sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:px-6">
-      <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
-        <span
-          id="commit-token-label"
-          class="text-dimmed"
-        >Token</span>
-        <div
-          role="group"
-          aria-labelledby="commit-token-label"
-          class="inline-flex w-fit rounded-lg border border-(--d-line) bg-(--d-raised-strong) p-0.5"
-        >
-          <button
-            v-for="kind in (['app', 'user'] as const)"
-            :key="kind"
-            type="button"
-            :aria-pressed="tokenKind === kind"
-            :class="[control, tokenKind === kind ? controlOn : controlOff]"
-            @click="chooseToken(kind)"
+    <template #controls>
+      <FigureTabs
+        v-model="tokenKind"
+        label="Token"
+        :options="tokenOptions"
+        show-label
+      />
+      <FigureTabs
+        v-model="option"
+        label="Option"
+        :options="optionOptions"
+        show-label
+        mono
+      />
+    </template>
+
+    <div class="flex justify-center px-4 py-8 sm:px-10 sm:py-10">
+      <div class="flex w-full max-w-[28rem] flex-col">
+        <div class="d-stack">
+          <div
+            v-for="kind in tokenOptions"
+            :key="kind.value"
+            class="mx-auto flex items-center gap-2.5 rounded-lg border border-(--d-line) bg-(--d-raised) px-3 py-2"
+            :class="[layer(tokenKind === kind.value)]"
+            :aria-hidden="tokenKind !== kind.value"
           >
-            {{ owners[kind].label }}
-          </button>
+            <span class="grid size-7 shrink-0 place-items-center rounded-md border border-(--d-line) bg-default text-highlighted">
+              <UIcon
+                name="i-lucide-key-round"
+                class="size-4"
+              />
+            </span>
+            <div>
+              <p class="text-[13px]/5 font-medium text-highlighted">
+                {{ kind.value === 'app' ? 'App installation token' : 'User token' }}
+              </p>
+              <p class="font-mono text-[12px]/4 text-muted">
+                owner: {{ owners[kind.value] }}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
-        <span
-          id="commit-options-label"
-          class="text-dimmed"
-        >Options</span>
         <div
-          role="group"
-          aria-labelledby="commit-options-label"
-          class="inline-flex w-fit gap-1 font-mono"
+          class="d-stack h-12"
+          aria-hidden="true"
         >
-          <button
-            v-for="option in options"
-            :key="option"
-            type="button"
-            :aria-pressed="set[option]"
-            class="inline-flex items-center gap-1.5 border"
-            :class="[
-              control,
-              set[option] ? 'border-(--d-signal)/50 bg-(--d-signal)/8 text-highlighted' : 'border-(--d-line) text-muted hover:text-highlighted',
-              pressing === option ? 'scale-95' : ''
-            ]"
-            @click="toggle(option)"
+          <div
+            v-for="path in [true, false]"
+            :key="String(path)"
+            class="relative flex justify-center"
+            :class="[signedPath === path ? '' : 'invisible opacity-0']"
           >
-            <span
-              class="size-1.5 rounded-full transition-colors duration-200"
-              :class="set[option] ? 'bg-(--d-signal)' : 'bg-(--d-line-strong)'"
-            />
-            {{ option }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex flex-col gap-4 p-4 text-[13.5px]/6 sm:p-6">
-      <div
-        class="d-step overflow-hidden rounded-lg border border-(--d-line) bg-default"
-        :data-on="shown > 0"
-      >
-        <div class="flex items-start justify-between gap-3 px-4 pt-3">
-          <p class="font-medium text-highlighted">
-            Update README.md
-          </p>
-          <span
-            class="shrink-0 rounded-full border border-(--d-signal)/50 px-2 text-[11.5px]/5 text-(--d-signal-text) transition-[opacity,transform] duration-300 ease-(--d-ease)"
-            :class="verified ? 'opacity-100' : 'scale-95 opacity-0'"
-            :aria-hidden="!verified"
-          >Verified</span>
+            <span class="w-px bg-(--d-line-strong)" />
+            <span :class="tagClass">{{ path ? 'createCommitOnBranch' : 'REST contents API' }}</span>
+          </div>
         </div>
 
-        <div
-          class="grid transition-[grid-template-rows] duration-300 ease-(--d-ease)"
-          :class="set.coAuthors ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
-        >
-          <div class="overflow-hidden">
+        <article class="rounded-lg border border-(--d-line) bg-(--d-raised)">
+          <div class="flex flex-col gap-1.5 px-3 pt-2.5 pb-3">
+            <div class="flex items-center justify-between gap-3">
+              <h4 class="text-[13px]/5 font-medium text-highlighted">
+                Update README.md
+              </h4>
+              <span
+                class="inline-flex h-5 shrink-0 items-center gap-1 rounded-full border border-(--d-ok)/40 bg-(--d-ok-bg) px-2 text-[12px] font-medium text-(--d-ok)"
+                :class="[views.find(v => v.key === current)!.verified ? '' : 'invisible opacity-0']"
+              >Verified</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <span class="h-1.5 w-11/12 rounded-full bg-(--d-raised-strong)" />
+              <span class="h-1.5 w-2/3 rounded-full bg-(--d-raised-strong)" />
+            </div>
             <p
-              class="px-4 pt-2 font-mono text-[12px]/5 break-all text-muted transition-opacity duration-300"
-              :class="set.coAuthors ? 'opacity-100' : 'opacity-0'"
+              class="mt-1 font-mono text-[12px]/4 [overflow-wrap:anywhere] text-muted"
+              :class="[option === 'coAuthors' ? '' : 'invisible opacity-0']"
+              :aria-hidden="option !== 'coAuthors'"
             >
               Co-authored-by: {{ coAuthor.name }} &lt;{{ coAuthor.email }}&gt;
             </p>
           </div>
-        </div>
 
-        <div class="mt-3 flex items-start gap-2.5 border-t border-(--d-line) bg-(--d-raised-strong) px-4 py-2.5 text-[12.5px]">
-          <span class="flex shrink-0 -space-x-1 pt-0.5">
+          <div class="d-stack border-t border-(--d-line)">
+            <div
+              v-for="v in views"
+              :key="v.key"
+              class="flex items-start gap-2.5 px-3 py-2.5"
+              :class="[layer(current === v.key)]"
+              :aria-hidden="current !== v.key"
+            >
+              <span class="flex shrink-0 gap-1">
+                <span
+                  v-for="person in v.people"
+                  :key="person"
+                  class="grid size-6 place-items-center rounded-md border border-(--d-line) bg-default text-[12px] font-semibold text-highlighted"
+                  aria-hidden="true"
+                >{{ person[0]!.toUpperCase() }}</span>
+              </span>
+              <p class="min-w-0 flex-1 pt-0.5 text-[13px]/5 text-muted">
+                <span class="font-medium text-highlighted">{{ v.byline.lead }}</span>
+                {{ v.byline.rest }}
+              </p>
+              <code class="shrink-0 pt-0.5 font-mono text-[12px]/5 text-muted">{{ v.sha }}</code>
+            </div>
+          </div>
+        </article>
+
+        <div class="d-stack mt-4">
+          <p
+            v-for="v in views"
+            :key="v.key"
+            class="flex gap-2 text-[13px]/5 text-muted"
+            :class="[layer(current === v.key)]"
+            :aria-hidden="current !== v.key"
+          >
             <span
-              class="inline-flex size-5 items-center justify-center bg-inverted text-[10px] font-semibold text-inverted ring-2 ring-(--d-raised-strong)"
-              :class="!set.author && owner.bot ? 'rounded-md' : 'rounded-full'"
-            >{{ authorName[0]?.toUpperCase() }}</span>
-            <span
-              v-if="set.coAuthors"
-              class="inline-flex size-5 items-center justify-center rounded-md bg-(--d-line-strong) text-[10px] font-semibold text-highlighted ring-2 ring-(--d-raised-strong)"
-            >M</span>
-          </span>
-          <span class="min-w-0 flex-1 text-muted">
-            <span class="font-medium text-highlighted">{{ byline.lead }}</span>
-            {{ byline.rest }}
-          </span>
-          <code class="shrink-0 font-mono text-[12px]/6 text-dimmed">{{ sha }}</code>
+              class="mt-1.75 size-1.5 shrink-0 rounded-full"
+              :class="v.verified ? 'bg-(--d-ok)' : 'bg-(--d-line-strong)'"
+            />
+            <span>{{ v.reason }}</span>
+          </p>
         </div>
       </div>
-
-      <dl
-        class="d-step grid grid-cols-[5.5rem_1fr] gap-x-4 gap-y-1.5 text-[12.5px] sm:grid-cols-[6rem_1fr]"
-        :data-on="shown > 1"
-      >
-        <dt class="text-dimmed">
-          Author
-        </dt>
-        <dd class="min-w-0 break-words text-muted">
-          <span class="text-highlighted">{{ set.author ? `${author.name} <${author.email}>` : owner.name }}</span>
-          <span v-if="!set.author"> (token owner)</span>
-        </dd>
-        <dt class="text-dimmed">
-          Committer
-        </dt>
-        <dd class="min-w-0 break-words text-muted">
-          <span class="text-highlighted">{{ set.committer ? `${committer.name} <${committer.email}>` : owner.name }}</span>
-          <span v-if="!set.committer"> (token owner)</span>
-        </dd>
-      </dl>
-
-      <p
-        class="d-step inline-flex items-start gap-2 text-[12.5px] text-muted"
-        :data-on="shown > 2"
-      >
-        <span
-          class="mt-1.5 size-1.5 shrink-0 rounded-full transition-colors duration-300"
-          :class="verified ? 'bg-(--d-signal)' : 'bg-(--d-line-strong)'"
-        />
-        {{ reason }}
-      </p>
     </div>
   </DocsFigure>
 </template>

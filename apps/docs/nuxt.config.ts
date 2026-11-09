@@ -87,12 +87,26 @@ export default defineNuxtConfig({
   content: {
     experimental: {
       sqliteConnector: 'native'
+    },
+    build: {
+      markdown: {
+        highlight: {
+          // Docus loads a short list; the docs also show TSX and TOML.
+          langs: ['bash', 'diff', 'json', 'js', 'ts', 'tsx', 'jsx', 'html', 'css', 'vue', 'shell', 'mdc', 'md', 'yaml', 'toml']
+        }
+      }
     }
   },
   mcp: {
     name: 'GitHub tools MCP',
   },
   icon: {
+    // Figures swap icons with their state; bundling them avoids a blank icon while one loads.
+    clientBundle: {
+      scan: true,
+      includeCustomCollections: true,
+      icons: ['lucide:alert-circle', 'lucide:arrow-right', 'lucide:check', 'lucide:check-circle', 'lucide:chevron-down', 'lucide:circle-check', 'lucide:circle-dot', 'lucide:circle-x', 'lucide:clock', 'lucide:copy', 'lucide:cpu', 'lucide:eye', 'lucide:file-code', 'lucide:git-merge', 'lucide:git-pull-request', 'lucide:hand', 'lucide:key-round', 'lucide:link', 'lucide:menu', 'lucide:message-square', 'lucide:pen', 'lucide:pencil', 'lucide:plug', 'lucide:rocket', 'lucide:server', 'lucide:tag', 'lucide:terminal', 'lucide:wrench', 'lucide:x', 'lucide:rotate-ccw', 'lucide:loader-circle', 'lucide:arrow-up', 'lucide:send-horizontal', 'simple-icons:github', 'simple-icons:slack', 'simple-icons:linear'],
+    },
     customCollections: [
       {
         prefix: 'custom',

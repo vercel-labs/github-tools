@@ -9,11 +9,25 @@ const props = defineProps<{
 }>()
 
 defineEmits<{ replay: [] }>()
+
+/** Vercel captions lead with a short phrase in the primary color: the first sentence. */
+const captionParts = computed(() => {
+  const caption = props.caption ?? ''
+  const end = caption.search(/[.!?](\s|$)/)
+  if (end === -1) return { lead: caption, rest: '' }
+  return { lead: caption.slice(0, end + 1), rest: caption.slice(end + 1).trim() }
+})
 </script>
 
 <template>
   <figure class="not-prose my-8">
-    <div class="group/fig relative overflow-hidden rounded-xl border border-(--d-line) bg-(--d-raised)">
+    <div class="group/fig relative overflow-hidden border border-(--d-line) bg-default">
+      <div
+        v-if="$slots.controls"
+        class="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-(--d-line) px-4 py-2.5 sm:px-5"
+      >
+        <slot name="controls" />
+      </div>
       <slot />
 
       <button
@@ -30,9 +44,10 @@ defineEmits<{ replay: [] }>()
 
     <figcaption
       v-if="props.caption"
-      class="mt-3 px-1 text-[13px]/5 text-pretty text-dimmed"
+      class="mt-3 text-sm/5 text-pretty text-muted"
     >
-      {{ props.caption }}
+      <span class="font-medium text-highlighted">{{ captionParts.lead }}</span>
+      {{ captionParts.rest }}
     </figcaption>
   </figure>
 </template>

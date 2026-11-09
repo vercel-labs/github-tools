@@ -8,7 +8,7 @@ const appConfig = useAppConfig()
     v-if="route.meta.layout !== 'docs'"
     class="border-t border-default"
   >
-    <UContainer class="[--ui-container:72rem]">
+    <UContainer>
       <footer class="py-12 sm:py-16">
         <div class="mb-10 max-w-sm">
           <AppHeaderLogo class="h-6 text-highlighted" />

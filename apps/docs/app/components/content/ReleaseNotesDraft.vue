@@ -1,24 +1,18 @@
 <script setup lang="ts">
 type Kind = 'Features' | 'Fixes' | 'Other'
+type Order = 'merged' | 'grouped'
 
 const COMMAND = 'npm run generate -- vercel-labs github-tools'
 const ECHO = ['> generate', '> tsx --env-file=.env scripts/generate-release-notes.ts vercel-labs github-tools']
 
-const CALLS = [
-  { call: 'getReleaseContext({})', result: 'latest @github-tools/sdk@1.19.0, previous 1.18.0' },
-  { call: 'listPullRequests({ state: \'closed\' })', result: '30 closed pull requests' }
-]
-
-// Merge order, newest first.
-const PRS: { number: number, title: string, kind: Kind, note: string }[] = [
-  { number: 227, title: 'fix(sdk): find the previous release beyond the 30 most recent', kind: 'Fixes', note: 'Find the previous release beyond the 30 most recent' },
-  { number: 226, title: 'feat(sdk): explain auto-approval decisions with call-level toolApproval', kind: 'Features', note: 'Explain auto-approval decisions with call-level toolApproval' },
-  { number: 225, title: 'feat(sdk): add code scanning, Dependabot and secret scanning alert tools', kind: 'Features', note: 'Add code scanning, Dependabot and secret scanning alert tools' },
-  { number: 224, title: 'feat(sdk): add auto-merge and branch rules tools', kind: 'Features', note: 'Add auto-merge and branch rules tools' },
-  { number: 223, title: 'feat(sdk): let review comments span a range of lines', kind: 'Features', note: 'Let review comments span a range of lines' },
-  { number: 222, title: 'fix(eve): label failed GitHub calls as failed instead of done', kind: 'Fixes', note: 'Label failed GitHub calls as failed instead of done' },
-  { number: 203, title: 'docs: fix counts, option names and paths that drifted from the code', kind: 'Other', note: 'Fix counts, option names and paths in the docs' },
-  { number: 202, title: 'chore(sdk): remove dead code and check preset tool names at compile time', kind: 'Other', note: 'Check preset tool names at compile time' }
+// Merge order, newest first: the pull requests merged since @github-tools/sdk@1.19.0.
+const PRS: { number: number, type: string, kind: Kind, note: string, bar: string }[] = [
+  { number: 227, type: 'fix(sdk)', kind: 'Fixes', note: 'Find the previous release beyond the 30 most recent', bar: 'w-[70%]' },
+  { number: 226, type: 'feat(sdk)', kind: 'Features', note: 'Explain auto-approval decisions with call-level toolApproval', bar: 'w-[85%]' },
+  { number: 225, type: 'feat(sdk)', kind: 'Features', note: 'Add code scanning, Dependabot and secret scanning alert tools', bar: 'w-[90%]' },
+  { number: 224, type: 'feat(sdk)', kind: 'Features', note: 'Add auto-merge and branch rules tools', bar: 'w-[55%]' },
+  { number: 222, type: 'fix(eve)', kind: 'Fixes', note: 'Label failed GitHub calls as failed instead of done', bar: 'w-[75%]' },
+  { number: 203, type: 'docs', kind: 'Other', note: 'Fix counts, option names and paths in the docs', bar: 'w-[65%]' }
 ]
 
 const KINDS: Kind[] = ['Features', 'Fixes', 'Other']
@@ -29,236 +23,254 @@ const DRAFT = KINDS.flatMap((kind, k) => [
   ...PRS.filter(pr => pr.kind === kind).map(pr => `- ${pr.note} (#${pr.number})`)
 ])
 
-const TYPE_AT = 300
-const CHAR_GAP = 28
-const CALL_AT = TYPE_AT + COMMAND.length * CHAR_GAP + 500
-const PR_AT = CALL_AT + 1800
-const PR_GAP = 220
-const SORT_AT = PR_AT + PRS.length * PR_GAP + 600
-const DRAFT_AT = SORT_AT + 1300
-const LINE_GAP = 110
+const CALLS = [
+  { name: 'getReleaseContext', result: '1.19.0, previous 1.18.0' },
+  { name: 'listPullRequests', result: '6 merged since 1.19.0' }
+]
+
+const ORDER_OPTIONS = [
+  { value: 'merged', label: 'Merge order' },
+  { value: 'grouped', label: 'Grouped' }
+] as const
+
+const CHUNK = 2
+const typingMs = Math.ceil(COMMAND.length / CHUNK) * CHUNK * FIGURE_PACE.perChar
 
 const typed = ref(0)
-const shown = ref(0)
-const step = ref(0)
+const echoed = ref(false)
 const calls = ref(0)
-const prs = ref(0)
-const sorted = ref(false)
-const printed = ref(0)
+const listed = ref(false)
+const order = ref<Order>('merged')
+const printed = ref(false)
 const done = ref(false)
+
+const at = timeline([
+  typingMs + 300,
+  FIGURE_PACE.beat,
+  FIGURE_PACE.beat,
+  1500,
+  1500,
+  1500,
+  0
+])
 
 const { root, finished, still, replay } = useFigure({
   steps: [
-    ...Array.from(COMMAND, (_, i) => ({ at: TYPE_AT + i * CHAR_GAP, run: () => { typed.value = i + 1 } })),
-    { at: CALL_AT - 300, run: () => { shown.value = 1 } },
-    { at: CALL_AT, run: () => { step.value = 1 } },
-    { at: CALL_AT + 700, run: () => { calls.value = 1 } },
-    { at: CALL_AT + 900, run: () => { step.value = 2 } },
-    { at: CALL_AT + 1500, run: () => { calls.value = 2 } },
-    ...PRS.map((_, i) => ({ at: PR_AT + i * PR_GAP, run: () => { prs.value = i + 1 } })),
-    { at: SORT_AT - 300, run: () => { step.value = 3 } },
-    { at: SORT_AT, run: () => { sorted.value = true } },
-    ...DRAFT.map((_, i) => ({ at: DRAFT_AT + i * LINE_GAP, run: () => { printed.value = i + 1 } })),
-    { at: DRAFT_AT + DRAFT.length * LINE_GAP + 500, run: () => { done.value = true } }
+    ...Array.from({ length: Math.ceil(COMMAND.length / CHUNK) }, (_, i) => ({
+      at: at[0]! + i * CHUNK * FIGURE_PACE.perChar,
+      run: () => { typed.value = Math.min(COMMAND.length, (i + 1) * CHUNK) }
+    })),
+    { at: at[1]!, run: () => { echoed.value = true } },
+    { at: at[2]!, run: () => { calls.value = 1 } },
+    { at: at[3]!, run: () => {
+      calls.value = 2
+      listed.value = true
+    } },
+    { at: at[4]!, run: () => { order.value = 'grouped' } },
+    { at: at[5]!, run: () => { printed.value = true } },
+    { at: at[6]!, run: () => { done.value = true } }
   ],
   reset: () => {
     typed.value = 0
-    shown.value = 0
-    step.value = 0
+    echoed.value = false
     calls.value = 0
-    prs.value = 0
-    sorted.value = false
-    printed.value = 0
+    listed.value = false
+    order.value = 'merged'
+    printed.value = false
     done.value = false
   },
   settle: () => {
     typed.value = COMMAND.length
-    shown.value = 1
-    step.value = 3
+    echoed.value = true
     calls.value = CALLS.length
-    prs.value = PRS.length
-    sorted.value = true
-    printed.value = DRAFT.length
+    listed.value = true
+    order.value = 'grouped'
+    printed.value = true
     done.value = true
   }
 })
 
-const running = computed(() => step.value > 0 && printed.value === 0)
-
-const items = computed(() => {
-  const merged = PRS.slice(0, prs.value).map(pr => ({ key: String(pr.number), pr }))
-  if (!sorted.value) return merged
+function rows(o: Order) {
+  const merged = PRS.map(pr => ({ key: String(pr.number), pr }))
+  if (o === 'merged') return merged
   return KINDS.flatMap(kind => [
     { key: kind, heading: kind },
     ...merged.filter(item => item.pr.kind === kind)
   ])
-})
+}
 
-const segment = 'rounded-md px-2 py-0.5 transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--d-signal) disabled:cursor-default'
-const segmentOn = 'bg-default text-highlighted shadow-xs ring-1 ring-(--d-line-strong)'
-const segmentOff = 'text-muted enabled:hover:text-highlighted'
+const live = computed(() => rows(order.value))
 </script>
 
 <template>
   <DocsFigure
     ref="root"
-    caption="The script reads the latest release and the merged pull requests, the model groups them into sections, and the draft prints in the terminal without writing anything to GitHub."
+    caption="A draft, not a release. The script reads the latest release and what merged since, the model groups the pull requests, and the notes print in the terminal without writing anything to GitHub."
     :finished
     :still
     @replay="replay"
   >
-    <div class="grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      <section class="border-b border-(--d-line) md:border-r md:border-b-0">
-        <h4 class="flex items-center gap-2 border-b border-(--d-line) px-4 py-2 text-[12px] text-dimmed">
-          <UIcon
-            name="i-lucide-square-terminal"
-            class="size-3.5"
-          />
-          Terminal
-        </h4>
-        <div class="px-4 py-3 font-mono text-[11.5px]/[19px]">
-          <p class="[overflow-wrap:anywhere] text-highlighted">
-            <span class="text-dimmed select-none">$ </span>{{ COMMAND.slice(0, typed) }}<span
-              v-if="typed < COMMAND.length"
-              class="ms-px inline-block h-3.5 w-1.5 animate-pulse bg-(--d-signal) align-[-2px]"
-            />
-          </p>
-          <div
-            class="d-step mt-1 text-dimmed"
-            :data-on="shown > 0"
-          >
-            <p
-              v-for="line in ECHO"
-              :key="line"
-              class="[overflow-wrap:anywhere]"
-            >
-              {{ line }}
-            </p>
-          </div>
-          <p
-            class="mt-2 inline-flex items-center gap-2 text-dimmed transition-opacity duration-300"
-            :class="running ? 'opacity-100' : 'h-0 opacity-0'"
-          >
-            <UIcon
-              name="i-lucide-loader-circle"
-              class="size-3.5 animate-spin"
-            />
-            waiting for generateText
-          </p>
-          <div class="mt-2">
-            <p
-              v-for="(line, i) in DRAFT"
-              :key="i"
-              class="min-h-[19px] whitespace-pre-wrap transition-opacity duration-200"
-              :class="[
-                printed > i ? 'opacity-100' : 'opacity-0',
-                line.startsWith('##') ? 'text-highlighted' : 'ps-[2ch] -indent-[2ch] text-muted'
-              ]"
-            >
-              {{ line }}
-            </p>
-          </div>
-        </div>
-      </section>
+    <template #controls>
+      <FigureTabs
+        v-model="order"
+        label="Pull requests"
+        :options="ORDER_OPTIONS"
+        show-label
+        :inert="!finished"
+      />
+    </template>
 
-      <section class="flex min-w-0 flex-col">
-        <h4 class="flex items-center justify-between gap-2 border-b border-(--d-line) px-4 py-2 text-[12px] text-dimmed">
-          <span>Inside generateText</span>
-          <span class="font-mono tabular-nums">{{ step > 0 ? `step ${step} of up to 10` : 'not started' }}</span>
-        </h4>
-        <div class="flex flex-1 flex-col gap-3 px-4 py-3">
-          <ol class="flex flex-col gap-2">
+    <div class="@container px-4 py-8 sm:px-10 sm:py-12">
+      <div class="mx-auto grid max-w-[30rem] items-center @2xl:max-w-none @2xl:grid-cols-[minmax(0,1.15fr)_2.5rem_minmax(0,1fr)]">
+        <section class="min-w-0 overflow-hidden rounded-lg border border-(--d-line-strong) bg-(--d-raised)">
+          <header class="relative flex h-9 items-center border-b border-(--d-line) px-3">
+            <span
+              aria-hidden="true"
+              class="flex gap-1.5"
+            >
+              <span
+                v-for="n in 3"
+                :key="n"
+                class="size-2.5 rounded-full bg-(--d-line-strong)"
+              />
+            </span>
+            <span class="absolute inset-x-0 text-center font-mono text-[12px] text-muted">release-notes</span>
+          </header>
+          <div class="px-3 py-3 font-mono text-[12.5px]/5">
+            <p class="d-stack">
+              <span
+                class="invisible [overflow-wrap:anywhere]"
+                aria-hidden="true"
+              >$ {{ COMMAND }}</span>
+              <span class="[overflow-wrap:anywhere] text-highlighted"><span class="text-muted select-none">$ </span>{{ COMMAND.slice(0, typed) }}</span>
+            </p>
+            <div
+              class="d-step text-muted"
+              :data-on="echoed"
+            >
+              <p
+                v-for="line in ECHO"
+                :key="line"
+                class="[overflow-wrap:anywhere]"
+              >
+                {{ line }}
+              </p>
+            </div>
+            <div class="mt-3">
+              <p
+                v-for="(line, i) in DRAFT"
+                :key="i"
+                class="min-h-5 transition-opacity duration-300"
+                :class="[
+                  printed ? 'opacity-100' : 'opacity-0',
+                  line.startsWith('##') ? 'text-highlighted' : 'ps-[2ch] -indent-[2ch] text-toned'
+                ]"
+                :style="{ transitionDelay: printed && !still ? `${i * 70}ms` : '0ms' }"
+              >
+                {{ line }}
+              </p>
+            </div>
+            <p
+              class="mt-3 text-muted transition-opacity duration-300"
+              :class="done ? '' : 'opacity-0'"
+            >
+              $<span class="ms-1.5 inline-block h-3.5 w-1.5 animate-pulse bg-(--d-signal) align-[-2px]" />
+            </p>
+          </div>
+        </section>
+
+        <div
+          aria-hidden="true"
+          class="relative h-10 @2xl:h-full"
+        >
+          <span
+            class="absolute inset-y-0 left-1/2 w-px transition-colors duration-500 @2xl:inset-x-0 @2xl:inset-y-auto @2xl:top-1/2 @2xl:left-0 @2xl:h-px @2xl:w-full"
+            :class="calls > 0 ? 'bg-(--d-signal)' : 'bg-(--d-line-strong)'"
+          />
+        </div>
+
+        <section class="min-w-0 rounded-lg border border-(--d-line-strong) bg-(--d-raised)">
+          <header class="border-b border-(--d-line) px-3 py-2.5">
+            <p class="text-[13px]/5 font-medium text-highlighted">
+              generateText
+            </p>
+            <p class="font-mono text-[12px]/4 text-muted">
+              release-manager preset
+            </p>
+          </header>
+
+          <ul class="flex flex-col gap-1 border-b border-(--d-line) px-3 py-2.5">
             <li
               v-for="(c, i) in CALLS"
-              :key="c.call"
-              class="d-step"
-              :data-on="step > i"
+              :key="c.name"
+              class="flex flex-wrap items-center gap-x-2 text-[12px]/5"
             >
-              <code class="block font-mono text-[11.5px]/5 [overflow-wrap:anywhere] text-highlighted">{{ c.call }}</code>
-              <p class="flex items-center gap-1.5 text-[12px]/5">
-                <UIcon
-                  v-if="calls > i"
-                  name="i-lucide-check"
-                  class="size-3.5 shrink-0 text-highlighted"
-                />
-                <span
-                  v-else
-                  class="mx-1 size-1.5 shrink-0 animate-pulse rounded-full bg-(--d-line-strong)"
-                />
-                <span :class="calls > i ? 'text-muted' : 'text-dimmed'">{{ calls > i ? c.result : 'reading' }}</span>
-              </p>
+              <span
+                class="size-1.5 shrink-0 rounded-full transition-colors duration-300"
+                :class="calls > i ? 'bg-(--d-ok)' : 'bg-(--d-line-strong)'"
+              />
+              <code class="font-mono text-toned">{{ c.name }}</code>
+              <span
+                class="text-muted transition-opacity duration-300"
+                :class="calls > i ? '' : 'opacity-0'"
+              >{{ c.result }}</span>
             </li>
-          </ol>
+          </ul>
 
           <div
-            class="d-step rounded-lg border border-(--d-line) bg-(--d-raised-strong)"
-            :data-on="prs > 0"
+            class="d-step d-stack px-3 py-2"
+            :data-on="listed"
           >
-            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-(--d-line) px-3 py-1.5 text-[11.5px] text-dimmed">
-              <span>Merged since 1.19.0</span>
-              <div
-                role="group"
-                aria-label="Order the pull requests"
-                class="inline-flex rounded-md border border-(--d-line) bg-(--d-raised) p-0.5"
-              >
-                <button
-                  type="button"
-                  :disabled="!finished"
-                  :aria-pressed="!sorted"
-                  :class="[segment, !sorted ? segmentOn : segmentOff]"
-                  @click="sorted = false"
-                >
-                  Merge order
-                </button>
-                <button
-                  type="button"
-                  :disabled="!finished"
-                  :aria-pressed="sorted"
-                  :class="[segment, sorted ? segmentOn : segmentOff]"
-                  @click="sorted = true"
-                >
-                  Grouped
-                </button>
-              </div>
-            </div>
+            <ul
+              aria-hidden="true"
+              class="invisible"
+            >
+              <li
+                v-for="item in rows('grouped')"
+                :key="item.key"
+                class="h-7"
+              />
+            </ul>
             <TransitionGroup
               tag="ul"
-              class="relative px-3 py-2"
+              class="relative"
               move-class="transition-transform duration-700 ease-(--d-ease)"
-              enter-active-class="transition-[opacity,transform] duration-400 ease-(--d-ease)"
-              enter-from-class="translate-y-1 opacity-0"
-              leave-active-class="absolute transition-opacity duration-200"
+              enter-active-class="transition-opacity duration-500 delay-300"
+              enter-from-class="opacity-0"
+              leave-active-class="absolute inset-x-0 transition-opacity duration-200"
               leave-to-class="opacity-0"
             >
               <li
-                v-for="item in items"
+                v-for="item in live"
                 :key="item.key"
-                class="flex min-w-0 gap-2 text-[12px]/[22px]"
-                :class="'heading' in item ? 'pt-1 text-[11.5px] text-dimmed first:pt-0' : ''"
+                class="flex h-7 items-center gap-2.5"
               >
-                <template v-if="'heading' in item">
-                  {{ item.heading }}
-                </template>
+                <span
+                  v-if="'heading' in item"
+                  class="text-[12px] font-medium text-muted"
+                >{{ item.heading }}</span>
                 <template v-else>
-                  <span class="shrink-0 font-mono text-dimmed tabular-nums">#{{ item.pr.number }}</span>
-                  <span class="truncate text-muted">{{ item.pr.title }}</span>
+                  <UIcon
+                    name="i-lucide-git-merge"
+                    class="size-3.5 shrink-0 text-muted"
+                  />
+                  <code class="w-9 shrink-0 font-mono text-[12px] text-toned tabular-nums">#{{ item.pr.number }}</code>
+                  <code class="w-[4.5rem] shrink-0 font-mono text-[12px] text-muted">{{ item.pr.type }}</code>
+                  <span
+                    aria-hidden="true"
+                    class="min-w-0 flex-1"
+                  >
+                    <span
+                      class="block h-1.5 rounded-full bg-(--d-raised-strong)"
+                      :class="item.pr.bar"
+                    />
+                  </span>
                 </template>
               </li>
             </TransitionGroup>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
-
-    <p
-      class="d-step flex items-start gap-2 border-t border-(--d-line) px-4 py-3 text-[12.5px]/5 text-muted"
-      :data-on="done"
-    >
-      <UIcon
-        name="i-lucide-shield-check"
-        class="mt-0.5 size-3.5 shrink-0 text-highlighted"
-      />
-      <span><span class="text-highlighted">Nothing was written to GitHub.</span> createRelease is in the preset, but nothing in the script answers its approval request.</span>
-    </p>
   </DocsFigure>
 </template>

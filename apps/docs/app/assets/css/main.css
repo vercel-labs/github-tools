@@ -35,8 +35,12 @@ html {
   --geist-amber-900: oklch(52.79% 0.1496 54.65);
   --geist-green-900: oklch(51.75% 0.1453 147.65);
   --geist-red-700: oklch(62.56% 0.2524 23.03);
+  --geist-green-100: oklch(97.59% 0.0289 145.42);
+  --geist-amber-100: oklch(97.48% 0.0331 85.79);
+  --geist-red-100: oklch(96.5% 0.0223 13.09);
 
-  --ui-container: 91.5rem;
+  /* Vercel's page container: 1400px of content between 24px gutters. */
+  --ui-container: 1448px;
   /* Geist radii: 6px controls (rounded-md), 8px blocks (rounded-lg). */
   --ui-radius: 0.25rem;
 
@@ -82,6 +86,9 @@ html {
   --geist-amber-900: oklch(77.21% 0.1991 64.28);
   --geist-green-900: oklch(73.1% 0.2158 148.29);
   --geist-red-700: oklch(62.56% 0.2234 23.03);
+  --geist-green-100: oklch(23.09% 0.0716 149.68);
+  --geist-amber-100: oklch(22.46% 0.0538 76.04);
+  --geist-red-100: oklch(22.1% 0.0657 15.11);
 }
 
 :where(code, kbd, samp, pre, .font-mono) {
@@ -93,7 +100,18 @@ html {
 
 *:focus-visible,
 *:has(> a:focus-visible) {
-  --tw-ring-color: var(--ui-primary);
+  --tw-ring-color: var(--ui-border-accented);
+}
+
+/* Neutral focus and selection: Geist ink instead of the browser's blue. */
+:focus-visible:not(input, textarea, select, [contenteditable]) {
+  outline: 1px solid var(--ui-border-accented);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: color-mix(in oklch, var(--ui-text-highlighted) 22%, transparent);
+  color: var(--ui-text-highlighted);
 }
 
 .vercel-section-label {
@@ -158,6 +176,11 @@ aside[data-side="right"] .prose :where(table) {
   --d-signal-text: var(--geist-gray-1000);
   --d-signal-fg: var(--geist-background-100);
   --d-warn: var(--geist-amber-900);
+  --d-warn-bg: var(--geist-amber-100);
+  --d-ok: var(--geist-green-900);
+  --d-ok-bg: var(--geist-green-100);
+  --d-fail: var(--geist-red-700);
+  --d-fail-bg: var(--geist-red-100);
   --d-ease: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -180,3 +203,122 @@ aside[data-side="right"] .prose :where(table) {
     transform: none;
   }
 }
+
+/*
+ * Figure primitives. Every figure uses these so the set reads as one family.
+ * .d-stack: children share one grid cell, so the frame keeps the size of its tallest state.
+ * .d-row: a label column and a value column, aligned on the first baseline.
+ * .d-label: the muted 13px label of a row or group.
+ * .d-code: an inline identifier or call, set in mono without a box.
+ */
+/* Messages entering a scene thread (landing scenes). */
+.scene-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--d-line-strong) transparent;
+}
+
+/* Where a thread continues past an edge, that edge fades instead of cutting a message in half. */
+.scene-scroll[data-scrolled] {
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+}
+
+.scene-scroll[data-more] {
+  mask-image: linear-gradient(to top, transparent, #000 2.5rem);
+}
+
+.scene-scroll[data-scrolled][data-more] {
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem, #000 calc(100% - 2.5rem), transparent);
+}
+
+/* Draws the eye to the one button a scene is waiting on. */
+.scene-ping {
+  animation: scene-ping 2.4s var(--d-ease) infinite;
+}
+
+@keyframes scene-ping {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--d-signal) 35%, transparent);
+  }
+
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.scene-enter-active {
+  transition: opacity 320ms var(--d-ease), transform 320ms var(--d-ease);
+}
+
+.scene-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.scene-leave-active {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-enter-active {
+    transition: opacity 150ms ease;
+  }
+
+  .scene-enter-from {
+    transform: none;
+  }
+
+  .scene-ping {
+    animation: none;
+  }
+}
+
+.d-stack {
+  display: grid;
+}
+
+.d-stack > * {
+  grid-area: 1 / 1;
+}
+
+.d-row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  column-gap: 1rem;
+  align-items: baseline;
+}
+
+.d-label {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ui-text-muted);
+}
+
+.d-code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--ui-text-highlighted);
+  overflow-wrap: anywhere;
+}
+
+/* Syntax colors for hand-written samples, after Vercel's code blocks. */
+:root {
+  --code-keyword: oklch(0.55 0.2 350);
+  --code-string: oklch(0.5 0.13 150);
+  --code-function: oklch(0.52 0.18 300);
+  --code-property: var(--ui-text-highlighted);
+  --code-comment: var(--ui-text-dimmed);
+}
+
+.dark {
+  --code-keyword: oklch(0.72 0.17 350);
+  --code-string: oklch(0.78 0.15 150);
+  --code-function: oklch(0.75 0.14 300);
+}
+
+.code-kw { color: var(--code-keyword); }
+.code-str { color: var(--code-string); }
+.code-fn { color: var(--code-function); }
+.code-pr { color: var(--code-property); }
+.code-cm { color: var(--code-comment); }

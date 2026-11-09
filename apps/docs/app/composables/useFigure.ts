@@ -7,6 +7,11 @@ export interface UseFigureOptions {
   reset: () => void
   /** Puts the figure on its last frame, for readers who prefer reduced motion. */
   settle: () => void
+  /**
+   * `false` for figures the reader explores by clicking: they open on their settled state,
+   * never play on their own, and show no Replay button.
+   */
+  autoplay?: boolean
 }
 
 /**
@@ -36,7 +41,7 @@ export function useFigure(opts: UseFigureOptions) {
   let observer: IntersectionObserver | undefined
 
   onMounted(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (opts.autoplay === false || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       still.value = true
       opts.settle()
       finished.value = true

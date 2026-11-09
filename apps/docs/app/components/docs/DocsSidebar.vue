@@ -30,17 +30,25 @@ const links = [
 <template>
   <div class="flex h-full flex-col">
     <div class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-default px-4">
-      <NuxtLink
-        to="/docs"
-        class="flex items-center gap-2.5 text-highlighted"
-      >
-        <AppHeaderLogo
-          icon-only
-          class="size-5"
-        />
+      <div class="flex items-center gap-2.5 text-highlighted">
+        <NuxtLink
+          to="/"
+          aria-label="GitHub tools home"
+          class="rounded-sm"
+        >
+          <AppHeaderLogo
+            icon-only
+            class="size-5"
+          />
+        </NuxtLink>
         <span class="h-4 w-px bg-accented" />
-        <span class="text-[15px] font-medium">Docs</span>
-      </NuxtLink>
+        <NuxtLink
+          to="/docs"
+          class="text-[15px] font-medium"
+        >
+          Docs
+        </NuxtLink>
+      </div>
 
       <UContentSearchButton
         :collapsed="true"
@@ -59,7 +67,7 @@ const links = [
         <p class="mb-1 px-2 text-[13px] font-medium text-muted">
           {{ group.label }}
         </p>
-        <ul>
+        <ul class="flex flex-col gap-0.5">
           <li
             v-for="item in group.items"
             :key="item.to"

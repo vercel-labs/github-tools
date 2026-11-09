@@ -1,372 +1,255 @@
 <script setup lang="ts">
-type Outcome = 'none' | 'skipped' | 'replied' | 'commented' | 'pending' | 'approved' | 'denied'
-type Sweep = 0 | 1
+type Sweep = '1' | '2'
+type Action = 'none' | 'labelled' | 'waiting' | 'approved' | 'denied'
 
 interface Issue {
   number: number
   title: string
   label: string
-  /** Last activity as each sweep sees it. */
-  activity: [string, string]
-  outcome: [Outcome, Outcome]
 }
 
-// Sweep 2 runs five weeks after sweep 1, so the stale comments are older than the 30-day cutoff again.
-const ISSUES: Issue[] = [
-  { number: 241, title: 'Dark mode toggle resets on reload', label: 'bug', activity: ['41 days ago', '35 days ago'], outcome: ['commented', 'approved'] },
-  { number: 236, title: 'Allow a custom webhook secret', label: 'enhancement', activity: ['3 days ago', '6 days ago'], outcome: ['skipped', 'skipped'] },
-  { number: 219, title: 'CLI crashes when the config file is empty', label: 'bug', activity: ['52 days ago', '9 days ago'], outcome: ['commented', 'replied'] },
-  { number: 250, title: 'Flaky upload test on Node 22', label: 'tests', activity: ['12 days ago', '47 days ago'], outcome: ['skipped', 'commented'] },
-  { number: 204, title: 'Document the proxy options', label: 'docs', activity: ['67 days ago', '35 days ago'], outcome: ['commented', 'denied'] },
-  { number: 188, title: 'Add a retry option to the fetch helper', label: 'enhancement', activity: ['94 days ago', '35 days ago'], outcome: ['commented', 'approved'] }
+// Real rows are the ones the sweeps touch; skeleton rows changed in the last 30 days and are left alone.
+const ROWS: (Issue | null)[] = [
+  { number: 241, title: 'Dark mode toggle resets on reload', label: 'bug' },
+  null,
+  { number: 250, title: 'Flaky upload test on Node 22', label: 'tests' },
+  null,
+  { number: 204, title: 'Document the proxy options', label: 'docs' }
 ]
 
-const SWEEPS = [
-  { label: 'Sweep 1', when: 'Nov 9', cutoff: '2026-10-10' },
-  { label: 'Sweep 2', when: 'Dec 14, five weeks later', cutoff: '2026-11-14' }
-]
+// Sweep 2 runs five weeks later, so its cutoff (30 days before the sweep) moves too.
+const CUTOFF = { 1: '2026-10-10', 2: '2026-11-14' } as const
 
-const SUMMARY = [
-  'Commented on and labelled 4 issues. Skipped 2 that changed in the last 30 days.',
-  'Closed 2 issues, you kept #204 open. Commented on and labelled #250. Skipped 2 with recent activity.'
-]
-
-const ROW_GAP = 620
-const SCAN_ONE = 1500
-const SCAN_TWO = SCAN_ONE + ISSUES.length * ROW_GAP + 1500
-const DECIDE = SCAN_TWO + ISSUES.length * ROW_GAP + 500
-const PENDING = ISSUES.flatMap((issue, i) => (issue.outcome[1] === 'approved' || issue.outcome[1] === 'denied' ? [i] : []))
-
-const sweep = ref<Sweep>(0)
-const shown = ref(0)
-const scanned = ref(0)
-const scanAt = ref(-1)
-const scanY = ref(0)
-const outcome = ref<Outcome[]>(ISSUES.map(() => 'none'))
-const stale = ref<boolean[]>(ISSUES.map(() => false))
-const pressing = ref<{ row: number, approve: boolean }>()
-const summary = ref(false)
-
-const list = ref<HTMLElement>()
-const rowEls: HTMLElement[] = []
-
-function setOutcome(i: number, value: Outcome) {
-  outcome.value = outcome.value.map((o, j) => (j === i ? value : o))
-  if (value === 'commented') stale.value = stale.value.map((s, j) => s || j === i)
+const FINAL: Record<Sweep, Record<number, Action>> = {
+  1: { 241: 'labelled', 250: 'none', 204: 'labelled' },
+  2: { 241: 'approved', 250: 'labelled', 204: 'denied' }
 }
 
-function scanTo(i: number) {
-  scanAt.value = i
-  scanY.value = i < ISSUES.length ? (rowEls[i]?.offsetTop ?? 0) : (list.value?.offsetHeight ?? 0)
-  scanned.value = Math.min(i, ISSUES.length) + (i < ISSUES.length ? 1 : 0)
+const ACTIONS = {
+  labelled: { tool: '', text: 'commented and labelled, no approval', tone: 'text-(--d-ok)', icon: 'i-lucide-check' },
+  waiting: { tool: 'closeIssue', text: 'waiting for you', tone: 'text-(--d-warn)', icon: '' },
+  approved: { tool: 'closeIssue', text: 'approved, closed', tone: 'text-(--d-ok)', icon: 'i-lucide-check' },
+  denied: { tool: 'closeIssue', text: 'denied, stays open', tone: 'text-(--d-fail)', icon: 'i-lucide-x' }
+} as const
+
+const SWEEP_OPTIONS = [
+  { value: '1', label: 'Nov 9' },
+  { value: '2', label: 'Dec 14' }
+] as const
+
+const sweep = ref<Sweep>('1')
+const searched = ref(false)
+const actions = ref<Record<number, Action>>({ 241: 'none', 250: 'none', 204: 'none' })
+
+function act(issue: number, action: Action) {
+  actions.value = { ...actions.value, [issue]: action }
 }
 
-function startSweep(s: Sweep) {
+function show(s: Sweep) {
   sweep.value = s
-  scanned.value = 0
-  summary.value = false
-  outcome.value = ISSUES.map(() => 'none')
+  searched.value = true
+  actions.value = { ...FINAL[s] }
 }
 
-function showSweep(s: Sweep) {
-  sweep.value = s
-  shown.value = 2
-  scanAt.value = -1
-  scanned.value = ISSUES.length
-  outcome.value = ISSUES.map(issue => issue.outcome[s])
-  stale.value = ISSUES.map(issue => issue.outcome[0] === 'commented' || (s === 1 && issue.outcome[1] === 'commented'))
-  pressing.value = undefined
-  summary.value = true
-}
-
-function scanSteps(start: number, s: Sweep) {
-  return [
-    ...ISSUES.flatMap((issue, i) => [
-      { at: start + i * ROW_GAP, run: () => scanTo(i) },
-      { at: start + i * ROW_GAP + 300, run: () => setOutcome(i, issue.outcome[s] === 'approved' || issue.outcome[s] === 'denied' ? 'pending' : issue.outcome[s]) }
-    ]),
-    { at: start + ISSUES.length * ROW_GAP, run: () => scanTo(ISSUES.length) },
-    { at: start + ISSUES.length * ROW_GAP + 450, run: () => { scanAt.value = -1 } }
-  ]
-}
+const at = timeline([
+  1200,
+  FIGURE_PACE.beat,
+  1500,
+  1200,
+  FIGURE_PACE.beat,
+  FIGURE_PACE.beat,
+  FIGURE_PACE.hold,
+  FIGURE_PACE.beat,
+  0
+])
 
 const { root, finished, still, replay } = useFigure({
   steps: [
-    { at: 200, run: () => { shown.value = 1 } },
-    { at: 800, run: () => { shown.value = 2 } },
-    ...scanSteps(SCAN_ONE, 0),
-    { at: SCAN_TWO - 1100, run: () => { summary.value = true } },
-    { at: SCAN_TWO - 500, run: () => startSweep(1) },
-    ...scanSteps(SCAN_TWO, 1),
-    ...PENDING.flatMap((row, k) => {
-      const approve = ISSUES[row]?.outcome[1] === 'approved'
-      return [
-        { at: DECIDE + k * 1100, run: () => { pressing.value = { row, approve } } },
-        { at: DECIDE + k * 1100 + 180, run: () => {
-          pressing.value = undefined
-          setOutcome(row, approve ? 'approved' : 'denied')
-        } }
-      ]
-    }),
-    { at: DECIDE + PENDING.length * 1100 + 300, run: () => { summary.value = true } }
+    { at: at[0]!, run: () => { searched.value = true } },
+    { at: at[1]!, run: () => act(241, 'labelled') },
+    { at: at[2]!, run: () => act(204, 'labelled') },
+    { at: at[3]!, run: () => {
+      sweep.value = '2'
+      actions.value = { 241: 'none', 250: 'none', 204: 'none' }
+    } },
+    { at: at[4]!, run: () => act(250, 'labelled') },
+    { at: at[5]!, run: () => act(241, 'waiting') },
+    { at: at[6]!, run: () => act(204, 'waiting') },
+    { at: at[7]!, run: () => act(241, 'approved') },
+    { at: at[8]!, run: () => act(204, 'denied') }
   ],
   reset: () => {
-    sweep.value = 0
-    shown.value = 0
-    scanned.value = 0
-    scanAt.value = -1
-    scanY.value = 0
-    outcome.value = ISSUES.map(() => 'none')
-    stale.value = ISSUES.map(() => false)
-    pressing.value = undefined
-    summary.value = false
+    sweep.value = '1'
+    searched.value = false
+    actions.value = { 241: 'none', 250: 'none', 204: 'none' }
   },
-  settle: () => showSweep(1)
+  settle: () => show('2')
 })
 
-const labelled = computed(() => outcome.value.filter(o => o === 'commented').length)
-const awaiting = computed(() => outcome.value.filter(o => o === 'pending').length)
-const closed = computed(() => outcome.value.filter(o => o === 'approved').length)
+const picked = computed({
+  get: () => sweep.value,
+  set: (s: Sweep) => show(s)
+})
 
-const counters = computed(() => [
-  { label: 'Scanned', value: scanned.value },
-  { label: 'Labelled stale', value: labelled.value },
-  { label: 'Awaiting approval', value: awaiting.value, warn: awaiting.value > 0 },
-  { label: 'Closed', value: closed.value }
-])
+function stale(issue: Issue) {
+  if (actions.value[issue.number] === 'labelled') return true
+  return sweep.value === '2' && FINAL[1][issue.number] === 'labelled'
+}
 
-const segment = 'rounded-md px-2 py-1 transition-[background-color,color,box-shadow,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--d-signal) disabled:cursor-default sm:px-2.5'
-const segmentOn = 'bg-default text-highlighted shadow-xs ring-1 ring-(--d-line-strong)'
-const segmentOff = 'text-muted enabled:hover:text-highlighted'
-const chip = 'inline-flex items-center gap-1 rounded-full border px-2 font-mono text-[11px]/[18px]'
+const chip = 'inline-flex h-5 items-center gap-1.5 rounded-full border border-(--d-line-strong) px-2 text-[12px] text-toned'
 </script>
 
 <template>
   <DocsFigure
     ref="root"
-    caption="The first sweep comments on and labels inactive issues without asking, and the next one proposes closing the stale issues nobody answered, each close waiting for a person."
+    caption="Comments and labels run, closes wait. The first sweep labels inactive issues without asking; the next one asks before closing each stale issue nobody answered."
     :finished
     :still
     @replay="replay"
   >
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-(--d-line) px-4 py-3 text-[12.5px] sm:px-6">
-      <div
-        role="group"
-        aria-label="Show a sweep"
-        class="inline-flex w-fit rounded-lg border border-(--d-line) bg-(--d-raised-strong) p-0.5"
-      >
-        <button
-          v-for="(s, i) in SWEEPS"
-          :key="s.label"
-          type="button"
-          :aria-pressed="sweep === i"
-          :disabled="!finished"
-          :class="[segment, sweep === i ? segmentOn : segmentOff]"
-          @click="showSweep(i as Sweep)"
-        >
-          {{ s.label }}
-        </button>
-      </div>
-      <span class="text-dimmed">{{ SWEEPS[sweep]?.when }}</span>
-    </div>
-
-    <div class="flex flex-col gap-2 px-4 pt-4 text-[13.5px]/6 sm:px-6">
-      <p
-        class="d-step flex gap-4"
-        :data-on="shown > 0"
-      >
-        <span class="w-14 shrink-0 text-dimmed">You</span>
-        <span class="text-highlighted">Sweep stale issues on my-org/my-repo.</span>
-      </p>
-      <p
-        class="d-step flex flex-col gap-1 sm:flex-row sm:gap-4"
-        :data-on="shown > 1"
-      >
-        <span class="w-14 shrink-0 text-dimmed">Agent</span>
-        <code class="min-w-0 font-mono text-[12px]/5 [overflow-wrap:anywhere] text-muted">searchIssues({ query: 'repo:my-org/my-repo is:issue is:open updated:&lt;<span class="text-highlighted">{{ SWEEPS[sweep]?.cutoff }}</span>' })</code>
-      </p>
-    </div>
-
-    <div
-      ref="list"
-      class="relative mx-4 mt-4 overflow-hidden rounded-lg border border-(--d-line) bg-default/40 sm:mx-6"
-    >
-      <ol>
-      <li
-        v-for="(issue, i) in ISSUES"
-        :key="issue.number"
-        :ref="el => { if (el) rowEls[i] = el as HTMLElement }"
-        class="grid grid-cols-[1rem_minmax(0,1fr)] gap-x-3 border-b border-(--d-line) px-3 py-2.5 transition-[background-color,opacity] duration-300 last:border-b-0 sm:px-4"
-        :class="scanAt === i ? 'bg-(--d-raised-strong)' : ''"
-      >
-        <UIcon
-          :name="outcome[i] === 'approved' ? 'i-lucide-circle-check' : 'i-lucide-circle-dot'"
-          class="mt-1 size-4"
-          :class="outcome[i] === 'approved' ? 'text-dimmed' : 'text-muted'"
-        />
-        <div class="min-w-0">
-          <p
-            class="text-[13.5px]/6 transition-colors duration-300"
-            :class="outcome[i] === 'approved' ? 'text-muted line-through decoration-(--d-line-strong)' : 'text-highlighted'"
-          >
-            {{ issue.title }}
-          </p>
-          <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px]/5 text-dimmed">
-            <span class="font-mono">#{{ issue.number }}</span>
-            <Transition
-              mode="out-in"
-              enter-from-class="opacity-0"
-              leave-to-class="opacity-0"
-              enter-active-class="transition-opacity duration-200"
-              leave-active-class="transition-opacity duration-200"
-            >
-              <span :key="sweep">updated {{ issue.activity[sweep] }}</span>
-            </Transition>
-            <span :class="[chip, 'border-(--d-line) text-muted']">{{ issue.label }}</span>
-            <Transition
-              enter-from-class="scale-75 opacity-0"
-              enter-active-class="transition-[opacity,transform] duration-300 ease-(--d-ease)"
-            >
-              <span
-                v-if="stale[i]"
-                :class="[chip, 'origin-left border-(--d-line-strong) bg-(--d-raised-strong) text-highlighted']"
-              >
-                <UIcon
-                  name="i-lucide-clock"
-                  class="size-3"
-                />
-                stale
-              </span>
-            </Transition>
-            <span
-              v-if="outcome[i] === 'approved'"
-              class="text-muted"
-            >closed</span>
-          </div>
-
-          <div
-            class="d-step"
-            :data-on="outcome[i] !== 'none'"
-          >
-            <p
-              v-if="outcome[i] === 'commented'"
-              class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]/5"
-            >
-              <span class="inline-flex items-center gap-1.5 font-mono text-muted">
-                <UIcon
-                  name="i-lucide-message-square"
-                  class="size-3.5"
-                />
-                addIssueComment
-              </span>
-              <span class="inline-flex items-center gap-1.5 font-mono text-muted">
-                <UIcon
-                  name="i-lucide-tag"
-                  class="size-3.5"
-                />
-                addLabels
-              </span>
-              <span class="inline-flex items-center gap-1.5 text-dimmed">
-                <span class="size-1.5 rounded-full bg-(--d-signal)" />
-                ran without asking
-              </span>
-            </p>
-
-            <p
-              v-else-if="outcome[i] === 'skipped' || outcome[i] === 'replied'"
-              class="mt-1.5 text-[12px]/5 text-dimmed"
-            >
-              {{ outcome[i] === 'replied' ? 'The author replied 9 days ago, skipped' : 'Changed in the last 30 days, skipped' }}
-            </p>
-
-            <div
-              v-else-if="outcome[i] === 'pending' || outcome[i] === 'approved' || outcome[i] === 'denied'"
-              class="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border bg-(--d-raised-strong) px-3 py-2 text-[12px]/5 transition-colors duration-300"
-              :class="outcome[i] === 'pending' ? 'border-(--d-warn)/50' : 'border-(--d-line)'"
-            >
-              <span class="inline-flex min-w-0 flex-wrap items-center gap-x-2">
-                <code class="font-mono text-highlighted">closeIssue #{{ issue.number }}</code>
-                <span
-                  v-if="outcome[i] === 'pending'"
-                  class="inline-flex items-center gap-1.5 text-toned"
-                >
-                  <span class="size-1.5 animate-pulse rounded-full bg-(--d-warn)" />
-                  Close? Waiting for you
-                </span>
-                <span
-                  v-else
-                  class="text-muted"
-                >{{ outcome[i] === 'approved' ? 'Approved by you' : 'Denied, stays open' }}</span>
-              </span>
-              <span class="flex gap-1.5">
-                <span
-                  class="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 transition-all duration-150"
-                  :class="[
-                    outcome[i] === 'denied' ? 'border-(--d-line-strong) bg-default text-highlighted' : 'border-(--d-line) text-muted',
-                    outcome[i] === 'approved' ? 'opacity-40' : '',
-                    pressing?.row === i && !pressing.approve ? 'scale-95' : ''
-                  ]"
-                >
-                  <UIcon
-                    v-if="outcome[i] === 'denied'"
-                    name="i-lucide-x"
-                    class="size-3"
-                  />
-                  Deny
-                </span>
-                <span
-                  class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 transition-all duration-150"
-                  :class="[
-                    outcome[i] === 'approved' ? 'bg-(--d-signal) text-(--d-signal-fg)' : 'bg-inverted text-inverted',
-                    outcome[i] === 'denied' ? 'opacity-40' : '',
-                    pressing?.row === i && pressing.approve ? 'scale-95' : ''
-                  ]"
-                >
-                  <UIcon
-                    v-if="outcome[i] === 'approved'"
-                    name="i-lucide-check"
-                    class="size-3"
-                  />
-                  Approve
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </li>
-      </ol>
-
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute inset-x-0 top-0 h-px bg-(--d-signal) transition-[transform,opacity] duration-300 ease-(--d-ease)"
-        :class="scanAt >= 0 ? 'opacity-70' : 'opacity-0'"
-        :style="{ transform: `translateY(${scanY}px)` }"
+    <template #controls>
+      <FigureTabs
+        v-model="picked"
+        label="Sweep"
+        :options="SWEEP_OPTIONS"
+        show-label
+        :inert="!finished"
       />
-    </div>
+    </template>
 
-    <p
-      class="d-step flex flex-col gap-1 px-4 pt-4 text-[13.5px]/6 sm:flex-row sm:gap-4 sm:px-6"
-      :data-on="summary"
-    >
-      <span class="w-14 shrink-0 text-dimmed">Agent</span>
-      <span class="text-highlighted">{{ SUMMARY[sweep] }}</span>
-    </p>
+    <div class="px-4 py-8 sm:px-10 sm:py-12">
+      <div class="mx-auto flex max-w-[30rem] flex-col items-center">
+        <div class="flex items-center gap-2.5 rounded-lg border border-(--d-line-strong) bg-(--d-raised) py-2 ps-2 pe-4">
+          <span class="grid size-8 place-items-center rounded-md border border-(--d-line) bg-default">
+            <UIcon
+              name="i-custom:eve"
+              class="size-4 text-highlighted"
+            />
+          </span>
+          <span>
+            <span class="block text-[13px]/5 font-medium text-highlighted">triage-agent</span>
+            <span class="block font-mono text-[12px]/4 text-muted">issue-triage</span>
+          </span>
+        </div>
 
-    <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-(--d-line) px-4 py-3 text-[12px] sm:grid-cols-4 sm:px-6">
-      <div
-        v-for="c in counters"
-        :key="c.label"
-      >
-        <dt class="text-dimmed">
-          {{ c.label }}
-        </dt>
-        <dd
-          class="font-mono text-[15px] tabular-nums transition-colors duration-300"
-          :class="c.warn ? 'text-(--d-warn)' : 'text-highlighted'"
-        >
-          {{ c.value }}
-        </dd>
+        <div class="relative grid h-16 w-full place-items-center">
+          <span
+            aria-hidden="true"
+            class="absolute inset-y-0 left-1/2 w-px bg-(--d-line-strong)"
+          />
+          <span
+            aria-hidden="true"
+            class="absolute inset-y-0 left-1/2 w-px origin-top bg-(--d-signal) transition-transform duration-700 ease-(--d-ease)"
+            :class="searched ? 'scale-y-100' : 'scale-y-0'"
+          />
+          <span
+            class="d-step d-stack relative rounded border border-(--d-line-strong) bg-default px-1.5 font-mono text-[12px]/5 text-toned"
+            :data-on="searched"
+          >
+            <span
+              v-for="(cutoff, s) in CUTOFF"
+              :key="s"
+              class="transition-opacity duration-300"
+              :class="sweep === String(s) ? '' : 'invisible opacity-0'"
+            >searchIssues updated:&lt;{{ cutoff }}</span>
+          </span>
+        </div>
+
+        <div class="w-full overflow-hidden rounded-lg border border-(--d-line-strong) bg-(--d-raised)">
+          <p class="flex items-center gap-2 border-b border-(--d-line) px-3 py-2.5 text-[13px]">
+            <UIcon
+              name="i-simple-icons-github"
+              class="size-4 text-highlighted"
+            />
+            <span class="font-medium text-highlighted">my-org/my-repo</span>
+            <span class="text-muted">open issues</span>
+          </p>
+
+          <ol>
+            <li
+              v-for="(issue, i) in ROWS"
+              :key="i"
+              class="flex gap-2.5 border-b border-(--d-line) px-3 py-2.5 transition-colors duration-500 last:border-b-0"
+              :class="issue && actions[issue.number] === 'waiting' ? 'bg-(--d-warn-bg)' : ''"
+            >
+              <template v-if="issue">
+                <span class="d-stack mt-0.5 size-4 shrink-0">
+                  <UIcon
+                    name="i-lucide-circle-dot"
+                    class="size-4 text-(--d-ok) transition-opacity duration-300"
+                    :class="actions[issue.number] === 'approved' ? 'opacity-0' : ''"
+                  />
+                  <UIcon
+                    name="i-lucide-circle-check"
+                    class="size-4 text-muted transition-opacity duration-300"
+                    :class="actions[issue.number] === 'approved' ? '' : 'opacity-0'"
+                  />
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p
+                    class="text-[13px]/5 font-medium transition-colors duration-300"
+                    :class="actions[issue.number] === 'approved' ? 'text-muted' : 'text-highlighted'"
+                  >
+                    {{ issue.title }} <span class="font-mono text-[12px] font-normal text-muted">#{{ issue.number }}</span>
+                  </p>
+                  <div class="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
+                    <span :class="chip">
+                      <span class="size-2 rounded-full bg-(--d-line-strong)" />
+                      {{ issue.label }}
+                    </span>
+                    <span
+                      class="d-step"
+                      :class="chip"
+                      :data-on="stale(issue)"
+                    >
+                      <span class="size-2 rounded-full bg-(--d-warn)" />
+                      stale
+                    </span>
+                    <span class="d-stack ms-1 text-[12px]">
+                      <span
+                        v-for="(a, key) in ACTIONS"
+                        :key="key"
+                        class="inline-flex items-center gap-1 transition-opacity duration-300"
+                        :class="[a.tone, actions[issue.number] === key ? '' : 'invisible opacity-0']"
+                        :aria-hidden="actions[issue.number] !== key"
+                      >
+                        <UIcon
+                          v-if="a.icon"
+                          :name="a.icon"
+                          class="size-3.5"
+                        />
+                        <span
+                          v-else
+                          class="mx-0.5 size-1.5 animate-pulse rounded-full bg-(--d-warn)"
+                        />
+                        <code
+                          v-if="a.tool"
+                          class="font-mono"
+                        >{{ a.tool }}</code>
+                        {{ a.text }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </template>
+
+              <template v-else>
+                <UIcon
+                  name="i-lucide-circle-dot"
+                  class="mt-0.5 size-4 shrink-0 text-dimmed"
+                />
+                <div
+                  aria-hidden="true"
+                  class="flex flex-1 flex-col gap-2.5 pt-1.5"
+                >
+                  <span class="h-1.5 w-3/5 rounded-full bg-(--d-raised-strong)" />
+                  <span class="h-1.5 w-1/4 rounded-full bg-(--d-raised-strong)" />
+                </div>
+              </template>
+            </li>
+          </ol>
+        </div>
       </div>
-    </dl>
+    </div>
   </DocsFigure>
 </template>
