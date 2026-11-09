@@ -11,12 +11,13 @@ Compares `@github-tools/eve-extension` configurations on 12 GitHub tasks with [e
 | `auto-presets` | `auto` with `evaluation.selection: 'presets'`: routes to presets instead |
 | `auto-turn` | `auto` with `evaluation.scope: 'turn'`: picks tools again for each request |
 | `core-deferred` | `auto` with `maxTools: 0`: only the core read tools are listed, the rest is deferred |
+| `cli` | No GitHub tools: eve's bash tool runs the `gh` CLI in a [just-bash](https://eve.dev/docs/sandbox/just-bash) sandbox. Reads run the host's authenticated `gh`, so the token stays outside the sandbox; writes are stubbed by `lib/gh-command.ts` |
 
 `BENCH_LEVEL` (`conservative`, `default`, `permissive`) sets the `evaluation` thresholds, see `lib/configs.ts`.
 
 ## Run
 
-Needs `AI_GATEWAY_API_KEY` (agent model and Jev) and `GITHUB_TOKEN` (reads). Set `JEV_GATEWAY_API_KEY` to call Jev with a different Gateway key. The agent disables eve's built-in tools, but eve still prepares a [local sandbox](https://eve.dev/docs/sandbox/default): run Docker, or install `microsandbox`.
+Needs `AI_GATEWAY_API_KEY` (agent model and Jev) and `GITHUB_TOKEN` (reads). Set `JEV_GATEWAY_API_KEY` to call Jev with a different Gateway key. The agent disables eve's built-in tools, but eve still prepares a [local sandbox](https://eve.dev/docs/sandbox/default): run Docker, or install `microsandbox`. The `cli` config needs `gh` installed and signed in on the host instead of `GITHUB_TOKEN`.
 
 ```bash
 pnpm --filter @github-tools/sdk --filter @github-tools/eve-extension build

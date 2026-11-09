@@ -16,6 +16,7 @@
     "@github-tools/sdk": "workspace:*",
     "ai": "^7.0.148",
     "eve": "^1.0.0-rc.6",
+    "just-bash": "3.6.0",
     "zod": "^4.5.4"
   }
 }

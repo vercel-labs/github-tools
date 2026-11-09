@@ -17,7 +17,7 @@ export default defineEval({
   timeoutMs: 1_200_000,
   async test(t) {
     t.log(`${BENCH_LOG_PREFIX}${JSON.stringify({ task: 'conversation', ...selection })}`)
-    let session
+    let session: Awaited<ReturnType<typeof t.send>>['session'] | undefined
     for (const id of TURNS) {
       const { prompt } = TASKS.find(task => task.id === id)!
       let turn = session ? await session.send(prompt) : await t.send(prompt)
