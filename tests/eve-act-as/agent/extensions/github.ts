@@ -8,7 +8,7 @@ export default githubExtension({
   connector: 'github/eval',
   actAs: 'caller',
   approvers: 'anyone',
-  include: ['getRepository', 'createIssue', 'addIssueComment'],
+  include: ['getRepository', 'createIssue', 'addIssueComment', 'resolveReviewThread', 'searchCode'],
   requireApproval: { createIssue: 'always', addIssueComment: 'always' },
   overrides: { addIssueComment: { actAs: 'app' } },
 })

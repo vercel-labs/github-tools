@@ -127,7 +127,10 @@ export interface GithubExtensionConfig {
    * - `'caller'`: `'user'` when a signed-in user drives the turn, the App when
    *   nobody does (schedules, automations, bots). A user who has not
    *   authorized the App is asked to sign in; the call never falls back to
-   *   the App for them.
+   *   the App for them. Someone who comments on eve's GitHub channel can't
+   *   sign in, so their call runs as the App once their own role on the
+   *   repository it targets allows it: Read for a read, Write for a write.
+   *   A refused call fails with `github_tools.CALLER_FORBIDDEN`.
    *
    * GitHub allows a user-token call only when both the user and the App have
    * access, so a maintainer can do what a maintainer can, and a reader can
