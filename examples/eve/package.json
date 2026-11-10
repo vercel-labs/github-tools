@@ -7,13 +7,18 @@
   },
   "scripts": {
     "dev": "eve dev",
-    "build": "eve build"
+    "build": "eve build",
+    "typecheck": "tsc"
   },
   "dependencies": {
-    "@github-tools/eve-extension": "workspace:*",
+    "@github-tools/eve-extension": "latest",
     "@vercel/connect": "^2.7.0",
     "ai": "^7.0.148",
     "eve": "^1.0.0-rc.6",
     "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "^6.0.3"
   }
 }

@@ -215,8 +215,8 @@ importers:
   examples/eve:
     dependencies:
       '@github-tools/eve-extension':
-        specifier: workspace:*
-        version: link:../../packages/github-tools-eve-extension
+        specifier: latest
+        version: 0.13.0(980d50c8c90bae1fa32403fc36e4bcac)
       '@vercel/connect':
         specifier: ^2.7.0
         version: 2.7.0(@ai-sdk/mcp@2.0.93(zod@4.6.7))(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(ai@7.0.148(zod@4.6.7))(eve@1.0.0-rc.6)
@@ -229,6 +229,13 @@ importers:
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^26.5.0
+        version: 26.5.0
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   examples/eve-bench:
     dependencies:
@@ -1659,6 +1666,41 @@ packages:
     resolution: {integrity: sha512-043dyEKD9TDSfz080YH2vobubgg+NIo/9Fw4RAl7sEMpD8Am1DNrrSTl/GpMBjyGHoD/FbJY2QLawY+HSQsEIA==}
     peerDependencies:
       vue: '>=3.3.0'
+
+  '@github-tools/eve-extension@0.13.0':
+    resolution: {integrity: sha512-NHvCnKmvoEmCwmyw0x3XA3EKD5iPIuiY9ZfMxrvetkjH31Z8tiCxL8R5OC1edSAIkwZM7GTRxgKyXgORFnQT2g==}
+    engines: {node: '>=24'}
+    peerDependencies:
+      '@vercel/connect': '>=2.7.0'
+      eve: '*'
+    peerDependenciesMeta:
+      '@vercel/connect':
+        optional: true
+
+  '@github-tools/sdk@1.22.0':
+    resolution: {integrity: sha512-fNpJZqUjT47E/3yAxcVKUM2xDYYORSPqiXsSSDv+dzq4DOSHUi7B90zvuOgWkz8ksA7TcMLTnwZqHVnRrMfogQ==}
+    peerDependencies:
+      '@ai-sdk/workflow': ^1.0.16 || ^2.0.0
+      '@tanstack/ai': ~0.64.0
+      '@tanstack/ai-vercel-gateway': ~0.3.2
+      '@vercel/connect': '>=0.3.2'
+      ai: ^6.0.97 || ^7.0.0
+      eve: '>=0.84.0 || >=1.0.0-0'
+      workflow: ^4.5.0 || ^5.0.0
+      zod: ^4.3.6
+    peerDependenciesMeta:
+      '@ai-sdk/workflow':
+        optional: true
+      '@tanstack/ai':
+        optional: true
+      '@tanstack/ai-vercel-gateway':
+        optional: true
+      '@vercel/connect':
+        optional: true
+      eve:
+        optional: true
+      workflow:
+        optional: true
 
   '@hono/node-server@2.1.1':
     resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
@@ -12882,6 +12924,71 @@ snapshots:
       '@floating-ui/dom': 1.8.0
       '@floating-ui/utils': 0.2.12
       vue: 3.5.45(typescript@6.0.3)
+
+  '@github-tools/eve-extension@0.13.0(980d50c8c90bae1fa32403fc36e4bcac)':
+    dependencies:
+      '@github-tools/sdk': 1.22.0(3bd2ff77fabaf4ee4c6050da9c8d767c)
+      eve: 1.0.0-rc.6(f8168b37b4887d4feb9da8853275c7e5)
+      zod: 4.6.7
+    optionalDependencies:
+      '@vercel/connect': 2.7.0(@ai-sdk/mcp@2.0.93(zod@4.6.7))(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(ai@7.0.148(zod@4.6.7))(eve@1.0.0-rc.6)
+    transitivePeerDependencies:
+      - '@ai-sdk/workflow'
+      - '@nestjs/common'
+      - '@nestjs/core'
+      - '@nuxt/kit'
+      - '@orpc/server'
+      - '@tanstack/ai'
+      - '@tanstack/ai-vercel-gateway'
+      - '@tanstack/start-client-core'
+      - ai
+      - effect
+      - elysia
+      - express
+      - fastify
+      - h3
+      - hono
+      - next
+      - nitro
+      - nitropack
+      - ofetch
+      - react
+      - react-router
+      - vite
+      - workflow
+
+  '@github-tools/sdk@1.22.0(3bd2ff77fabaf4ee4c6050da9c8d767c)':
+    dependencies:
+      ai: 7.0.148(zod@4.6.7)
+      evlog: 2.35.1(1a94fbd90780ea6e89f97e285a6b4ad5)
+      octokit: 5.0.5
+      zod: 4.6.7
+    optionalDependencies:
+      '@ai-sdk/workflow': 2.0.80(workflow@5.4.0(@aws-sdk/credential-provider-web-identity@3.972.49)(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/schema@4.6.4)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(confbox@0.3.2)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.5)(mlly@1.8.2)(oxc-parser@0.151.0)(react@19.3.0)(rolldown@1.2.16)(typescript@6.0.3)(unplugin@3.7.0(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.68.0)(vite@8.3.6(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)))(ws@8.22.0))(zod@4.6.7)
+      '@tanstack/ai': 0.64.0(zod@4.6.7)
+      '@tanstack/ai-vercel-gateway': 0.3.2(@smithy/signature-v4@5.7.3)(@tanstack/ai@0.64.0(zod@4.6.7))(ws@8.22.0)(zod@4.6.7)
+      '@vercel/connect': 2.7.0(@ai-sdk/mcp@2.0.93(zod@4.6.7))(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(ai@7.0.148(zod@4.6.7))(eve@1.0.0-rc.6)
+      eve: 1.0.0-rc.6(f8168b37b4887d4feb9da8853275c7e5)
+      workflow: 5.4.0(@aws-sdk/credential-provider-web-identity@3.972.49)(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nuxt/schema@4.6.4)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(confbox@0.3.2)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.5)(mlly@1.8.2)(oxc-parser@0.151.0)(react@19.3.0)(rolldown@1.2.16)(typescript@6.0.3)(unplugin@3.7.0(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.68.0)(vite@8.3.6(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)))(ws@8.22.0)
+    transitivePeerDependencies:
+      - '@nestjs/common'
+      - '@nestjs/core'
+      - '@nuxt/kit'
+      - '@orpc/server'
+      - '@tanstack/start-client-core'
+      - effect
+      - elysia
+      - express
+      - fastify
+      - h3
+      - hono
+      - next
+      - nitro
+      - nitropack
+      - ofetch
+      - react
+      - react-router
+      - vite
 
   '@hono/node-server@2.1.1(hono@4.13.7)':
     dependencies:

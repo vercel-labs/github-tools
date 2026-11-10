@@ -1,7 +1,8 @@
-.env
 node_modules
-.eve
-.output
-.vercel
 .env*
 !.env.example
+.eve
+.vercel
+.output
+.DS_Store
+*.tsbuildinfo

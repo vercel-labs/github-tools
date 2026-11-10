@@ -29,6 +29,8 @@ allowBuilds:
 minimumReleaseAge: 2880
 
 minimumReleaseAgeExclude:
+  # This repository's packages: examples/eve installs them from npm
+  - '@github-tools/*'
   # Nuxt
   - '@nuxt/*'
   - '@nuxtjs/*'
