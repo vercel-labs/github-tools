@@ -78,6 +78,13 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Act on a repository and branch the guardrails allow, such as a branch matching the allowed patterns, or ask the user to change `guardrails`.',
     link: 'https://github-tools.com/approval#guardrails',
   },
+  CALLER_FORBIDDEN: {
+    status: 403,
+    message: ({ reason }: { reason: string }) => `Not allowed for the person who asked: ${reason}`,
+    why: 'The tools run with a GitHub App\'s token for a person who has no token of their own, so each call is limited to what that person may do on the target repository.',
+    fix: 'Tell the person which access they are missing. Do not retry the call or reach the same result another way.',
+    link: 'https://github-tools.com/integrations/eve#per-user-tokens',
+  },
   EVALUATION_UNAVAILABLE: {
     status: 500,
     message: '`requireApproval: \'auto\'` and `preset: \'auto\'` need `experimental_decide` (or `experimental_evaluate`) from `ai` 7.0.105 or later.',

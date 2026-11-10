@@ -2,10 +2,44 @@ import { defineEval, type EveEvalContext, type EveEvalTurn } from 'eve/evals'
 import { equals, includes, satisfies } from 'eve/evals/expect'
 
 const as = (user: string) => ({ headers: { 'x-eval-user': user } })
+const commenting = (login: string) => ({ headers: { 'x-eval-commenter': login } })
 
-function answer(turn: EveEvalTurn, optionId: 'approve' | 'deny', user: string) {
-  return turn.session.respond([{ interactionId: turn.interactions[0]!.interactionId, optionId }], as(user))
+function answer(turn: EveEvalTurn, optionId: 'approve' | 'deny', user: string | ReturnType<typeof commenting>) {
+  return turn.session.respond([{ interactionId: turn.interactions[0]!.interactionId, optionId }], typeof user === 'string' ? as(user) : user)
 }
+
+// An `issue_comment` webhook as GitHub sends it to the channel route.
+function postComment(t: EveEvalContext, id: number, login: string, body: string) {
+  const sender = { login, id, type: 'User' }
+  return t.target.fetch('/eve/v1/github', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-github-event': 'issue_comment', 'x-github-delivery': `delivery-${id}` },
+    body: JSON.stringify({
+      action: 'created',
+      issue: { number: 7, title: 'eval', state: 'open', user: sender },
+      comment: { id, body, user: sender },
+      repository: { id: 1, name: 'github-tools', full_name: 'vercel-labs/github-tools', private: false, default_branch: 'main', owner: { login: 'vercel-labs', id: 2, type: 'Organization' } },
+      sender,
+      installation: { id: 3 },
+    }),
+  })
+}
+
+async function githubCalls(t: EveEvalContext): Promise<string[]> {
+  return JSON.parse((await t.send('github calls', as('alice'))).reply ?? '[]')
+}
+
+// A webhook is answered before its turn runs, so the calls it leads to show up later.
+async function githubCallsOnce(t: EveEvalContext, done: (calls: string[]) => boolean) {
+  for (let attempt = 0; attempt < 80; attempt++) {
+    const calls = await githubCalls(t)
+    if (done(calls)) return calls
+    await new Promise(resolve => setTimeout(resolve, 250))
+  }
+  throw new Error('The GitHub calls the webhook should lead to never happened.')
+}
+
+const isRoleLookup = (call: string) => call.includes('/collaborators/')
 
 function kinds(turn: EveEvalTurn) {
   return turn.interactions.map(interaction => interaction.request.kind)
@@ -106,8 +140,55 @@ export default defineEval({
     t.check(gatedUpdate.interactions.map(interaction => interaction.request.prompt), equals(['Update issue on vercel-labs/github-tools#999?']))
     await answer(gatedUpdate, 'deny', 'alice')
 
-    const calls = await t.send('github calls', as('alice'))
-    t.check(JSON.parse(calls.reply ?? '[]'), equals([
+    // A commenter on eve's GitHub channel, with `actAs: 'caller'` (`github__*`)
+
+    // GitHub vouches for the commenter but can't sign them in: the call runs as the App, with no sign-in.
+    const commenterRead = await t.send('read', commenting('gh-writer'))
+    t.check(kinds(commenterRead), equals([]))
+    t.check(commenterRead.requireToolCall('github__getRepository').status, equals('completed'))
+
+    // A reader's write is refused for their role once approved, before it reaches GitHub.
+    const readerWrite = await t.send('write', commenting('gh-reader'))
+    t.check(kinds(readerWrite), equals(['approval']))
+    const refused = await answer(readerWrite, 'approve', commenting('gh-reader'))
+    t.check(refused.reply, includes('github_tools.CALLER_FORBIDDEN'))
+    t.check(refused.reply, includes('gh-reader has read access to vercel-labs/github-tools, and `createIssue` needs write access.'))
+
+    // A writer who approves a reader's write lends their role, without a sign-in.
+    const lent = await answer(await t.send('write', commenting('gh-reader')), 'approve', commenting('gh-writer'))
+    t.check(kinds(lent), equals([]))
+    t.check(lent.reply, includes('4242'))
+
+    // The role is read on the repository a call targets, not the one the thread is in.
+    const elsewhere = await t.send('read private', commenting('gh-writer'))
+    t.check(elsewhere.reply, includes('gh-writer has no access to vercel-labs/private, and `getRepository` needs read access.'))
+
+    // A write that names no repository is checked on the repository its target is in: a reader can't
+    // resolve a review thread by approving their own request, and a writer can.
+    const readerResolve = await answer(await t.send('resolve thread', commenting('gh-reader')), 'approve', commenting('gh-reader'))
+    t.check(readerResolve.reply, includes('gh-reader has read access to vercel-labs/github-tools, and `resolveReviewThread` needs write access.'))
+    const writerResolve = await answer(await t.send('resolve thread', commenting('gh-writer')), 'approve', commenting('gh-writer'))
+    t.check(writerResolve.reply, includes('"isResolved":true'))
+
+    // A search is refused while the App's token reaches a repository other than the thread's.
+    const search = await t.send('search', commenting('gh-writer'))
+    t.check(search.reply, includes('`searchCode` would search every repository the agent\'s token reaches, not only vercel-labs/github-tools'))
+
+    // The GitHub channel with `respondTo: 'writers'`
+
+    // A reader's mention does nothing: their role is read, and no turn starts.
+    t.check((await postComment(t, 2001, 'gh-reader', '@eval-agent read this repository')).ok, equals(true))
+    await githubCallsOnce(t, calls => calls.some(call => call.includes('/collaborators/gh-reader/')))
+    // A writer's mention starts a turn, which reads the thread's repository as the App and replies.
+    t.check((await postComment(t, 2002, 'gh-writer', '@eval-agent read this repository')).ok, equals(true))
+    const calls = await githubCallsOnce(t, calls => calls.some(call => call.startsWith('POST /repos/vercel-labs/github-tools/issues/7/comments')))
+
+    t.check([...new Set(calls.filter(isRoleLookup))].sort(), equals([
+      'GET /repos/vercel-labs/github-tools/collaborators/gh-reader/permission ghs_app',
+      'GET /repos/vercel-labs/github-tools/collaborators/gh-writer/permission ghs_app',
+      'GET /repos/vercel-labs/private/collaborators/gh-writer/permission ghs_app',
+    ]))
+    t.check(calls.filter(call => !isRoleLookup(call)), equals([
       'GET /repos/vercel-labs/github-tools ghs_app',
       'GET /repos/vercel-labs/github-tools ghs_app',
       'GET /repos/vercel-labs/github-tools ghu_alice',
@@ -118,6 +199,18 @@ export default defineEval({
       'GET /repos/vercel-labs/github-tools ghu_revoked',
       'GET /repos/vercel-labs/github-tools ghu_dave',
       'POST /repos/vercel-labs/github-tools/issues ghs_app',
+      'GET /repos/vercel-labs/github-tools ghs_app',
+      'POST /repos/vercel-labs/github-tools/issues ghs_app',
+      // The reader's thread lookup, then the writer's lookup and mutation.
+      'POST /graphql ghs_app',
+      'POST /graphql ghs_app',
+      'POST /graphql ghs_app',
+      'GET /installation/repositories ghs_app',
+      'POST /repos/vercel-labs/github-tools/issues/comments/2002/reactions ghs_app',
+      // The channel reads the repository for its checkout, then the tool reads it.
+      'GET /repos/vercel-labs/github-tools ghs_app',
+      'GET /repos/vercel-labs/github-tools ghs_app',
+      'POST /repos/vercel-labs/github-tools/issues/7/comments ghs_app',
     ]))
   },
 })
