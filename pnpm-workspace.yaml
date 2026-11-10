@@ -6,6 +6,12 @@ packages:
 
 shamefullyHoist: true
 
+# @nuxtjs/mdc imports hast-util-to-html without declaring it.
+packageExtensions:
+  '@nuxtjs/mdc':
+    dependencies:
+      hast-util-to-html: ^9.0.6
+
 allowBuilds:
   '@mongodb-js/zstd': false
   '@nestjs/core': false
