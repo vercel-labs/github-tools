@@ -64,6 +64,16 @@ globalThis.fetch = async (input, init) => {
     const role = repo === 'github-tools' ? roles[login!] : undefined
     return json({ ...(role ?? { permission: 'none', role_name: '' }), user: { login, id: 1 } })
   }
+  // The App's token reaches both repositories, and the review thread `PRRT_1` is in `github-tools`.
+  if (request.method === 'GET' && url.pathname === '/installation/repositories') {
+    return json({ total_count: 2, repositories: [{ full_name: 'vercel-labs/github-tools' }, { full_name: 'vercel-labs/private' }] })
+  }
+  if (request.method === 'POST' && url.pathname === '/graphql') {
+    const { query } = await request.json() as { query: string }
+    return query.includes('mutation')
+      ? json({ data: { resolveReviewThread: { thread: { id: 'PRRT_1', isResolved: true } } } })
+      : json({ data: { node: { repository: { name: 'github-tools', owner: { login: 'vercel-labs' } } } } })
+  }
   // The GitHub channel reacts to the comment that starts a turn and posts the reply on its issue.
   if (request.method === 'POST' && /^\/repos\/vercel-labs\/github-tools\/issues\/comments\/\d+\/reactions$/.test(url.pathname)) {
     return json({ id: 1, content: 'eyes' }, 201)

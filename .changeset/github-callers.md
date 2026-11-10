@@ -9,7 +9,9 @@ Make an agent on eve's GitHub channel act for the person who commented, and choo
 
 - Before each call, the extension reads the commenter's role on the repository the call targets. A read needs Read and a write needs Write, so someone who can write to one repository can't have the agent read another one they can't see.
 - A refused call fails with `github_tools.CALLER_FORBIDDEN` before it reaches GitHub. The message names the role the person has and the one the call needs.
-- A tool without a repository, such as `searchCode`, gets a token for the thread's repository only. `createRepository` and `forkRepository` are refused.
+- `resolveReviewThread` needs Write on the repository the thread is in.
+- A search runs only when the App's token reaches the thread's repository and no other, and is refused otherwise, for example when `connect` pins an installation or several repositories.
+- Every other tool without a repository is refused: gists, notifications, `createRepository` and `forkRepository`.
 - With `approvers: 'anyone'`, a call another commenter approved is checked against the approver's role.
 
 `'app'` and `'user'` are unchanged, and so are `'caller'` turns from other channels.
@@ -29,4 +31,4 @@ export default githubChannel({
 
 `respondTo` takes `'anyone'` (default), `'triagers'`, `'writers'`, `'maintainers'` or `'admins'`: GitHub's repository roles, each meaning that role and everyone above it. A comment from someone below it starts no turn, so it leaves no reaction, no session and no model call. Every other option is eve's.
 
-`@github-tools/sdk/eve-runtime` exports what both are built from: `withGithubCallerAccess(token, { login, repository? })`, `githubCallerViolation`, `githubRoleRank` and `GITHUB_ROLES`.
+`@github-tools/sdk/eve-runtime` exports what both are built from: `withGithubCallerAccess(token, { login, repository? })`, `githubRoleRank` and `GITHUB_ROLES`.

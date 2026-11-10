@@ -163,6 +163,17 @@ export default defineEval({
     const elsewhere = await t.send('read private', commenting('gh-writer'))
     t.check(elsewhere.reply, includes('gh-writer has no access to vercel-labs/private, and `getRepository` needs read access.'))
 
+    // A write that names no repository is checked on the repository its target is in: a reader can't
+    // resolve a review thread by approving their own request, and a writer can.
+    const readerResolve = await answer(await t.send('resolve thread', commenting('gh-reader')), 'approve', commenting('gh-reader'))
+    t.check(readerResolve.reply, includes('gh-reader has read access to vercel-labs/github-tools, and `resolveReviewThread` needs write access.'))
+    const writerResolve = await answer(await t.send('resolve thread', commenting('gh-writer')), 'approve', commenting('gh-writer'))
+    t.check(writerResolve.reply, includes('"isResolved":true'))
+
+    // A search is refused while the App's token reaches a repository other than the thread's.
+    const search = await t.send('search', commenting('gh-writer'))
+    t.check(search.reply, includes('`searchCode` would search every repository the agent\'s token reaches, not only vercel-labs/github-tools'))
+
     // The GitHub channel with `respondTo: 'writers'`
 
     // A reader's mention does nothing: their role is read, and no turn starts.
@@ -190,6 +201,11 @@ export default defineEval({
       'POST /repos/vercel-labs/github-tools/issues ghs_app',
       'GET /repos/vercel-labs/github-tools ghs_app',
       'POST /repos/vercel-labs/github-tools/issues ghs_app',
+      // The reader's thread lookup, then the writer's lookup and mutation.
+      'POST /graphql ghs_app',
+      'POST /graphql ghs_app',
+      'POST /graphql ghs_app',
+      'GET /installation/repositories ghs_app',
       'POST /repos/vercel-labs/github-tools/issues/comments/2002/reactions ghs_app',
       // The channel reads the repository for its checkout, then the tool reads it.
       'GET /repos/vercel-labs/github-tools ghs_app',

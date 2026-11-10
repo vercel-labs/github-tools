@@ -14,6 +14,10 @@ export default defineAgent({
     // A comment from the GitHub channel arrives with its context block, and names no repository.
     if (lastUserMessage?.includes('read this repository')) return { toolCalls: [{ name: 'github__getRepository', input: {} }] }
     switch (lastUserMessage) {
+      case 'resolve thread':
+        return { toolCalls: [{ name: 'github__resolveReviewThread', input: { threadId: 'PRRT_1' } }] }
+      case 'search':
+        return { toolCalls: [{ name: 'github__searchCode', input: { query: 'secret' } }] }
       case 'read private':
         return { toolCalls: [{ name: 'github__getRepository', input: { owner: 'vercel-labs', repo: 'private' } }] }
       case 'read':
