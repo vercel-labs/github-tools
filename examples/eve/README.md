@@ -12,20 +12,39 @@ agent/
   instructions.md        # system prompt
   channels/
     slack.ts             # Slack mentions, direct messages and approval buttons
-    github.ts            # GitHub mentions, limited to people who can push
+    github.ts            # GitHub mentions, from people who can write to the repository
     eve.ts               # HTTP API for the terminal UI, closed to anonymous callers
   extensions/
-    github.ts            # GitHub tools and approval
+    github.ts            # GitHub tools, identity and approval
 ```
 
-- **No stored tokens.** [Vercel Connect](https://vercel.com/docs/connect) holds the GitHub App and the Slack app. Each tool call gets a short-lived GitHub App token scoped to that tool.
+The GitHub setup is two short files:
+
+```ts
+// agent/channels/github.ts
+export default githubChannel({
+  credentials: connectGitHubCredentials('github/github-agent'),
+  respondTo: 'writers',
+})
+```
+
+```ts
+// agent/extensions/github.ts
+export default githubExtension({
+  connector: 'github/github-agent',
+  actAs: 'caller',
+  preset: 'auto',
+  requireApproval: 'auto',
+})
+```
+
+- **No stored tokens.** [Vercel Connect](https://vercel.com/docs/connect) holds the GitHub App and the Slack app, and hands out short-lived tokens.
+- **Each person acts as themselves.** With `actAs: 'caller'`, the agent does nothing for someone that GitHub wouldn't let them do. In Slack, a call runs with the GitHub access of the person who asked: the first time, Slack shows them a private button to authorize the GitHub App. On GitHub, a comment can't carry a sign-in, so the call runs as the App after their own role on the target repository is checked.
+- **Only writers can mention it on GitHub.** With `respondTo: 'writers'`, a comment from anyone without the Write role on the repository starts nothing, so a stranger on a public repository can't use the agent or spend your model budget.
 - **Writes need approval.** With `requireApproval: 'auto'`, low-risk writes the person asked for (labels, reactions, comments, review replies) run directly. Every other write asks first, with **Approve** and **Deny** buttons in Slack and a comment to answer on GitHub. Only the person who asked can approve.
-- **Strangers can't use it on GitHub.** A mention reaches the agent only when its author can push to the repository, so a stranger's comment on a public repository does nothing. A turn started on GitHub only gets tokens for the repository of its thread, so it can't read or change another repository the App is installed on.
 - **Only the tools a request needs.** `preset: 'auto'` lists the tools the first message calls for and defers the rest.
 - **Credentials stay out of GitHub.** A call whose input contains what looks like a token or a private key is blocked.
 - **GitHub text is data.** HTML comments and invisible characters are removed from issue and pull request bodies, and the agent is told to act only on what the person asked.
-
-Every call runs as the GitHub App, so in Slack anyone who can message the app can read what the App can read, and can approve their own writes. Install the App only on the repositories the agent works on, and see [Customize](#customize) to restrict it further.
 
 ## Before you start
 
@@ -65,23 +84,21 @@ Every call runs as the GitHub App, so in Slack anyone who can message the app ca
    vercel connect attach github/github-agent --triggers --trigger-path /eve/v1/github
    ```
 
-   Install the connector's GitHub App on your organization or account, and pick the repositories the agent may work on. The App needs the permissions of the tools the agent may call, which [Permissions per preset](https://github-tools.com/auth#permissions-per-preset) lists.
+   Install the connector's GitHub App on your organization or account, and pick the repositories the agent may work on. The App needs the permissions of the tools the agent may call, which [Permissions per preset](https://github-tools.com/auth#permissions-per-preset) lists. If you chose another connector name, set it in `agent/channels/github.ts` and `agent/extensions/github.ts`.
 
-5. Set `botName` in `agent/channels/github.ts` to the GitHub App's slug, the last part of its `github.com/apps/<slug>` URL. It's the name people mention. If you chose another connector name, set it in `agent/channels/github.ts` and `agent/extensions/github.ts`.
-
-6. Deploy:
+5. Deploy:
 
    ```bash
    npx eve deploy
    ```
 
-7. Try it. In Slack, invite the app to a channel and mention it:
+6. Try it. In Slack, invite the app to a channel and mention it:
 
    ```text
    @github-agent which pull requests on my-org/my-repo are waiting for review?
    ```
 
-   On GitHub, comment on a pull request with the name you set as `botName`:
+   On GitHub, mention the GitHub App by its slug, the last part of its `github.com/apps/<slug>` URL, in a comment on a pull request:
 
    ```text
    @github-agent review this pull request
@@ -105,11 +122,17 @@ On GitHub, it posts a comment that names the action. Answer by mentioning the ag
 pnpm dev
 ```
 
-This opens eve's terminal UI. When `VERCEL_OIDC_TOKEN` expires, run `vercel env pull` again. From the root of the github-tools repository, `pnpm dev:eve` does the same.
+This opens eve's terminal UI. Nobody is signed in there, so calls run as the GitHub App. When `VERCEL_OIDC_TOKEN` expires, run `vercel env pull` again. From the root of the github-tools repository, `pnpm dev:eve` does the same.
 
 ## Customize
 
-Each change below is an option of `githubExtension` in `agent/extensions/github.ts`. The [eve integration guide](https://github-tools.com/integrations/eve) documents all of them.
+Choose who the agent answers on GitHub, in `agent/channels/github.ts`. Each value is a GitHub repository role and everyone above it:
+
+```ts
+respondTo: 'maintainers', // or 'anyone', 'triagers', 'writers', 'admins'
+```
+
+The changes below are options of `githubExtension` in `agent/extensions/github.ts`. The [eve integration guide](https://github-tools.com/integrations/eve) documents all of them.
 
 Limit the agent to some repositories and branches, whoever asks and whoever approves:
 
@@ -127,12 +150,6 @@ Pin a preset instead of routing each session:
 
 ```ts
 preset: 'code-review',
-```
-
-Make each Slack user act with their own GitHub access instead of the App's. This only suits an agent without the GitHub channel: a GitHub comment can't show a sign-in, so a turn started there stops at "Authorization required".
-
-```ts
-actAs: 'caller',
 ```
 
 To answer Slack thread replies without a mention or change where approvals appear, see eve's [Slack channel](https://eve.dev/docs/channels/slack). To wake the agent on new issues, pull requests or failed CI, see eve's [GitHub channel](https://eve.dev/docs/channels/github).

@@ -216,7 +216,7 @@ importers:
     dependencies:
       '@github-tools/eve-extension':
         specifier: latest
-        version: 0.12.0(980d50c8c90bae1fa32403fc36e4bcac)
+        version: 0.13.0(980d50c8c90bae1fa32403fc36e4bcac)
       '@vercel/connect':
         specifier: ^2.7.0
         version: 2.7.0(@ai-sdk/mcp@2.0.93(zod@4.6.7))(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(ai@7.0.148(zod@4.6.7))(eve@1.0.0-rc.6)
@@ -1667,8 +1667,8 @@ packages:
     peerDependencies:
       vue: '>=3.3.0'
 
-  '@github-tools/eve-extension@0.12.0':
-    resolution: {integrity: sha512-QLj0fOwvARB2p0kvcU+49u6nHXZ5vHTvS03mVHLdpphancoqiS3TvIvp+lvQ6XyBethci+qgMZMOz3ySLioPHg==}
+  '@github-tools/eve-extension@0.13.0':
+    resolution: {integrity: sha512-NHvCnKmvoEmCwmyw0x3XA3EKD5iPIuiY9ZfMxrvetkjH31Z8tiCxL8R5OC1edSAIkwZM7GTRxgKyXgORFnQT2g==}
     engines: {node: '>=24'}
     peerDependencies:
       '@vercel/connect': '>=2.7.0'
@@ -1677,8 +1677,8 @@ packages:
       '@vercel/connect':
         optional: true
 
-  '@github-tools/sdk@1.21.0':
-    resolution: {integrity: sha512-kD1gi4SG9SBnz8m6zobtOjXo0pxmnL/HjdrqDK1lznocYEpaBpM7XZ2JrWKXnOv2eWd7Ray7NFKsDvbNLAnd7w==}
+  '@github-tools/sdk@1.22.0':
+    resolution: {integrity: sha512-fNpJZqUjT47E/3yAxcVKUM2xDYYORSPqiXsSSDv+dzq4DOSHUi7B90zvuOgWkz8ksA7TcMLTnwZqHVnRrMfogQ==}
     peerDependencies:
       '@ai-sdk/workflow': ^1.0.16 || ^2.0.0
       '@tanstack/ai': ~0.64.0
@@ -12925,9 +12925,9 @@ snapshots:
       '@floating-ui/utils': 0.2.12
       vue: 3.5.45(typescript@6.0.3)
 
-  '@github-tools/eve-extension@0.12.0(980d50c8c90bae1fa32403fc36e4bcac)':
+  '@github-tools/eve-extension@0.13.0(980d50c8c90bae1fa32403fc36e4bcac)':
     dependencies:
-      '@github-tools/sdk': 1.21.0(3bd2ff77fabaf4ee4c6050da9c8d767c)
+      '@github-tools/sdk': 1.22.0(3bd2ff77fabaf4ee4c6050da9c8d767c)
       eve: 1.0.0-rc.6(f8168b37b4887d4feb9da8853275c7e5)
       zod: 4.6.7
     optionalDependencies:
@@ -12957,7 +12957,7 @@ snapshots:
       - vite
       - workflow
 
-  '@github-tools/sdk@1.21.0(3bd2ff77fabaf4ee4c6050da9c8d767c)':
+  '@github-tools/sdk@1.22.0(3bd2ff77fabaf4ee4c6050da9c8d767c)':
     dependencies:
       ai: 7.0.148(zod@4.6.7)
       evlog: 2.35.1(1a94fbd90780ea6e89f97e285a6b4ad5)
