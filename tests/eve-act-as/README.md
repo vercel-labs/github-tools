@@ -6,7 +6,7 @@ Mounts the built `@github-tools/eve-extension` twice and drives it with `eve eva
 - `agent/extensions/strict.ts`: `actAs: 'user'` with the default approvers
 - `agent/extensions/gated.ts`: `actAs: 'app'` with a configured `response` policy and a `pullNumber` context
 
-`fixtures/stubs.ts` answers Vercel Connect and `api.github.com` in-process, including the Connect sign-in. `agent/channels/eve.ts` signs in the user named by the `x-eval-user` header. The run needs no token, network, or AI Gateway credentials.
+`fixtures/stubs.ts` answers Vercel Connect and `api.github.com` in-process, including the Connect sign-in. `agent/channels/eve.ts` signs in the user named by the `x-eval-user` header, or stands in for a GitHub commenter named by `x-eval-commenter`. `agent/channels/github.ts` mounts `githubChannel` from `@github-tools/eve-extension/channels` with `respondTo: 'writers'`, and the eval posts `issue_comment` webhooks to it. The run needs no token, network, or AI Gateway credentials.
 
 The eval checks that:
 
@@ -21,6 +21,8 @@ The eval checks that:
 - a user who never authorized the App gets a sign-in prompt, and a user whose token GitHub rejects signs in again and the call resumes
 - a configured `response` policy that rejects the requester refuses their approval, and the approver it allows runs the write
 - the approval prompt names the issue a call updates, not the pull request in the context
+- with `'caller'`, a GitHub commenter's call runs as the App with no sign-in, a reader's approved write is refused with `CALLER_FORBIDDEN`, a writer who approves it lends their role, and a call to another repository is checked against the role there
+- with `respondTo: 'writers'`, a reader's mention starts no turn, and a writer's mention starts one that reads the thread's repository and replies
 
 ```bash
 pnpm --filter @github-tools/sdk --filter @github-tools/eve-extension build

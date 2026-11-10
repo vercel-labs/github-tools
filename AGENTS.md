@@ -33,7 +33,7 @@ pnpm workspaces + Turborepo, with published packages, apps, and examples:
 - **`packages/github-tools`** — the SDK (`@github-tools/sdk`), published to npm. Built with `tsdown` to ESM (`.mjs`/`.d.mts`).
 - **`packages/github-tools-eve-extension`** — the published eve extension (`@github-tools/eve-extension`).
 - **`examples/*`** — consumer integrations used for development, smoke tests (`examples/eve-smoke`), and canary checks.
-- **`tests/*`** — eval-only agents that are not usable examples: `tests/eve-act-as` covers the eve extension's `actAs` and `approvers`, and `tests/eve-auto` covers `preset: 'auto'` and `requireApproval: 'auto'`, both with stubbed Vercel Connect and GitHub.
+- **`tests/*`** — eval-only agents that are not usable examples: `tests/eve-act-as` covers the eve extension's `actAs`, `approvers` and `githubChannel`'s `respondTo`, and `tests/eve-auto` covers `preset: 'auto'` and `requireApproval: 'auto'`, both with stubbed Vercel Connect and GitHub.
 - **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
 - **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.start/4.agent-skills.md`).
 
@@ -107,7 +107,9 @@ Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security
 
 ## eve extension dynamic tools (`packages/github-tools-eve-extension`)
 
-`extension/tools/github.ts` default-exports `defineDynamic(async (ctx) => tools)`. eve runs it before every model call and rebuilds every callback and schema from what it returns, so ordinary closures and Zod schemas are fine; there are no durable descriptors to preserve. Re-read config through `buildSessionOptions()` or `extension.config`. Work that must stay fixed across model calls or processes (the `preset: 'auto'` routing) goes in `ctx.memo(key, fn)` with a JSON result. `examples/eve-smoke` runs the built extension under `eve eval` in CI. A scheduled canary (`.github/workflows/eve-canary.yml`) builds `examples/eve` and runs that smoke eval against a coherent `eve@latest` / `ai@latest` pair.
+`extension/tools/github.ts` default-exports `defineDynamic(async (ctx) => tools)`. eve runs it before every model call and rebuilds every callback and schema from what it returns, so ordinary closures and Zod schemas are fine; there are no durable descriptors to preserve. Re-read config through `buildSessionOptions()` or `extension.config`. Work that must stay fixed across model calls or processes (the `preset: 'auto'` routing) goes in `ctx.memo(key, fn)` with a JSON result. `examples/eve-smoke` runs the built extension under `eve eval` in CI.
+
+`channels/index.ts` (`@github-tools/eve-extension/channels`, the `githubChannel` wrapper with `respondTo`) is not part of the mounted extension: `tsc -p tsconfig.channels.json` compiles it to `channels/dist`. Keep it out of `extension/` and `dist/`. eve binds every module under `dist/extension` to a mount, so an agent with two mounts of the package can't import one from a channel file, and building an agent that uses the workspace extension rebuilds `dist/` and deletes anything else in it. A scheduled canary (`.github/workflows/eve-canary.yml`) builds `examples/eve` and runs that smoke eval against a coherent `eve@latest` / `ai@latest` pair.
 
 ## Chat App Architecture (`apps/chat`)
 

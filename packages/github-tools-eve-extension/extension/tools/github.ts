@@ -17,6 +17,7 @@ import {
   latestUserText,
   listEveToolDescriptors,
   mapEveApprovalValue,
+  withGithubCallerAccess,
   type AutoApprovalDecision,
   type EveGithubToolsOptions,
   type EveToolOverrides,
@@ -28,6 +29,7 @@ import {
 import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy, ApprovalStatus } from 'eve/tools/approval'
 import { defineDynamic, defineTool, toolOutput, type ToolContext, type ToolDefinition } from 'eve/tools'
 import { z } from 'zod'
+import { githubCommenter } from '../lib/commenter'
 import { sessionContext } from '../lib/context'
 import extension, {
   type GithubActAs,
@@ -185,9 +187,16 @@ async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolC
 
   const requester = ctx.session.auth.current
   const approver = ctx.approval?.responder
+  // Someone else approved: the call runs with their access, so GitHub checks and records the approver.
+  const approvedByOther = isUser(approver) && !samePrincipal(approver, requester)
+  // A commenter can't sign in, so their `'caller'` call runs as the App within their own role on each target repository.
+  const commenter = actAs === 'caller' ? githubCommenter(approvedByOther ? approver : requester) : undefined
+  if (commenter) {
+    const options = buildSessionOptions(ctx)
+    return executeGithubEveTool(name, args, { ...options, token: withGithubCallerAccess(options.token, commenter) })
+  }
   const auth = await githubUserAuth()
-  // Someone else approved: the call runs with their token, so GitHub checks and records the approver.
-  if (isUser(approver) && !samePrincipal(approver, requester)) {
+  if (approvedByOther) {
     const { token } = await approver.getToken(auth)
     return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
   }
@@ -208,7 +217,10 @@ async function runGithubEveApprovalResponse(name: GithubToolName, { request, res
       ? { status: 'allowed' }
       : { status: 'rejected', reason: 'Sign in to approve this GitHub action.' }
   }
-  if (actAsFor(name) === 'app') return { status: 'allowed' }
+  const actAs = actAsFor(name)
+  if (actAs === 'app') return { status: 'allowed' }
+  // A commenter has no sign-in: the approved call checks their role on GitHub instead.
+  if (actAs === 'caller' && githubCommenter(response.principal)) return { status: 'allowed' }
   // Signs the approver in before the approval counts, since the call will run with their token.
   await auth.getToken(await githubUserAuth())
   return { status: 'allowed' }

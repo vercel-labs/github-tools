@@ -90,6 +90,7 @@ export default githubExtension({
 - `'app'` (default): the App installation for everyone.
 - `'user'`: the signed-in user's own GitHub token. Sessions without a `principalType: 'user'` caller (schedules, `localDev()`) fail with `principal_required`.
 - `'caller'`: the user when one drives the turn, the App otherwise (schedules, `localDev()`, bots). Recommended when the agent works both on its own and for people. The default may become `'caller'` in a future major.
+- On eve's GitHub channel a commenter can't sign in. With `'caller'` their call runs as the App after the extension reads their role on the repository the call targets: Read for a read, Write for a write. A refused call returns `github_tools.CALLER_FORBIDDEN`; tell the person which access is missing and don't retry. With `'user'` the call waits for a sign-in GitHub can't show.
 - `{ read, write }` picks per tool kind (each defaults to `'app'`); `overrides.<tool>.actAs` picks per tool.
 - GitHub allows a user-token call only when both the user and the App have access, so a maintainer can merge and a reader gets `403`.
 - A user who has not authorized the App gets an eve `sign-in` interaction, and the call resumes after it; a `401` asks them to sign in again. A signed-in user never falls back to the App.
@@ -97,6 +98,23 @@ export default githubExtension({
 - `'user'`/`'caller'` need `connector`; `connect` configures App tokens and cannot be combined with `actAs: 'user'`.
 
 One GitHub App installed on several accounts needs no configuration: each app token targets the installation owning the call's `owner/repo`, after `context` defaults. Tools without a repository target (search, gists, notifications) use the connector's default installation. Set `installationId`, `authorizationDetails` or `repositories` in `connect` to pin one installation; user subjects are left untouched. `connect` also accepts a custom `(ctx, call) => params` resolver, where `call` is `{ toolName, input, owner?, repo? }`. A missing installation surfaces as `CONNECT_INSTALLATION_REQUIRED` naming the account.
+
+To choose who can reach the agent with a GitHub comment, use the extension's `githubChannel` instead of eve's. It takes eve's options plus `respondTo`:
+
+```ts
+// agent/channels/github.ts
+import { connectGitHubCredentials } from '@vercel/connect/eve'
+import { githubChannel } from '@github-tools/eve-extension/channels'
+
+export default githubChannel({
+  credentials: connectGitHubCredentials('github/my-connector'),
+  respondTo: 'writers',
+})
+```
+
+- `respondTo`: `'anyone'` (default), `'triagers'`, `'writers'`, `'maintainers'` or `'admins'`. Each value is a GitHub repository role and everyone above it.
+- A comment from someone below it starts no turn: no reaction, no session, no model call.
+- Pair it with `actAs: 'caller'` on an agent that people mention on GitHub.
 
 ## Docs
 

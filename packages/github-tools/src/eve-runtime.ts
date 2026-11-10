@@ -22,6 +22,8 @@ export type { AutoApprovalDecision, GithubEvaluationOptions } from './core/evalu
 export { resolveGithubToken } from './core/token'
 export { githubGuardrailViolation } from './eve/steps'
 export type { GithubGuardrails } from './core/guardrails'
+export { GITHUB_ROLES, githubCallerViolation, githubRoleRank, withGithubCallerAccess } from './core/caller-access'
+export type { GithubCaller, GithubRole } from './core/caller-access'
 export type { GithubDryRunApproval, GithubDryRunResult } from './core/dry-run'
 export type { GithubTokenCall } from './core/token'
 export { githubToolsErrors } from './core/errors'

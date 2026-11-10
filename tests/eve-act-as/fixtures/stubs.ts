@@ -13,6 +13,13 @@ const userTokens: Record<string, string> = {
 // read it, and the App installation can do both.
 const canWrite = new Set(['ghu_alice', 'ghu_carol', 'ghs_app'])
 
+// What GitHub's collaborator permission endpoint answers for the people who comment on GitHub.
+// Nobody has access to `vercel-labs/private`.
+const roles: Record<string, { permission: string, role_name: string }> = {
+  'gh-writer': { permission: 'write', role_name: 'write' },
+  'gh-reader': { permission: 'read', role_name: 'read' },
+}
+
 const originalFetch = globalThis.fetch
 
 function json(body: unknown, status = 200) {
@@ -51,6 +58,20 @@ globalThis.fetch = async (input, init) => {
   recordGithubCall(`${request.method} ${url.pathname} ${token}`)
   if (!/^gh[us]_/.test(token) || token === 'ghu_revoked') return json({ message: 'Bad credentials' }, 401)
 
+  const collaborator = url.pathname.match(/^\/repos\/vercel-labs\/(github-tools|private)\/collaborators\/([^/]+)\/permission$/)
+  if (request.method === 'GET' && collaborator) {
+    const [, repo, login] = collaborator
+    const role = repo === 'github-tools' ? roles[login!] : undefined
+    return json({ ...(role ?? { permission: 'none', role_name: '' }), user: { login, id: 1 } })
+  }
+  // The GitHub channel reacts to the comment that starts a turn and posts the reply on its issue.
+  if (request.method === 'POST' && /^\/repos\/vercel-labs\/github-tools\/issues\/comments\/\d+\/reactions$/.test(url.pathname)) {
+    return json({ id: 1, content: 'eyes' }, 201)
+  }
+  if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/issues/7/comments') {
+    const { body } = await request.json() as { body: string }
+    return json({ id: 78, html_url: 'https://github.com/vercel-labs/github-tools/issues/7#issuecomment-78', body, user: { login: 'eval[bot]' }, created_at: '2026-11-06T00:00:00Z' }, 201)
+  }
   if (request.method === 'GET' && url.pathname === '/repos/vercel-labs/github-tools') {
     return json({
       name: 'github-tools',

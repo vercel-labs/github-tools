@@ -11,7 +11,11 @@ export default defineAgent({
       const last = toolResults.at(-1)!
       return `result ${last.name} ${last.isError ? 'error' : 'ok'} ${JSON.stringify(last.output)}`
     }
+    // A comment from the GitHub channel arrives with its context block, and names no repository.
+    if (lastUserMessage?.includes('read this repository')) return { toolCalls: [{ name: 'github__getRepository', input: {} }] }
     switch (lastUserMessage) {
+      case 'read private':
+        return { toolCalls: [{ name: 'github__getRepository', input: { owner: 'vercel-labs', repo: 'private' } }] }
       case 'read':
         return { toolCalls: [{ name: 'github__getRepository', input: target }] }
       case 'write':

@@ -81,6 +81,25 @@ export default githubExtension({
 
 See the runnable consumer at [`examples/eve`](../../examples/eve).
 
+## Choose who the agent answers on GitHub
+
+On [eve's GitHub channel](https://eve.dev/docs/channels/github), anyone who mentions the bot starts a turn, including on a public repository. `@github-tools/eve-extension/channels` exports eve's `githubChannel` with one more option, `respondTo`:
+
+```ts
+// agent/channels/github.ts
+import { connectGitHubCredentials } from '@vercel/connect/eve'
+import { githubChannel } from '@github-tools/eve-extension/channels'
+
+export default githubChannel({
+  credentials: connectGitHubCredentials('github/my-connector'),
+  respondTo: 'writers',
+})
+```
+
+`respondTo` takes `'anyone'` (default), `'triagers'`, `'writers'`, `'maintainers'` or `'admins'`: GitHub's repository roles, each meaning that role and everyone above it. The channel reads the commenter's role on the thread's repository before a comment starts or continues a turn, so a comment from anyone below it leaves no reaction, no session and no model call. Every other option is eve's.
+
+Pair it with `actAs: 'caller'`, which limits what a turn does to the commenter's role on each repository a call targets.
+
 ## Structure
 
 ```
@@ -88,6 +107,8 @@ extension/
   extension.ts        # defineExtension() config schema (token, connector, preset, include, exclude, requireApproval, ...)
   tools/
     github.ts          # defineDynamic() resolving listEveToolDescriptors(...) into authored defineTool calls
+channels/
+  index.ts             # githubChannel with respondTo, compiled apart from the extension to channels/dist
 ```
 
 ## Config schema (`extension/extension.ts`)
@@ -96,7 +117,7 @@ extension/
 |---|---|---|
 | `token` | `string \| (() => Promise<string>)` (optional) | PAT string, or an async provider for rotating tokens (e.g. a GitHub App installation token) — the same `GithubTokenInput` the SDK accepts; falls back to `GITHUB_TOKEN` when omitted and `connector` is not set |
 | `connector` | `string \| (() => string \| Promise<string>)` (optional) | Vercel Connect connector name, or a resolver to pick one dynamically (e.g. per environment/tenant); takes priority over `token` |
-| `actAs` | `'app' \| 'user' \| 'caller' \| { read, write }` (optional) | Whose GitHub access the tools use when `connector` is set. `'app'` (default) uses the GitHub App installation. `'user'` runs each call with the signed-in eve user's own GitHub token, so the agent can do what that user can do on GitHub and nothing more; sessions without a signed-in user fail. `'caller'` uses the user when one drives the turn and the App otherwise (schedules, bots). Users who have not authorized the App get a sign-in prompt and never fall back to the App. `{ read, write }` picks per tool kind, `overrides.<tool>.actAs` per tool. The default may change to `'caller'` in a future major version |
+| `actAs` | `'app' \| 'user' \| 'caller' \| { read, write }` (optional) | Whose GitHub access the tools use when `connector` is set. `'app'` (default) uses the GitHub App installation. `'user'` runs each call with the signed-in eve user's own GitHub token, so the agent can do what that user can do on GitHub and nothing more; sessions without a signed-in user fail. `'caller'` uses the user when one drives the turn and the App otherwise (schedules, bots). Users who have not authorized the App get a sign-in prompt and never fall back to the App. Someone who comments on eve's GitHub channel can't sign in, so their call runs as the App once their own role on the target repository allows it (Read for a read, Write for a write), and fails with `CALLER_FORBIDDEN` otherwise. `{ read, write }` picks per tool kind, `overrides.<tool>.actAs` per tool. The default may change to `'caller'` in a future major version |
 | `approvers` | `'requester' \| 'anyone'` (optional) | Who may answer an approval. `'requester'` (default) is only the person who asked, so a colleague cannot approve your request. `'anyone'` is an opt-in that lets any signed-in user approve and anyone deny; for `'user'` and `'caller'` tools the approved call runs with the approver's GitHub token, after they sign in |
 | `connect` | `record \| ((ctx, call) => record)` (optional) | Passed through to `getToken` when `connector` is set. `connect.subject` defaults to `{ type: 'app' }` (the project's GitHub App installation); for per-user tokens, use `actAs`. App tokens target the installation owning each call's repository unless `installationId`, `authorizationDetails` or `repositories` pins one; pass a `(ctx, call) => record` resolver for other per-call rules |
 | `preset` | preset name, array, or `'auto'` | `code-review`, `issue-triage`, `ci-ops`, `repo-explorer`, `security-audit`, `release-manager`, `discussion-moderator`, `notification-inbox`, `pr-author`, `maintainer`; `'auto'` lists the tools the session's first request needs and defers the rest |
@@ -111,7 +132,7 @@ extension/
 ## Build (contributors)
 
 ```sh
-pnpm --filter @github-tools/eve-extension build   # runs `eve extension build`
+pnpm --filter @github-tools/eve-extension build   # runs `eve extension build`, then compiles `channels/`
 ```
 
 ## License

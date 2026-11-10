@@ -30,13 +30,18 @@
     "./tools": {
       "types": "./dist/tools/index.d.ts",
       "default": "./dist/tools/index.mjs"
+    },
+    "./channels": {
+      "types": "./channels/dist/index.d.ts",
+      "default": "./channels/dist/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "channels/dist"
   ],
   "scripts": {
-    "build": "eve extension build",
+    "build": "eve extension build && tsc -p tsconfig.channels.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit"
