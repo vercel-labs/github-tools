@@ -20,7 +20,7 @@ agent/
 
 - **No stored tokens.** [Vercel Connect](https://vercel.com/docs/connect) holds the GitHub App and the Slack app. Each tool call gets a short-lived GitHub App token scoped to that tool.
 - **Writes need approval.** With `requireApproval: 'auto'`, low-risk writes the person asked for (labels, reactions, comments, review replies) run directly. Every other write asks first, with **Approve** and **Deny** buttons in Slack and a comment to answer on GitHub. Only the person who asked can approve.
-- **Strangers can't use it on GitHub.** A mention reaches the agent only when its author can push to the repository, so a stranger's comment on a public repository does nothing.
+- **Strangers can't use it on GitHub.** A mention reaches the agent only when its author can push to the repository, so a stranger's comment on a public repository does nothing. A turn started on GitHub only gets tokens for the repository of its thread, so it can't read or change another repository the App is installed on.
 - **Only the tools a request needs.** `preset: 'auto'` lists the tools the first message calls for and defers the rest.
 - **Credentials stay out of GitHub.** A call whose input contains what looks like a token or a private key is blocked.
 - **GitHub text is data.** HTML comments and invisible characters are removed from issue and pull request bodies, and the agent is told to act only on what the person asked.
