@@ -32,6 +32,8 @@ overrides:
   '@tiptap/extension-node-range': 3.33.0
   '@tiptap/extension-placeholder': 3.33.0
 
+packageExtensionsChecksum: sha256-sFDQaL9pEUXdkIvsVnhZxZ1HiOI+ZaFoV3zWDUpgZj0=
+
 importers:
 
   .:
@@ -15347,6 +15349,7 @@ snapshots:
       detab: 3.0.2
       github-slugger: 2.0.0
       hast-util-format: 1.1.0
+      hast-util-to-html: 9.0.6
       hast-util-to-mdast: 10.1.2
       hast-util-to-string: 3.0.1
       mdast-util-to-hast: 13.2.1
@@ -15406,6 +15409,7 @@ snapshots:
       detab: 3.0.2
       github-slugger: 2.0.0
       hast-util-format: 1.1.0
+      hast-util-to-html: 9.0.6
       hast-util-to-mdast: 10.1.2
       hast-util-to-string: 3.0.1
       mdast-util-to-hast: 13.2.1
