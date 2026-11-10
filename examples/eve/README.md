@@ -93,7 +93,7 @@ Every call runs as the GitHub App, so in Slack anyone who can message the app ca
 
 In Slack, the agent posts **Approve** and **Deny** buttons in the thread.
 
-On GitHub, it posts a comment that names the action and the replies it accepts. Answer by mentioning the agent in a reply:
+On GitHub, it posts a comment that names the action. Answer by mentioning the agent in a reply:
 
 ```text
 @github-agent Yes
