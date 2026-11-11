@@ -85,6 +85,13 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Tell the person which access they are missing. Do not retry the call or reach the same result another way.',
     link: 'https://github-tools.com/integrations/eve#per-user-tokens',
   },
+  AUDIT_UNAVAILABLE: {
+    status: 503,
+    message: 'The audit record of this write was not accepted, so the write was not sent to GitHub.',
+    why: 'These tools record each GitHub write before sending it, and the `audit` function threw. Reads are not affected.',
+    fix: 'Do not retry the write or reach the same result another way. Tell the user that GitHub writes are refused until the audit destination accepts records again.',
+    link: 'https://github-tools.com/observability#when-the-function-throws',
+  },
   EVALUATION_UNAVAILABLE: {
     status: 500,
     message: '`requireApproval: \'auto\'` and `preset: \'auto\'` need `experimental_decide` (or `experimental_evaluate`) from `ai` 7.0.105 or later.',

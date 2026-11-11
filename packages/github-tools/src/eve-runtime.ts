@@ -27,9 +27,22 @@ export type { GithubCaller, GithubRole } from './core/caller-access'
 export type { GithubDryRunApproval, GithubDryRunResult } from './core/dry-run'
 export type { GithubTokenCall } from './core/token'
 export { githubToolsErrors } from './core/errors'
+export { githubAuditRecordId, githubAuditSettled, githubAuditStarted, githubAuditTarget, reconcileGithubAudit } from './core/audit'
+export type {
+  GithubAuditCall,
+  GithubAuditClearance,
+  GithubAuditOutcome,
+  GithubAuditPrincipal,
+  GithubAuditRecord,
+  GithubAuditSettlement,
+  GithubAuditTarget,
+  GithubAuditTargetKind,
+  GithubAuditVerdict,
+} from './core/audit'
 export type {
   EveApprovalConfig,
   EveApprovalValue,
+  EveGithubToolCallOptions,
   EveGithubToolsOptions,
   EveToolFactoryOptions,
   EveToolOverrides,

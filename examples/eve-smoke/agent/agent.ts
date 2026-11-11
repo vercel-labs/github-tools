@@ -1,5 +1,6 @@
 import { defineAgent } from 'eve'
 import { mockModel } from 'eve/evals'
+import { auditRecords } from '../fixtures/audit'
 import { routingCalls } from '../fixtures/routing'
 
 const target = { owner: 'vercel-labs', repo: 'github-tools' }
@@ -36,6 +37,8 @@ export default defineAgent({
         return messages.filter(message => message.role === 'system').map(message => message.text).join('\n')
       case 'routing':
         return String(routingCalls())
+      case 'audit records':
+        return JSON.stringify(auditRecords())
       default:
         return `unexpected message: ${lastUserMessage}`
     }

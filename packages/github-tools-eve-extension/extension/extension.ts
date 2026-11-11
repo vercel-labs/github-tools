@@ -1,5 +1,6 @@
 import type { GithubTokenCall, GithubTokenInput } from '@github-tools/sdk'
 import type { ConnectTokenSubject, GithubConnectorInput, GithubConnectParams } from '@github-tools/sdk/connect'
+import type { SessionContext } from 'eve/context'
 import type { ToolContext } from 'eve/tools'
 import {
   GITHUB_TOOL_NAMES,
@@ -8,6 +9,7 @@ import {
   type CommitIdentity,
   type EveApprovalValue,
   type EveToolOverrides,
+  type GithubAuditRecord,
   type GithubEvaluationOptions,
   type GithubGuardrails,
   type GithubToolName,
@@ -96,6 +98,12 @@ export type GithubExtensionApprovers = 'requester' | 'anyone'
 export type GithubExtensionToolOverrides = {
   [K in GithubToolName]?: NonNullable<EveToolOverrides[K]> & { actAs?: GithubActAs }
 }
+
+/**
+ * Receives each audit record of a GitHub write, with eve's session context. Store the record and
+ * return, or throw when it can't be stored. A returned promise is awaited.
+ */
+export type GithubAuditFunction = (record: GithubAuditRecord, ctx: SessionContext) => void | Promise<void>
 
 /**
  * Config passed to `githubExtension({ ... })` at the agent mount site.
@@ -222,6 +230,22 @@ export interface GithubExtensionConfig {
    * repositories, for example a scheduled bot, before letting it write.
    */
   dryRun?: boolean
+  /**
+   * Records every GitHub write. The function receives plain `GithubAuditRecord` objects and
+   * decides where they go.
+   *
+   * A write that reaches GitHub has two records with the same `id`. The `started` record is sent
+   * immediately before the request, and the write waits for the function: when it throws, the
+   * write isn't sent and the call fails with `github_tools.AUDIT_UNAVAILABLE`. The `settled`
+   * record carries the outcome: `succeeded`, `failed`, or `denied`. A write that `guardrails`, an
+   * approval policy, or a person stopped has a `settled` record only.
+   *
+   * A `settled` record the function rejects is written to stderr as one JSON line prefixed
+   * `[github-tools] audit`, and sent again with `reconciled: true` when a turn of the session ends,
+   * until the function accepts it. A record names the agent, the requester, the approver, and the
+   * target, and holds nothing that was written. Reads and dry-run writes have no record.
+   */
+  audit?: GithubAuditFunction
 }
 
 const presetNameSchema = z.enum(Object.keys(PRESET_TOOLS) as [GithubToolPreset, ...GithubToolPreset[]])
@@ -285,6 +309,7 @@ const configSchema = z.object({
     secrets: z.enum(['block', 'allow']).optional(),
   }).optional(),
   dryRun: z.boolean().optional(),
+  audit: z.custom<GithubAuditFunction>(value => typeof value === 'function').optional(),
 }).superRefine((config, ctx) => {
   const { actAs } = config
   const identities = [

@@ -13,7 +13,7 @@ import {
   listPullRequestFilesToModelOutput,
 } from '../core/model-output'
 import { stripRateLimit } from '../core/rate-limit'
-import { resolveGithubToken, type GithubTokenInput } from '../core/token'
+import { resolveGithubToken, type GithubTokenCall, type GithubTokenInput } from '../core/token'
 import type { GithubGuardrails } from '../core/guardrails'
 import type { GithubDryRunApproval } from '../core/dry-run'
 import type { GithubWriteToolName } from '../core/write-tools'
@@ -30,6 +30,7 @@ export type ToolBuildContext = {
   guardrails?: GithubGuardrails
   dryRun?: boolean
   dryRunApproval?: GithubDryRunApproval
+  beforeWrite?: (call: GithubTokenCall) => void | Promise<void>
 }
 
 type ToolRegistryEntry = {

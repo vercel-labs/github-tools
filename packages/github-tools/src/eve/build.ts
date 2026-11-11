@@ -5,7 +5,7 @@ import { isEveApprovalDisabled, mapEveApprovalValue, resolveEveToolApproval } fr
 import { getEveTools } from './load-eve'
 import { ALL_GITHUB_TOOL_NAMES, createToolRegistry, formatGithubEveToolOutput, hasGithubEveToolModelOutput, type GithubToolName, type ToolBuildContext } from './registry'
 import { runGithubToolStep } from './steps'
-import type { EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './types'
+import type { EveGithubToolCallOptions, EveGithubToolsOptions, EveToolFactoryOptions, EveToolOverrides } from './types'
 
 type BuildOptions = EveGithubToolsOptions | (EveToolFactoryOptions & { preset?: EveGithubToolsOptions['preset'] })
 type EveToolMap = Partial<Record<GithubToolName, ToolDefinition>>
@@ -181,12 +181,13 @@ export { formatGithubEveToolOutput, hasGithubEveToolModelOutput }
  * A failed call throws, so eve settles it as `failed`. For a catalog error, the message is
  * its `{ code, message, why, fix, link }` as JSON and `cause` is its `{ code, status }`.
  * The thrown error holds nothing from the GitHub request.
+ * `options.beforeWrite` is awaited immediately before a write's request, and a throw from it stops the write.
  * Used by `@github-tools/eve-extension` so `execute` only closes over a serializable tool name.
  */
 export async function executeGithubEveTool(
   name: GithubToolName,
   input: Record<string, unknown>,
-  options: EveGithubToolsOptions = {},
+  options: EveGithubToolCallOptions = {},
 ) {
   const ctx: ToolBuildContext = {
     token: createGithubTokenResolver(options.token),
@@ -197,6 +198,7 @@ export async function executeGithubEveTool(
     guardrails: options.guardrails,
     dryRun: options.dryRun,
     dryRunApproval: options.dryRunApproval,
+    beforeWrite: options.beforeWrite,
   }
   return runGithubToolStep(name, input, ctx)
 }
