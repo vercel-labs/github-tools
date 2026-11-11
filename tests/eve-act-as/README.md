@@ -32,6 +32,7 @@ Mounts the built `@github-tools/eve-extension` four times and drives it with `ev
 - a write a second person approves has a `started` and a `settled` record with the same `id`, naming the agent, the requester, and the approver
 - a write `guardrails` block and a write a person denies each have one `denied` record, with the reason and, for the denial, who denied it
 - a write the decision model lets through carries its verdict
+- a write only the agent's own `approval` policy sent to a person has `clearance: 'person'` and names the approver
 - a write GitHub answers with `403` settles as `failed` with the error code
 - a scheduled turn's records have no requester
 - when the function rejects a `started` record, GitHub gets no request and the call fails with `AUDIT_UNAVAILABLE`

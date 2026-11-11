@@ -13,8 +13,8 @@ export default defineHook({
       auditState.update(state => ({ ...state, turn: { agent: ctx.agent.name, channel: ctx.channel.kind } }))
     },
 
-    // The person who answered an approval. `execute` replaces them with the approver it runs for, so
-    // for a write that never runs this is who denied it.
+    // The person who answered an approval, whichever policy asked for it. `execute` replaces them with
+    // the approver it runs for, so for a write that never runs this is who denied it.
     'response.submitted'(event, ctx) {
       if (!extension.config.audit) return
       const asked = interaction(ctx.view, event.data.interactionId)
@@ -27,7 +27,7 @@ export default defineHook({
       const approver = requester && requester.id === sender.id && requester.type === sender.type && requester.issuer === sender.issuer
         ? requester
         : { id: sender.id, type: sender.type, ...(sender.issuer && { issuer: sender.issuer }) }
-      auditState.update(state => ({ ...state, writes: { ...state.writes, [callId]: { ...write, approver } } }))
+      auditState.update(state => ({ ...state, writes: { ...state.writes, [callId]: { ...write, approver, clearance: 'person' } } }))
     },
 
     async 'call.settled'(event, ctx) {

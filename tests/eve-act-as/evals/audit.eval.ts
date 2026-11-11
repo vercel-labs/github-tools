@@ -84,6 +84,14 @@ export default defineEval({
       { phase: 'settled', outcome: 'succeeded', ...label },
     ]))
 
+    // A person the agent's own policy asked is what let the write run, though the extension needed no approval.
+    const gated = await answer(await t.send('audited comment 600', as('alice')), 'approve', 'alice')
+    t.check(gated.requireToolCall('audited__addIssueComment').status, equals('completed'))
+    t.check((await recordsOf(t, gated.sessionId)).map(({ phase, clearance, approver }) => ({ phase, clearance, approver })), equals([
+      { phase: 'started', clearance: 'person', approver: user('alice') },
+      { phase: 'settled', clearance: 'person', approver: user('alice') },
+    ]))
+
     // A write GitHub refuses settles as failed, with the error code.
     const refused = await answer(await t.send('audited write', as('bob')), 'approve', 'bob')
     t.check(refused.reply, includes('github_tools.FORBIDDEN'))

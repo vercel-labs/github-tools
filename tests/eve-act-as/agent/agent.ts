@@ -8,6 +8,8 @@ const audited = { owner: 'vercel-labs', repo: 'audited' }
 
 export default defineAgent({
   defaultTools: false,
+  // The agent's own policy asks a person before a comment on issue 600, which the extension lets through unasked.
+  approval: ({ toolName, toolInput }) => toolName === 'audited__addIssueComment' && toolInput?.issueNumber === 600 ? 'user-approval' : undefined,
   model: mockModel(({ messages, lastUserMessage, toolResults }) => {
     if (messages.at(-1)?.role === 'tool') {
       const last = toolResults.at(-1)!
@@ -50,6 +52,8 @@ export default defineAgent({
         return { toolCalls: [{ name: 'audited__addIssueComment', input: { ...audited, issueNumber: 500, body: 'eval' } }] }
       case 'audited comment 501':
         return { toolCalls: [{ name: 'audited__addIssueComment', input: { ...audited, issueNumber: 501, body: 'eval' } }] }
+      case 'audited comment 600':
+        return { toolCalls: [{ name: 'audited__addIssueComment', input: { ...audited, issueNumber: 600, body: 'eval' } }] }
       case 'audit records':
         return JSON.stringify(auditedRecords())
       case 'github calls':

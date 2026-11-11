@@ -108,7 +108,8 @@ export function withAuditStarted(options: EveGithubToolsOptions, ctx: ToolContex
       const approver = ctx.approval?.responder
       const write: TrackedWrite = {
         ...writes[ctx.callId]!,
-        ...(approver && { approver: auditPrincipal(approver) }),
+        // An `approval` policy in `agent.ts` can ask a person for a write this extension lets through.
+        ...(approver && { approver: auditPrincipal(approver), clearance: 'person' }),
         githubIdentity,
       }
       auditState.update(state => ({ ...state, writes: { ...state.writes, [ctx.callId]: write } }))
