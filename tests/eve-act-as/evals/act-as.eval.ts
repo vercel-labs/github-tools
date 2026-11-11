@@ -81,7 +81,8 @@ export default defineEval({
     t.check(ownWrite.interactions.map(interaction => interaction.request.prompt), equals(['Create issue on vercel-labs/github-tools?']))
     const forbidden = await answer(ownWrite, 'approve', 'bob')
     t.check(forbidden.reply, includes('github_tools.FORBIDDEN'))
-    // The model gets the failure as an error result, not as a successful output.
+    // The approved call settles as failed, and the model gets the failure as an error result.
+    forbidden.calledTool('github__createIssue', { status: 'failed', count: 1 })
     t.check(forbidden.reply, includes('result github__createIssue error'))
 
     // Anyone signed in can deny, without connecting GitHub first.

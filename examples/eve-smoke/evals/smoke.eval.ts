@@ -37,10 +37,11 @@ export default defineEval({
     t.check(remembered.interactions.length, satisfies(value => value === 0, "'once' approval is remembered for the session"))
     t.check(remembered.reply, includes('4242'))
 
-    // A write that fails returns { error }, so its label must not claim success.
+    // A write GitHub refuses settles as failed, and the model gets the catalog error as the call's result.
     const failed = await remembered.session.send('failing write')
-    t.check(failed.reply, includes('error'))
-    t.eventsSatisfy('failed write label', events => JSON.stringify(events).includes("Couldn't create issue on vercel-labs/missing"))
+    failed.calledTool('github__createIssue', { status: 'failed', output: /github_tools\.NOT_FOUND/, count: 1 })
+    t.check(failed.reply?.startsWith('result github__createIssue error'), satisfies(value => value === true, 'the model gets a failed write as an error result'))
+    t.check(failed.reply, includes('github_tools.NOT_FOUND'))
 
     // Guardrails deny a write outside the allowed repositories with the reason, before anyone is asked,
     // even though `createIssue` was approved for the session.
@@ -64,17 +65,22 @@ export default defineEval({
     const deferred = await remembered.session.send('deferred read')
     t.check(deferred.requireToolCall('github__listBranches').status, equals('completed'))
     t.check(deferred.reply, includes('abc123'))
+    // A deferred tool that fails settles as failed under its own name, and the model gets the error as eve__tool's result.
+    const failedDeferred = await deferred.session.send('failing deferred read')
+    failedDeferred.calledTool('github__listBranches', { status: 'failed', output: /github_tools\.NOT_FOUND/, count: 1 })
+    t.check(failedDeferred.reply?.startsWith('result eve__tool error'), satisfies(value => value === true, 'the model gets a failed deferred call as an error result'))
+    t.check(failedDeferred.reply, includes('github_tools.NOT_FOUND'))
 
     // The extension adds its tool guidance to the system prompt.
-    const instructions = await deferred.session.send('instructions')
+    const instructions = await failedDeferred.session.send('instructions')
     t.check(instructions.reply, includes('getCiFailureContext'))
     t.check(instructions.reply, includes('eve__search'))
 
     const later = await deferred.session.send('tools')
     t.check(listedTools(later.reply).has('github__addLabels'), satisfies(value => value === true, 'routing holds on later turns'))
 
-    // Ten turns including this one, and the read and write turns make a second model call after
-    // their tool result. All of them reuse the session's first routing.
+    // Every turn of this session reuses its first routing, and so does the second model call
+    // a turn makes after a tool result.
     const routing = await later.session.send('routing')
     t.check(Number(routing.reply), satisfies(value => value === 1, 'routing runs once per session, not once per turn or model call'))
 

@@ -76,7 +76,7 @@ describe('credentials in tool input', () => {
     })
     const result = await createGithubAgent({ model, token: 'test' }).generate({ prompt: 'File the deploy key as an issue' })
     expect(result.steps[0]!.content).toContainEqual(expect.objectContaining({ type: 'tool-approval-response', approved: false, reason: expect.stringContaining('a GitHub token') }))
-    await expect(executeGithubEveTool('createIssue', issue, { token: 'test' })).resolves.toMatchObject({ error: { code: 'github_tools.GUARDRAIL_BLOCKED' } })
+    await expect(executeGithubEveTool('createIssue', issue, { token: 'test' })).rejects.toThrow('github_tools.GUARDRAIL_BLOCKED')
     expect(requests).toEqual([])
   })
 })

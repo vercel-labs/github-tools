@@ -184,22 +184,12 @@ describe('createGithubTools eve integration', () => {
     })
   })
 
-  it('returns an error payload instead of throwing when execute fails', async () => {
+  it('throws when execute fails', async () => {
     await expect(executeGithubEveTool('getRepository', { owner: 'octocat', repo: 'hello-world' }, {
       token: async () => {
         throw new Error('Unable to find project root directory. Have you linked your project with `vc link?`')
       },
-    })).resolves.toEqual({
-      error: 'Unable to find project root directory. Have you linked your project with `vc link?`',
-    })
-  })
-
-  it('passes structured GitHub API errors through without calling the formatter', () => {
-    const error = { code: 'github_tools.NOT_FOUND', message: 'GitHub resource not found (404): Not Found' }
-    expect(formatGithubEveToolOutput('listPullRequestFiles', { error })).toEqual({
-      type: 'json',
-      value: { error },
-    })
+    })).rejects.toThrow('Unable to find project root directory. Have you linked your project with `vc link?`')
   })
 
   it('returns stripped json for tools without a built-in formatter', () => {

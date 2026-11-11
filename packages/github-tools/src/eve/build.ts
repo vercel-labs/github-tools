@@ -178,6 +178,9 @@ export { formatGithubEveToolOutput, hasGithubEveToolModelOutput }
 
 /**
  * Execute a GitHub tool by name with the given eve options (token/context/attribution).
+ * A failed call throws, so eve settles it as `failed`. For a catalog error, the message is
+ * its `{ code, message, why, fix, link }` as JSON and `cause` is its `{ code, status }`.
+ * The thrown error holds nothing from the GitHub request.
  * Used by `@github-tools/eve-extension` so `execute` only closes over a serializable tool name.
  */
 export async function executeGithubEveTool(

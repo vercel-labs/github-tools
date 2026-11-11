@@ -27,7 +27,7 @@ import {
   type GithubWriteToolName,
 } from '@github-tools/sdk/eve-runtime'
 import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy, ApprovalStatus } from 'eve/tools/approval'
-import { defineDynamic, defineTool, toolOutput, type ToolContext, type ToolDefinition } from 'eve/tools'
+import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
 import { z } from 'zod'
 import { githubCommenter } from '../lib/commenter'
 import { sessionContext } from '../lib/context'
@@ -203,10 +203,13 @@ async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolC
   if (actAs === 'caller' && !isUser(requester)) return executeGithubEveTool(name, args, buildSessionOptions(ctx))
 
   const { token } = await ctx.getToken(auth)
-  const result = await executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
-  // A 401 means the user revoked the authorization: drop the token and ask them to sign in again.
-  if (isUnauthorized(result)) ctx.requireAuth(auth)
-  return result
+  try {
+    return await executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
+  } catch (error) {
+    // A 401 means the user revoked the authorization: drop the token and ask them to sign in again.
+    if (isUnauthorized(error)) ctx.requireAuth(auth)
+    throw error
+  }
 }
 
 // Only set with `approvers: 'anyone'`: any signed-in user, or the requester, may approve. Without it, eve lets only the requester answer.
@@ -238,22 +241,16 @@ function configuredApprovalResponse(name: GithubToolName): ApprovalResponsePolic
   return typeof value === 'object' ? value.response : undefined
 }
 
-function isUnauthorized(result: unknown): boolean {
-  if (!isErrorResult(result)) return false
-  const { error } = result
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === githubToolsErrors.UNAUTHORIZED.code
+// `executeGithubEveTool` throws a catalog error's payload as the message, with its `{ code, status }` as `cause`.
+function isUnauthorized(error: unknown): boolean {
+  const cause = error instanceof Error ? error.cause : undefined
+  return typeof cause === 'object' && cause !== null && 'code' in cause && cause.code === githubToolsErrors.UNAUTHORIZED.code
 }
 
 function runGithubEveToModelOutput(name: GithubToolName, output: unknown) {
   const custom = buildSessionOptions().overrides?.[name]?.toModelOutput
   if (custom) return custom(output)
-  // A failed call returns `{ error }`; marking it as an error result keeps providers and MCP clients from reading it as a success.
-  if (isErrorResult(output)) return toolOutput.errorText(JSON.stringify({ error: output.error }))
   return formatGithubEveToolOutput(name, output)
-}
-
-function isErrorResult(output: unknown): output is { error: unknown } {
-  return output != null && typeof output === 'object' && !Array.isArray(output) && 'error' in output && output.error != null
 }
 
 // Delegated and service sessions get their latest user message from another model or
@@ -360,13 +357,8 @@ const PAST_TENSE: Record<string, string> = {
 
 // "Created issue on owner/repo#123" once a write succeeds, with the number of what it created,
 // or "Would create issue on owner/repo" under `dryRun`.
-// Reads return '', which keeps their start label. A failed call returns `{ error }` rather than
-// throwing, so eve runs this for it too: "Couldn't create issue on owner/repo".
+// Reads return '', which keeps their start label. eve doesn't run this for a failed call.
 function describeGithubResult(name: GithubToolName, inputSchema: z.ZodType, input: Readonly<Record<string, unknown>>, output: unknown, context: GithubExtensionContext | undefined) {
-  if (output !== null && typeof output === 'object' && 'error' in output) {
-    const label = describeGithubCall(name, inputSchema, input, context)
-    return `Couldn't ${label[0]!.toLowerCase()}${label.slice(1)}`
-  }
   if (!writeToolName(name)) return ''
   if (output !== null && typeof output === 'object' && 'dryRun' in output) {
     const label = describeGithubCall(name, inputSchema, input, context)
