@@ -32,6 +32,10 @@ export default defineAgent({
         return { toolCalls: [{ name: 'eve__tool', input: { name: 'github__listBranches', input: target } }] }
       case 'instructions':
         return messages.filter(message => message.role === 'system').map(message => message.text).join('\n')
+      case 'skills':
+        return messages.filter(message => message.role === 'system' || message.role === 'user').map(message => message.text).join('\n')
+      case 'load skill':
+        return { toolCalls: [{ name: 'eve__skill', input: { name: 'github__review-pull-request' } }] }
       case 'routing':
         return String(routingCalls())
       default:

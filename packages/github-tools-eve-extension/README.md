@@ -47,6 +47,18 @@ export default githubExtension({
 
 The tool file is a `defineDynamic` function that eve runs before every model call, so tools, approval policies, and schema overrides are rebuilt from the extension config in every process, including after Workflow replay and redeploys. With `preset: 'auto'`, the routing is kept for the session with `ctx.memo`, or for the turn with `evaluation.scope: 'turn'`. `toModelOutput` strips `rateLimit` from the model-facing payload; the execute result still carries it for hooks and channels. Do not use the deprecated `@github-tools/sdk/connect/eve` one-liner for durable Slack/multi-turn agents.
 
+`extension/skills/` adds four skills the model loads with `eve__skill` when a request matches one: `review-pull-request`, `triage-issue`, `diagnose-ci`, and `draft-release-notes`. Each is a procedure for that workflow. A skill is offered only when the mount has the tools it requires, and with `preset: 'auto'`, loading one lists the tools its procedure names. `skills` adds your rules after a built-in procedure, or turns a skill off:
+
+```ts
+export default githubExtension({
+  preset: 'auto',
+  skills: {
+    'review-pull-request': { additionalInstructions: 'Every behavior change needs a test.' },
+    'draft-release-notes': false,
+  },
+})
+```
+
 `connector` also accepts a `() => string | Promise<string>` resolver, so the same config can pick a connector dynamically (e.g. by environment):
 
 ```ts
@@ -107,6 +119,8 @@ extension/
   extension.ts        # defineExtension() config schema (token, connector, preset, include, exclude, requireApproval, ...)
   tools/
     github.ts          # defineDynamic() resolving listEveToolDescriptors(...) into authored defineTool calls
+  skills/
+    *.ts               # one defineDynamic() skill per workflow, from listGithubSkills(...)
 channels/
   index.ts             # githubChannel with respondTo, compiled apart from the extension to channels/dist
 ```
@@ -124,6 +138,7 @@ channels/
 | `include` | `string[]?` | Tool names to add on top of `preset` (union), or the full set standalone |
 | `exclude` | `string[]?` | Tool names to remove from the resolved `preset` + `include` set |
 | `context` | `{ owner?, repo?, pullNumber?, issueNumber?, ref? }?` | Default working context for tool inputs and schemas |
+| `skills` | `boolean \| record` (optional) | Workflow skills, on by default. `false` offers none; per skill, `false` turns it off and `{ additionalInstructions }` adds rules after the built-in procedure |
 | `requireApproval` | `boolean \| 'auto' \| record` | Global or per-tool; per-tool values may be `'auto'` or predicate functions. `'auto'` runs low-risk writes the user asked for without a prompt |
 | `evaluation` | `record?` | Tunes the `'auto'` modes: `model`, `maxRisk`, `minIntent`, `selection`, `scope`, `minToolProbability`, `maxTools`, `minPresetProbability`, `maxPresets`, `providerOptions` |
 | `overrides` | `record` | Per-tool `description` / `approval` / `actAs` / `toModelOutput` / `outputSchema` |

@@ -2,7 +2,7 @@
 
 Mounts the built `@github-tools/eve-extension` in an eve agent and drives it with `eve eval`. A `mockModel` replaces the agent model, a fixed decision model in `fixtures/routing.ts` answers `preset: 'auto'` routing, and `agent/extensions/github.ts` answers `api.github.com` in-process, so the run needs no token, network, or AI Gateway credentials.
 
-The eval checks that the picked tools register and the rest is deferred, a read tool executes, a write tool asks for approval with the input-aware prompt, a denial skips it, a `'once'` approval is remembered for the session, and routing runs once per session rather than once per turn or model call.
+The eval checks that the picked tools register and the rest is deferred, a read tool executes, a write tool asks for approval with the input-aware prompt, a denial skips it, a `'once'` approval is remembered for the session, and routing runs once per session rather than once per turn or model call. It also checks that the mount offers the skills its tools can carry out, and that loading one returns the procedure with the mount's rules and lists the tools it names.
 
 ```bash
 pnpm --filter @github-tools/sdk --filter @github-tools/eve-extension build

@@ -1,6 +1,6 @@
 # eve benchmark for the `'auto'` modes
 
-Compares `@github-tools/eve-extension` configurations on 12 GitHub tasks with [eve evals](https://eve.dev/docs), and replays the evaluation model's routing and approval decisions on fixed cases. Tasks read `vercel-labs/github-tools`; every GitHub write is answered by a local stub (`lib/stub-writes.ts`), so no repository changes.
+Compares `@github-tools/eve-extension` configurations on 13 GitHub tasks with [eve evals](https://eve.dev/docs), and replays the evaluation model's routing and approval decisions on fixed cases. Tasks read `vercel-labs/github-tools`; every GitHub write is answered by a local stub (`lib/stub-writes.ts`), so no repository changes.
 
 | `BENCH_CONFIG` | Extension config |
 | --- | --- |
@@ -8,6 +8,7 @@ Compares `@github-tools/eve-extension` configurations on 12 GitHub tasks with [e
 | `fixed` | `preset: ['code-review', 'issue-triage']` |
 | `auto-preset` | `preset: 'auto'` |
 | `auto` | `preset: 'auto'`, `requireApproval: 'auto'`: picks single tools once per session |
+| `auto-no-skills` | `auto` with `skills: false`: the baseline for the workflow skills, which every other configuration offers |
 | `auto-presets` | `auto` with `evaluation.selection: 'presets'`: routes to presets instead |
 | `auto-turn` | `auto` with `evaluation.scope: 'turn'`: picks tools again for each request |
 | `core-deferred` | `auto` with `maxTools: 0`: only the core read tools are listed, the rest is deferred |
@@ -30,7 +31,9 @@ pnpm decisions # routing and approval accuracy per level, writes .eve/bench/deci
 pnpm report    # aggregates every run into .eve/bench/report.md
 ```
 
-`npx eve eval conversation` runs six different requests in one session instead of the 12 single-turn tasks, to measure prompt caching across turns (`npx eve eval tasks` runs only the single-turn tasks).
+The report's **Skill loads** table counts the runs that loaded the workflow skill their task matches, and the runs that loaded a skill on a task that matches none.
+
+`npx eve eval conversation` runs six different requests in one session instead of the 13 single-turn tasks, to measure prompt caching across turns (`npx eve eval tasks` runs only the single-turn tasks).
 
 `pnpm agent-conversation` sends the same six requests to `createGithubAgent` from `@github-tools/sdk` instead of eve, with AI Gateway's automatic prompt caching, and prints cache reads, cache writes and cost per request. `BENCH_CONFIG` is `all` (full catalog), `presets` (`selection: 'presets'`) or `tools` (the default `preset: 'auto'`).
 

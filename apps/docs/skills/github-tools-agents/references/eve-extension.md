@@ -36,7 +36,7 @@ Tools are exposed to the model as `<namespace>__<toolName>`: `agent/extensions/g
 
 ## Config schema
 
-`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `dryRun`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it, with the reason and without asking anyone. They cover the extension's tools only: eve's git extension runs `gh` through `git__gh` without approval, so limit it with its own `github.authorize` check. `dryRun: true` sends no write to GitHub and labels each one "Would create issue on owner/repo".
+`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `dryRun`, `skills`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it, with the reason and without asking anyone. They cover the extension's tools only: eve's git extension runs `gh` through `git__gh` without approval, so limit it with its own `github.authorize` check. `dryRun: true` sends no write to GitHub and labels each one "Would create issue on owner/repo".
 
 `token` is `string | (() => Promise<string>)` (`GithubTokenInput`). Pass an async provider for rotating GitHub App installation tokens. Falls back to `GITHUB_TOKEN` when omitted; `connector` takes priority.
 
@@ -56,6 +56,22 @@ export default githubExtension({
 ```
 
 The tool file is a `defineDynamic` function that eve runs before every model call; it rebuilds `execute`, `toModelOutput`, `approval`, and schemas from the extension config, so they survive Workflow replay and redeploys. The extension adds a system instruction with the preset's tool rules, the shared rules and the working `context` (`resolveToolGuidance`), and write tools set `label.complete` ("Created issue on owner/repo#123"). `preset: 'auto'` routing is kept for the session with `ctx.memo` (for the turn with `evaluation.scope: 'turn'`). `toModelOutput` also strips `rateLimit` from the model-facing payload. Execute failures return `{ error }` so the model still receives a `tool_result` — a structured `{ code, message, why, fix, link }` object for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), a plain string otherwise. The model receives it as an eve `error-text` result. An `approval` policy in `agent.ts` can add gates to GitHub tools but never remove one; match them with `toolName.startsWith('github__')`. A same-named tool in the agent, such as `agent/tools/github__createIssue.ts`, replaces the extension's.
+
+## Skills
+
+The extension ships four eve skills, on by default, that the model loads with `eve__skill` when a request matches: `review-pull-request`, `triage-issue`, `diagnose-ci`, `draft-release-notes`. They are named with the mount prefix (`github__review-pull-request`). A skill is offered only when the mount has the tools it requires, so `preset: 'code-review'` offers `review-pull-request` alone, and no preset or `preset: 'auto'` offers all four. With `'auto'`, loading a skill lists the tools it names.
+
+```ts
+export default githubExtension({
+  preset: 'auto',
+  skills: {
+    'review-pull-request': { additionalInstructions: 'Every behavior change needs a test.' },
+    'draft-release-notes': false,
+  },
+})
+```
+
+`additionalInstructions` adds rules after the built-in procedure; they win on conflict. `false` turns one skill off, and `skills: false` turns all of them off. There is no option that replaces a procedure: turn the skill off and write your own under `agent/skills/`.
 
 ## Approval
 

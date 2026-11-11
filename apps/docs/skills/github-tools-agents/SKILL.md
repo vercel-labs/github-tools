@@ -117,6 +117,8 @@ import githubExtension from '@github-tools/eve-extension'
 export default githubExtension({ preset: 'code-review' })
 ```
 
+The extension also ships workflow skills (`review-pull-request`, `triage-issue`, `diagnose-ci`, `draft-release-notes`), on by default; `skills` adds rules to one or turns it off.
+
 See `./references/eve-extension.md` and `/integrations/eve`.
 
 ### eve agent, direct import (deprecated)

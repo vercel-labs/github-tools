@@ -31,6 +31,7 @@ import { defineDynamic, defineTool, toolOutput, type ToolContext, type ToolDefin
 import { z } from 'zod'
 import { githubCommenter } from '../lib/commenter'
 import { sessionContext } from '../lib/context'
+import { offeredSkills } from '../lib/skills'
 import extension, {
   type GithubActAs,
   type GithubExtensionApprovalConfig,
@@ -123,6 +124,20 @@ function calledGithubTools(messages: readonly ModelMessage[]): GithubToolName[] 
         if (part.type !== 'tool-call') return []
         const name = part.toolName.split('__').at(-1)!
         return Object.hasOwn(GITHUB_TOOL_NAMES, name) ? [name as GithubToolName] : []
+      })
+    : [])
+}
+
+// Loading a skill adds no tool, so with `'auto'` the tools its procedure names would stay deferred.
+function loadedSkillTools(messages: readonly ModelMessage[]): GithubToolName[] {
+  const skills = offeredSkills()
+  return messages.flatMap(message => message.role === 'assistant' && Array.isArray(message.content)
+    ? message.content.flatMap((part) => {
+        if (part.type !== 'tool-call' || part.toolName !== 'eve__skill') return []
+        // The model can call `eve__skill` without a name. eve answers that call with an error.
+        const name = (part.input as { name?: unknown } | null)?.name
+        if (typeof name !== 'string') return []
+        return skills.find(skill => skill.name === name.split('__').at(-1))?.tools ?? []
       })
     : [])
 }
@@ -404,7 +419,7 @@ export default defineDynamic(async (ctx) => {
   const listed = routed && new Set(listEveToolDescriptors({
     ...sessionOptions,
     preset: routed.preset,
-    include: [...routed.include ?? [], ...sessionOptions.include ?? [], ...calledGithubTools(messages)],
+    include: [...routed.include ?? [], ...sessionOptions.include ?? [], ...calledGithubTools(messages), ...loadedSkillTools(messages)],
   }).map(entry => entry.name))
   const descriptors = listEveToolDescriptors(listed ? { ...sessionOptions, preset: undefined, include: undefined } : sessionOptions)
   const tools: Record<string, ToolDefinition> = {}

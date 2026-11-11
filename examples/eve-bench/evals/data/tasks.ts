@@ -1,4 +1,5 @@
 import type { GithubToolPreset } from '@github-tools/sdk'
+import type { GithubSkillName } from '@github-tools/sdk/eve-runtime'
 
 const REPO = 'vercel-labs/github-tools'
 
@@ -11,24 +12,28 @@ export type Task = {
   /** Completed when at least one of these tools was called (or requested for approval). */
   required: string[]
   writes: boolean
+  /** The workflow skill the request matches, when it matches one. */
+  skill?: GithubSkillName
 }
 
 export const TASKS: Task[] = [
   { id: 'explore', useCase: 'Explore', writes: false, oracle: ['repo-explorer'], required: ['getRepositoryTree', 'getFileContent'],
     prompt: `What packages does the ${REPO} monorepo contain, and what is each one for?` },
-  { id: 'review-read', useCase: 'Code review', writes: false, oracle: ['code-review'], required: ['getPullRequestContext', 'listPullRequestFiles', 'getPullRequest'],
+  { id: 'review-read', useCase: 'Code review', writes: false, oracle: ['code-review'], required: ['getPullRequestContext', 'listPullRequestFiles', 'getPullRequest'], skill: 'review-pull-request',
     prompt: `Review PR #150 in ${REPO}. Summarize the change and its risk. Do not post anything.` },
-  { id: 'review-post', useCase: 'Code review', writes: true, oracle: ['code-review'], required: ['createPullRequestReview', 'addPullRequestComment'],
+  { id: 'review-post', useCase: 'Code review', writes: true, oracle: ['code-review'], required: ['createPullRequestReview', 'addPullRequestComment'], skill: 'review-pull-request',
     prompt: `Review PR #146 in ${REPO} and post a short review comment with your findings.` },
   { id: 'label', useCase: 'Issue triage', writes: true, oracle: ['issue-triage'], required: ['addLabels'],
     prompt: `Add the bug label to issue #145 in ${REPO}.` },
+  { id: 'triage', useCase: 'Issue triage', writes: true, oracle: ['issue-triage'], required: ['addLabels', 'addIssueComment'], skill: 'triage-issue',
+    prompt: `Triage issue #145 in ${REPO}.` },
   { id: 'triage-comment', useCase: 'Issue triage', writes: true, oracle: ['issue-triage'], required: ['addIssueComment'],
     prompt: `Read issue #99 in ${REPO} and add a comment summarizing its root cause in two sentences.` },
-  { id: 'ci-diagnose', useCase: 'CI', writes: false, oracle: ['ci-ops'], required: ['getCiFailureContext', 'getWorkflowJobLogs', 'listWorkflowJobs'],
+  { id: 'ci-diagnose', useCase: 'CI', writes: false, oracle: ['ci-ops'], required: ['getCiFailureContext', 'getWorkflowJobLogs', 'listWorkflowJobs'], skill: 'diagnose-ci',
     prompt: `Why did workflow run 35846998891 in ${REPO} fail?` },
   { id: 'ci-rerun', useCase: 'CI', writes: true, oracle: ['ci-ops'], required: ['rerunWorkflowRun'],
     prompt: `Re-run the failed workflow run 35846998891 in ${REPO}.` },
-  { id: 'release-notes', useCase: 'Release', writes: false, oracle: ['release-manager'], required: ['compareCommits', 'getReleaseContext', 'getRelease'],
+  { id: 'release-notes', useCase: 'Release', writes: false, oracle: ['release-manager'], required: ['compareCommits', 'getReleaseContext', 'getRelease'], skill: 'draft-release-notes',
     prompt: `Summarize what changed in ${REPO} between the releases @github-tools/sdk@1.15.0 and @github-tools/sdk@1.16.0.` },
   { id: 'security', useCase: 'Security', writes: false, oracle: ['security-audit'], required: ['getFileContent', 'searchCode'],
     prompt: `Audit packages/github-tools/src/client.ts in ${REPO} for hardcoded secrets or unsafe token handling. Report findings, do not open issues.` },

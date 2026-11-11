@@ -78,6 +78,24 @@ export default defineEval({
     const routing = await later.session.send('routing')
     t.check(Number(routing.reply), satisfies(value => value === 1, 'routing runs once per session, not once per turn or model call'))
 
+    // The mount offers the skills its tools can carry out, except the one it sets to `false`.
+    // The `dryrun` mount has two write tools, which no skill can work with.
+    const skills = await routing.session.send('skills')
+    t.check(skills.reply, includes('- github__review-pull-request: '))
+    t.check(skills.reply, includes('- github__triage-issue: '))
+    t.check(skills.reply?.includes('github__draft-release-notes'), satisfies(value => value === false, 'a skill set to false is not offered'))
+    t.check(skills.reply?.includes('dryrun__'), satisfies(value => value === false, 'a mount without the tools a skill requires offers none'))
+
+    // Loading a skill returns the built-in procedure with the mount's rules after it, and lists
+    // the tools the procedure names, which routing had left deferred.
+    t.check(listedTools(later.reply).has('github__createPullRequestReview'), satisfies(value => value === false, 'a tool only a skill names starts deferred'))
+    const loaded = await skills.session.send('load skill')
+    t.calledSkill('github__review-pull-request')
+    t.check(loaded.reply, includes('# Review a pull request'))
+    t.check(loaded.reply, includes('Smoke: every change needs a test.'))
+    const afterSkill = await loaded.session.send('tools')
+    t.check(listedTools(afterSkill.reply).has('github__createPullRequestReview'), satisfies(value => value === true, 'a loaded skill lists the tools it names'))
+
     // On eve's GitHub channel, the thread fills `context`: the model leaves out owner and repo,
     // and the system prompt names the thread. This starts a new session, so it runs after the routing count.
     const fromThread = { headers: { 'x-eval-github': 'vercel-labs/github-tools#12' } }

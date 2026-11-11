@@ -2,6 +2,7 @@ import type { GithubTokenCall, GithubTokenInput } from '@github-tools/sdk'
 import type { ConnectTokenSubject, GithubConnectorInput, GithubConnectParams } from '@github-tools/sdk/connect'
 import type { ToolContext } from 'eve/tools'
 import {
+  GITHUB_SKILL_NAMES,
   GITHUB_TOOL_NAMES,
   GITHUB_WRITE_TOOLS,
   PRESET_TOOLS,
@@ -10,6 +11,8 @@ import {
   type EveToolOverrides,
   type GithubEvaluationOptions,
   type GithubGuardrails,
+  type GithubSkillName,
+  type GithubSkillsConfig,
   type GithubToolName,
   type GithubToolPreset,
   type GithubWriteToolName,
@@ -191,6 +194,16 @@ export interface GithubExtensionConfig {
    */
   context?: GithubExtensionContext
   /**
+   * Workflow skills: procedures the model loads with `eve__skill` when a request matches one, such as
+   * `review-pull-request` or `triage-issue`. On by default. A skill is offered only when the mount
+   * has the tools it requires.
+   *
+   * `false` offers none. An object sets each skill on its own: `false` turns it off, and
+   * `additionalInstructions` adds your rules after the built-in procedure. Your rules win when
+   * they conflict with one of its steps.
+   */
+  skills?: GithubSkillsConfig
+  /**
    * Global boolean, `'auto'`, or per-tool approval config.
    * Per-tool values may be `'once'`, `'always'`, `'never'`, `'auto'`, or predicate functions.
    */
@@ -227,6 +240,7 @@ export interface GithubExtensionConfig {
 const presetNameSchema = z.enum(Object.keys(PRESET_TOOLS) as [GithubToolPreset, ...GithubToolPreset[]])
 const toolNameSchema = z.enum(Object.values(GITHUB_TOOL_NAMES) as [GithubToolName, ...GithubToolName[]])
 const writeToolNameSchema = z.enum(Object.values(GITHUB_WRITE_TOOLS) as [GithubWriteToolName, ...GithubWriteToolName[]])
+const skillNameSchema = z.enum(GITHUB_SKILL_NAMES as [GithubSkillName, ...GithubSkillName[]])
 
 const actAsSchema = z.enum(['app', 'user', 'caller'])
 
@@ -258,6 +272,10 @@ const configSchema = z.object({
     issueNumber: z.number().optional(),
     ref: z.string().optional(),
   }).optional(),
+  skills: z.union([
+    z.boolean(),
+    z.partialRecord(skillNameSchema, z.union([z.literal(false), z.strictObject({ additionalInstructions: z.string().optional() })])),
+  ]).optional(),
   // Key validation only — a mistyped tool name would otherwise be silently
   // ignored and the tool would keep its default behavior with no signal.
   requireApproval: z.union([z.boolean(), z.literal('auto'), z.partialRecord(writeToolNameSchema, z.unknown())]).optional(),

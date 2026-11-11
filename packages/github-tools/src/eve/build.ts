@@ -1,5 +1,6 @@
 import type { ToolDefinition } from 'eve/tools'
 import { resolvePresetTools, type CombinedPresetToolNames, type GithubToolPreset, type PresetToolName } from '../core/presets'
+import { resolveGithubSkills, type GithubSkillsConfig, type ResolvedGithubSkill } from '../core/skills'
 import { createGithubTokenResolver } from '../core/token'
 import { isEveApprovalDisabled, mapEveApprovalValue, resolveEveToolApproval } from './approval'
 import { getEveTools } from './load-eve'
@@ -145,6 +146,14 @@ export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'p
 export function listResolvedEveToolNames(options: Pick<EveGithubToolsOptions, 'preset' | 'include' | 'exclude'> = {}): GithubToolName[] {
   const isAllowed = resolveAllowedToolNames(options)
   return ALL_GITHUB_TOOL_NAMES.filter(isAllowed)
+}
+
+/**
+ * The skills to offer next to the tools that `preset`, `include` and `exclude` resolve to.
+ * A skill is left out when one of its required tools is, or when `skills` turns it off.
+ */
+export function listGithubSkills(options: Pick<EveGithubToolsOptions, 'preset' | 'include' | 'exclude'> & { skills?: GithubSkillsConfig } = {}): ResolvedGithubSkill[] {
+  return resolveGithubSkills(listResolvedEveToolNames(options), options.skills)
 }
 
 /**

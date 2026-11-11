@@ -11,6 +11,8 @@ export const CONFIGS = {
   'fixed': { preset: ['code-review', 'issue-triage'] },
   'auto-preset': { preset: 'auto' },
   'auto': { preset: 'auto', requireApproval: 'auto' },
+  // The baseline for the workflow skills, which are on in every other configuration.
+  'auto-no-skills': { preset: 'auto', requireApproval: 'auto', skills: false },
   'auto-presets': { preset: 'auto', requireApproval: 'auto', evaluation: { selection: 'presets' } },
   'auto-turn': { preset: 'auto', requireApproval: 'auto', evaluation: { scope: 'turn' } },
   'core-deferred': { preset: 'auto', requireApproval: 'auto', evaluation: { maxTools: 0 } },

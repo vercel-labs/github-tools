@@ -83,6 +83,7 @@ export const myTool = (token: GithubTokenInput, { needsApproval = true }: ToolOp
 - `src/agents.ts` — `createGithubAgent()` (`ToolLoopAgent`); shared preset prompts live in `src/core/instructions.ts`
 - `src/tanstack/index.ts` and `src/tanstack/` — native TanStack tools, agent, evaluation, and approval middleware; browser-safe interrupt definition at `@github-tools/sdk/tanstack/interrupts`
 - `src/core/evaluation-policy.ts` — runtime-independent auto-approval and preset evaluation policy
+- `src/core/skills.ts` — `GITHUB_SKILLS`, the workflow procedures the eve extension ships as skills, each with the tools it `requires` and the `tools` it names; `skills.test.ts` fails when a procedure names a tool that is not in its `tools`
 - `src/workflow.ts` — `createDurableGithubAgent()` (`WorkflowAgent` from `@ai-sdk/workflow`), exported from `@github-tools/sdk/workflow` subpath
 - `src/core/evaluation.ts` — `requireApproval: 'auto'` and `preset: 'auto'` on AI SDK `experimental_decide` (default model `typesafe-ai/jev-1.14.0`, pinned in `DEFAULT_EVALUATION_MODEL`). `ai` is a static namespace import and `experimental_decide` (or `experimental_evaluate` before ai 7.0.128) is feature-detected, so the root entry still loads on `ai` 6. Keep it static: a dynamic `import('ai')` splits the chunk and breaks `eve build` of the extension
 - `src/eve-runtime.ts` — shared eve primitives for `@github-tools/eve-extension` (`listEveToolDescriptors`, `executeGithubEveTool`, approval helpers); public export `@github-tools/sdk/eve-runtime`
@@ -109,6 +110,8 @@ Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security
 ## eve extension dynamic tools (`packages/github-tools-eve-extension`)
 
 `extension/tools/github.ts` default-exports `defineDynamic(async (ctx) => tools)`. eve runs it before every model call and rebuilds every callback and schema from what it returns, so ordinary closures and Zod schemas are fine; there are no durable descriptors to preserve. Re-read config through `buildSessionOptions()` or `extension.config`. Work that must stay fixed across model calls or processes (the `preset: 'auto'` routing) goes in `ctx.memo(key, fn)` with a JSON result. `examples/eve-smoke` runs the built extension under `eve eval` in CI.
+
+`extension/skills/*.ts` are dynamic skills, one per entry of `GITHUB_SKILLS`: each returns `null` when the mount lacks a tool the skill requires or `skills` turns it off. Their text lives in the SDK, and it depends on the config only, never on the session. With `preset: 'auto'`, the tool file lists a loaded skill's tools by reading `eve__skill` calls from `ctx.messages()`.
 
 `channels/index.ts` (`@github-tools/eve-extension/channels`, the `githubChannel` wrapper with `respondTo`) is not part of the mounted extension: `tsc -p tsconfig.channels.json` compiles it to `channels/dist`. Keep it out of `extension/` and `dist/`. eve binds every module under `dist/extension` to a mount, so an agent with two mounts of the package can't import one from a channel file, and building an agent that uses the workspace extension rebuilds `dist/` and deletes anything else in it. A scheduled canary (`.github/workflows/eve-canary.yml`) builds `examples/eve` and runs that smoke eval against a coherent `eve@latest` / `ai@latest` pair.
 

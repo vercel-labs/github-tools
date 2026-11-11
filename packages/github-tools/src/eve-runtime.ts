@@ -11,12 +11,15 @@ export {
   createEveGithubToolsDynamic,
   listResolvedEveToolNames,
   listEveToolDescriptors,
+  listGithubSkills,
   executeGithubEveTool,
   formatGithubEveToolOutput,
   hasGithubEveToolModelOutput,
 } from './eve/build'
 export { mapEveApprovalValue, resolveEveApproval, resolveEveToolApproval, isEveApprovalDisabled } from './eve/approval'
 export { resolveToolGuidance } from './core/instructions'
+export { GITHUB_SKILLS, GITHUB_SKILL_NAMES } from './core/skills'
+export type { GithubSkill, GithubSkillName, GithubSkillOptions, GithubSkillsConfig, ResolvedGithubSkill } from './core/skills'
 export { AUTO_APPROVAL_TOOLS, autoApprovalDecision, evaluatePresets, evaluateTools, fallbackPresets, fallbackTools, latestUserText, needsAutoApproval, selectPresets, selectTools } from './core/evaluation'
 export type { AutoApprovalDecision, GithubEvaluationOptions } from './core/evaluation'
 export { resolveGithubToken } from './core/token'

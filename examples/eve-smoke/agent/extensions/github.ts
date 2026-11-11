@@ -40,4 +40,8 @@ export default githubExtension({
   requireApproval: { createIssue: 'once' },
   guardrails: { repositories: ['vercel-labs/*'] },
   overrides: { getRepository: { description: 'Smoke: get repository' } },
+  skills: {
+    'review-pull-request': { additionalInstructions: 'Smoke: every change needs a test.' },
+    'draft-release-notes': false,
+  },
 })

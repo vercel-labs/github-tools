@@ -4,7 +4,7 @@ import { BENCH_LOG_DIR, BENCH_LOG_PREFIX } from '../lib/log.ts'
 import { TASKS } from '../evals/data/tasks.ts'
 
 type Usage = { costUsd?: number, inputTokens: number, outputTokens: number, cacheReadTokens: number, cacheWriteTokens: number }
-type Event = { type: string, data: { kind?: string, usage?: Usage }, meta: { at: string } }
+type Event = { type: string, data: { kind?: string, usage?: Usage, capability?: { kind: string, name: string } }, meta: { at: string } }
 type Tag = { task: string, config: string, level: string }
 
 type Run = Tag & {
@@ -17,6 +17,8 @@ type Run = Tag & {
   outputTokens: number
   approvals: number
   seconds: number
+  /** Skills the run loaded, without the mount prefix. */
+  skills: string[]
 }
 
 const evalsDir = join(process.cwd(), '.eve', 'evals')
@@ -54,6 +56,7 @@ function loadRuns(): Run[] {
         outputTokens: usages.reduce((s, u) => s + u.outputTokens, 0),
         approvals: artifact.result.derived?.interactions?.length ?? 0,
         seconds: (Math.max(...times) - Math.min(...times)) / 1000,
+        skills: events.flatMap(e => e.type === 'call.requested' && e.data.capability?.kind === 'skill' ? [e.data.capability.name.split('__').at(-1)!] : []),
       }]
     })
   })
@@ -100,6 +103,18 @@ for (const task of TASKS) {
     return `${usd(mean(rs.map(r => r.costUsd)))}${rs.every(r => r.passed) ? '' : ' ✗'}`
   })
   lines.push(`| ${task.id} | ${task.useCase} | ${cells.join(' | ')} |`)
+}
+
+lines.push('', '### Skill loads', '')
+lines.push('| Configuration | Loaded the skill the task matches | Loaded a skill on another task |')
+lines.push('| --- | --- | --- |')
+for (const v of variants) {
+  const [config, level] = v.split('|')
+  const rs = runs.filter(r => r.config === config && r.level === level)
+  const skillOf = (r: Run) => TASKS.find(t => t.id === r.task)?.skill
+  const matching = rs.filter(r => skillOf(r))
+  const others = rs.filter(r => !skillOf(r))
+  lines.push(`| ${label(v)} | ${matching.filter(r => r.skills.includes(skillOf(r)!)).length}/${matching.length} | ${others.filter(r => r.skills.length > 0).length}/${others.length} |`)
 }
 
 const decisionsPath = join(BENCH_LOG_DIR, 'decisions.json')
