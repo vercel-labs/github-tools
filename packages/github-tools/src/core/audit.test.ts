@@ -125,6 +125,15 @@ describe('audit records', () => {
     expect(denied.githubIdentity).toBeUndefined()
   })
 
+  it('lists a record\'s keys in the order of the type', () => {
+    const denied = githubAuditSettled(
+      write({ clearance: 'person', approver: { id: 'U2', type: 'user' }, verdict: { risk: 2, intent: 1 } }),
+      { callId: 'call-1', outcome: 'rejected', error: { code: 'TOOL_EXECUTION_DENIED', message: 'Tool execution was denied.' } },
+      'later',
+    )!
+    expect(Object.keys(denied)).toEqual(['id', 'phase', 'at', 'tool', 'target', 'outcome', 'reason', 'agent', 'requester', 'approver', 'clearance', 'verdict', 'session'])
+  })
+
   it.each(['interrupted', 'abandoned', undefined])('has no outcome record for a call eve settled as %s', (outcome) => {
     expect(githubAuditSettled(write(), { callId: 'call-1', outcome }, 'later')).toBeUndefined()
   })

@@ -169,7 +169,13 @@ export function githubAuditRecordId(sessionId: string, callId: string): string {
   return `${sessionId}:${callId}`
 }
 
-function record(call: GithubAuditCall, phase: GithubAuditRecord['phase'], at: string): GithubAuditRecord {
+// Keys follow the order of `GithubAuditRecord`, so a stored or logged record reads the same way everywhere.
+function record(
+  call: GithubAuditCall,
+  phase: GithubAuditRecord['phase'],
+  at: string,
+  { outcome, reason }: Pick<GithubAuditRecord, 'outcome' | 'reason'> = {},
+): GithubAuditRecord {
   const { tool, target, agent, requester, approver, clearance, verdict, githubIdentity, session } = call
   return {
     id: githubAuditRecordId(session.id, session.callId),
@@ -177,6 +183,8 @@ function record(call: GithubAuditCall, phase: GithubAuditRecord['phase'], at: st
     at,
     tool,
     target,
+    ...(outcome && { outcome }),
+    ...(reason && { reason }),
     agent,
     ...(requester && { requester }),
     ...(approver && { approver }),
@@ -217,17 +225,16 @@ function settledTarget(target: GithubAuditTarget, output: unknown): GithubAuditT
 export function githubAuditSettled(call: GithubAuditCall, settlement: GithubAuditSettlement, at: string): GithubAuditRecord | undefined {
   const { outcome, error, output } = settlement
   if (outcome === 'completed') {
-    return { ...record({ ...call, target: settledTarget(call.target, output) }, 'settled', at), outcome: 'succeeded' }
+    return record({ ...call, target: settledTarget(call.target, output) }, 'settled', at, { outcome: 'succeeded' })
   }
   if (outcome === 'rejected') {
-    const reason = call.reason ?? error?.message
-    return { ...record(call, 'settled', at), outcome: 'denied', ...(reason && { reason }) }
+    return record(call, 'settled', at, { outcome: 'denied', reason: call.reason ?? error?.message })
   }
   if (outcome !== 'failed') return undefined
   if (error?.code === githubToolsErrors.GUARDRAIL_BLOCKED.code) {
-    return { ...record(call, 'settled', at), outcome: 'denied', reason: error.message }
+    return record(call, 'settled', at, { outcome: 'denied', reason: error.message })
   }
-  return { ...record(call, 'settled', at), outcome: 'failed', ...(error && { reason: error.code }) }
+  return record(call, 'settled', at, { outcome: 'failed', reason: error?.code })
 }
 
 /**
