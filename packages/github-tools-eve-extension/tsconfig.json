@@ -14,6 +14,6 @@
     "lib": ["ESNext"],
     "types": ["node"]
   },
-  "include": ["extension", "channels"],
-  "exclude": ["dist", "channels/dist", "node_modules"]
+  "include": ["extension", "channels", "testing"],
+  "exclude": ["dist", "channels/dist", "testing/dist", "node_modules"]
 }

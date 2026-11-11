@@ -100,6 +100,56 @@ export default githubChannel({
 
 Pair it with `actAs: 'caller'`, which limits what a turn does to the commenter's role on each repository a call targets.
 
+## Test your agent
+
+`@github-tools/eve-extension/testing` runs an agent's evals against a local GitHub emulator, [`vercel-labs/emulate`](https://github.com/vercel-labs/emulate), with the routes, GraphQL queries and role checks the tools need, and a Vercel Connect emulator beside it. An eval creates an issue as one person, asks the agent as another, and reads the result back. No request reaches GitHub or Vercel.
+
+```sh
+pnpm add -D @emulators/core@0.13.1 @emulators/github@0.13.1
+```
+
+```ts
+// evals/evals.config.ts
+import { defineEvalConfig } from 'eve/evals'
+import { emulateGithub } from '@github-tools/eve-extension/testing'
+
+export default defineEvalConfig({
+  setup: () => emulateGithub({
+    repositories: { 'acme/web': { labels: ['bug'] } },
+    people: { alice: { role: 'write' }, bob: { role: 'read' } },
+  }),
+  teardown: context => context?.close(),
+})
+```
+
+```ts
+// agent/channels/eve.ts
+import { eveChannel } from 'eve/channels/eve'
+import { evalIdentity } from '@github-tools/eve-extension/testing/agent'
+
+export default eveChannel({ auth: [evalIdentity(), /* your production auth */] })
+```
+
+```ts
+// evals/triage.eval.ts
+import { defineEval } from 'eve/evals'
+import { includes } from 'eve/evals/expect'
+import { as } from '@github-tools/eve-extension/testing'
+import type config from './evals.config'
+
+export default defineEval<typeof config>({
+  async test(t) {
+    const web = t.context.github.repo('acme/web')
+    const issue = await web.as('bob').createIssue({ title: 'Crash on save' })
+    const turn = await t.send(`Triage acme/web#${issue.number}`, as('alice'))
+    turn.calledTool('github__addLabels')
+    t.check((await web.issue(issue.number)).labels, includes('bug'))
+  },
+})
+```
+
+`emulateGithub` points the agent at the emulators through `NODE_OPTIONS`, so no agent file imports a redirect, and it stops the run before the first eval if the agent starts without it. `evalIdentity()` and `underEmulation()`, which adapts `connectGitHubCredentials` for eve's GitHub channel, do nothing outside a local eve server. See [Test an agent](https://github-tools.com/guides/test-an-agent) for the GitHub channel, sign-ins, and what the emulators don't cover.
+
 ## Structure
 
 ```
@@ -109,6 +159,12 @@ extension/
     github.ts          # defineDynamic() resolving listEveToolDescriptors(...) into authored defineTool calls
 channels/
   index.ts             # githubChannel with respondTo, compiled apart from the extension to channels/dist
+testing/
+  index.ts             # eval side: emulateGithub, as, and the client behind t.context, compiled to testing/dist
+  agent.ts             # agent side: evalIdentity and underEmulation
+  redirect.ts          # the fetch redirect emulateGithub names in NODE_OPTIONS
+  github/              # emulate's GitHub service with the role guard, the request fixes and the supplement
+  connect/             # the Vercel Connect emulator
 ```
 
 ## Config schema (`extension/extension.ts`)
@@ -132,8 +188,11 @@ channels/
 ## Build (contributors)
 
 ```sh
-pnpm --filter @github-tools/eve-extension build   # runs `eve extension build`, then compiles `channels/`
+pnpm --filter @github-tools/eve-extension build   # runs `eve extension build`, then compiles `channels/` and `testing/`
+pnpm --filter @github-tools/eve-extension test    # vitest for the emulators, the redirect, and every tool against the emulator
 ```
+
+The supplement in `testing/github/` adds what `@github-tools/sdk` calls and emulate lacks. `testing/coverage.test.ts` runs every tool against it, through `@github-tools/sdk/eve-runtime`, and fails with "delete this route" when a new emulate release answers a supplement route itself.
 
 ## License
 
