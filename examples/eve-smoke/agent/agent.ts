@@ -30,6 +30,8 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__getRepository', input: {} }] }
       case 'deferred read':
         return { toolCalls: [{ name: 'eve__tool', input: { name: 'github__listBranches', input: target } }] }
+      case 'failing deferred read':
+        return { toolCalls: [{ name: 'eve__tool', input: { name: 'github__listBranches', input: { owner: 'vercel-labs', repo: 'missing' } } }] }
       case 'instructions':
         return messages.filter(message => message.role === 'system').map(message => message.text).join('\n')
       case 'routing':

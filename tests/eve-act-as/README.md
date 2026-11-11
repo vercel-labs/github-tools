@@ -12,7 +12,7 @@ The eval checks that:
 
 - a scheduled turn and a `localDev()` turn run as the App with `'caller'`
 - a signed-in user's calls run with their own GitHub token
-- a reader who approves their own write gets GitHub's `403`
+- a reader who approves their own write gets GitHub's `403`, and the call settles as failed
 - anyone can deny without signing in
 - a maintainer who approves a reader's write signs in first, and the write runs with the maintainer's token
 - an `'app'` tool still needs a signed-in approver, and the approved call runs as the App

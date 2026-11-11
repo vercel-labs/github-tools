@@ -107,10 +107,10 @@ describe('createGithubAgent({ guardrails })', () => {
 })
 
 describe('eve runtime guardrails', () => {
-  it('returns a blocked call as a GUARDRAIL_BLOCKED error without calling GitHub', async () => {
+  it('throws GUARDRAIL_BLOCKED for a blocked call without calling GitHub', async () => {
     const requests = stubGithub()
-    const result = await executeGithubEveTool('createBranch', { owner: 'vercel', repo: 'ai', branch: 'main' }, { token: 'test', guardrails })
-    expect(result).toMatchObject({ error: { code: 'github_tools.GUARDRAIL_BLOCKED' } })
+    await expect(executeGithubEveTool('createBranch', { owner: 'vercel', repo: 'ai', branch: 'main' }, { token: 'test', guardrails }))
+      .rejects.toThrow('github_tools.GUARDRAIL_BLOCKED')
     expect(requests).toEqual([])
   })
 })

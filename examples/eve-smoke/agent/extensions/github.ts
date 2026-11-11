@@ -30,6 +30,7 @@ globalThis.fetch = async (input, init) => {
     const { title } = await request.json() as { title: string }
     return json({ number: 4242, title, html_url: 'https://github.com/vercel-labs/github-tools/issues/4242', state: 'open', labels: [], user: { login: 'smoke' } }, 201)
   }
+  if (url.pathname.startsWith('/repos/vercel-labs/missing')) return json({ message: 'Not Found' }, 404)
   return json({ message: `Unexpected ${request.method} ${url.pathname}` }, 500)
 }
 

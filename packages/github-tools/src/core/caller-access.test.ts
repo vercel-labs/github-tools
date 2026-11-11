@@ -103,10 +103,10 @@ describe('withGithubCallerAccess on a repository', () => {
     expect(requests).toHaveLength(2)
   })
 
-  it('returns the refusal as an error result from an eve tool, without calling the tool\'s endpoint', async () => {
+  it('throws the refusal from an eve tool, without calling the tool\'s endpoint', async () => {
     const requests = stubGithub({ [permissionRoute('vercel/ai', 'guest')]: role('read', 'read') })
-    const result = await executeGithubEveTool('createIssue', { owner: 'vercel', repo: 'ai', title: 'x' }, { token: withGithubCallerAccess('test', { login: 'guest' }) })
-    expect(result).toMatchObject({ error: { code: 'github_tools.CALLER_FORBIDDEN' } })
+    await expect(executeGithubEveTool('createIssue', { owner: 'vercel', repo: 'ai', title: 'x' }, { token: withGithubCallerAccess('test', { login: 'guest' }) }))
+      .rejects.toThrow('github_tools.CALLER_FORBIDDEN')
     expect(requests).toEqual([permissionRoute('vercel/ai', 'guest')])
   })
 })

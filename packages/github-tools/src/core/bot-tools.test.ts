@@ -81,7 +81,7 @@ describe('updatePullRequestBranch', () => {
     await expect((tool.execute as (input: unknown, options: unknown) => Promise<unknown>)(input, { toolCallId: 'call-1', messages: [] })).rejects.toThrow(reason)
     const [tanstackTool] = createTanstackTools({ token: 'test', guardrails, preset: 'pr-author' }).filter(candidate => candidate.name === 'updatePullRequestBranch')
     await expect(tanstackTool!.execute(input)).rejects.toThrow(reason)
-    await expect(executeGithubEveTool('updatePullRequestBranch', input, { token: 'test', guardrails })).resolves.toMatchObject({ error: { code: 'github_tools.GUARDRAIL_BLOCKED' } })
+    await expect(executeGithubEveTool('updatePullRequestBranch', input, { token: 'test', guardrails })).rejects.toThrow('github_tools.GUARDRAIL_BLOCKED')
 
     expect(requests.map(request => request.route)).toEqual(Array(3).fill('GET /repos/vercel/ai/pulls/12'))
   })
