@@ -34,17 +34,27 @@
     "./channels": {
       "types": "./channels/dist/index.d.ts",
       "default": "./channels/dist/index.js"
+    },
+    "./testing": {
+      "types": "./testing/dist/index.d.ts",
+      "default": "./testing/dist/index.js"
+    },
+    "./testing/agent": {
+      "types": "./testing/dist/agent.d.ts",
+      "default": "./testing/dist/agent.js"
     }
   },
   "files": [
     "dist",
-    "channels/dist"
+    "channels/dist",
+    "testing/dist"
   ],
   "scripts": {
-    "build": "eve extension build && tsc -p tsconfig.channels.json",
+    "build": "eve extension build && tsc -p tsconfig.channels.json && tsc -p tsconfig.testing.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "keywords": [
     "ai",
@@ -60,21 +70,32 @@
     "zod": "^4.6.7"
   },
   "peerDependencies": {
+    "@emulators/core": "0.13.1",
+    "@emulators/github": "0.13.1",
     "@vercel/connect": ">=2.7.0",
     "eve": "*"
   },
   "peerDependenciesMeta": {
+    "@emulators/core": {
+      "optional": true
+    },
+    "@emulators/github": {
+      "optional": true
+    },
     "@vercel/connect": {
       "optional": true
     }
   },
   "devDependencies": {
+    "@emulators/core": "0.13.1",
+    "@emulators/github": "0.13.1",
     "@types/node": "^26.5.0",
     "@vercel/connect": "^2.7.0",
     "eslint": "^10.10.0",
     "eve": "1.0.0-rc.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
   },
   "packageManager": "pnpm@11.1.3",
   "publishConfig": {

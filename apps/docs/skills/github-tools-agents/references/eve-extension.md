@@ -116,7 +116,63 @@ export default githubChannel({
 - A comment from someone below it starts no turn: no reaction, no session, no model call.
 - Pair it with `actAs: 'caller'` on an agent that people mention on GitHub.
 
+## Test the agent without GitHub
+
+`@github-tools/eve-extension/testing` runs evals against a local GitHub emulator (`vercel-labs/emulate`, plus the routes, GraphQL queries and role checks the tools need) and a Vercel Connect emulator. No request reaches GitHub or Vercel, and no token is needed.
+
+```sh
+pnpm add -D @emulators/core@0.13.1 @emulators/github@0.13.1
+```
+
+```ts
+// evals/evals.config.ts
+import { defineEvalConfig } from 'eve/evals'
+import { emulateGithub } from '@github-tools/eve-extension/testing'
+
+export default defineEvalConfig({
+  setup: () => emulateGithub({
+    repositories: { 'acme/web': { labels: ['bug'] } },
+    people: { alice: { role: 'write' }, bob: { role: 'read' }, carol: { role: 'write', authorized: false } },
+  }),
+  teardown: context => context?.close(),
+})
+```
+
+```ts
+// agent/channels/eve.ts
+import { eveChannel } from 'eve/channels/eve'
+import { evalIdentity } from '@github-tools/eve-extension/testing/agent'
+
+export default eveChannel({ auth: [evalIdentity(), /* production auth */] })
+```
+
+```ts
+// evals/triage.eval.ts
+import { defineEval } from 'eve/evals'
+import { includes } from 'eve/evals/expect'
+import { as } from '@github-tools/eve-extension/testing'
+import type config from './evals.config'
+
+export default defineEval<typeof config>({
+  async test(t) {
+    const web = t.context.github.repo('acme/web')
+    const issue = await web.as('bob').createIssue({ title: 'Crash on save' })
+    const turn = await t.send(`Triage acme/web#${issue.number}`, as('alice'))
+    turn.calledTool('github__addLabels')
+    t.check((await web.issue(issue.number)).labels, includes('bug'))
+  },
+})
+```
+
+- `people`: each is a GitHub user with `role` (`'read'`, `'triage'`, `'write'`, `'maintain'`, `'admin'`) on every repository, and the eve principal of the same name. `as('alice')` sends a message, or answers an approval, as her. `authorized: false` is a person who has to sign in first: finish it with `t.context.connect.completeSignIn(t, turn)`.
+- The emulator refuses what GitHub refuses: a reader's own token can't label, merge or release, and the call settles as failed with `github_tools.FORBIDDEN`. It also drops what GitHub drops: the labels, assignees and milestone a reader sends when opening or editing their own issue, and a reader's `addAssignees`, complete without changing them. Assert on the issue's state.
+- `t.context.github`: `repo(name)`, `.as(person)`, `createIssue`, `createPullRequest`, `comment`, `issue(n)`, `pull(n)`, `createRepo(owner)`, `octokit(person)`, `requests`, `deliveries`. Create the item an eval works on inside that eval: evals run concurrently on one emulator.
+- GitHub channel: wrap Connect's credentials, `credentials: underEmulation(connectGitHubCredentials('github/my-connector'))`, call `await t.context.github.deliverWebhooksTo(t)`, create a comment that mentions `@${t.context.github.app.slug}`, then `await web.issue(n).waitForComment({ by: 'app' })`.
+- Don't hardcode a GitHub token in the extension config, and don't import the redirect: `emulateGithub` sets `GITHUB_TOKEN` and loads the redirect through `NODE_OPTIONS`.
+- Only `eve eval` on a local target is covered. Use eve's tool stubs for a deployed target, and a `dryRun: true` pass on real repositories before granting write access.
+
 ## Docs
 
 - `/integrations/eve`
+- `/guides/test-an-agent`
 - `examples/eve/`: `pnpm dev:eve` from monorepo root

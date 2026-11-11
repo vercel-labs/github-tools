@@ -67,8 +67,9 @@ Every tool splits into a **core** function (pure logic) and a **tool factory** (
    - `apps/docs/content/docs/3.core/3.approval.md` if the write tool joins `AUTO_APPROVAL_TOOLS`
    - `apps/docs/content/docs/3.core/5.context.md` if the tool is a context tool or changes default payload behavior (`detail`, `includePatch`, ranges)
    - `packages/github-tools/README.md` (tool tables, preset tables, write tools list, token permissions) — the root `README.md` is a symlink to this file, no separate edit needed
-6. **Changeset** — `pnpm changeset` (`minor`)
-7. Run checks:
+6. **Emulator** — add a sample input for the tool to `SAMPLES` in `packages/github-tools-eve-extension/testing/coverage.test.ts`, which runs every tool against the GitHub emulator in that folder (the file doesn't type-check without it, once the SDK is built). When the tool calls a route or sends a GraphQL document emulate doesn't answer, add it to `testing/github/supplement/`. For a write tool, either the test's reader case gets `403`, which may need a rule in `testing/github/role-guard.ts`, or the tool joins `READER_MAY` with the reason GitHub allows it, and a `holds` check of the result when GitHub accepts the call and ignores part of it
+7. **Changeset** — `pnpm changeset` (`minor`)
+8. Run checks:
 
 ```sh
 pnpm build && pnpm lint && pnpm typecheck && pnpm test
