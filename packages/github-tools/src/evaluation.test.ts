@@ -5,6 +5,7 @@ import type { Experimental_DecisionModelV4Answer, Experimental_DecisionModelV4Ca
 import { describe, expect, it, vi } from 'vitest'
 import { createGithubAgent, createGithubTools, AUTO_APPROVAL_TOOLS, PRESET_TOOLS } from './index'
 import { resolveApprovalMode } from './core/approval'
+import { autoApprovalDecision } from './core/evaluation'
 import { resolveInstructions } from './agents'
 import { ALL_GITHUB_TOOL_NAMES } from './core/catalog'
 
@@ -43,6 +44,19 @@ const messages: ModelMessage[] = [
 type NeedsApproval = (input: unknown, options: { toolCallId: string, messages: ModelMessage[] }) => Promise<boolean>
 
 describe("requireApproval: 'auto'", () => {
+  it('returns the decision model\'s risk and intent with the decision', async () => {
+    const { model } = evaluationModel(() => ({ risk: 0.2, intent: 0.9 }))
+    expect(await autoApprovalDecision('addLabels', {}, messages, { model })).toEqual({
+      ask: false,
+      reason: 'Approved automatically: negligible (risk 0.2 of 2), 90% likely you asked for it.',
+      risk: 0.2,
+      intent: 0.9,
+    })
+    const failing = new Experimental_DecisionMockModelV4({ doDecide: async () => { throw new Error('unavailable') } })
+    vi.spyOn(console, 'warn').mockImplementationOnce(() => {})
+    expect(await autoApprovalDecision('addLabels', {}, messages, { model: failing })).toEqual({ ask: true, reason: 'The decision model was unavailable.' })
+  })
+
   it.each(approvalCases)('applies shared approval policy $risk/$intent', async ({ risk, intent, options, expected }) => {
     const { model } = evaluationModel(() => ({ risk, intent }))
     const tools = createGithubTools({ token: 'test', requireApproval: 'auto', evaluation: { model, ...options } })

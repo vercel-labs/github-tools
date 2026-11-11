@@ -37,7 +37,8 @@ export const docsSidebar: DocsSidebarGroup[] = [
       { path: '/auth' },
       { path: '/context' },
       { path: '/commits' },
-      { path: '/errors' }
+      { path: '/errors' },
+      { path: '/observability' }
     ]
   },
   {

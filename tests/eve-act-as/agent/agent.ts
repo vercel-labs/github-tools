@@ -1,8 +1,10 @@
 import { defineAgent } from 'eve'
 import { mockModel } from 'eve/evals'
+import { audited as auditedRecords } from '../fixtures/audit'
 import { githubCalls } from '../fixtures/github-calls'
 
 const target = { owner: 'vercel-labs', repo: 'github-tools' }
+const audited = { owner: 'vercel-labs', repo: 'audited' }
 
 export default defineAgent({
   defaultTools: false,
@@ -34,6 +36,22 @@ export default defineAgent({
         return { toolCalls: [{ name: 'gated__createIssue', input: { ...target, title: 'eval' } }] }
       case 'gated update':
         return { toolCalls: [{ name: 'gated__updateIssue', input: { ...target, issueNumber: 999, state: 'closed' } }] }
+      case 'audited read':
+        return { toolCalls: [{ name: 'audited__getRepository', input: audited }] }
+      case 'audited write':
+        return { toolCalls: [{ name: 'audited__createIssue', input: { ...audited, title: 'eval' } }] }
+      case 'audited elsewhere':
+        return { toolCalls: [{ name: 'audited__createIssue', input: { ...target, title: 'eval' } }] }
+      case 'audited label':
+        return { toolCalls: [{ name: 'audited__addLabels', input: { ...audited, issueNumber: 12, labels: ['bug'] } }] }
+      case 'audited comment':
+        return { toolCalls: [{ name: 'audited__addIssueComment', input: { ...audited, issueNumber: 1, body: 'eval' } }] }
+      case 'audited comment 500':
+        return { toolCalls: [{ name: 'audited__addIssueComment', input: { ...audited, issueNumber: 500, body: 'eval' } }] }
+      case 'audited comment 501':
+        return { toolCalls: [{ name: 'audited__addIssueComment', input: { ...audited, issueNumber: 501, body: 'eval' } }] }
+      case 'audit records':
+        return JSON.stringify(auditedRecords())
       case 'github calls':
         return JSON.stringify(githubCalls())
       default:

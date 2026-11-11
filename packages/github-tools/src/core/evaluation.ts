@@ -121,8 +121,11 @@ function warnEvaluationFailed(model: Experimental_EvaluationModel, fallback: str
   }))
 }
 
-/** Whether a person should approve a GitHub write, and why, as a short sentence for the approval request. */
-export type AutoApprovalDecision = { ask: boolean, reason: string }
+/**
+ * Whether a person should approve a GitHub write, and why, as a short sentence for the approval request.
+ * `risk` (0 to 2) and `intent` (0 to 1) are the decision model's answers, absent when it gave none.
+ */
+export type AutoApprovalDecision = { ask: boolean, reason: string, risk?: number, intent?: number }
 
 const RISK_LABELS = RISK_QUESTION.criteria.map(criterion => criterion.slice(0, criterion.indexOf(':')))
 
@@ -168,8 +171,8 @@ export async function autoApprovalDecision(
   // Jev scores risk on a continuous 0–2 scale, so the label is the nearest rubric level.
   const verdict = `${RISK_LABELS[Math.round(risk)]} (risk ${Number(risk.toFixed(1))} of 2), ${Math.round(intent * 100)}% likely you asked for it`
   return requiresApproval(risk, intent, { maxRisk, minIntent })
-    ? { ask: true, reason: `${verdict}.` }
-    : { ask: false, reason: `Approved automatically: ${verdict.charAt(0).toLowerCase()}${verdict.slice(1)}.` }
+    ? { ask: true, reason: `${verdict}.`, risk, intent }
+    : { ask: false, reason: `Approved automatically: ${verdict.charAt(0).toLowerCase()}${verdict.slice(1)}.`, risk, intent }
 }
 
 /** Whether a GitHub write needs a person's approval; see {@link autoApprovalDecision}. */

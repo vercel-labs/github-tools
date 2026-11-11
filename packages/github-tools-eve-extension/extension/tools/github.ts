@@ -29,6 +29,7 @@ import {
 import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy, ApprovalStatus } from 'eve/tools/approval'
 import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
 import { z } from 'zod'
+import { trackedApprovalReason, trackGithubWrite, withAuditStarted } from '../lib/audit'
 import { githubCommenter } from '../lib/commenter'
 import { sessionContext } from '../lib/context'
 import extension, {
@@ -182,8 +183,11 @@ async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolC
     dryRunApprovals.delete(key)
     return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), dryRunApproval })
   }
+  // With `audit`, a write's `started` record is sent before its request and names whose access it uses.
+  const run = (options: EveGithubToolsOptions, githubIdentity: 'app' | 'user') =>
+    executeGithubEveTool(name, args, withAuditStarted(options, ctx, githubIdentity))
   const actAs = actAsFor(name)
-  if (actAs === 'app') return executeGithubEveTool(name, args, buildSessionOptions(ctx))
+  if (actAs === 'app') return run(buildSessionOptions(ctx), 'app')
 
   const requester = ctx.session.auth.current
   const approver = ctx.approval?.responder
@@ -193,18 +197,18 @@ async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolC
   const commenter = actAs === 'caller' ? githubCommenter(approvedByOther ? approver : requester) : undefined
   if (commenter) {
     const options = buildSessionOptions(ctx)
-    return executeGithubEveTool(name, args, { ...options, token: withGithubCallerAccess(options.token, commenter) })
+    return run({ ...options, token: withGithubCallerAccess(options.token, commenter) }, 'app')
   }
   const auth = await githubUserAuth()
   if (approvedByOther) {
     const { token } = await approver.getToken(auth)
-    return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
+    return run({ ...buildSessionOptions(ctx), token }, 'user')
   }
-  if (actAs === 'caller' && !isUser(requester)) return executeGithubEveTool(name, args, buildSessionOptions(ctx))
+  if (actAs === 'caller' && !isUser(requester)) return run(buildSessionOptions(ctx), 'app')
 
   const { token } = await ctx.getToken(auth)
   try {
-    return await executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
+    return await run({ ...buildSessionOptions(ctx), token }, 'user')
   } catch (error) {
     // A 401 means the user revoked the authorization: drop the token and ask them to sign in again.
     if (isUnauthorized(error)) ctx.requireAuth(auth)
@@ -291,7 +295,9 @@ function cachedAutoApproval(writeTool: GithubWriteToolName, request: string, ctx
 // An `agent.ts` policy can still ask for a call the evaluator approved; that prompt gets no reason.
 function approvalPrompt(label: string, sessionId: string, callId: string) {
   const decision = autoDecisions.get(decisionKey(sessionId, callId))?.settled
-  return decision?.ask ? `${label}? ${decision.reason}` : `${label}?`
+  // Another process may have made the decision: with `audit`, session state kept its sentence.
+  const reason = decision ? decision.ask && decision.reason : trackedApprovalReason(callId)
+  return reason ? `${label}? ${reason}` : `${label}?`
 }
 
 function configuredApprovalValue(name: GithubToolName): GithubExtensionApprovalValue | undefined {
@@ -307,6 +313,12 @@ const dryRunApprovals = new Map<string, GithubDryRunApproval>()
 async function runGithubEveApproval(name: GithubToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const writeTool = writeToolName(name)
   if (!writeTool) return 'not-applicable'
+  const status = await githubWriteApproval(name, writeTool, request, ctx)
+  trackGithubWrite(writeTool, ctx, status, autoDecisions.get(decisionKey(ctx.session.id, ctx.callId))?.settled)
+  return status
+}
+
+async function githubWriteApproval(name: GithubToolName, writeTool: GithubWriteToolName, request: string, ctx: ApprovalContext): Promise<ApprovalStatus> {
   const reason = githubGuardrailViolation(name, ctx.toolInput as Record<string, unknown>, { context: sessionContext(ctx.session.auth.current), guardrails: extension.config.guardrails })
   if (reason) return { type: 'denied', reason }
   if (!extension.config.dryRun) return githubApprovalStatus(name, writeTool, request, ctx)

@@ -52,7 +52,10 @@ export async function runGithubToolStep(
     if (reason) throw githubToolsErrors.GUARDRAIL_BLOCKED({ reason })
     if (ctx.dryRun && isGithubWriteToolName(name)) return dryRunWrite(name, call.input as Record<string, unknown>, ctx.guardrails, () => ctx.dryRunApproval)
     const token = await resolveGithubToken(ctx.token, call)
-    const result = await executeGithubToolStep(name, input, { ...ctx, token })
+    // Awaited here, outside the step, so it can use the eve session and only serializable values enter the step.
+    const { beforeWrite, ...stepContext } = ctx
+    if (beforeWrite && isGithubWriteToolName(name)) await beforeWrite(call)
+    const result = await executeGithubToolStep(name, input, { ...stepContext, token })
     // Some GraphQL tools return `{ error }` when GitHub has no such repository, thread, or discussion.
     if (isErrorResult(result)) throw new Error(result.error)
     return result
