@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
 import type { AddressInfo } from 'node:net'
 import type { Context } from '@emulators/core'
@@ -30,11 +31,11 @@ const error = (status: number, code: string, message: string) => Response.json({
 export async function startConnectEmulator(github: GithubEmulator, people: Record<string, PersonSeed>) {
   const requests: ConnectRequest[] = []
   const tokens = new Map<string, string>()
-  let issued = 0
+  let authorizations = 0
 
   // A sign-in has to produce a token GitHub knows: one it doesn't is anonymous to emulate and `401` to the role guard.
   function issue(person: string): string {
-    const token = `ghu_${person}_${++issued}`
+    const token = `ghu_${randomBytes(20).toString('hex')}`
     github.registerToken(token, person)
     tokens.set(person, token)
     return token
@@ -83,7 +84,8 @@ export async function startConnectEmulator(github: GithubEmulator, people: Recor
     }
     revoke(subject.id)
     issue(subject.id)
-    return c.json({ url: returnUrl, request: `req_${issued}`, verifier: `ver_${issued}`, connector: connector(c) })
+    authorizations++
+    return c.json({ url: returnUrl, request: `req_${authorizations}`, verifier: `ver_${authorizations}`, connector: connector(c) })
   })
 
   app.get('/v1/connect/connectors/:connector', c => c.json({ ...connector(c), data: { appSlug: github.githubApp.slug } }))
@@ -103,6 +105,8 @@ export async function startConnectEmulator(github: GithubEmulator, people: Recor
   const server = serve({
     port: 0,
     fetch: async (request) => {
+      // Only a browser sends an `Origin` header, and a web page has no business with these routes.
+      if (request.headers.get('origin') !== null) return error(403, 'forbidden', 'The Connect emulator answers no request from a web page.')
       const body = request.method === 'GET' ? undefined : await request.clone().json().catch(() => undefined) as ConnectRequest['body']
       const response = await app.fetch(request)
       const [, , , route, name] = new URL(request.url).pathname.split('/')

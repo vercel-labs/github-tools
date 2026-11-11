@@ -125,17 +125,22 @@ export class RepositoryClient {
   }
 
   /**
-   * Opens a pull request from a new branch with the given files, which default to one new file.
-   * The person needs Write, since the branch is in this repository.
+   * Opens a pull request from a new branch with one commit that writes the given files, by path.
+   * They default to one new file. The person needs Write, since the branch is in this repository.
    */
   async createPullRequest(input: { title: string, body?: string, files?: Record<string, string>, base?: string, draft?: boolean }): Promise<EmulatedPullRequest> {
     const base = input.base ?? (await this.request<{ default_branch: string }>('GET', '')).default_branch
     const { object } = await this.request<{ object: { sha: string } }>('GET', `/git/ref/heads/${base}`)
+    const { tree: baseTree } = await this.request<{ tree: { sha: string } }>('GET', `/git/commits/${object.sha}`)
     const branch = `eval-${this.github.nextId()}`
-    await this.request('POST', '/git/refs', { ref: `refs/heads/${branch}`, sha: object.sha })
-    for (const [path, content] of Object.entries(input.files ?? { [`${branch}.txt`]: `${input.title}\n` })) {
-      await this.request('PUT', `/contents/${path}`, { message: `Add ${path}`, content: Buffer.from(content).toString('base64'), branch })
-    }
+    // One commit through the Git database routes, which take a file whether or not the base branch has it.
+    const files = input.files ?? { [`${branch}.txt`]: `${input.title}\n` }
+    const tree = await this.request<{ sha: string }>('POST', '/git/trees', {
+      base_tree: baseTree.sha,
+      tree: Object.entries(files).map(([path, content]) => ({ path, mode: '100644', type: 'blob', content })),
+    })
+    const commit = await this.request<{ sha: string }>('POST', '/git/commits', { message: input.title, tree: tree.sha, parents: [object.sha] })
+    await this.request('POST', '/git/refs', { ref: `refs/heads/${branch}`, sha: commit.sha })
     const created = await this.request<{ number: number }>('POST', '/pulls', { title: input.title, body: input.body, head: branch, base, draft: input.draft })
     return this.pull(created.number)
   }

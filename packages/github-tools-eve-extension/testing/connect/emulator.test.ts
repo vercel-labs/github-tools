@@ -87,6 +87,23 @@ describe('the Vercel Connect emulator', () => {
     expect((await githubAs(again.token, 'GET', '/repos/acme/web')).status).toBe(401)
   })
 
+  it('answers no request a web page sends, and issues tokens that differ on every sign-in', async () => {
+    // A form or a `text/plain` fetch needs no preflight, so a page could otherwise sign a person in.
+    const fromPage = await fetch(`${connect.url}/v1/connect/authorize/github%2Fmy-agent`, {
+      method: 'POST',
+      headers: { 'origin': 'https://evil.example', 'content-type': 'text/plain' },
+      body: JSON.stringify({ ...user('erin'), returnUrl: 'http://localhost:3000/callback' }),
+    })
+    expect(fromPage.status).toBe(403)
+    expect((await post('token/github%2Fmy-agent', user('erin'))).status).toBe(403)
+
+    const first = await (await post('token/github%2Fmy-agent', user('alice'))).json() as { token: string }
+    await post('authorize/github%2Fmy-agent', { ...user('alice'), returnUrl: 'http://localhost:3000/callback' })
+    const second = await (await post('token/github%2Fmy-agent', user('alice'))).json() as { token: string }
+    expect([first.token, second.token].some(token => /^ghu_alice_\d+$/u.test(token))).toBe(false)
+    expect(second.token).not.toBe(first.token)
+  })
+
   it('names the App in the connector metadata, and answers 404 to any other route', async () => {
     const metadata = await fetch(`${connect.url}/v1/connect/connectors/github%2Fmy-agent`, { headers: { authorization: 'Bearer oidc' } })
     expect(await metadata.json()).toMatchObject({ uid: 'github/my-agent', data: { appSlug: github.githubApp.slug } })

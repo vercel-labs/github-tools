@@ -3,10 +3,10 @@ import type { Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { createSign, randomBytes } from 'node:crypto'
 import type { AppEnv, Hono, ServicePlugin, Store, TokenMap, WebhookDispatcher } from '@emulators/core'
-import type { GitHubSeedConfig, GitHubStore } from '@emulators/github'
+import type { GitHubPullRequest, GitHubRepo, GitHubSeedConfig, GitHubStore } from '@emulators/github'
 import { createAppKeyResolver, createServer, getGitHubStore, githubPlugin, prepareSeed, seedFromConfig, serve } from '../emulators.js'
 import { ROLE_PERMISSION, type Role } from './access.js'
-import { registerRequestFixes } from './fixes.js'
+import { registerRequestFixes, type ChangedFile } from './fixes.js'
 import { registerRoleGuard } from './role-guard.js'
 import { fixWebhookPayloads, registerSupplementRoutes, type SecurityAlertSeeds } from './supplement/index.js'
 
@@ -90,7 +90,6 @@ export async function startGithubEmulator({ repositories, people = {}, supplemen
   const unknownDocuments: string[] = []
   const supplementRoutes: Array<{ method: string, path: string }> = []
   const tokenLogins = new Map<string, string>()
-  const personalTokens = new Map<string, string>()
   const webhookSecret = randomBytes(24).toString('hex')
   const owners = [...new Set(Object.keys(repositories).map(name => name.split('/')[0]!))]
   const installations = Object.fromEntries(owners.map((owner, index) => [owner, 1000 + index]))
@@ -102,7 +101,7 @@ export async function startGithubEmulator({ repositories, people = {}, supplemen
     register(app, store, webhooks, baseUrl, tokenMap) {
       const context = { app, store, gh: getGitHubStore(store), webhooks, baseUrl }
       registerRoleGuard(app, store)
-      registerRequestFixes(app, store)
+      registerRequestFixes(app, store, changedFiles)
       if (supplement) {
         const before = app.routeTable.length
         parts = registerSupplementRoutes(context, unknownDocuments)
@@ -127,6 +126,10 @@ export async function startGithubEmulator({ repositories, people = {}, supplemen
   const server: Server = serve({
     port: 0,
     fetch: async (request) => {
+      // emulate allows every origin, so a web page open during a run could call the emulator. Nothing the
+      // kit starts sends an `Origin` header: only a browser does.
+      const origin = request.headers.get('origin')
+      if (origin !== null && origin !== url) return Response.json({ message: 'The GitHub emulator answers no request from another origin.' }, { status: 403 })
       const response = await app.fetch(request)
       requests.push({ method: request.method, path: new URL(request.url).pathname, status: response.status, actor: actorOf(request) })
       return response
@@ -136,6 +139,8 @@ export async function startGithubEmulator({ repositories, people = {}, supplemen
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 
   const users = [ADMIN, ...Object.keys(people)]
+  // Random on every run, the admin's included, so nothing outside the run can act as a seeded person.
+  const personalTokens = new Map(users.map(login => [login, `ghp_${randomBytes(20).toString('hex')}`]))
   const prepared = await prepareSeed({
     users: users.map(login => ({ login })),
     orgs: owners.filter(owner => !(owner in people)).map(login => ({ login, members: [{ login: ADMIN, role: 'admin' }] })),
@@ -186,6 +191,14 @@ export async function startGithubEmulator({ repositories, people = {}, supplemen
     return token
   }
 
+  // A pull request's diff, which emulate computes on its compare route. The head branch moves when
+  // commits are pushed, and emulate keeps the head SHA the pull request was opened with.
+  async function changedFiles(repo: GitHubRepo, pull: GitHubPullRequest): Promise<ChangedFile[]> {
+    const pushed = pull.head_repo_id === repo.id && gh.branches.findBy('repo_id', repo.id).some(branch => branch.name === pull.head_ref)
+    const { files } = await request<{ files: ChangedFile[] }>(adminOf(repo.full_name), 'GET', `/repos/${repo.full_name}/compare/${pull.base_sha}...${pushed ? encodeURIComponent(pull.head_ref) : pull.head_sha}`)
+    return files
+  }
+
   /** The admin of a repository or of its owner: the owner for a user's repository, the emulator's own admin for an organization's. */
   const adminOf = (name: string) => {
     const owner = name.split('/')[0]!
@@ -204,10 +217,7 @@ export async function startGithubEmulator({ repositories, people = {}, supplemen
   async function seed(): Promise<void> {
     plugin.seed!(store, url)
     seedFromConfig(store, url, prepared.config as GitHubSeedConfig)
-    for (const login of users) {
-      personalTokens.set(login, `ghp_${login}`)
-      registerToken(`ghp_${login}`, login)
-    }
+    for (const [login, token] of personalTokens) registerToken(token, login)
     for (const [fullName, repository] of Object.entries(repositories)) {
       await applyRoles(fullName)
       for (const name of repository.labels ?? []) {

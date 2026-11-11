@@ -137,6 +137,28 @@ describe('the emulator', () => {
     ])
   })
 
+  it('answers no request a web page sends from another origin', async () => {
+    const from = (origin: string, init: RequestInit = {}) => fetch(`${github.url}/repos/acme/web`, { ...init, headers: { ...init.headers, origin } })
+    expect((await from('https://evil.example')).status).toBe(403)
+    expect((await from('null')).status).toBe(403)
+    // A browser asks before a request with an Authorization header, and reads the answer's CORS headers.
+    const preflight = await from('https://evil.example', { method: 'OPTIONS', headers: { 'access-control-request-method': 'POST', 'access-control-request-headers': 'authorization' } })
+    expect([preflight.status, preflight.headers.get('access-control-allow-origin')]).toEqual([403, null])
+    expect((await from(github.url)).status).toBe(200)
+  })
+
+  it('gives each person a token that differs on every run', async () => {
+    expect((await api(undefined, 'GET', '/repos/acme/web', undefined, 'ghp_alice')).status).toBe(401)
+    expect((await api(undefined, 'GET', '/repos/acme/web', undefined, `ghp_${github.admin}`)).status).toBe(401)
+    const other = await startGithubEmulator({ repositories: { 'acme/web': {} }, people: { alice: {} } })
+    const tokens = [github.tokenFor('alice'), other.tokenFor('alice'), github.tokenFor(github.admin)]
+    await other.close()
+    expect(new Set(tokens).size).toBe(3)
+    // The same token after a reset, since the agent may hold it.
+    await github.reset()
+    expect(github.tokenFor('alice')).toBe(tokens[0])
+  })
+
   it('goes back to the seeded state on reset', async () => {
     await issue('bob')
     await github.reset()
@@ -188,6 +210,23 @@ describe('the GraphQL handler', () => {
     expect(status).toBe(200)
     expect(body.errors[0]).toMatchObject({ type: 'EMULATOR_UNSUPPORTED', message: expect.stringContaining('query { viewer { login } }') })
     expect(github.unknownDocuments).toEqual(['query { viewer { login } }'])
+  })
+
+  it('lets the author of a pull request change its draft state, and needs Write from anyone else', async () => {
+    // alice pushes the branch, and bob, who has Read, opens the pull request from it.
+    const { object } = await github.request<{ object: { sha: string } }>('alice', 'GET', '/repos/acme/web/git/ref/heads/main')
+    await github.request('alice', 'POST', '/repos/acme/web/git/refs', { ref: 'refs/heads/draft', sha: object.sha })
+    await github.request('alice', 'PUT', '/repos/acme/web/contents/draft.txt', { message: 'Draft', content: Buffer.from('draft\n').toString('base64'), branch: 'draft' })
+    const pull = await github.request<{ number: number, node_id: string }>('bob', 'POST', '/repos/acme/web/pulls', { title: 'Draft', head: 'draft', base: 'main' })
+    const setDraft = (login: string, mutation: string) => graphql(login, `mutation($pullRequestId: ID!) { ${mutation}(input: { pullRequestId: $pullRequestId }) { pullRequest { id } } }`, { pullRequestId: pull.node_id })
+    const draft = async () => (await api('alice', 'GET', `/repos/acme/web/pulls/${pull.number}`)).body.draft
+
+    expect((await setDraft('tara', 'convertPullRequestToDraft')).body.errors[0].type).toBe('FORBIDDEN')
+    expect(await draft()).toBe(false)
+    expect((await setDraft('bob', 'convertPullRequestToDraft')).body.data.convertPullRequestToDraft.pullRequest.id).toBe(pull.node_id)
+    expect(await draft()).toBe(true)
+    expect((await setDraft('alice', 'markPullRequestReadyForReview')).body.errors).toBeUndefined()
+    expect(await draft()).toBe(false)
   })
 
   it('blames each line on the commit that introduced it', async () => {

@@ -1,7 +1,16 @@
 import type { AppEnv, Hono, Store } from '@emulators/core'
+import type { GitHubPullRequest, GitHubRepo } from '@emulators/github'
 import { ApiError, getGitHubStore } from '../emulators.js'
-import { briefUser, findRepo, replaceBody, requireRead, roleRank, type Ctx } from './access.js'
+import { briefUser, findRepo, paginate, replaceBody, requireRead, roleRank, type Ctx } from './access.js'
 import { callAsCaller } from './supplement/context.js'
+
+/** A file of a pull request, as emulate's compare route describes it. */
+export interface ChangedFile {
+  filename: string
+  status: string
+  additions: number
+  deletions: number
+}
 
 interface ReviewComment {
   path?: string
@@ -15,8 +24,37 @@ interface ReviewComment {
  * Requests emulate 0.13.1 has a route for and answers differently from GitHub. Registered before
  * emulate's routes, each fix changes the request on its way in or the store on its way out.
  */
-export function registerRequestFixes(app: Hono<AppEnv>, store: Store): void {
+export function registerRequestFixes(app: Hono<AppEnv>, store: Store, changedFiles: (repo: GitHubRepo, pull: GitHubPullRequest) => Promise<ChangedFile[]>): void {
   const gh = getGitHubStore(store)
+
+  function findPull(c: Ctx): { repo: GitHubRepo, pull: GitHubPullRequest } | undefined {
+    const repo = gh.repos.findOneBy('full_name', `${c.req.param('owner')}/${c.req.param('repo')}`)
+    const pull = repo && gh.pullRequests.findBy('repo_id', repo.id).find(candidate => candidate.number === Number(c.req.param('pull_number')))
+    return repo && pull ? { repo, pull } : undefined
+  }
+
+  // emulate lists a pull request's files as `file1.ts`, `file2.ts`, and so on, one for each of a
+  // counter that stays at 0, so the list is empty. This route is registered first and answers with the real diff.
+  app.get('/repos/:owner/:repo/pulls/:pull_number/files', async (c: Ctx) => {
+    const found = findPull(c)
+    if (!found) throw new ApiError(404, 'Not Found')
+    requireRead(c, gh, found.repo, 'pull_requests')
+    return c.json(paginate(c, await changedFiles(found.repo, found.pull)))
+  })
+
+  // The same counters are on the pull request itself, so they follow the diff before emulate reads them.
+  app.use('/repos/:owner/:repo/pulls/:pull_number', async (c: Ctx, next) => {
+    const found = c.req.method === 'GET' ? findPull(c) : undefined
+    if (found) {
+      const files = await changedFiles(found.repo, found.pull)
+      gh.pullRequests.update(found.pull.id, {
+        changed_files: files.length,
+        additions: files.reduce((total, file) => total + file.additions, 0),
+        deletions: files.reduce((total, file) => total + file.deletions, 0),
+      })
+    }
+    await next()
+  })
 
   // GitHub reads a write with no body as an empty object. emulate answers 400, which breaks
   // `forkRepository` and `updatePullRequestBranch` when they send no option.

@@ -37,7 +37,8 @@ const ownComment = ({ gh, repo, user, match }: RuleInput) => {
 // "Only users with push access can set labels for new issues. Labels are silently dropped otherwise", and the
 // same for assignees and the milestone, on creating and on updating an issue. Triage is the lowest role with that access.
 const TRIAGE_FIELDS = ['labels', 'assignees', 'milestone']
-const AUTHOR_PULL_FIELDS = new Set(['title', 'body', 'state', 'base', 'maintainer_can_modify'])
+// `draft` is how the GraphQL handler changes a pull request's stage, which its author may do on GitHub.
+const AUTHOR_PULL_FIELDS = new Set(['title', 'body', 'state', 'base', 'maintainer_can_modify', 'draft'])
 
 /**
  * The role a personal token needs on each write route. emulate 0.13.1 checks it for contents,
