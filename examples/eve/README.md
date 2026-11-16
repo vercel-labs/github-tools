@@ -77,6 +77,8 @@ export default githubExtension({
    npx eve add channel/slack
    ```
 
+   The setup picks its own connector name, such as `slack/eve`, so `agent/channels/slack.ts` can name a different connector than `slack/github-agent`. Keep the name it wrote.
+
 4. Create the GitHub connector, then attach it to the project with its webhooks routed to the agent:
 
    ```bash
