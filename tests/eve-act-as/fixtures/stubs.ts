@@ -1,3 +1,4 @@
+import { auditedGithub } from './audit'
 import { recordGithubCall } from './github-calls'
 
 // The GitHub token Vercel Connect holds for each user. `carol` and `erin` have not authorized
@@ -55,6 +56,7 @@ globalThis.fetch = async (input, init) => {
     return json({ message: `Blocked ${request.method} ${url.hostname} in the eval` }, 599)
   }
   const token = request.headers.get('authorization')?.replace(/^(token|bearer) /i, '') ?? ''
+  if (url.pathname.startsWith('/repos/vercel-labs/audited')) return auditedGithub(request, url.pathname, token)
   recordGithubCall(`${request.method} ${url.pathname} ${token}`)
   if (!/^gh[us]_/.test(token) || token === 'ghu_revoked') return json({ message: 'Bad credentials' }, 401)
 

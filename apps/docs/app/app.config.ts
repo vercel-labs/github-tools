@@ -276,6 +276,7 @@ export default defineAppConfig({
           { label: 'Context', to: '/context' },
           { label: 'Commits', to: '/commits' },
           { label: 'Errors', to: '/errors' },
+          { label: 'Observability', to: '/observability' },
         ],
       },
       {

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { GithubAuditTargetKind } from './audit'
 import * as bundles from './bundles'
 import * as checks from './checks'
 import * as commits from './commits'
@@ -58,10 +59,16 @@ export const UNSCOPED = [] as const
 type GithubToolDescriptor = {
   description: string
   inputSchema: z.ZodType
-  /** Present on write tools — drives `GITHUB_WRITE_TOOLS` and approval defaults. */
-  write?: true
   connectScopes: readonly string[]
-}
+} & ({
+  write?: never
+  target?: never
+} | {
+  /** Present on write tools — drives `GITHUB_WRITE_TOOLS` and approval defaults. */
+  write: true
+  /** What the write acts on, named in its audit records. */
+  target: GithubAuditTargetKind
+})
 
 /**
  * Single source of truth for every GitHub tool.
@@ -102,6 +109,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: repository.createBranchDescription,
     inputSchema: repository.createBranchInputSchema,
     write: true,
+    target: 'branch',
     connectScopes: CONTENTS_WRITE,
   },
   /** Delete a branch from a GitHub repository permanently. Requires approval by default. */
@@ -109,6 +117,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: repository.deleteBranchDescription,
     inputSchema: repository.deleteBranchInputSchema,
     write: true,
+    target: 'branch',
     connectScopes: CONTENTS_WRITE,
   },
   /** Fork a GitHub repository to the authenticated user account or a specified organization. Requires approval by default. */
@@ -116,6 +125,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: repository.forkRepositoryDescription,
     inputSchema: repository.forkRepositoryInputSchema,
     write: true,
+    target: 'repository',
     connectScopes: FORK,
   },
   /** Create a new GitHub repository for the authenticated user or a specified organization. Requires approval by default. */
@@ -123,6 +133,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: repository.createRepositoryDescription,
     inputSchema: repository.createRepositoryInputSchema,
     write: true,
+    target: 'repository',
     connectScopes: ADMIN,
   },
   /** Create or update a file in a GitHub repository. Provide the SHA when updating an existing file. Requires approval by default. */
@@ -130,6 +141,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: repository.createOrUpdateFileDescription,
     inputSchema: repository.createOrUpdateFileInputSchema,
     write: true,
+    target: 'branch',
     connectScopes: CONTENTS_WRITE,
   },
   /** List the required checks, required reviews and other rules that protect a branch. */
@@ -149,6 +161,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: repository.editFilesDescription,
     inputSchema: repository.editFilesInputSchema,
     write: true,
+    target: 'branch',
     connectScopes: CONTENTS_AND_PR_WRITE,
   },
   /** List pull requests for a GitHub repository. */
@@ -168,6 +181,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.createPullRequestDescription,
     inputSchema: pullRequests.createPullRequestInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_WRITE,
   },
   /** Merge a pull request. Requires approval by default. */
@@ -175,6 +189,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.mergePullRequestDescription,
     inputSchema: pullRequests.mergePullRequestInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_MERGE,
   },
   /** Merge a pull request once its required checks and reviews pass. Requires approval by default. */
@@ -182,6 +197,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.enablePullRequestAutoMergeDescription,
     inputSchema: pullRequests.enablePullRequestAutoMergeInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_MERGE,
   },
   /** Cancel a pending auto-merge. Requires approval by default. */
@@ -189,6 +205,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.disablePullRequestAutoMergeDescription,
     inputSchema: pullRequests.disablePullRequestAutoMergeInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_WRITE,
   },
   /** Update a pull request — title, body, state, base branch, or draft status. Requires approval by default. */
@@ -196,6 +213,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.updatePullRequestDescription,
     inputSchema: pullRequests.updatePullRequestInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_WRITE,
   },
   /** Bring a pull request branch up to date by merging its base branch into it. Requires approval by default. */
@@ -203,6 +221,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.updatePullRequestBranchDescription,
     inputSchema: pullRequests.updatePullRequestBranchInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_MERGE,
   },
   /** Add a comment to a pull request. Requires approval by default. */
@@ -210,6 +229,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.addPullRequestCommentDescription,
     inputSchema: pullRequests.addPullRequestCommentInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_WRITE,
   },
   /** Update the body of a comment on a pull request. Requires approval by default. */
@@ -217,6 +237,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.updatePullRequestCommentDescription,
     inputSchema: pullRequests.updatePullRequestCommentInputSchema,
     write: true,
+    target: 'comment',
     connectScopes: PR_WRITE,
   },
   /** Delete a comment from a pull request permanently. Requires approval by default. */
@@ -224,6 +245,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.deletePullRequestCommentDescription,
     inputSchema: pullRequests.deletePullRequestCommentInputSchema,
     write: true,
+    target: 'comment',
     connectScopes: PR_WRITE,
   },
   /** List files changed in a pull request with status and stats. Patches omitted by default — set includePatch true for diffs. */
@@ -243,6 +265,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.createPullRequestReviewDescription,
     inputSchema: pullRequests.createPullRequestReviewInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_WRITE,
   },
   /** List review threads on a pull request with comments, resolution state, and the IDs needed to reply or resolve. Unresolved only by default. */
@@ -256,6 +279,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.replyToReviewCommentDescription,
     inputSchema: pullRequests.replyToReviewCommentInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_WRITE,
   },
   /** Mark a pull request review thread as resolved. Requires approval by default. */
@@ -263,6 +287,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.resolveReviewThreadDescription,
     inputSchema: pullRequests.resolveReviewThreadInputSchema,
     write: true,
+    target: 'review_thread',
     connectScopes: PR_WRITE,
   },
   /** Request reviews from users or teams on a pull request. Requires approval by default. */
@@ -270,6 +295,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: pullRequests.requestReviewersDescription,
     inputSchema: pullRequests.requestReviewersInputSchema,
     write: true,
+    target: 'pull_request',
     connectScopes: PR_WRITE,
   },
   /** Fetch pull request details plus files, reviews, and optional CI checks in one call. */
@@ -307,6 +333,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.createIssueDescription,
     inputSchema: issues.createIssueInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** Add a comment to a GitHub issue. Requires approval by default. */
@@ -314,6 +341,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.addIssueCommentDescription,
     inputSchema: issues.addIssueCommentInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** Update the body of a comment on a GitHub issue. Requires approval by default. */
@@ -321,6 +349,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.updateIssueCommentDescription,
     inputSchema: issues.updateIssueCommentInputSchema,
     write: true,
+    target: 'comment',
     connectScopes: ISSUES_WRITE,
   },
   /** Delete a comment from a GitHub issue permanently. Requires approval by default. */
@@ -328,6 +357,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.deleteIssueCommentDescription,
     inputSchema: issues.deleteIssueCommentInputSchema,
     write: true,
+    target: 'comment',
     connectScopes: ISSUES_WRITE,
   },
   /** Close an open GitHub issue. Requires approval by default. */
@@ -335,6 +365,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.closeIssueDescription,
     inputSchema: issues.closeIssueInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** Update a GitHub issue — title, body, state, labels, milestone, or assignees. Requires approval by default. */
@@ -342,6 +373,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.updateIssueDescription,
     inputSchema: issues.updateIssueInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** List labels available in a GitHub repository. */
@@ -355,6 +387,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.addLabelsDescription,
     inputSchema: issues.addLabelsInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** Remove a label from an issue or pull request. Requires approval by default. */
@@ -362,6 +395,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.removeLabelDescription,
     inputSchema: issues.removeLabelInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** Create a label in a GitHub repository. Requires approval by default. */
@@ -369,6 +403,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.createLabelDescription,
     inputSchema: issues.createLabelInputSchema,
     write: true,
+    target: 'label',
     connectScopes: ISSUES_WRITE,
   },
   /** Update a label in a GitHub repository — name, color, or description. Requires approval by default. */
@@ -376,6 +411,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.updateLabelDescription,
     inputSchema: issues.updateLabelInputSchema,
     write: true,
+    target: 'label',
     connectScopes: ISSUES_WRITE,
   },
   /** Delete a label from a GitHub repository permanently. Requires approval by default. */
@@ -383,6 +419,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.deleteLabelDescription,
     inputSchema: issues.deleteLabelInputSchema,
     write: true,
+    target: 'label',
     connectScopes: ISSUES_WRITE,
   },
   /** Assign users to an issue or pull request. Requires approval by default. */
@@ -390,6 +427,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.addAssigneesDescription,
     inputSchema: issues.addAssigneesInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** Remove assignees from an issue or pull request. Requires approval by default. */
@@ -397,6 +435,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.removeAssigneesDescription,
     inputSchema: issues.removeAssigneesInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** List milestones in a GitHub repository with their due dates and issue counts. */
@@ -416,6 +455,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: issues.addSubIssueDescription,
     inputSchema: issues.addSubIssueInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** List reactions on an issue or pull request conversation, with per-emoji counts. */
@@ -429,6 +469,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: reactions.addIssueReactionDescription,
     inputSchema: reactions.addIssueReactionInputSchema,
     write: true,
+    target: 'issue',
     connectScopes: ISSUES_WRITE,
   },
   /** List reactions on an issue or pull request comment, with per-emoji counts. */
@@ -442,6 +483,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: reactions.addCommentReactionDescription,
     inputSchema: reactions.addCommentReactionInputSchema,
     write: true,
+    target: 'comment',
     connectScopes: ISSUES_WRITE,
   },
   /** List discussions in a GitHub repository, most recently updated first, optionally filtered by category. */
@@ -461,6 +503,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: discussions.addDiscussionCommentDescription,
     inputSchema: discussions.addDiscussionCommentInputSchema,
     write: true,
+    target: 'discussion',
     connectScopes: DISCUSSIONS_WRITE,
   },
   /** List notification threads for the authenticated user. Requires a token with notifications access. */
@@ -474,6 +517,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: notifications.markNotificationReadDescription,
     inputSchema: notifications.markNotificationReadInputSchema,
     write: true,
+    target: 'notification',
     connectScopes: UNSCOPED,
   },
   /** Search for code in GitHub repositories. Use qualifiers like "repo:owner/name" to scope the search. Results include matching text snippets when GitHub returns them. */
@@ -541,6 +585,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: gists.createGistDescription,
     inputSchema: gists.createGistInputSchema,
     write: true,
+    target: 'gist',
     connectScopes: UNSCOPED,
   },
   /** Update an existing gist — edit description, update files, or remove files. Requires approval by default. */
@@ -548,6 +593,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: gists.updateGistDescription,
     inputSchema: gists.updateGistInputSchema,
     write: true,
+    target: 'gist',
     connectScopes: UNSCOPED,
   },
   /** Delete a gist permanently. Requires approval by default. */
@@ -555,6 +601,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: gists.deleteGistDescription,
     inputSchema: gists.deleteGistInputSchema,
     write: true,
+    target: 'gist',
     connectScopes: UNSCOPED,
   },
   /** Add a comment to a gist. Requires approval by default. */
@@ -562,6 +609,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: gists.createGistCommentDescription,
     inputSchema: gists.createGistCommentInputSchema,
     write: true,
+    target: 'gist',
     connectScopes: UNSCOPED,
   },
   /** List GitHub Actions workflows in a repository. */
@@ -599,6 +647,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: workflows.triggerWorkflowDescription,
     inputSchema: workflows.triggerWorkflowInputSchema,
     write: true,
+    target: 'workflow',
     connectScopes: ACTIONS_WRITE,
   },
   /** Cancel an in-progress workflow run. Requires approval by default. */
@@ -606,6 +655,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: workflows.cancelWorkflowRunDescription,
     inputSchema: workflows.cancelWorkflowRunInputSchema,
     write: true,
+    target: 'workflow_run',
     connectScopes: ACTIONS_WRITE,
   },
   /** Re-run a workflow run, optionally only the failed jobs. Requires approval by default. */
@@ -613,6 +663,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: workflows.rerunWorkflowRunDescription,
     inputSchema: workflows.rerunWorkflowRunInputSchema,
     write: true,
+    target: 'workflow_run',
     connectScopes: ACTIONS_WRITE,
   },
   /** List check runs (Checks API — GitHub Actions and other CI providers) for a commit, branch, or tag. */
@@ -632,6 +683,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: checks.createCommitStatusDescription,
     inputSchema: checks.createCommitStatusInputSchema,
     write: true,
+    target: 'commit',
     connectScopes: STATUSES_WRITE,
   },
   /** Diagnose CI failures for a ref — combined status, failing checks, and failed workflow jobs in one call. */
@@ -669,6 +721,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: releases.createReleaseDescription,
     inputSchema: releases.createReleaseInputSchema,
     write: true,
+    target: 'release',
     connectScopes: CONTENTS_WRITE,
   },
   /** Update an existing release — tag, target, title, notes, draft, or prerelease status. Requires approval by default. */
@@ -676,6 +729,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: releases.updateReleaseDescription,
     inputSchema: releases.updateReleaseInputSchema,
     write: true,
+    target: 'release',
     connectScopes: CONTENTS_WRITE,
   },
   /** Delete a release permanently. Requires approval by default. */
@@ -683,6 +737,7 @@ export const GITHUB_TOOL_CATALOG = {
     description: releases.deleteReleaseDescription,
     inputSchema: releases.deleteReleaseInputSchema,
     write: true,
+    target: 'release',
     connectScopes: CONTENTS_WRITE,
   },
   /** List code scanning alerts for a repository. */

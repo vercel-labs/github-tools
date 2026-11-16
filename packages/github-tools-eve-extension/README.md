@@ -81,6 +81,24 @@ export default githubExtension({
 
 See the runnable consumer at [`examples/eve`](../../examples/eve).
 
+## Record every write
+
+`audit` takes a function that receives a plain record of each GitHub write, with eve's session context as its second argument:
+
+```ts
+export default githubExtension({
+  connector: 'github/my-connector',
+  requireApproval: 'auto',
+  audit: record => db.upsert('github_audit', record.id, record),
+})
+```
+
+A write that reaches GitHub has two records with the same `id`. The `started` record is sent immediately before the request, and the write waits for the function: when it throws, the write isn't sent and the call fails with `github_tools.AUDIT_UNAVAILABLE`. The `settled` record has the outcome: `succeeded`, `failed` or `denied`. A write that `guardrails`, an approval policy or a person stopped has a `settled` record only.
+
+A record names the agent, the requester, the approver, the target, what let the write run (`clearance`), the decision model's verdict and the GitHub identity used. It holds nothing that was written. Reads and dry-run writes have no record.
+
+A `settled` record the function rejects is written to stderr as one JSON line prefixed `[github-tools] audit`, and sent again with `reconciled: true` each time a turn of the session ends, until the function accepts it. See [Observability](https://github-tools.com/observability) for every field.
+
 ## Choose who the agent answers on GitHub
 
 On [eve's GitHub channel](https://eve.dev/docs/channels/github), anyone who mentions the bot starts a turn, including on a public repository. `@github-tools/eve-extension/channels` exports eve's `githubChannel` with one more option, `respondTo`:
@@ -107,6 +125,10 @@ extension/
   extension.ts        # defineExtension() config schema (token, connector, preset, include, exclude, requireApproval, ...)
   tools/
     github.ts          # defineDynamic() resolving listEveToolDescriptors(...) into authored defineTool calls
+  hooks/
+    audit.ts           # with `audit`: sends each write's outcome record, and sends rejected ones again when a turn ends
+  lib/
+    audit.ts           # session state for audit records, and the `started` record sent before a write
 channels/
   index.ts             # githubChannel with respondTo, compiled apart from the extension to channels/dist
 ```
@@ -127,6 +149,7 @@ channels/
 | `requireApproval` | `boolean \| 'auto' \| record` | Global or per-tool; per-tool values may be `'auto'` or predicate functions. `'auto'` runs low-risk writes the user asked for without a prompt |
 | `evaluation` | `record?` | Tunes the `'auto'` modes: `model`, `maxRisk`, `minIntent`, `selection`, `scope`, `minToolProbability`, `maxTools`, `minPresetProbability`, `maxPresets`, `providerOptions` |
 | `overrides` | `record` | Per-tool `description` / `approval` / `actAs` / `toModelOutput` / `outputSchema` |
+| `audit` | `(record, ctx) => void \| Promise<void>` (optional) | Receives a record of each GitHub write, before the request and with its outcome. When it throws on the first record, the write isn't sent |
 | `author` / `committer` / `coAuthors` | commit identity | Attribution for commit-creating tools |
 
 ## Build (contributors)

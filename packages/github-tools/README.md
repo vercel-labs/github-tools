@@ -446,6 +446,15 @@ export default githubExtension({
 })
 ```
 
+To record every GitHub write, pass a function as `audit`. It receives a plain record before each write's request and another with its outcome, naming the agent, the requester, the approver and the target. When the function throws on the first record, the write isn't sent and the call fails with `github_tools.AUDIT_UNAVAILABLE`. See [Observability](https://github-tools.com/observability).
+
+```ts
+export default githubExtension({
+  connector: 'github/my-connector',
+  audit: record => db.upsert('github_audit', record.id, record),
+})
+```
+
 No `build.externalDependencies` workaround is needed here. Unlike the deprecated direct import below, the extension is pre-built via `eve extension build` and loaded through eve's extension mechanism rather than inlined from a workspace-linked source import.
 
 See [`packages/github-tools-eve-extension`](../github-tools-eve-extension) and [`examples/eve`](../../examples/eve) for the full package README and a runnable agent.

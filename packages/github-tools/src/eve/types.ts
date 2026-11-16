@@ -5,7 +5,7 @@ import type { GithubToolsContext } from '../core/context'
 import type { GithubGuardrails } from '../core/guardrails'
 import type { GithubDryRunApproval } from '../core/dry-run'
 import type { GithubToolPreset } from '../core/presets'
-import type { GithubTokenInput } from '../core/token'
+import type { GithubTokenCall, GithubTokenInput } from '../core/token'
 import type { GithubToolName } from '../core/tool-names'
 import type { GithubWriteToolName } from '../core/write-tools'
 import type { CommitIdentity } from '../types'
@@ -96,3 +96,13 @@ export type EveGithubToolsOptions = {
 }
 
 export type EveToolFactoryOptions = Omit<EveGithubToolsOptions, 'preset' | 'include' | 'exclude'>
+
+/** Options for `executeGithubEveTool`: the tool options, and a gate the eve extension sets per call. */
+export type EveGithubToolCallOptions = EveGithubToolsOptions & {
+  /**
+   * Awaited for a write once `guardrails` pass and the token resolves, immediately before the
+   * request. When it throws, the write isn't sent and the call fails with what it threw. Not
+   * called for a read or a dry run.
+   */
+  beforeWrite?: (call: GithubTokenCall) => void | Promise<void>
+}

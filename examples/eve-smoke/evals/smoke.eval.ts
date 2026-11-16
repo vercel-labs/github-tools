@@ -92,5 +92,10 @@ export default defineEval({
     t.check(thread.reply, includes('stubbed-repo'))
     const threadInstructions = await thread.session.send('instructions', fromThread)
     t.check(threadInstructions.reply, includes('vercel-labs/github-tools'))
+
+    // Only the dry-run mount has an `audit` function. It gets no record for a dry-run write, and
+    // none for the writes of the mount without one.
+    const audited = await threadInstructions.session.send('audit records', fromThread)
+    t.check(JSON.parse(audited.reply ?? 'null'), equals([]))
   },
 })

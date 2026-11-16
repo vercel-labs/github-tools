@@ -36,7 +36,7 @@ Tools are exposed to the model as `<namespace>__<toolName>`: `agent/extensions/g
 
 ## Config schema
 
-`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `dryRun`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it, with the reason and without asking anyone. They cover the extension's tools only: eve's git extension runs `gh` through `git__gh` without approval, so limit it with its own `github.authorize` check. `dryRun: true` sends no write to GitHub and labels each one "Would create issue on owner/repo".
+`token`, `connector`, `actAs`, `approvers`, `connect`, `preset`, `include`, `exclude`, `context`, `requireApproval`, `evaluation`, `guardrails`, `dryRun`, `audit`, `overrides`, `author`/`committer`/`coAuthors`, see `/integrations/eve#config`. `guardrails: { repositories, branches }` deny any call outside the allowed repositories or branch patterns, whoever approves it, with the reason and without asking anyone. They cover the extension's tools only: eve's git extension runs `gh` through `git__gh` without approval, so limit it with its own `github.authorize` check. `dryRun: true` sends no write to GitHub and labels each one "Would create issue on owner/repo".
 
 `token` is `string | (() => Promise<string>)` (`GithubTokenInput`). Pass an async provider for rotating GitHub App installation tokens. Falls back to `GITHUB_TOKEN` when omitted; `connector` takes priority.
 
@@ -57,11 +57,32 @@ export default githubExtension({
 
 The tool file is a `defineDynamic` function that eve runs before every model call; it rebuilds `execute`, `toModelOutput`, `approval`, and schemas from the extension config, so they survive Workflow replay and redeploys. The extension adds a system instruction with the preset's tool rules, the shared rules and the working `context` (`resolveToolGuidance`), and write tools set `label.complete` ("Created issue on owner/repo#123"). `preset: 'auto'` routing is kept for the session with `ctx.memo` (for the turn with `evaluation.scope: 'turn'`). `toModelOutput` also strips `rateLimit` from the model-facing payload. A failed call throws, so eve settles it as `failed` in `call.settled` and `noFailedCalls()` fails in an eval. The model receives an eve `error-text` result: `{ code, message, why, fix, link }` as JSON for catalog errors (e.g. `github_tools.NOT_FOUND` explains GitHub masks no-access private repos as 404), the error's message otherwise. An `approval` policy in `agent.ts` can add gates to GitHub tools but never remove one; match them with `toolName.startsWith('github__')`. A same-named tool in the agent, such as `agent/tools/github__createIssue.ts`, replaces the extension's.
 
+## Audit records
+
+`audit: (record, ctx) => void | Promise<void>` receives a plain `GithubAuditRecord` for each GitHub write, and `ctx` is eve's session context. No logging library is involved: the function stores the record where it wants.
+
+```ts
+export default githubExtension({
+  connector: 'github/my-connector',
+  requireApproval: 'auto',
+  audit: record => db.upsert('github_audit', record.id, record),
+})
+```
+
+- A write that reaches GitHub has two records with the same `id` (`<session id>:<call id>`): `phase: 'started'`, awaited immediately before the request, and `phase: 'settled'` with `outcome` `succeeded`, `failed` or `denied`.
+- When the function throws on `started`, the write isn't sent and the call fails with `github_tools.AUDIT_UNAVAILABLE`. Reads keep working.
+- A write that `guardrails`, an approval policy or a person stopped has one `settled` record with `outcome: 'denied'` and a `reason`.
+- Fields: `tool`, `target` (`kind`, `owner`, `repo`, and `number`, `ref`, `name` or `id`; `url` once GitHub accepted the write), `agent`, `requester` (absent in a scheduled run), `approver` (who approved or denied), `clearance` (`none`, `policy`, `auto`, `person`), `verdict` (`{ risk, intent }` from the decision model), `githubIdentity` (`app` or `user`), `session`, `reason`, `reconciled`. No title, body, diff or input.
+- A `settled` record the function rejects is written to stderr as `[github-tools] audit {json}` and sent again with `reconciled: true` when a turn of the session ends. Store by `id` and `phase`: delivery is at least once.
+- Reads and dry-run writes have no record. A call eve interrupts or abandons keeps its `started` record without a `settled` one.
+
+See `/observability` for every field.
+
 ## Approval
 
 - Default: write tools → `always()`
 - `'once'`, predicates, `always()` / `never()` passthrough
-- `requireApproval: 'auto'` (global or per tool): low-risk writes the user asked for run without a prompt; other writes keep `always()`. Needs `ai` >= 7.0.105. A prompt it asks for ends with the evaluation model's verdict ("Add labels on owner/repo#12? Hard to undo (risk 2 of 2), 100% likely you asked for it."); a call it lets through gets `clearedBy: { policy: 'approval' }` on `call.started` (eve doesn't keep the verdict)
+- `requireApproval: 'auto'` (global or per tool): low-risk writes the user asked for run without a prompt; other writes keep `always()`. Needs `ai` >= 7.0.105. A prompt it asks for ends with the evaluation model's verdict ("Add labels on owner/repo#12? Hard to undo (risk 2 of 2), 100% likely you asked for it."); a call it lets through gets `clearedBy: { policy: 'approval' }` on `call.started` (eve doesn't keep the verdict; with `audit`, the write's record has it)
 - `preset: 'auto'`: the evaluation model picks the tools the session's first request needs; those and the core read tools stay listed for the session so the provider's prompt cache holds (`evaluation.scope: 'turn'` picks again for each request); every other tool is deferred, reachable through `eve__search` / `eve__tool` with its approval policy intact. Tools already called in the session stay listed. `evaluation: { selection: 'presets' }` routes to at most two presets instead. Tune both with `evaluation`
 - Approval **pauses the session durably** until a human responds
 - On eve's GitHub channel, `context` fills from the thread (repository, issue or PR number); configured `context` fields win. Gate who starts a turn in `onComment` with `GET /repos/{owner}/{repo}/collaborators/{login}/permission` through `ctx.github.request`. Markdown schedules can't wait for approval, so give scheduled writes a predicate such as `({ session }) => session.schedule === undefined`
