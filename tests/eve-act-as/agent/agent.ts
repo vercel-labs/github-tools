@@ -1,6 +1,6 @@
 import { defineAgent } from 'eve'
 import { mockModel } from 'eve/evals'
-import { githubCalls } from '../fixtures/github-calls'
+import { githubCalls, githubWrites } from '../fixtures/github-calls'
 
 const target = { owner: 'vercel-labs', repo: 'github-tools' }
 
@@ -34,8 +34,16 @@ export default defineAgent({
         return { toolCalls: [{ name: 'gated__createIssue', input: { ...target, title: 'eval' } }] }
       case 'gated update':
         return { toolCalls: [{ name: 'gated__updateIssue', input: { ...target, issueNumber: 999, state: 'closed' } }] }
+      case 'pr':
+        return { toolCalls: [{ name: 'github__createPullRequest', input: { ...target, title: 'eval', body: 'Fixes the drain.', head: 'eval', base: 'main' } }] }
+      case 'commit':
+        return { toolCalls: [{ name: 'github__createOrUpdateFile', input: { ...target, path: 'README.md', message: 'docs: update readme', content: 'eval', branch: 'eval' } }] }
+      case 'strict pr':
+        return { toolCalls: [{ name: 'strict__createPullRequest', input: { ...target, title: 'eval', body: 'Fixes the drain.', head: 'eval', base: 'main' } }] }
       case 'github calls':
         return JSON.stringify(githubCalls())
+      case 'github writes':
+        return JSON.stringify(githubWrites())
       default:
         return `unexpected message: ${lastUserMessage}`
     }

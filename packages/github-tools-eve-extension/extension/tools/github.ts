@@ -29,6 +29,7 @@ import {
 import type { ApprovalContext, ApprovalResponseContext, ApprovalResponseDecision, ApprovalResponsePolicy, ApprovalStatus } from 'eve/tools/approval'
 import { defineDynamic, defineTool, type ToolContext, type ToolDefinition } from 'eve/tools'
 import { z } from 'zod'
+import { withAttribution } from '../lib/attribution'
 import { githubCommenter } from '../lib/commenter'
 import { sessionContext } from '../lib/context'
 import extension, {
@@ -174,6 +175,12 @@ async function githubUserAuth() {
   return connect(await resolveGithubConnector(extension.config.connector!))
 }
 
+// GitHub records the person whose token runs the call, so the App is credited on what it wrote for them.
+async function runAsUser(name: GithubToolName, input: Record<string, unknown>, ctx: ToolContext, token: string) {
+  const { args, options } = await withAttribution(name, input, buildSessionOptions(ctx), token)
+  return executeGithubEveTool(name, args, options)
+}
+
 async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolContext) {
   const args = input as Record<string, unknown>
   if (extension.config.dryRun && writeToolName(name)) {
@@ -198,13 +205,13 @@ async function runGithubEveTool(name: GithubToolName, input: unknown, ctx: ToolC
   const auth = await githubUserAuth()
   if (approvedByOther) {
     const { token } = await approver.getToken(auth)
-    return executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
+    return runAsUser(name, args, ctx, token)
   }
   if (actAs === 'caller' && !isUser(requester)) return executeGithubEveTool(name, args, buildSessionOptions(ctx))
 
   const { token } = await ctx.getToken(auth)
   try {
-    return await executeGithubEveTool(name, args, { ...buildSessionOptions(ctx), token })
+    return await runAsUser(name, args, ctx, token)
   } catch (error) {
     // A 401 means the user revoked the authorization: drop the token and ask them to sign in again.
     if (isUnauthorized(error)) ctx.requireAuth(auth)
