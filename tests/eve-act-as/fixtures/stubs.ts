@@ -1,4 +1,4 @@
-import { recordGithubCall } from './github-calls'
+import { recordGithubCall, recordGithubWrite } from './github-calls'
 
 // The GitHub token Vercel Connect holds for each user. `carol` and `erin` have not authorized
 // the App yet, and `dave` revoked the authorization on GitHub after Connect stored their token.
@@ -69,7 +69,12 @@ globalThis.fetch = async (input, init) => {
     return json({ total_count: 2, repositories: [{ full_name: 'vercel-labs/github-tools' }, { full_name: 'vercel-labs/private' }] })
   }
   if (request.method === 'POST' && url.pathname === '/graphql') {
-    const { query } = await request.json() as { query: string }
+    const { query, variables } = await request.json() as { query: string, variables: { input?: { message?: { headline: string, body?: string } } } }
+    if (query.includes('createCommitOnBranch')) {
+      const message = variables.input!.message!
+      recordGithubWrite([message.headline, message.body].filter(Boolean).join('\n\n'))
+      return json({ data: { createCommitOnBranch: { commit: { oid: 'c0ffee', url: 'https://github.com/vercel-labs/github-tools/commit/c0ffee' } } } })
+    }
     return query.includes('mutation')
       ? json({ data: { resolveReviewThread: { thread: { id: 'PRRT_1', isResolved: true } } } })
       : json({ data: { node: { repository: { name: 'github-tools', owner: { login: 'vercel-labs' } } } } })
@@ -81,6 +86,21 @@ globalThis.fetch = async (input, init) => {
   if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/issues/7/comments') {
     const { body } = await request.json() as { body: string }
     return json({ id: 78, html_url: 'https://github.com/vercel-labs/github-tools/issues/7#issuecomment-78', body, user: { login: 'eval[bot]' }, created_at: '2026-11-06T00:00:00Z' }, 201)
+  }
+  // A user token lists the installations of the App that issued it: the eval connector's App is `eval`.
+  if (request.method === 'GET' && url.pathname === '/user/installations' && token.startsWith('ghu_')) {
+    return json({ total_count: 1, installations: [{ id: 3, app_id: 9, app_slug: 'eval' }] })
+  }
+  if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/users/eval[bot]') {
+    return json({ login: 'eval[bot]', id: 4242, type: 'Bot' })
+  }
+  if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/pulls') {
+    const { title, body, head, base } = await request.json() as { title: string, body?: string, head: string, base: string }
+    recordGithubWrite(body ?? '')
+    return json({ number: 31, title, html_url: 'https://github.com/vercel-labs/github-tools/pull/31', state: 'open', draft: false, head: { ref: head }, base: { ref: base } }, 201)
+  }
+  if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/repos/vercel-labs/github-tools/git/ref/heads/eval') {
+    return json({ ref: 'refs/heads/eval', object: { sha: 'abc123' } })
   }
   if (request.method === 'GET' && url.pathname === '/repos/vercel-labs/github-tools') {
     return json({

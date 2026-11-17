@@ -78,6 +78,12 @@ export const githubToolsErrors = defineErrorCatalog('github_tools', {
     fix: 'Act on a repository and branch the guardrails allow, such as a branch matching the allowed patterns, or ask the user to change `guardrails`.',
     link: 'https://github-tools.com/approval#guardrails',
   },
+  APP_BOT_UNKNOWN: {
+    status: 403,
+    message: 'GitHub lists no installation of the App to this user token, so the App\'s bot account can\'t be credited.',
+    why: 'Attribution reads the App that issued a user token from the installations GitHub lists to it. An empty list means the token is not a GitHub App user token, or the user can reach no installation of the App.',
+    fix: 'Use a Vercel Connect connector backed by a GitHub App installed where the user works, or turn attribution off.',
+  },
   CALLER_FORBIDDEN: {
     status: 403,
     message: ({ reason }: { reason: string }) => `Not allowed for the person who asked: ${reason}`,
