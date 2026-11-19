@@ -23,4 +23,4 @@ export default githubExtension({
 })
 ```
 
-`@github-tools/sdk/eve-runtime` exports `fillGithubFooter`, `githubFooterTokens`, `githubAppFooterValues`, `githubChannelFooterValues`, `githubLogin`, `GITHUB_FOOTER_TOKENS` and `DEFAULT_GITHUB_FOOTER`, `GithubAppBot` gains `name`, and `withGithubAppFooter(body, bot, footer?)` takes the filled line as an optional third argument.
+`@github-tools/sdk/eve-runtime` exports `fillGithubFooter`, `githubFooterTokens`, `githubAppFooterValues`, `githubChannelFooterValues`, `githubLogin`, `GITHUB_FOOTER_TOKENS` and `DEFAULT_GITHUB_FOOTER`, `GithubAppBot` gains an optional `name`, which footers show in place of the slug when it is set, and `withGithubAppFooter(body, bot, footer?)` takes the filled line as an optional third argument.

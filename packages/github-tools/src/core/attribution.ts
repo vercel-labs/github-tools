@@ -7,8 +7,8 @@ import type { GithubToolName } from './tool-names'
 export type GithubAppBot = {
   /** The App's slug, as in `https://github.com/apps/<slug>`. */
   slug: string
-  /** The App's display name, as its page on GitHub shows it. */
-  name: string
+  /** The App's display name, as its page on GitHub shows it. {@link githubAppBot} always sets it; footers show `slug` without it. */
+  name?: string
   /** The bot's login, `<slug>[bot]`. */
   login: string
   /** The bot's numeric user id. */
@@ -127,7 +127,8 @@ export function fillGithubFooter(template: string, values: Partial<Record<Github
 
 /** The App's own footer values, which every call can fill. */
 export function githubAppFooterValues(bot: GithubAppBot): Pick<Record<GithubFooterToken, string>, 'app' | 'app.name'> {
-  return { 'app': `[${bot.name}](https://github.com/apps/${bot.slug})`, 'app.name': bot.name }
+  const name = bot.name ?? bot.slug
+  return { 'app': `[${name}](https://github.com/apps/${bot.slug})`, 'app.name': name }
 }
 
 /** The footer values the channel serving a call fills: `{channel}` and `{origin}`. */
