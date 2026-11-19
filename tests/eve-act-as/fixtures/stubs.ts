@@ -91,6 +91,9 @@ globalThis.fetch = async (input, init) => {
   if (request.method === 'GET' && url.pathname === '/user/installations' && token.startsWith('ghu_')) {
     return json({ total_count: 1, installations: [{ id: 3, app_id: 9, app_slug: 'eval' }] })
   }
+  if (request.method === 'GET' && url.pathname === '/user' && token.startsWith('ghu_')) {
+    return json({ login: token.slice('ghu_'.length), id: 1, type: 'User' })
+  }
   if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/users/eval[bot]') {
     return json({ login: 'eval[bot]', id: 4242, type: 'Bot' })
   }
