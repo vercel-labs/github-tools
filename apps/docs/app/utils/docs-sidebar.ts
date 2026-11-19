@@ -25,7 +25,8 @@ export const docsSidebar: DocsSidebarGroup[] = [
     items: [
       { path: '/learn/github-agents' },
       { path: '/learn/tool-calls' },
-      { path: '/learn/first-agent' }
+      { path: '/learn/first-agent' },
+      { path: '/learn/coding-agents' }
     ]
   },
   {
