@@ -91,6 +91,12 @@ globalThis.fetch = async (input, init) => {
   if (request.method === 'GET' && url.pathname === '/user/installations' && token.startsWith('ghu_')) {
     return json({ total_count: 1, installations: [{ id: 3, app_id: 9, app_slug: 'eval' }] })
   }
+  if (request.method === 'GET' && url.pathname === '/user' && token.startsWith('ghu_')) {
+    return json({ login: token.slice('ghu_'.length), id: 1, type: 'User' })
+  }
+  if (request.method === 'GET' && url.pathname === '/apps/eval') {
+    return json({ slug: 'eval', name: 'Eval Agent' })
+  }
   if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/users/eval[bot]') {
     return json({ login: 'eval[bot]', id: 4242, type: 'Bot' })
   }
@@ -98,6 +104,16 @@ globalThis.fetch = async (input, init) => {
     const { title, body, head, base } = await request.json() as { title: string, body?: string, head: string, base: string }
     recordGithubWrite(body ?? '')
     return json({ number: 31, title, html_url: 'https://github.com/vercel-labs/github-tools/pull/31', state: 'open', draft: false, head: { ref: head }, base: { ref: base } }, 201)
+  }
+  // `editFiles` creates `eval-new` from `main`.
+  if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/repos/vercel-labs/github-tools/git/ref/heads/eval-new') {
+    return json({ message: 'Not Found' }, 404)
+  }
+  if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/repos/vercel-labs/github-tools/git/ref/heads/main') {
+    return json({ ref: 'refs/heads/main', object: { sha: 'abc123' } })
+  }
+  if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/git/refs') {
+    return json({ ref: 'refs/heads/eval-new', object: { sha: 'abc123' } }, 201)
   }
   if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/repos/vercel-labs/github-tools/git/ref/heads/eval') {
     return json({ ref: 'refs/heads/eval', object: { sha: 'abc123' } })

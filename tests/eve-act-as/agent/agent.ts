@@ -38,6 +38,10 @@ export default defineAgent({
         return { toolCalls: [{ name: 'github__createPullRequest', input: { ...target, title: 'eval', body: 'Fixes the drain.', head: 'eval', base: 'main' } }] }
       case 'commit':
         return { toolCalls: [{ name: 'github__createOrUpdateFile', input: { ...target, path: 'README.md', message: 'docs: update readme', content: 'eval', branch: 'eval' } }] }
+      case 'edit files pr':
+        return { toolCalls: [{ name: 'github__editFiles', input: { ...target, branch: 'eval-new', baseBranch: 'main', message: 'docs: reword the intro', edits: [{ path: 'README.md', content: '# Site\n' }], pullRequest: { title: 'docs: reword the intro', body: 'Rewords the intro.' } } }] }
+      case 'custom pr':
+        return { toolCalls: [{ name: 'custom__createPullRequest', input: { ...target, title: 'eval', body: 'Fixes the drain.', head: 'eval', base: 'main' } }] }
       case 'strict pr':
         return { toolCalls: [{ name: 'strict__createPullRequest', input: { ...target, title: 'eval', body: 'Fixes the drain.', head: 'eval', base: 'main' } }] }
       case 'github calls':
