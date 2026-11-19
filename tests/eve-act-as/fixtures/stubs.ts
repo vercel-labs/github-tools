@@ -99,6 +99,16 @@ globalThis.fetch = async (input, init) => {
     recordGithubWrite(body ?? '')
     return json({ number: 31, title, html_url: 'https://github.com/vercel-labs/github-tools/pull/31', state: 'open', draft: false, head: { ref: head }, base: { ref: base } }, 201)
   }
+  // `editFiles` creates `eval-new` from `main`.
+  if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/repos/vercel-labs/github-tools/git/ref/heads/eval-new') {
+    return json({ message: 'Not Found' }, 404)
+  }
+  if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/repos/vercel-labs/github-tools/git/ref/heads/main') {
+    return json({ ref: 'refs/heads/main', object: { sha: 'abc123' } })
+  }
+  if (request.method === 'POST' && url.pathname === '/repos/vercel-labs/github-tools/git/refs') {
+    return json({ ref: 'refs/heads/eval-new', object: { sha: 'abc123' } }, 201)
+  }
   if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/repos/vercel-labs/github-tools/git/ref/heads/eval') {
     return json({ ref: 'refs/heads/eval', object: { sha: 'abc123' } })
   }

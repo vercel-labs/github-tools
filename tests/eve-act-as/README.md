@@ -4,6 +4,7 @@ Mounts the built `@github-tools/eve-extension` twice and drives it with `eve eva
 
 - `agent/extensions/github.ts`: `actAs: 'caller'` with `approvers: 'anyone'`
 - `agent/extensions/strict.ts`: `actAs: 'user'` with the default approvers and `attribution: false`
+- `agent/extensions/custom.ts`: `actAs: 'user'` with a custom `attribution.footer`
 - `agent/extensions/gated.ts`: `actAs: 'app'` with a configured `response` policy and a `pullNumber` context
 
 `fixtures/stubs.ts` answers Vercel Connect and `api.github.com` in-process, including the Connect sign-in. `agent/channels/eve.ts` signs in the user named by the `x-eval-user` header, or stands in for a GitHub commenter named by `x-eval-commenter`. `agent/channels/github.ts` mounts `githubChannel` from `@github-tools/eve-extension/channels` with `respondTo: 'writers'`, and the eval posts `issue_comment` webhooks to it. The run needs no token, network, or AI Gateway credentials.
@@ -23,7 +24,7 @@ The eval checks that:
 - the approval prompt names the issue a call updates, not the pull request in the context
 - with `'caller'`, a GitHub commenter's call runs as the App with no sign-in, a reader's approved write is refused with `CALLER_FORBIDDEN`, a writer who approves it lends their role, and a call to another repository is checked against the role there
 - with `'caller'`, a commenter needs Write on a review thread's repository to resolve it, and a search is refused while the App's token reaches another repository
-- a signed-in user's pull request ends with the App's footer and their commit names the App's bot as co-author, the App is read once from their token, and an App call or a mount with `attribution: false` adds neither
+- a signed-in user's pull request ends with the App's footer and their commit names the App's bot as co-author, the App is read once from their token, a pull request that `editFiles` opens gets the footer too, a custom `footer` replaces the line, and an App call or a mount with `attribution: false` adds neither
 - with `respondTo: 'writers'`, a reader's mention starts no turn, and a writer's mention starts one that reads the thread's repository and replies
 
 ```bash
