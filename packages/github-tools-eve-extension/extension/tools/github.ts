@@ -177,7 +177,7 @@ async function githubUserAuth() {
 
 // GitHub records the person whose token runs the call, so the App is credited on what it wrote for them.
 async function runAsUser(name: GithubToolName, input: Record<string, unknown>, ctx: ToolContext, token: string) {
-  const { args, options } = await withAttribution(name, input, buildSessionOptions(ctx), token, ctx.channel.kind)
+  const { args, options } = await withAttribution(name, input, buildSessionOptions(ctx), token, ctx.channel)
   return executeGithubEveTool(name, args, options)
 }
 

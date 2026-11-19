@@ -94,6 +94,9 @@ globalThis.fetch = async (input, init) => {
   if (request.method === 'GET' && url.pathname === '/user' && token.startsWith('ghu_')) {
     return json({ login: token.slice('ghu_'.length), id: 1, type: 'User' })
   }
+  if (request.method === 'GET' && url.pathname === '/apps/eval') {
+    return json({ slug: 'eval', name: 'Eval Agent' })
+  }
   if (request.method === 'GET' && decodeURIComponent(url.pathname) === '/users/eval[bot]') {
     return json({ login: 'eval[bot]', id: 4242, type: 'Bot' })
   }

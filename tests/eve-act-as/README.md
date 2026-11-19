@@ -24,7 +24,7 @@ The eval checks that:
 - the approval prompt names the issue a call updates, not the pull request in the context
 - with `'caller'`, a GitHub commenter's call runs as the App with no sign-in, a reader's approved write is refused with `CALLER_FORBIDDEN`, a writer who approves it lends their role, and a call to another repository is checked against the role there
 - with `'caller'`, a commenter needs Write on a review thread's repository to resolve it, and a search is refused while the App's token reaches another repository
-- a signed-in user's pull request ends with the App's footer and their commit names the App's bot as co-author, the App is read once from their token, a pull request that `editFiles` opens gets the footer too, a `footer` template fills `{app}`, `{app.name}`, `{requester}` and `{channel}` from the call, and an App call or a mount with `attribution: false` adds neither
+- a signed-in user's pull request ends with the App's footer and their commit names the App's bot as co-author, the App is read once from their token, a pull request that `editFiles` opens gets the footer too, the default footer names the App by its display name, the requester and the channel, a `footer` template fills its tokens from the call, and an App call or a mount with `attribution: false` adds neither
 - with `respondTo: 'writers'`, a reader's mention starts no turn, and a writer's mention starts one that reads the thread's repository and replies
 
 ```bash

@@ -5,12 +5,14 @@ import {
   GITHUB_COMMIT_TOOLS,
   githubAppBot,
   githubAppFooterValues,
+  githubChannelFooterValues,
   githubFooterTokens,
   githubLogin,
   githubAppBotIdentity,
   withGithubAppFooter,
   type EveGithubToolsOptions,
   type GithubAppBot,
+  type GithubFooterChannel,
   type GithubToolName,
 } from '@github-tools/sdk/eve-runtime'
 import extension, { type GithubExtensionAttribution } from '../extension'
@@ -34,12 +36,12 @@ function credits(): { footer: NonNullable<GithubExtensionAttribution['footer']>,
   return { footer: attribution.footer ?? true, coAuthor: attribution.coAuthor ?? true }
 }
 
-async function footerText(footer: GithubExtensionAttribution['footer'], bot: GithubAppBot, token: string, channel: string): Promise<string> {
+async function footerText(footer: GithubExtensionAttribution['footer'], bot: GithubAppBot, token: string, channel: GithubFooterChannel): Promise<string> {
   if (typeof footer === 'function') return footer(bot)
   const template = typeof footer === 'string' ? footer : DEFAULT_GITHUB_FOOTER
   // The requester costs a GitHub call, so it is read only for a template that names them.
   const requester = githubFooterTokens(template).includes('requester') ? `@${await githubLogin(token)}` : undefined
-  return fillGithubFooter(template, { ...githubAppFooterValues(bot), channel: channel.replace(/^channel:/, ''), ...(requester && { requester }) })
+  return fillGithubFooter(template, { ...githubAppFooterValues(bot), ...githubChannelFooterValues(channel), ...(requester && { requester }) })
 }
 
 type PullRequestInput = { title: string, body?: string, draft?: boolean }
@@ -54,7 +56,7 @@ export async function withAttribution(
   args: Record<string, unknown>,
   options: EveGithubToolsOptions,
   token: string,
-  channel: string,
+  channel: GithubFooterChannel,
 ): Promise<{ args: Record<string, unknown>, options: EveGithubToolsOptions }> {
   const { footer, coAuthor } = credits()
   const pullRequest = name === 'editFiles' ? args.pullRequest as PullRequestInput | undefined : undefined
