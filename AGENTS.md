@@ -8,7 +8,7 @@
 pnpm build              # Build all packages (turbo)
 pnpm lint               # Lint all packages
 pnpm typecheck          # Type-check all packages
-pnpm test               # SDK vitest + eve extension evals (examples/eve-smoke, tests/eve-act-as, tests/eve-auto) + the eve-bench gh classifier test
+pnpm test               # SDK and eve extension vitest + eve extension evals (examples/eve-smoke, tests/eve-act-as, tests/eve-auto, tests/eve-emulate) + the eve-bench gh classifier test
 pnpm dev                # Run the chat app in dev mode
 pnpm docs:dev           # Run the docs site in dev mode
 
@@ -24,7 +24,7 @@ pnpm version-packages   # Apply changesets
 pnpm release            # Build SDK + publish
 ```
 
-Verify changes with `pnpm build && pnpm lint && pnpm typecheck && pnpm test`. The SDK has vitest (`packages/github-tools/**/*.test.ts`). The eve extension is covered by `examples/eve-smoke`: `eve eval` mounts the built extension with a `mockModel`, a fixed routing model, and an in-process `api.github.com` stub, and checks routing, registration, execution, and approval gating.
+Verify changes with `pnpm build && pnpm lint && pnpm typecheck && pnpm test`. The SDK has vitest (`packages/github-tools/**/*.test.ts`), and so does the extension's testing entry (`packages/github-tools-eve-extension/testing/**/*.test.ts`). The eve extension is covered by `examples/eve-smoke`: `eve eval` mounts the built extension with a `mockModel`, a fixed routing model, and an in-process `api.github.com` stub, and checks routing, registration, execution, and approval gating.
 
 ## Monorepo Structure
 
@@ -34,7 +34,7 @@ pnpm workspaces + Turborepo, with published packages, apps, and examples:
 - **`packages/github-tools-eve-extension`** — the published eve extension (`@github-tools/eve-extension`).
 - **`examples/*`** — consumer integrations used for development, smoke tests (`examples/eve-smoke`), and canary checks.
 - **`examples/eve`** — the Slack and GitHub agent people clone or deploy on its own (Deploy button, `giget`), so it must work outside the monorepo: no `workspace:*`, no root config. It depends on `@github-tools/eve-extension` from npm as `latest`, because Changesets rewrites a semver range to the unreleased version in the Version PR, which breaks `pnpm install --frozen-lockfile`. Only use released options in it; to try unreleased extension code, use `examples/eve-smoke` or `tests/*`. After a release, move its lockfile entry to the new version so CI builds against it: set the dependency to that version, run `pnpm install`, set it back to `latest` and run `pnpm install` again. `pnpm update --filter` also refreshes unrelated transitive dependencies.
-- **`tests/*`** — eval-only agents that are not usable examples: `tests/eve-act-as` covers the eve extension's `actAs`, `approvers` and `githubChannel`'s `respondTo`, and `tests/eve-auto` covers `preset: 'auto'` and `requireApproval: 'auto'`, both with stubbed Vercel Connect and GitHub.
+- **`tests/*`** — eval-only agents that are not usable examples: `tests/eve-act-as` covers the eve extension's `actAs`, `approvers` and `githubChannel`'s `respondTo`, and `tests/eve-auto` covers `preset: 'auto'` and `requireApproval: 'auto'`, both with stubbed Vercel Connect and GitHub. `tests/eve-emulate` runs the extension's testing entry end to end, against the GitHub and Vercel Connect emulators.
 - **`apps/chat`** — Nuxt 4 demo app with NuxtHub (SQLite + blob), GitHub OAuth, dual-mode agent (standard `ToolLoopAgent` vs durable `WorkflowAgent`).
 - **`apps/docs`** — Nuxt 4 docs site built on Docus. Also publishes a consumer-facing Agent Skill at `apps/docs/skills/github-tools-agents/` (served via `/.well-known/skills/`, see `apps/docs/content/docs/1.start/4.agent-skills.md`).
 
@@ -111,6 +111,17 @@ Ten presets (`code-review`, `issue-triage`, `repo-explorer`, `ci-ops`, `security
 `extension/tools/github.ts` default-exports `defineDynamic(async (ctx) => tools)`. eve runs it before every model call and rebuilds every callback and schema from what it returns, so ordinary closures and Zod schemas are fine; there are no durable descriptors to preserve. Re-read config through `buildSessionOptions()` or `extension.config`. Work that must stay fixed across model calls or processes (the `preset: 'auto'` routing) goes in `ctx.memo(key, fn)` with a JSON result. `examples/eve-smoke` runs the built extension under `eve eval` in CI.
 
 `channels/index.ts` (`@github-tools/eve-extension/channels`, the `githubChannel` wrapper with `respondTo`) is not part of the mounted extension: `tsc -p tsconfig.channels.json` compiles it to `channels/dist`. Keep it out of `extension/` and `dist/`. eve binds every module under `dist/extension` to a mount, so an agent with two mounts of the package can't import one from a channel file, and building an agent that uses the workspace extension rebuilds `dist/` and deletes anything else in it. A scheduled canary (`.github/workflows/eve-canary.yml`) builds `examples/eve` and runs that smoke eval against a coherent `eve@latest` / `ai@latest` pair.
+
+`testing/` (`@github-tools/eve-extension/testing` for eval files, `/testing/agent` for agent files) is compiled the same way, by `tsc -p tsconfig.testing.json` to `testing/dist`. It runs evals against [`vercel-labs/emulate`](https://github.com/vercel-labs/emulate), pinned exactly, plus what emulate lacks:
+
+- `testing/github/role-guard.ts`: the role a personal token needs on each write route, and the body fields GitHub ignores from a person below Triage instead of refusing the request. emulate checks a role for contents, refs and admin routes only.
+- `testing/github/supplement/`: the REST routes and the GraphQL documents the SDK sends that emulate doesn't answer. They register before emulate's routes, because its router takes the first match.
+- `testing/github/fixes.ts`: requests emulate has a route for and answers differently from GitHub.
+- `testing/connect/`: the Vercel Connect routes `@vercel/connect` calls.
+
+`testing/coverage.test.ts` is the contract: it runs every tool against the emulator, fails on a GraphQL document the emulator doesn't know, checks that a reader is refused every write GitHub refuses and that the fields GitHub ignores from a reader stay unset, and fails with "delete this route" when emulate answers a supplement route itself. It reaches the tools through `@github-tools/sdk/eve-runtime` (`listEveToolDescriptors`, `executeGithubEveTool`), so it runs against the SDK's build, and the SDK has no dependency on the extension. A bump of the emulate pin is its own pull request.
+
+`testing/emulators.ts` imports `@emulators/*` through a specifier a bundler can't follow, and `emulateGithub` finds the redirect with `import.meta.resolve`. Keep both: eve bundles what an eval imports from a workspace-linked package, and a bundled `@emulators/core` can't find the files it reads at load.
 
 ## Chat App Architecture (`apps/chat`)
 

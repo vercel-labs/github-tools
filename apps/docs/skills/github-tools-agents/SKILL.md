@@ -117,6 +117,8 @@ import githubExtension from '@github-tools/eve-extension'
 export default githubExtension({ preset: 'code-review' })
 ```
 
+To test an eve agent without GitHub, `emulateGithub` from `@github-tools/eve-extension/testing` starts a local GitHub emulator and a Vercel Connect emulator from the eval run's `setup`, and `evalIdentity()` from `@github-tools/eve-extension/testing/agent` names the caller of each eval. See the testing section of `./references/eve-extension.md`.
+
 See `./references/eve-extension.md` and `/integrations/eve`.
 
 ### eve agent, direct import (deprecated)

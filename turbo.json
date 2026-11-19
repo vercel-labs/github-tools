@@ -12,7 +12,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".vercel/output/**", "dist/**", "channels/dist/**", ".nuxt/**", ".output/**"],
+      "outputs": [".vercel/output/**", "dist/**", "channels/dist/**", "testing/dist/**", ".nuxt/**", ".output/**"],
       "inputs": ["$TURBO_DEFAULT$", ".env", ".env.*"],
       "env": [
         "NUXT_STUDIO_SSO_URL",

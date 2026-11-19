@@ -383,6 +383,12 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
     devDependencies:
+      '@emulators/core':
+        specifier: 0.13.1
+        version: 0.13.1
+      '@emulators/github':
+        specifier: 0.13.1
+        version: 0.13.1
       '@types/node':
         specifier: ^26.5.0
         version: 26.5.0
@@ -401,6 +407,9 @@ importers:
       typescript-eslint:
         specifier: ^8.70.0
         version: 8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3)
+      vitest:
+        specifier: ^5.0.0
+        version: 5.0.0(@types/node@26.5.0)(vite@8.3.6(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
 
   tests/eve-act-as:
     dependencies:
@@ -437,6 +446,31 @@ importers:
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+
+  tests/eve-emulate:
+    dependencies:
+      '@github-tools/eve-extension':
+        specifier: workspace:*
+        version: link:../../packages/github-tools-eve-extension
+      '@vercel/connect':
+        specifier: ^2.7.0
+        version: 2.7.0(@ai-sdk/mcp@2.0.93(zod@4.6.7))(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(ai@7.0.148(zod@4.6.7))(eve@1.0.0-rc.6)
+      ai:
+        specifier: ^7.0.148
+        version: 7.0.148(zod@4.6.7)
+      eve:
+        specifier: ^1.0.0-rc.6
+        version: 1.0.0-rc.6(f8168b37b4887d4feb9da8853275c7e5)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@emulators/core':
+        specifier: 0.13.1
+        version: 0.13.1
+      '@emulators/github':
+        specifier: 0.13.1
+        version: 0.13.1
 
 packages:
 
@@ -970,6 +1004,12 @@ packages:
 
   '@emotion/weak-memoize@0.4.0':
     resolution: {integrity: sha512-snKqtPW01tN0ui7yu9rGv69aJXr/a/Ywvl11sUjNtEcRc+ng/mQriFL0wLXMef74iHa/EkftbDzU9F8iFbH+zg==}
+
+  '@emulators/core@0.13.1':
+    resolution: {integrity: sha512-otPAqo7b1Me+Ak84Yw+oyvpSnPKu+X7XDgbscFrkwXmZ3lb5HjlN4wbMeQ01a6f5p562DtlKhpIUU+Q2mvfDRQ==}
+
+  '@emulators/github@0.13.1':
+    resolution: {integrity: sha512-5QxGs+8BGBA0cbrLYWDNhrqMwgwo1praPwqWMoQ0sS06NwzkzSUHVkrPfRoZSIjGotvRhF+wE/pvsInyHVXrwQ==}
 
   '@es-joy/jsdoccomment@0.91.0':
     resolution: {integrity: sha512-vgqlMGNNhZxwDYbUNIHj3Hskb4R28iqdXx90ufHyt/NeuTQkeqjTDslAs9I0/GCAfbxP5BpH5WsL1R1fht5Lxg==}
@@ -12538,6 +12578,14 @@ snapshots:
   '@emotion/utils@1.4.2': {}
 
   '@emotion/weak-memoize@0.4.0': {}
+
+  '@emulators/core@0.13.1':
+    dependencies:
+      jose: 6.2.12
+
+  '@emulators/github@0.13.1':
+    dependencies:
+      '@emulators/core': 0.13.1
 
   '@es-joy/jsdoccomment@0.91.0':
     dependencies:

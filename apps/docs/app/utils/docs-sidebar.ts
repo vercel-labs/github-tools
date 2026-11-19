@@ -62,7 +62,8 @@ export const docsSidebar: DocsSidebarGroup[] = [
       { path: '/guides/release-notes' },
       { path: '/guides/chat-bot' },
       { path: '/guides/multi-agent' },
-      { path: '/guides/self-improving-agent' }
+      { path: '/guides/self-improving-agent' },
+      { path: '/guides/test-an-agent' }
     ]
   },
   {
